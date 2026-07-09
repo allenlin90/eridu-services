@@ -21,6 +21,8 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { OPERATIONAL_DAY_START_HOUR } from '@/lib/utils/operational-day.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
+import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
+import type { HeldBackFieldValue, ScheduleConflictHeldBack } from '@/models/schedule-conflict/schedule-conflict.types';
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { TaskService } from '@/models/task/task.service';
@@ -55,6 +57,7 @@ export class PublishingService {
     private readonly utilityService: UtilityService,
     private readonly taskService: TaskService,
     private readonly auditService: AuditService,
+    private readonly scheduleConflictService: ScheduleConflictService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -186,6 +189,8 @@ export class PublishingService {
         endTime: true,
         metadata: true,
         deletedAt: true,
+        actualStartTime: true,
+        actualEndTime: true,
         showStatus: {
           select: {
             systemKey: true,
@@ -221,6 +226,8 @@ export class PublishingService {
           endTime: true,
           metadata: true,
           deletedAt: true,
+          actualStartTime: true,
+          actualEndTime: true,
           showStatus: {
             select: {
               systemKey: true,
@@ -369,11 +376,18 @@ export class PublishingService {
       publishSummary.shows_created += createdShows.length;
     }
 
+    const staleConflictCandidates = new Map<bigint, {
+      externalId: string | null;
+      heldBackFields: { changedFields: string[]; old: Record<string, HeldBackFieldValue>; new: Record<string, HeldBackFieldValue> } | null;
+    }>();
+    const terminalShowIds = new Set<bigint>();
+
     for (const pair of toUpdate) {
       const { incoming, existing } = pair;
 
-      if (this.isExistingPastOrDone(existing, publishStartedAt, UPDATE_PRESERVED_STATUS_KEYS)) {
+      if (this.isTerminalStatus(existing, UPDATE_PRESERVED_STATUS_KEYS)) {
         publishSummary.shows_preserved += 1;
+        terminalShowIds.add(existing.id);
         continue;
       }
 
@@ -381,27 +395,32 @@ export class PublishingService {
 
       const updateData: Record<string, unknown> = {};
       const changedFields: string[] = [];
+      const oldFieldValues: Record<string, HeldBackFieldValue> = {};
+      const newFieldValues: Record<string, HeldBackFieldValue> = {};
+
+      const trackChange = (field: string, oldValue: HeldBackFieldValue, newValue: HeldBackFieldValue, updateKey: string, updateValue: unknown) => {
+        updateData[updateKey] = updateValue;
+        changedFields.push(field);
+        oldFieldValues[field] = oldValue;
+        newFieldValues[field] = newValue;
+      };
 
       if (existing.name !== incoming.source.name) {
-        updateData.name = incoming.source.name;
-        changedFields.push('name');
+        trackChange('name', existing.name, incoming.source.name, 'name', incoming.source.name);
       }
 
       const incomingStart = new Date(incoming.source.startTime);
       if (existing.startTime.getTime() !== incomingStart.getTime()) {
-        updateData.startTime = incomingStart;
-        changedFields.push('start_time');
+        trackChange('start_time', existing.startTime.toISOString(), incomingStart.toISOString(), 'startTime', incomingStart);
       }
 
       const incomingEnd = new Date(incoming.source.endTime);
       if (existing.endTime.getTime() !== incomingEnd.getTime()) {
-        updateData.endTime = incomingEnd;
-        changedFields.push('end_time');
+        trackChange('end_time', existing.endTime.toISOString(), incomingEnd.toISOString(), 'endTime', incomingEnd);
       }
 
       if (existing.clientId !== incoming.clientId) {
-        updateData.clientId = incoming.clientId;
-        changedFields.push('client_id');
+        trackChange('client_id', existing.clientId, incoming.clientId, 'clientId', incoming.clientId);
       }
 
       if (existing.scheduleId !== schedule.id) {
@@ -410,34 +429,31 @@ export class PublishingService {
       }
 
       if (existing.studioId !== incoming.studioId) {
-        updateData.studioId = incoming.studioId;
-        changedFields.push('studio_id');
+        trackChange('studio_id', existing.studioId, incoming.studioId, 'studioId', incoming.studioId);
       }
 
       if (existing.studioRoomId !== incoming.studioRoomId) {
-        updateData.studioRoomId = incoming.studioRoomId;
-        changedFields.push('studio_room_id');
+        trackChange('studio_room_id', existing.studioRoomId, incoming.studioRoomId, 'studioRoomId', incoming.studioRoomId);
       }
 
       if (existing.showTypeId !== incoming.showTypeId) {
-        updateData.showTypeId = incoming.showTypeId;
-        changedFields.push('show_type_id');
+        trackChange('show_type_id', existing.showTypeId, incoming.showTypeId, 'showTypeId', incoming.showTypeId);
       }
 
       if (existing.showStatusId !== incoming.showStatusId) {
-        updateData.showStatusId = incoming.showStatusId;
-        changedFields.push('show_status_id');
+        trackChange('show_status_id', existing.showStatusId, incoming.showStatusId, 'showStatusId', incoming.showStatusId);
       }
 
       if (existing.showStandardId !== incoming.showStandardId) {
-        updateData.showStandardId = incoming.showStandardId;
-        changedFields.push('show_standard_id');
+        trackChange('show_standard_id', existing.showStandardId, incoming.showStandardId, 'showStandardId', incoming.showStandardId);
       }
 
       const incomingMetadata = incoming.source.metadata || {};
       if (JSON.stringify(existing.metadata || {}) !== JSON.stringify(incomingMetadata)) {
         updateData.metadata = incomingMetadata;
         changedFields.push('metadata');
+        oldFieldValues.metadata = JSON.stringify(existing.metadata || {});
+        newFieldValues.metadata = JSON.stringify(incomingMetadata);
       }
 
       const wasDeleted = existing.deletedAt !== null;
@@ -450,6 +466,20 @@ export class PublishingService {
       }
 
       const timeChanged = updateData.startTime !== undefined || updateData.endTime !== undefined;
+
+      const heldBackFields = changedFields.length > 0
+        ? { changedFields: [...changedFields], old: oldFieldValues, new: newFieldValues }
+        : null;
+
+      if (this.hasRecordedActuals(existing) && changedFields.length > 0) {
+        // Hold back — do not write. Recorded via staleConflictCandidates below,
+        // once every show in toUpdate has been visited.
+        staleConflictCandidates.set(existing.id, {
+          externalId: incoming.source.externalId,
+          heldBackFields,
+        });
+        continue;
+      }
 
       if (Object.keys(updateData).length > 0) {
         await tx.show.update({
@@ -555,6 +585,40 @@ export class PublishingService {
       uidMaps,
       publishSummary,
     );
+
+    for (const [showId, candidate] of staleConflictCandidates.entries()) {
+      const heldBack: ScheduleConflictHeldBack | null = candidate.heldBackFields
+        ? {
+            showFields: candidate.heldBackFields,
+            showCreators: [],
+            showPlatforms: [],
+            proposedStatusTransition: null,
+          }
+        : null;
+
+      const { recorded } = await this.scheduleConflictService.reconcileShowConflict({
+        showId,
+        scheduleUid: schedule.uid,
+        externalId: candidate.externalId,
+        actorId: userId,
+        conflictType: 'update_held_back',
+        heldBack,
+      });
+      if (recorded) {
+        publishSummary.publish_impacts_recorded += 1;
+      }
+    }
+
+    for (const showId of terminalShowIds) {
+      await this.scheduleConflictService.reconcileShowConflict({
+        showId,
+        scheduleUid: schedule.uid,
+        externalId: null,
+        actorId: userId,
+        conflictType: 'update_held_back',
+        heldBack: null,
+      });
+    }
 
     for (const [showId, update] of confirmedFutureUpdates.entries()) {
       const relationChanges = relationChangesByShowId.get(showId) ?? this.createEmptyRelationChanges();
@@ -682,6 +746,15 @@ export class PublishingService {
     const statusKey = show.showStatus.systemKey;
     return this.isBeforePublishDate(show.startTime, publishDate)
       || (statusKey !== null && preservedStatusKeys.has(statusKey));
+  }
+
+  private isTerminalStatus(show: ExistingShow, preservedStatusKeys: Set<string>): boolean {
+    const statusKey = show.showStatus.systemKey;
+    return statusKey !== null && preservedStatusKeys.has(statusKey);
+  }
+
+  private hasRecordedActuals(show: ExistingShow): boolean {
+    return show.actualStartTime !== null || show.actualEndTime !== null;
   }
 
   private isIncomingPastOrDone(

@@ -14,6 +14,7 @@ import { ValidationService } from './validation.service';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
+import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
@@ -65,6 +66,7 @@ describe('publishingService', () => {
   let validationService: jest.Mocked<ValidationService>;
   let taskService: jest.Mocked<TaskService>;
   let auditService: jest.Mocked<AuditService>;
+  let scheduleConflictService: jest.Mocked<ScheduleConflictService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
@@ -306,6 +308,12 @@ describe('publishingService', () => {
             create: jest.fn(),
           },
         },
+        {
+          provide: ScheduleConflictService,
+          useValue: {
+            reconcileShowConflict: jest.fn().mockResolvedValue({ recorded: false }),
+          },
+        },
       ],
     }).compile();
 
@@ -318,6 +326,7 @@ describe('publishingService', () => {
     validationService = module.get(ValidationService);
     taskService = module.get(TaskService);
     auditService = module.get(AuditService);
+    scheduleConflictService = module.get(ScheduleConflictService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -489,6 +498,8 @@ describe('publishingService', () => {
         endTime: new Date('2024-01-01T09:00:00Z'),
         metadata: { stale: true },
         deletedAt: new Date('2024-01-01T07:00:00Z'),
+        actualStartTime: null,
+        actualEndTime: null,
         showStatus: {
           systemKey: null,
         },
@@ -576,7 +587,7 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_cancelled).toBe(1);
     });
 
-    it('should preserve payload rows before the publish date and skip relation sync', async () => {
+    it('updates payload rows before the publish date when no actuals are recorded, and relation sync runs (date alone no longer preserves)', async () => {
       jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
       const pastExistingShow = {
         id: BigInt(88),
@@ -594,6 +605,8 @@ describe('publishingService', () => {
         endTime: new Date('2024-01-01T12:00:00Z'),
         metadata: {},
         deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
         showStatus: {
           systemKey: null,
         },
@@ -614,13 +627,14 @@ describe('publishingService', () => {
 
       const result = await service.publish(scheduleUid, version, userId);
 
-      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith(expect.objectContaining({
         where: { id: BigInt(88) },
+        data: expect.objectContaining({ name: 'Test Show 1' }),
       }));
-      expect(mockTransactionClient.showCreator.findMany).not.toHaveBeenCalled();
-      expect(mockTransactionClient.showPlatform.findMany).not.toHaveBeenCalled();
-      expect(result.publishSummary.shows_preserved).toBe(1);
-      expect(result.publishSummary.shows_updated).toBe(0);
+      expect(mockTransactionClient.showCreator.findMany).toHaveBeenCalled();
+      expect(mockTransactionClient.showPlatform.findMany).toHaveBeenCalled();
+      expect(result.publishSummary.shows_preserved).toBe(0);
+      expect(result.publishSummary.shows_updated).toBe(1);
     });
 
     it('should skip (not preserve) a brand-new payload row with a past start time and never existed before', async () => {
@@ -647,7 +661,7 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_skipped).toBe(1);
     });
 
-    it('should preserve overnight shows before the operational-day cutoff on publish day', async () => {
+    it('updates overnight shows before the operational-day cutoff on publish day when no actuals are recorded, without a publish impact (not confirmed-future)', async () => {
       jest.setSystemTime(new Date('2024-01-02T05:00:00.000Z')); // 12:00 Asia/Bangkok
       const overnightExistingShow = {
         id: BigInt(89),
@@ -665,6 +679,8 @@ describe('publishingService', () => {
         endTime: new Date('2024-01-02T00:00:00Z'),
         metadata: {},
         deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
         showStatus: {
           systemKey: 'CONFIRMED',
         },
@@ -691,13 +707,104 @@ describe('publishingService', () => {
 
       const result = await service.publish(scheduleUid, version, userId);
 
-      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith(expect.objectContaining({
         where: { id: BigInt(89) },
+        data: expect.objectContaining({ name: 'Updated Overnight Show' }),
       }));
       expect(auditService.create).not.toHaveBeenCalled();
-      expect(result.publishSummary.shows_preserved).toBe(1);
-      expect(result.publishSummary.shows_updated).toBe(0);
+      expect(result.publishSummary.shows_preserved).toBe(0);
+      expect(result.publishSummary.shows_updated).toBe(1);
       expect(result.publishSummary.publish_impacts_recorded).toBe(0);
+    });
+
+    it('applies a field diff on a past DRAFT show with no recorded actuals (bug-fix regression)', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const pastShowNoActuals = {
+        id: BigInt(110),
+        uid: 'show_past_no_actuals',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Name',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
+        showStatus: { systemKey: 'DRAFT' },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: { ...mockPlanDocument, shows: [mockPlanDocument.shows[0]!] },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([pastShowNoActuals])
+        .mockResolvedValueOnce([pastShowNoActuals]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: BigInt(110) },
+        data: expect.objectContaining({ name: 'Test Show 1' }),
+      }));
+      expect(result.publishSummary.shows_updated).toBe(1);
+      expect(result.publishSummary.shows_preserved).toBe(0);
+    });
+
+    it('holds back a field diff on a past DRAFT show with recorded actuals instead of writing it', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const pastShowWithActuals = {
+        id: BigInt(111),
+        uid: 'show_past_with_actuals',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Name',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: new Date('2024-01-01T10:05:00Z'),
+        actualEndTime: new Date('2024-01-01T12:00:00Z'),
+        showStatus: { systemKey: 'DRAFT' },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: { ...mockPlanDocument, shows: [mockPlanDocument.shows[0]!] },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([pastShowWithActuals])
+        .mockResolvedValueOnce([pastShowWithActuals]);
+
+      await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: BigInt(111) },
+      }));
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(111),
+        conflictType: 'update_held_back',
+        heldBack: expect.objectContaining({
+          showFields: expect.objectContaining({ changedFields: expect.arrayContaining(['name']) }),
+        }),
+      }));
     });
 
     it('should update a future confirmed show and write a publish impact audit', async () => {
@@ -717,6 +824,8 @@ describe('publishingService', () => {
         endTime: new Date('2024-01-01T12:00:00Z'),
         metadata: {},
         deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
         showStatus: {
           systemKey: 'CONFIRMED',
         },
@@ -917,6 +1026,8 @@ describe('publishingService', () => {
         endTime: new Date('2024-01-01T09:00:00Z'),
         metadata: {},
         deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
         showStatus: {
           systemKey: 'CANCELLED',
         },
@@ -976,6 +1087,8 @@ describe('publishingService', () => {
         endTime: new Date('2024-01-01T09:00:00Z'),
         metadata: {},
         deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
         showStatus: {
           systemKey: 'CANCELLED_PENDING_RESOLUTION',
         },

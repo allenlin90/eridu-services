@@ -36,6 +36,8 @@ export type ExistingShow = {
   endTime: Date;
   metadata: unknown;
   deletedAt: Date | null;
+  actualStartTime: Date | null;
+  actualEndTime: Date | null;
   showStatus: {
     systemKey: string | null;
   };
