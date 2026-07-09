@@ -159,9 +159,9 @@ const heldBackFkRefSchema = z.object({
   name: z.string(),
 });
 
+// No z.number() branch — every legitimate value here is a string (including a JSON-stringified metadata diff) or a resolved {uid, name} FK reference; a bare number would be a leaked, unresolved internal id.
 const heldBackFieldValueSchema = z.union([
   z.string(),
-  z.number(),
   z.boolean(),
   z.null(),
   heldBackFkRefSchema,
