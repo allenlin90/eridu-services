@@ -479,14 +479,21 @@ export class PublishingService {
         ? { changedFields: [...changedFields], old: oldFieldValues, new: newFieldValues }
         : null;
 
-      if (this.hasRecordedActuals(existing) && changedFields.length > 0) {
-        // Hold back — do not write. Recorded via staleConflictCandidates below,
-        // once every show in toUpdate has been visited.
+      if (this.hasRecordedActuals(existing)) {
+        // Always register as a candidate — even with no field diff — so the
+        // reconciliation pass below can auto-resolve a previously-opened
+        // conflict once the sheet no longer disagrees with the show. Only
+        // skip the write (continue) when there's something to actually hold
+        // back.
         staleConflictCandidates.set(existing.id, {
           externalId: incoming.source.externalId,
           heldBackFields,
         });
-        continue;
+        if (changedFields.length > 0) {
+          // Hold back — do not write. Recorded via staleConflictCandidates
+          // below, once every show in toUpdate has been visited.
+          continue;
+        }
       }
 
       if (Object.keys(updateData).length > 0) {

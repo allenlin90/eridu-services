@@ -437,6 +437,7 @@ export class StudioShowManagementService {
         return {
           currentShowStatus: freshShow.showStatus?.systemKey ?? '',
           currentFieldValues: await this.buildCurrentFieldValues(freshShow, changedFields),
+          currentRelationValues: await this.buildCurrentRelationValues(freshShow, heldBack),
         };
       },
     });
@@ -522,6 +523,45 @@ export class StudioShowManagementService {
       }
     }
     return values;
+  }
+
+  /**
+   * Current relation values for every creator/platform referenced in the
+   * pending conflict's held-back snapshot, keyed by uid — feeds
+   * `applyConflict`'s relation drift check. A uid missing from the returned
+   * map means that relation row no longer exists (soft-deleted or gone).
+   */
+  private async buildCurrentRelationValues(
+    show: ShowWithPayload<typeof studioShowDetailInclude>,
+    heldBack: HeldBackPayload | undefined,
+  ): Promise<{
+      showCreators: Record<string, string | null>;
+      showPlatforms: Record<string, { liveStreamLink: string | null; platformShowId: string | null }>;
+    }> {
+    const creatorUids = (heldBack?.show_creators ?? []).map((entry) => entry.creator_uid);
+    const showCreators: Record<string, string | null> = {};
+    if (creatorUids.length > 0) {
+      const rows = await this.txHost.tx.showCreator.findMany({
+        where: { showId: show.id, deletedAt: null, creator: { uid: { in: creatorUids } } },
+        include: { creator: { select: { uid: true } } },
+      });
+      for (const row of rows) {
+        showCreators[row.creator.uid] = row.note;
+      }
+    }
+
+    const showPlatforms: Record<string, { liveStreamLink: string | null; platformShowId: string | null }> = {};
+    for (const showPlatform of show.showPlatforms ?? []) {
+      const platformUid = showPlatform.platform?.uid;
+      if (platformUid) {
+        showPlatforms[platformUid] = {
+          liveStreamLink: showPlatform.liveStreamLink ?? null,
+          platformShowId: showPlatform.platformShowId ?? null,
+        };
+      }
+    }
+
+    return { showCreators, showPlatforms };
   }
 
   /**

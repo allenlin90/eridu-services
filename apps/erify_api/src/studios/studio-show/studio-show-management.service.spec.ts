@@ -31,7 +31,7 @@ import { UtilityService } from '@/utility/utility.service';
 
 let mockTx: {
   creator: { findFirst: jest.Mock };
-  showCreator: { findFirst: jest.Mock; update: jest.Mock };
+  showCreator: { findFirst: jest.Mock; update: jest.Mock; findMany: jest.Mock };
   platform: { findFirst: jest.Mock };
   showPlatform: { findFirst: jest.Mock; update: jest.Mock };
 };
@@ -142,7 +142,7 @@ describe('studioShowManagementService', () => {
   beforeEach(async () => {
     mockTx = {
       creator: { findFirst: jest.fn() },
-      showCreator: { findFirst: jest.fn(), update: jest.fn() },
+      showCreator: { findFirst: jest.fn(), update: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
       platform: { findFirst: jest.fn() },
       showPlatform: { findFirst: jest.fn(), update: jest.fn() },
     };
@@ -1230,6 +1230,67 @@ describe('studioShowManagementService', () => {
       const freshState = await passedParams.loadCurrentState();
       expect(freshState.currentFieldValues.name).toBe('Fresh Name (post-lock read)');
       expect(freshState.currentFieldValues.name).not.toBe('Stale Name (pre-lock snapshot)');
+    });
+
+    /**
+     * PR #271 review finding: `applyConflict`'s relation drift check needs
+     * current creator-note/platform-link values, keyed by uid, built from a
+     * fresh (lock-protected) read — not the pre-lock snapshot. This asserts
+     * `loadCurrentState` actually queries `showCreator` for the held-back
+     * creator uids and reads platform values off the freshly-loaded show.
+     */
+    it('builds currentRelationValues from a fresh showCreator query and the fresh show read', async () => {
+      // loadCurrentState touches this.txHost.tx (via buildCurrentRelationValues),
+      // which is only bound inside the CLS transaction context — so it must be
+      // invoked from within that context, not manually after
+      // resolveScheduleConflict has already returned and the context has torn
+      // down. Capturing it from inside the mocked applyConflict call (which
+      // runs synchronously within applyEligibleScheduleConflict's own
+      // @Transactional() context) preserves that.
+      let capturedState: any;
+      scheduleConflictServiceMock.applyConflict.mockImplementation(async (params: any) => {
+        capturedState = await params.loadCurrentState();
+        return { outcome: 'applied' };
+      });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+        showPlatforms: [{
+          platform: { uid: 'platform_1' },
+          liveStreamLink: 'https://fresh.example.com',
+          platformShowId: 'psid_fresh',
+        }],
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: {
+            show_fields: null,
+            show_creators: [{ creator_uid: 'creator_jane', action: 'update', old_note: 'Backup host', new_note: 'Lead host' }],
+            show_platforms: [{
+              platform_uid: 'platform_1',
+              action: 'update',
+              old: { live_stream_link: 'https://old.example.com', platform_show_id: 'psid_old' },
+              new: { live_stream_link: 'https://new.example.com', platform_show_id: 'psid_new' },
+            }],
+            proposed_status_transition: null,
+          },
+        },
+      } as any);
+      mockTx.showCreator.findMany.mockResolvedValue([
+        { note: 'Backup host', creator: { uid: 'creator_jane' } },
+      ]);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'x' }, actorExtId);
+
+      expect(mockTx.showCreator.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ showId: BigInt(1), creator: { uid: { in: ['creator_jane'] } } }),
+      }));
+      expect(capturedState.currentRelationValues).toEqual({
+        showCreators: { creator_jane: 'Backup host' },
+        showPlatforms: { platform_1: { liveStreamLink: 'https://fresh.example.com', platformShowId: 'psid_fresh' } },
+      });
     });
 
     it('applies a held-back creator removal by resolving creator_uid to the underlying row and soft-deleting it', async () => {

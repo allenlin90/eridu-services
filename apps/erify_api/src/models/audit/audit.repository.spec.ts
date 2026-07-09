@@ -16,6 +16,7 @@ function createPrismaAuditTargetDelegateMock() {
   return {
     count: jest.fn().mockResolvedValue(0),
     findMany: jest.fn().mockResolvedValue([]),
+    findFirst: jest.fn().mockResolvedValue(null),
   };
 }
 
@@ -261,6 +262,27 @@ describe('auditRepository', () => {
           },
         },
       });
+    });
+  });
+
+  /**
+   * PR #271 review finding: `reconcileShowConflict` can write a resolved row
+   * and its replacement opened row in the same transaction. Since
+   * `Audit.createdAt` is `@default(now())`, Postgres returns the same
+   * timestamp for both inserts within one transaction — ordering only by
+   * `createdAt` is non-deterministic between them. `audit.id` (autoincrement)
+   * must break the tie so the newest row is always the actual latest one.
+   */
+  describe('findLatestScheduleConflictForShow', () => {
+    it('orders by audit.createdAt desc with audit.id desc as a tie-breaker', async () => {
+      await repository.findLatestScheduleConflictForShow(BigInt(1));
+
+      expect(txAuditTargetDelegate.findFirst).toHaveBeenCalledTimes(1);
+      const args = txAuditTargetDelegate.findFirst.mock.calls[0]?.[0];
+      expect(args.orderBy).toEqual([
+        { audit: { createdAt: 'desc' } },
+        { audit: { id: 'desc' } },
+      ]);
     });
   });
 });

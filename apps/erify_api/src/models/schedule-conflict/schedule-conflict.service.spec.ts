@@ -11,6 +11,8 @@ import { AuditService } from '@/models/audit/audit.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
 
+const emptyRelationValues = { showCreators: {}, showPlatforms: {} };
+
 let mockTx: { $executeRaw: jest.Mock; showType: { findMany: jest.Mock } };
 const mockPrismaForCls = {
   $transaction: jest.fn(async (callback: any) => callback(mockTx)),
@@ -247,7 +249,7 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'planner override',
-        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
+        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' }, currentRelationValues: emptyRelationValues }),
       });
 
       expect(result.outcome).toBe('applied');
@@ -264,8 +266,96 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'x',
-        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'SOMETHING ELSE' } }),
+        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'SOMETHING ELSE' }, currentRelationValues: emptyRelationValues }),
       })).rejects.toThrow('CONFLICT_STATE_CHANGED');
+    });
+
+    /**
+     * PR #271 review finding: for a relation-only held-back conflict,
+     * `show_fields` is null, so the old drift check (which only compared
+     * `show_fields.old`) always passed. If a manager edited a show creator's
+     * note or a platform's live-stream link after the conflict opened, apply
+     * would still overwrite/delete that edit via `applyHeldBackRelations` and
+     * record the conflict as cleanly `applied`. Relation entries need the
+     * same old-value/current-value check as show fields.
+     */
+    it('apply rejects with CONFLICT_STATE_CHANGED when a held-back creator note has drifted from the snapshot', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit({
+        held_back: {
+          show_fields: null,
+          show_creators: [{ creator_uid: 'creator_1', action: 'update', old_note: 'original note', new_note: 'sheet note' }],
+          show_platforms: [],
+          proposed_status_transition: null,
+        },
+      }) as any);
+
+      await expect(service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'x',
+        loadCurrentState: async () => ({
+          currentShowStatus: 'DRAFT',
+          currentFieldValues: {},
+          currentRelationValues: { showCreators: { creator_1: 'manager edited note' }, showPlatforms: {} },
+        }),
+      })).rejects.toThrow('CONFLICT_STATE_CHANGED');
+    });
+
+    it('apply rejects with CONFLICT_STATE_CHANGED when a held-back platform link has drifted from the snapshot', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit({
+        held_back: {
+          show_fields: null,
+          show_creators: [],
+          show_platforms: [{
+            platform_uid: 'platform_1',
+            action: 'update',
+            old: { live_stream_link: 'https://old.example.com', platform_show_id: null },
+            new: { live_stream_link: 'https://sheet.example.com', platform_show_id: null },
+          }],
+          proposed_status_transition: null,
+        },
+      }) as any);
+
+      await expect(service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'x',
+        loadCurrentState: async () => ({
+          currentShowStatus: 'DRAFT',
+          currentFieldValues: {},
+          currentRelationValues: {
+            showCreators: {},
+            showPlatforms: { platform_1: { liveStreamLink: 'https://manager-edited.example.com', platformShowId: null } },
+          },
+        }),
+      })).rejects.toThrow('CONFLICT_STATE_CHANGED');
+    });
+
+    it('apply succeeds for a relation-only held-back conflict when the current relation values still match the snapshot', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit({
+        held_back: {
+          show_fields: null,
+          show_creators: [{ creator_uid: 'creator_1', action: 'update', old_note: 'original note', new_note: 'sheet note' }],
+          show_platforms: [],
+          proposed_status_transition: null,
+        },
+      }) as any);
+
+      const result = await service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'planner override',
+        loadCurrentState: async () => ({
+          currentShowStatus: 'DRAFT',
+          currentFieldValues: {},
+          currentRelationValues: { showCreators: { creator_1: 'original note' }, showPlatforms: {} },
+        }),
+      });
+
+      expect(result.outcome).toBe('applied');
     });
 
     it('apply throws CONFLICT_ALREADY_RESOLVED when the conflict_uid no longer matches the pending one (double-resolve)', async () => {
@@ -276,7 +366,7 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'x',
-        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
+        loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' }, currentRelationValues: emptyRelationValues }),
       })).rejects.toThrow('CONFLICT_ALREADY_RESOLVED');
     });
 
@@ -300,7 +390,7 @@ describe('scheduleConflictService', () => {
         conflictUid: 'conflict_1',
         actorId: BigInt(9),
         reason: 'x',
-        loadCurrentState: async () => ({ currentShowStatus: 'COMPLETED', currentFieldValues: { name: 'A' } }),
+        loadCurrentState: async () => ({ currentShowStatus: 'COMPLETED', currentFieldValues: { name: 'A' }, currentRelationValues: emptyRelationValues }),
       })).rejects.toThrow('SHOW_NO_LONGER_ELIGIBLE');
 
       expect(auditService.create).not.toHaveBeenCalled();
@@ -318,7 +408,7 @@ describe('scheduleConflictService', () => {
      */
     it('invokes loadCurrentState (not a pre-supplied snapshot) and uses its fresh values for the drift check', async () => {
       auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
-      const loadCurrentState = jest.fn().mockResolvedValue({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } });
+      const loadCurrentState = jest.fn().mockResolvedValue({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' }, currentRelationValues: emptyRelationValues });
 
       const result = await service.applyConflict({
         showId: BigInt(1),
@@ -504,7 +594,7 @@ describe('scheduleConflictService', () => {
           conflictUid: 'conflict_1',
           actorId: BigInt(10),
           reason: 'second caller',
-          loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
+          loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' }, currentRelationValues: emptyRelationValues }),
         }),
       ]);
 
@@ -554,7 +644,7 @@ describe('scheduleConflictService', () => {
           conflictUid: 'conflict_1',
           actorId: BigInt(10),
           reason: 'planner applies the deferred diff',
-          loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' } }),
+          loadCurrentState: async () => ({ currentShowStatus: 'DRAFT', currentFieldValues: { name: 'A' }, currentRelationValues: emptyRelationValues }),
         }),
       ]);
 

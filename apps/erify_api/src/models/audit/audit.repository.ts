@@ -226,6 +226,12 @@ export class AuditRepository {
    * `ScheduleConflictService`), the newest row alone tells the caller whether
    * a conflict is currently pending: `lifecycle: 'opened'` means pending,
    * `lifecycle: 'resolved'` or no row at all means not pending.
+   *
+   * `createdAt` ties: `reconcileShowConflict` can write a resolved row and
+   * its replacement opened row in the same transaction, and Postgres'
+   * `now()` (backing `@default(now())`) returns the same value for every
+   * statement in one transaction — so `createdAt` alone can't tell those two
+   * rows apart. `audit.id` (autoincrement, insertion-ordered) breaks the tie.
    */
   async findLatestScheduleConflictForShow(showId: bigint): Promise<AuditWithTargets | null> {
     const target = await this.txHost.tx.auditTarget.findFirst({
@@ -240,7 +246,7 @@ export class AuditRepository {
         },
       },
       include: { audit: { include: AUDIT_WITH_TARGETS_INCLUDE } },
-      orderBy: { audit: { createdAt: 'desc' } },
+      orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
     });
 
     if (!target) {

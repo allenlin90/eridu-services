@@ -34,8 +34,18 @@ type StaleConflictMetadata = {
   conflict_type: 'update_held_back' | 'removal_held_back';
   held_back: {
     show_fields: { changed_fields: string[]; old: Record<string, unknown>; new: Record<string, unknown> } | null;
-    show_creators: unknown[];
-    show_platforms: unknown[];
+    show_creators: Array<{
+      creator_uid: string;
+      action: 'update' | 'remove';
+      old_note: string | null;
+      new_note: string | null;
+    }>;
+    show_platforms: Array<{
+      platform_uid: string;
+      action: 'update' | 'remove';
+      old: { live_stream_link: string | null; platform_show_id: string | null };
+      new: { live_stream_link: string | null; platform_show_id: string | null };
+    }>;
     proposed_status_transition: { from: string; to: string } | null;
   };
   source: typeof SCHEDULE_PUBLISH_SOURCE;
@@ -138,17 +148,34 @@ export class ScheduleConflictService {
     // Loaded only now, after the showId advisory lock is held — see
     // `ApplyConflictParams.loadCurrentState` — so the checks below compare
     // against fresh state, not a pre-lock snapshot.
-    const { currentShowStatus, currentFieldValues } = await params.loadCurrentState();
+    const { currentShowStatus, currentFieldValues, currentRelationValues } = await params.loadCurrentState();
 
     if (isNoLongerEligible(pending.conflict_type, currentShowStatus)) {
       throw HttpError.conflict('SHOW_NO_LONGER_ELIGIBLE');
     }
 
     const snapshotOld = pending.held_back.show_fields?.old ?? {};
-    const drifted = Object.entries(snapshotOld).some(([field, value]) => {
+    const fieldsDrifted = Object.entries(snapshotOld).some(([field, value]) => {
       return JSON.stringify(currentFieldValues[field] ?? null) !== JSON.stringify(this.unwrapForCompare(value));
     });
-    if (drifted) {
+
+    // Relation entries need the same old-value/current-value check as show
+    // fields: `show_fields` is null for a relation-only held-back conflict,
+    // so without this a manager's edit to a creator note or platform link
+    // made after the conflict opened would go undetected and get silently
+    // overwritten by `applyHeldBackRelations`.
+    const creatorsDrifted = pending.held_back.show_creators.some((entry) => {
+      const currentNote = currentRelationValues.showCreators[entry.creator_uid];
+      return currentNote === undefined || currentNote !== entry.old_note;
+    });
+    const platformsDrifted = pending.held_back.show_platforms.some((entry) => {
+      const current = currentRelationValues.showPlatforms[entry.platform_uid];
+      return !current
+        || current.liveStreamLink !== entry.old.live_stream_link
+        || current.platformShowId !== entry.old.platform_show_id;
+    });
+
+    if (fieldsDrifted || creatorsDrifted || platformsDrifted) {
       throw HttpError.conflict('CONFLICT_STATE_CHANGED');
     }
 

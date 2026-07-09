@@ -50,17 +50,24 @@ export type DismissConflictParams = {
 
 export type ApplyConflictParams = DismissConflictParams & {
   /**
-   * Supplies the live show status and current DB values for every field in
-   * the snapshot's `show_fields.changed_fields` (keyed the same way; empty
-   * object for a `removal_held_back` conflict with no field diff).
-   * `applyConflict` invokes this only after it has acquired the showId
-   * advisory lock, so the eligibility recheck and drift check compare
-   * against fresh, lock-protected state — never a snapshot read before the
-   * caller entered a transaction.
+   * Supplies the live show status, current DB values for every field in the
+   * snapshot's `show_fields.changed_fields` (keyed the same way; empty
+   * object for a `removal_held_back` conflict with no field diff), and
+   * current relation values for every creator/platform referenced in the
+   * snapshot's `show_creators`/`show_platforms` (keyed by uid; an entry
+   * missing from the map means the relation row is gone). `applyConflict`
+   * invokes this only after it has acquired the showId advisory lock, so the
+   * eligibility recheck and drift check compare against fresh,
+   * lock-protected state — never a snapshot read before the caller entered a
+   * transaction.
    */
   loadCurrentState: () => Promise<{
     currentShowStatus: string;
     currentFieldValues: Record<string, unknown>;
+    currentRelationValues: {
+      showCreators: Record<string, string | null>;
+      showPlatforms: Record<string, { liveStreamLink: string | null; platformShowId: string | null }>;
+    };
   }>;
 };
 

@@ -608,10 +608,14 @@ describe('publishingService', () => {
       });
       expect(result.publishSummary.shows_restored).toBe(1);
 
-      // No stale-conflict / held-back audit row was recorded for this show —
-      // proves it never entered the actuals hold-back path.
-      expect(scheduleConflictService.reconcileShowConflict).not.toHaveBeenCalledWith(
-        expect.objectContaining({ showId: BigInt(77) }),
+      // Still reconciled with heldBack: null — a show with recorded actuals
+      // is always run through reconcileShowConflict so a previously-opened
+      // conflict can auto-resolve once nothing is left to hold back — but
+      // since nothing here needs holding back, that's the only call: the
+      // show update above was applied directly, not deferred into the
+      // hold-back path.
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(
+        expect.objectContaining({ showId: BigInt(77), heldBack: null }),
       );
     });
 
@@ -894,6 +898,58 @@ describe('publishingService', () => {
       }));
       expect(mockTransactionClient.showPlatform.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: { showId: { in: [BigInt(111)] } },
+      }));
+    });
+
+    /**
+     * PR #271 review finding: a show with recorded actuals that no longer has
+     * a field diff (the sheet reverted to match the show) must still run
+     * through reconcileShowConflict — heldBack: null — so a previously-opened
+     * stale conflict for this show gets auto-resolved rather than staying
+     * `pending` forever. Before this fix, `changedFields.length > 0` gated
+     * whether the show was even registered as a candidate, so a fully-clean
+     * diff skipped reconciliation entirely.
+     */
+    it('reconciles (with heldBack: null) a past show with recorded actuals even when the sheet no longer disagrees with it', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const pastShowMatchingIncoming = {
+        id: BigInt(112),
+        uid: 'show_past_no_diff',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        // Matches mockPlanDocument.shows[0] exactly — no field diff.
+        name: 'Test Show 1',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: { custom: 'data1' },
+        deletedAt: null,
+        actualStartTime: new Date('2024-01-01T10:05:00Z'),
+        actualEndTime: new Date('2024-01-01T12:00:00Z'),
+        showStatus: { systemKey: 'DRAFT' },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: { ...mockPlanDocument, shows: [mockPlanDocument.shows[0]!] },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([pastShowMatchingIncoming])
+        .mockResolvedValueOnce([pastShowMatchingIncoming]);
+
+      await service.publish(scheduleUid, version, userId);
+
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(112),
+        conflictType: 'update_held_back',
+        heldBack: null,
       }));
     });
 
