@@ -544,6 +544,77 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_created).toBe(0);
     });
 
+    /**
+     * Finding 4 (final-review fix): the `schedule_id` reassignment and
+     * `deleted_at` restore branches used to push into `changedFields` without
+     * going through `trackChange`, so `held_back.show_fields.changed_fields`
+     * could list `schedule_id`/`deleted_at` with no corresponding `old`/`new`
+     * entry — internally inconsistent, and (for a show with recorded
+     * actuals whose ONLY diff is one of these two bookkeeping fields) it
+     * silently held back a write that isn't even resolvable later, since
+     * `toShowUpdateData` never applies either field. The fix stops tracking
+     * both into `changed_fields`/`held_back` at all: this show restores and
+     * reassigns schedules directly, bypassing the actuals hold-back gate,
+     * with no phantom conflict recorded.
+     */
+    it('applies a schedule_id reassignment and deleted_at restore directly (not held back) and omits them from changed_fields, even with recorded actuals', async () => {
+      const deletedShowWithActualsOnlyBookkeepingDiff = {
+        id: BigInt(77),
+        uid: 'show_deleted',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: null,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        // Matches the incoming plan-document show exactly — the only real
+        // diffs are the bookkeeping fields (scheduleId, deletedAt) below.
+        name: 'Test Show 1',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: { custom: 'data1' },
+        deletedAt: new Date('2024-01-01T07:00:00Z'),
+        actualStartTime: new Date('2024-01-01T10:05:00Z'),
+        actualEndTime: new Date('2024-01-01T12:00:00Z'),
+        showStatus: {
+          systemKey: null,
+        },
+      };
+
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([deletedShowWithActualsOnlyBookkeepingDiff]);
+      mockTransactionClient.show.update.mockResolvedValue({});
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      // Applied directly — the actuals hold-back gate never triggers for a
+      // diff made up entirely of internal bookkeeping fields.
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(77) },
+        data: { scheduleId: BigInt(1), deletedAt: null },
+      });
+      expect(result.publishSummary.shows_restored).toBe(1);
+
+      // No stale-conflict / held-back audit row was recorded for this show —
+      // proves it never entered the actuals hold-back path.
+      expect(scheduleConflictService.reconcileShowConflict).not.toHaveBeenCalledWith(
+        expect.objectContaining({ showId: BigInt(77) }),
+      );
+    });
+
     it('should match by external_id only and not fall back to show name', async () => {
       const sameNameDifferentExternalId = {
         id: BigInt(77),

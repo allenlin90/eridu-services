@@ -425,9 +425,13 @@ export class PublishingService {
         trackChange('client_id', existing.clientId, incoming.clientId, 'clientId', incoming.clientId);
       }
 
+      // Internal bookkeeping, not a planner-facing field diff: there is no
+      // uid to resolve the old/new scheduleId against for display (it isn't
+      // one of the six FK fields in FK_FIELD_MODEL_MAP, and raw bigint DB
+      // ids must never be exposed via the API), so this intentionally does
+      // not go through trackChange / changedFields / held_back.
       if (existing.scheduleId !== schedule.id) {
         updateData.scheduleId = schedule.id;
-        changedFields.push('schedule_id');
       }
 
       if (existing.studioId !== incoming.studioId) {
@@ -462,9 +466,11 @@ export class PublishingService {
       const wasCancelled = existing.showStatus.systemKey === 'CANCELLED'
         || existing.showStatus.systemKey === 'CANCELLED_PENDING_RESOLUTION';
 
+      // Internal lifecycle bookkeeping (restore-on-republish), not a
+      // planner-facing field diff — intentionally not tracked into
+      // changed_fields / held_back either.
       if (wasDeleted) {
         updateData.deletedAt = null;
-        changedFields.push('deleted_at');
       }
 
       const timeChanged = updateData.startTime !== undefined || updateData.endTime !== undefined;
