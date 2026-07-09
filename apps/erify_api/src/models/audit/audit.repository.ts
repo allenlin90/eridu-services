@@ -169,6 +169,10 @@ export class AuditRepository {
     // Engineering decision: this is a purpose-built review queue query, not a
     // generic `findMany`, because it must page AuditTarget rows joined through
     // upcoming studio-scoped Shows while filtering Audit metadata by event.
+    // `impact_kind: 'stale_conflict'` rows share the same `event` value by
+    // design but are served exclusively by `findPendingStaleConflictsForStudio`
+    // — excluded here via `NOT` so a stale_conflict show's audit rows never
+    // double up across the two sources or leak resolved rows into this queue.
     const where: Prisma.AuditTargetWhereInput = {
       targetType: 'SHOW',
       show: {
@@ -183,6 +187,14 @@ export class AuditRepository {
         metadata: {
           path: ['event'],
           equals: 'schedule_publish_impact',
+        },
+      },
+      NOT: {
+        audit: {
+          metadata: {
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
+          },
         },
       },
     };

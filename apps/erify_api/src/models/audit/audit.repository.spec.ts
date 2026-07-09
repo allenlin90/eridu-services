@@ -12,15 +12,24 @@ function createPrismaAuditDelegateMock() {
   };
 }
 
+function createPrismaAuditTargetDelegateMock() {
+  return {
+    count: jest.fn().mockResolvedValue(0),
+    findMany: jest.fn().mockResolvedValue([]),
+  };
+}
+
 describe('auditRepository', () => {
   let repository: AuditRepository;
   let txAuditDelegate: ReturnType<typeof createPrismaAuditDelegateMock>;
+  let txAuditTargetDelegate: ReturnType<typeof createPrismaAuditTargetDelegateMock>;
 
   beforeEach(() => {
     txAuditDelegate = createPrismaAuditDelegateMock();
+    txAuditTargetDelegate = createPrismaAuditTargetDelegateMock();
     const prisma = { audit: txAuditDelegate } as unknown as PrismaService;
     const txHost = {
-      tx: { audit: txAuditDelegate },
+      tx: { audit: txAuditDelegate, auditTarget: txAuditTargetDelegate },
     } as unknown as TransactionHost<any>;
 
     repository = new AuditRepository(prisma, txHost);
@@ -203,6 +212,52 @@ describe('auditRepository', () => {
             select: {
               uid: true,
             },
+          },
+        },
+      });
+    });
+  });
+
+  /**
+   * Finding 3 (final-review fix): `findSchedulePublishImpactsForStudio`'s
+   * `where` clause only filtered on `metadata.event === 'schedule_publish_impact'`,
+   * which also matches every `stale_conflict` audit row (opened, applied,
+   * dismissed, superseded, auto-resolved) — those share the same `event`
+   * value by design. Since `listSchedulePublishImpacts` runs this query
+   * alongside the purpose-built `findPendingStaleConflictsForStudio` via
+   * `Promise.all`, a stale_conflict show's pending row could appear twice and
+   * its resolved rows could leak into a "needs attention" queue. This tests
+   * the repository's actual `where`-clause construction (not a mocked
+   * service boundary) since that's exactly what let the bug through
+   * undetected.
+   */
+  describe('findSchedulePublishImpactsForStudio', () => {
+    it('excludes impact_kind: stale_conflict rows from the where clause', async () => {
+      await repository.findSchedulePublishImpactsForStudio('studio_1', {
+        startDateFrom: new Date('2026-01-01T00:00:00.000Z'),
+        take: 25,
+        skip: 0,
+      });
+
+      expect(txAuditTargetDelegate.count).toHaveBeenCalledTimes(1);
+      expect(txAuditTargetDelegate.findMany).toHaveBeenCalledTimes(1);
+
+      const countWhere = txAuditTargetDelegate.count.mock.calls[0]?.[0].where;
+      const findManyWhere = txAuditTargetDelegate.findMany.mock.calls[0]?.[0].where;
+
+      // Both queries must apply the identical exclusion, or the paginated
+      // `count`/`findMany` pair could disagree on the result set.
+      expect(findManyWhere).toEqual(countWhere);
+
+      expect(countWhere.audit.metadata).toEqual({
+        path: ['event'],
+        equals: 'schedule_publish_impact',
+      });
+      expect(countWhere.NOT).toEqual({
+        audit: {
+          metadata: {
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
           },
         },
       });
