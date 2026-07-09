@@ -19,7 +19,7 @@ import { AuditService } from '@/models/audit/audit.service';
 import type { AuditWithTargets } from '@/models/audit/schemas/audit.schema';
 import { UtilityService } from '@/utility/utility.service';
 
-const CONFLICT_UID_PREFIX = 'conflict';
+export const CONFLICT_UID_PREFIX = 'conflict';
 const SCHEDULE_PUBLISH_IMPACT_EVENT = 'schedule_publish_impact';
 const STALE_CONFLICT_IMPACT_KIND = 'stale_conflict';
 const SCHEDULE_PUBLISH_SOURCE = 'google_sheets_schedule_publish';

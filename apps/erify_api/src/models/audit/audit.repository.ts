@@ -218,7 +218,9 @@ export class AuditRepository {
   }
 
   /**
-   * The most recent schedule-publish-impact Audit row for a show, filtered to
+   * Engineering decision: needs `orderBy` + a post-query metadata filter, not
+   * expressible as a plain `findMany({ where })`. The most recent
+   * schedule-publish-impact Audit row for a show, filtered to
    * `impact_kind: 'stale_conflict'`. Since only one conflict can be
    * unresolved per show at a time (enforced by the showId advisory lock in
    * `ScheduleConflictService`), the newest row alone tells the caller whether
@@ -254,13 +256,15 @@ export class AuditRepository {
   }
 
   /**
-   * All shows in a studio with a currently-pending `stale_conflict` — no date
-   * filter, since past-dated shows are the entire point of this kind (spec:
-   * "the default (no explicit filters) view returns unresolved stale_conflict
-   * rows regardless of the show's date"). Uses Prisma's `distinct` + `orderBy`
-   * to get one row per show (the newest), then filters to `lifecycle: 'opened'`
-   * in application code — Prisma can't express "opened with no later resolved
-   * row for the same conflict_uid" as a plain relational `where`.
+   * Engineering decision: purpose-built review-queue query, not a generic
+   * `findMany`. All shows in a studio with a currently-pending `stale_conflict`
+   * — no date filter, since past-dated shows are the entire point of this kind
+   * (spec: "the default (no explicit filters) view returns unresolved
+   * stale_conflict rows regardless of the show's date"). Uses Prisma's
+   * `distinct` + `orderBy` to get one row per show (the newest), then filters
+   * to `lifecycle: 'opened'` in application code — Prisma can't express
+   * "opened with no later resolved row for the same conflict_uid" as a plain
+   * relational `where`.
    */
   async findPendingStaleConflictsForStudio(
     studioUid: string,
