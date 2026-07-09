@@ -241,6 +241,46 @@ export class AuditRepository {
     return target.audit;
   }
 
+  /**
+   * All shows in a studio with a currently-pending `stale_conflict` — no date
+   * filter, since past-dated shows are the entire point of this kind (spec:
+   * "the default (no explicit filters) view returns unresolved stale_conflict
+   * rows regardless of the show's date"). Uses Prisma's `distinct` + `orderBy`
+   * to get one row per show (the newest), then filters to `lifecycle: 'opened'`
+   * in application code — Prisma can't express "opened with no later resolved
+   * row for the same conflict_uid" as a plain relational `where`.
+   */
+  async findPendingStaleConflictsForStudio(
+    studioUid: string,
+    opts: { take: number; skip: number },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    const latestPerShow = await this.txHost.tx.auditTarget.findMany({
+      where: {
+        targetType: 'SHOW',
+        show: { studio: { uid: studioUid }, deletedAt: null },
+        audit: {
+          metadata: {
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
+          },
+        },
+      },
+      distinct: ['showId'],
+      include: SCHEDULE_PUBLISH_IMPACT_INCLUDE,
+      orderBy: { audit: { createdAt: 'desc' } },
+    });
+
+    const pending = latestPerShow.filter((target) => {
+      const metadata = target.audit.metadata as { lifecycle?: string } | null;
+      return metadata?.lifecycle === 'opened';
+    });
+
+    return {
+      items: pending.slice(opts.skip, opts.skip + opts.take),
+      total: pending.length,
+    };
+  }
+
   private toTargetCreateInput(
     target: CreateAuditTargetPayload,
   ): Prisma.AuditTargetCreateWithoutAuditInput {

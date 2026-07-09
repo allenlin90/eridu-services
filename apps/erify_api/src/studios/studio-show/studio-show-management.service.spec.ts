@@ -114,6 +114,7 @@ describe('studioShowManagementService', () => {
   const auditServiceMock = {
     create: jest.fn(),
     findSchedulePublishImpactsForStudio: jest.fn(),
+    findPendingStaleConflictsForStudio: jest.fn(),
     countForTargets: jest.fn(),
     findForTargets: jest.fn(),
   };
@@ -1122,6 +1123,7 @@ describe('studioShowManagementService', () => {
           },
         ],
       });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
 
       const result = await service.listSchedulePublishImpacts('std_123', {
         page: 2,
@@ -1138,6 +1140,10 @@ describe('studioShowManagementService', () => {
           take: 25,
         },
       );
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        { skip: 25, take: 25 },
+      );
       expect(result.total).toBe(1);
       expect(result.items[0]).toEqual({
         audit_id: 'aud_123',
@@ -1146,6 +1152,10 @@ describe('studioShowManagementService', () => {
         external_id: 'show_external_1',
         changed_fields: ['start_time'],
         relation_changes: { creator_links_added: 1 },
+        conflict_uid: null,
+        conflict_type: null,
+        resolution_status: null,
+        held_back: null,
         show: {
           id: 'show_123',
           name: 'Confirmed Show',
@@ -1159,6 +1169,114 @@ describe('studioShowManagementService', () => {
         },
         created_at: '2026-06-29T10:00:00.000Z',
       });
+    });
+
+    it('returns unresolved stale_conflict rows for a past-dated show by default, alongside upcoming confirmed_future_* rows', async () => {
+      const confirmedFutureFixture = {
+        audit: {
+          uid: 'aud_confirmed',
+          createdAt: new Date('2026-05-01T00:00:00.000Z'),
+          reason: null,
+          metadata: {
+            event: 'schedule_publish_impact',
+            impact_kind: 'confirmed_future_updated',
+            schedule_uid: 'schedule_1',
+            external_id: 'EXT-1',
+            changed_fields: ['name'],
+            relation_changes: {},
+          },
+        },
+        targetId: BigInt(1),
+        show: {
+          uid: 'show_1',
+          externalId: 'EXT-1',
+          name: 'Upcoming Show',
+          startTime: new Date('2026-06-01T10:00:00.000Z'),
+          endTime: new Date('2026-06-01T12:00:00.000Z'),
+          client: { uid: 'client_1', name: 'Client' },
+          showStatus: { name: 'Confirmed', systemKey: 'CONFIRMED' },
+        },
+      };
+      const staleConflictFixture = {
+        audit: {
+          uid: 'aud_stale',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          reason: null,
+          metadata: {
+            event: 'schedule_publish_impact',
+            impact_kind: 'stale_conflict',
+            lifecycle: 'opened',
+            conflict_uid: 'conflict_1',
+            conflict_type: 'update_held_back',
+            schedule_uid: 'schedule_1',
+            external_id: 'EXT-2',
+            held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+          },
+        },
+        targetId: BigInt(2),
+        show: {
+          uid: 'show_2',
+          externalId: 'EXT-2',
+          name: 'Past Show',
+          startTime: new Date('2026-01-01T10:00:00.000Z'),
+          endTime: new Date('2026-01-01T12:00:00.000Z'),
+          client: { uid: 'client_1', name: 'Client' },
+          showStatus: { name: 'Draft', systemKey: 'DRAFT' },
+        },
+      };
+
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [confirmedFutureFixture], total: 1 });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [staleConflictFixture], total: 1 });
+
+      const result = await service.listSchedulePublishImpacts('studio_1', {});
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items.some((r) => r.impact_kind === 'stale_conflict')).toBe(true);
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledWith('studio_1', expect.objectContaining({ skip: 0, take: 25 }));
+    });
+
+    it('round-trips an FK-backed held_back field as uid+name, never a raw bigint', async () => {
+      const staleConflictFixtureWithFkField = {
+        audit: {
+          uid: 'aud_stale_fk',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          reason: null,
+          metadata: {
+            event: 'schedule_publish_impact',
+            impact_kind: 'stale_conflict',
+            lifecycle: 'opened',
+            conflict_uid: 'conflict_fk1',
+            conflict_type: 'update_held_back',
+            schedule_uid: 'schedule_1',
+            external_id: 'EXT-3',
+            held_back: {
+              show_fields: {
+                changed_fields: ['show_type_id'],
+                old: { show_type_id: { uid: 'shwtyp_1', name: 'bau' } },
+                new: { show_type_id: { uid: 'shwtyp_2', name: 'campaign' } },
+              },
+              show_creators: [],
+              show_platforms: [],
+              proposed_status_transition: null,
+            },
+          },
+        },
+        targetId: BigInt(3),
+        show: {
+          uid: 'show_3',
+          externalId: 'EXT-3',
+          name: 'Show',
+          startTime: new Date('2026-01-01T10:00:00.000Z'),
+          endTime: new Date('2026-01-01T12:00:00.000Z'),
+          client: { uid: 'client_1', name: 'Client' },
+          showStatus: { name: 'Draft', systemKey: 'DRAFT' },
+        },
+      };
+
+      const row = (service as any).toSchedulePublishImpactRow(staleConflictFixtureWithFkField);
+      expect(row.held_back.show_fields.old.show_type_id).toEqual({ uid: 'shwtyp_1', name: 'bau' });
+      expect(typeof row.held_back.show_fields.old.show_type_id).not.toBe('bigint');
+      expect(typeof row.held_back.show_fields.old.show_type_id).not.toBe('number');
     });
   });
 

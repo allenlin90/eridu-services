@@ -75,4 +75,11 @@ export class AuditService extends BaseModelService {
   async findLatestScheduleConflictForShow(showId: bigint): Promise<AuditWithTargets | null> {
     return this.auditRepository.findLatestScheduleConflictForShow(showId);
   }
+
+  async findPendingStaleConflictsForStudio(
+    studioUid: string,
+    opts: { take: number; skip: number },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    return this.auditRepository.findPendingStaleConflictsForStudio(studioUid, opts);
+  }
 }

@@ -331,19 +331,24 @@ export class StudioShowManagementService {
   ): Promise<{ items: SchedulePublishImpactRow[]; total: number }> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 25;
-    const { items, total } = await this.auditService.findSchedulePublishImpactsForStudio(
-      studioUid,
-      {
+    const skip = (page - 1) * limit;
+
+    const [confirmedFuture, staleConflicts] = await Promise.all([
+      this.auditService.findSchedulePublishImpactsForStudio(studioUid, {
         startDateFrom: query.start_date_from ? new Date(query.start_date_from) : new Date(),
         startDateTo: query.start_date_to ? new Date(query.start_date_to) : undefined,
-        skip: (page - 1) * limit,
+        skip,
         take: limit,
-      },
-    );
+      }),
+      this.auditService.findPendingStaleConflictsForStudio(studioUid, { skip, take: limit }),
+    ]);
 
     return {
-      items: items.map((item) => this.toSchedulePublishImpactRow(item)),
-      total,
+      items: [
+        ...confirmedFuture.items.map((item) => this.toSchedulePublishImpactRow(item)),
+        ...staleConflicts.items.map((item) => this.toSchedulePublishImpactRow(item)),
+      ],
+      total: confirmedFuture.total + staleConflicts.total,
     };
   }
 
@@ -438,13 +443,21 @@ export class StudioShowManagementService {
     }
 
     const metadata = this.asRecord(target.audit.metadata);
-    const changedFields = Array.isArray(metadata.changed_fields)
-      ? metadata.changed_fields.filter((field): field is string => typeof field === 'string')
-      : [];
-    const relationChanges = this.numberRecord(metadata.relation_changes);
-    const impactKind = metadata.impact_kind === 'confirmed_future_pending_resolution'
-      ? 'confirmed_future_pending_resolution'
-      : 'confirmed_future_updated';
+    const isStaleConflict = metadata.impact_kind === 'stale_conflict';
+
+    const changedFields = isStaleConflict
+      ? this.staleConflictChangedFields(metadata)
+      : (Array.isArray(metadata.changed_fields)
+          ? metadata.changed_fields.filter((field): field is string => typeof field === 'string')
+          : []);
+
+    const relationChanges = isStaleConflict ? {} : this.numberRecord(metadata.relation_changes);
+
+    const impactKind = isStaleConflict
+      ? 'stale_conflict' as const
+      : metadata.impact_kind === 'confirmed_future_pending_resolution'
+        ? 'confirmed_future_pending_resolution' as const
+        : 'confirmed_future_updated' as const;
 
     return {
       audit_id: target.audit.uid,
@@ -453,6 +466,10 @@ export class StudioShowManagementService {
       external_id: typeof metadata.external_id === 'string' ? metadata.external_id : null,
       changed_fields: changedFields,
       relation_changes: relationChanges,
+      conflict_uid: isStaleConflict && typeof metadata.conflict_uid === 'string' ? metadata.conflict_uid : null,
+      conflict_type: isStaleConflict ? (metadata.conflict_type as 'update_held_back' | 'removal_held_back' | undefined) ?? null : null,
+      resolution_status: isStaleConflict ? 'pending' : null,
+      held_back: isStaleConflict ? (metadata.held_back as SchedulePublishImpactRow['held_back']) ?? null : null,
       show: {
         id: target.show.uid,
         name: target.show.name,
@@ -466,6 +483,12 @@ export class StudioShowManagementService {
       },
       created_at: target.audit.createdAt.toISOString(),
     };
+  }
+
+  private staleConflictChangedFields(metadata: Record<string, unknown>): string[] {
+    const heldBack = metadata.held_back as { show_fields?: { changed_fields?: unknown } } | undefined;
+    const fields = heldBack?.show_fields?.changed_fields;
+    return Array.isArray(fields) ? fields.filter((f): f is string => typeof f === 'string') : [];
   }
 
   private asRecord(value: unknown): Record<string, unknown> {
