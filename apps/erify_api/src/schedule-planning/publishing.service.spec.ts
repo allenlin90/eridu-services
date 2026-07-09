@@ -805,6 +805,14 @@ describe('publishingService', () => {
           showFields: expect.objectContaining({ changedFields: expect.arrayContaining(['name']) }),
         }),
       }));
+      // Relation sync must still run for a held-back show — incomingByShowId.set() runs
+      // before the actuals gate, so per-row relation gating (Task 4) still sees this show.
+      expect(mockTransactionClient.showCreator.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { showId: { in: [BigInt(111)] } },
+      }));
+      expect(mockTransactionClient.showPlatform.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { showId: { in: [BigInt(111)] } },
+      }));
     });
 
     it('should update a future confirmed show and write a publish impact audit', async () => {
@@ -1505,6 +1513,54 @@ describe('publishingService', () => {
         service.publish(scheduleUid, version, userId),
       ).rejects.toThrow('Invalid plan document structure');
       expect(validateScheduleMock).not.toHaveBeenCalled();
+    });
+
+    it('auto-resolves a stale conflict via the terminal-status finalize pass for a matched LIVE show', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const liveMatchedShow = {
+        id: BigInt(112),
+        uid: 'show_live_matched',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Old Name',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: new Date('2024-01-01T10:05:00Z'),
+        actualEndTime: new Date('2024-01-01T12:00:00Z'),
+        showStatus: {
+          systemKey: 'LIVE',
+        },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: { ...mockPlanDocument, shows: [mockPlanDocument.shows[0]!] },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([liveMatchedShow])
+        .mockResolvedValueOnce([liveMatchedShow]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(result.publishSummary.shows_preserved).toBe(1);
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: BigInt(112) },
+      }));
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(112),
+        conflictType: 'update_held_back',
+        heldBack: null,
+      }));
     });
   });
 });
