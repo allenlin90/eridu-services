@@ -958,6 +958,62 @@ describe('publishingService', () => {
       expect(result.publishSummary.publish_impacts_recorded).toBe(1);
     });
 
+    it('does not record a confirmed_future_updated impact when the only diff is a schedule_id reassignment (bookkeeping only)', async () => {
+      const confirmedShowOnDifferentSchedule = {
+        id: BigInt(150),
+        uid: 'show_confirmed_reassigned',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: BigInt(2),
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Test Show 1',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: { custom: 'data1' },
+        deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
+        showStatus: {
+          systemKey: 'CONFIRMED',
+        },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [mockPlanDocument.shows[0]!],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([confirmedShowOnDifferentSchedule])
+        .mockResolvedValueOnce([confirmedShowOnDifferentSchedule]);
+      mockTransactionClient.showCreator.findMany.mockReset().mockResolvedValueOnce([
+        { id: BigInt(300), showId: BigInt(150), creatorId: BigInt(1), note: 'Creator Note 1', metadata: {}, deletedAt: null, actualStartTime: null, actualEndTime: null },
+      ]);
+      mockTransactionClient.showPlatform.findMany.mockReset().mockResolvedValueOnce([
+        { id: BigInt(301), showId: BigInt(150), platformId: BigInt(1), liveStreamLink: 'https://example.com/stream1', platformShowId: 'platform_show_1', metadata: {}, deletedAt: null, actualStartTime: null, actualEndTime: null },
+      ]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(150) },
+        data: { scheduleId: BigInt(1) },
+      });
+      expect(auditService.create).not.toHaveBeenCalledWith(expect.objectContaining({
+        metadata: expect.objectContaining({ impact_kind: 'confirmed_future_updated' }),
+      }));
+      expect(result.publishSummary.confirmed_shows_updated).toBe(0);
+      expect(result.publishSummary.publish_impacts_recorded).toBe(0);
+    });
+
     it('should move a missing future confirmed show to pending resolution and write an impact audit', async () => {
       const confirmedShow = {
         id: BigInt(101),
