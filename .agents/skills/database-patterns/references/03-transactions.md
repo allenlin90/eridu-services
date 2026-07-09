@@ -104,6 +104,58 @@ for (const show of shows) {
 
 ---
 
+## Anti-Pattern 3: Nested `@Transactional()` Reuse Rolls Back an Independent Write
+
+`@nestjs-cls/transactional` propagates the transaction through CLS: when a `@Transactional()` method calls another `@Transactional()` method, the callee reuses the caller's ambient transaction rather than opening a new one — even across service boundaries, even several calls deep. That's correct for one logical unit of work, but it means a write followed by a throw **anywhere in that call chain** rolls back together, even if the write was meant to survive the throw (e.g. an audit row recording "this was rejected").
+
+```typescript
+// ❌ BROKEN: checkEligibility's audit write shares the caller's ambient
+// transaction (nested @Transactional() reuses it via CLS), so the throw
+// below rolls the audit write back too — the rejection is never recorded.
+@Injectable()
+class ConflictService {
+  @Transactional()
+  async checkEligibility(id: bigint): Promise<{ eligible: boolean }> {
+    if (await this.isIneligible(id)) {
+      await this.auditService.create({ outcome: 'auto_resolved_no_longer_conflicting' }); // rolled back below
+      return { eligible: false };
+    }
+    return { eligible: true };
+  }
+}
+
+@Injectable()
+class OrchestratorService {
+  @Transactional() // ← nested: reuses ConflictService's ambient transaction
+  async resolve(id: bigint) {
+    const { eligible } = await this.conflictService.checkEligibility(id);
+    if (!eligible) {
+      throw HttpError.conflict('NO_LONGER_ELIGIBLE'); // rolls back checkEligibility's audit write too
+    }
+    // ... apply writes ...
+  }
+}
+
+// ✅ CORRECT: split into two genuinely separate @Transactional() calls,
+// invoked from a non-transactional orchestrating method. The first call's
+// commit is independent of whatever the second call (or the throw between
+// them) does.
+@Injectable()
+class OrchestratorService {
+  async resolve(id: bigint) {
+    const { eligible } = await this.conflictService.checkEligibility(id); // own transaction, commits here
+    if (!eligible) {
+      throw HttpError.conflict('NO_LONGER_ELIGIBLE'); // no transaction open — nothing to roll back
+    }
+    await this.conflictService.applyEligible(id); // second, separate transaction
+  }
+}
+```
+
+Real example: `ScheduleConflictService.checkEligibility` / `applyConflict` (`apps/erify_api/src/models/schedule-conflict/schedule-conflict.service.ts`) and the orchestrating `StudioShowManagementService.resolveScheduleConflict` / `applyEligibleScheduleConflict` (`apps/erify_api/src/studios/studio-show/studio-show-management.service.ts`). `resolveScheduleConflict` is deliberately **not** `@Transactional()` — it calls `checkEligibility` (own transaction, may write an auto-resolve audit row and return `{ eligible: false }`), throws `SHOW_NO_LONGER_ELIGIBLE` itself once that call returns with no transaction open, and otherwise calls `applyEligibleScheduleConflict` (a second, separate `@Transactional()` method) to perform the actual apply writes.
+
+---
+
 ## Legacy Pattern (DO NOT USE)
 
 ```typescript

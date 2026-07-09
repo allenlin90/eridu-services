@@ -25,7 +25,7 @@ NEVER loop over individual DB calls. Use `createMany` / `updateMany`.
 
 Use `@Transactional()` from `@nestjs-cls/transactional`. CLS propagates automatically — never pass `tx`. Apply on **Orchestration Services**, not repositories. Keep transactions short.
 
-**Anti-patterns:** Self-invocation bypasses proxy silently. Internal `try/catch` causes silent partial commit. Reading through a repository method bound to the raw `PrismaService` misses uncommitted writes made earlier in the same transaction.
+**Anti-patterns:** Self-invocation bypasses proxy silently. Internal `try/catch` causes silent partial commit. Reading through a repository method bound to the raw `PrismaService` misses uncommitted writes made earlier in the same transaction. Nested `@Transactional()` calls reuse the ambient CLS transaction — a write that must survive a later throw in the same call chain (e.g. an audit row recording a rejection) needs its own, separately-committing transaction call, not a nested one.
 
 If a flow mutates rows and then immediately re-queries eligible rows in the same transaction, the read must use a transaction-aware delegate (`txHost.tx.<model>`). This especially matters for restore/resume paths: a raw-client read cannot see rows undeleted earlier in the transaction, so reconciliation logic can silently skip work.
 
