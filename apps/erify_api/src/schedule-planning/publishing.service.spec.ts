@@ -1624,6 +1624,88 @@ describe('publishingService', () => {
       }));
     });
 
+    it('holds back only the creator with its own recorded actuals, while a sibling creator with no actuals still syncs, on a show with no actuals of its own', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const showWithoutActuals = {
+        id: BigInt(115),
+        uid: 'show_no_actuals',
+        externalId: 'show_temp_2',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Test Show 2',
+        startTime: new Date('2024-01-02T10:00:00Z'),
+        endTime: new Date('2024-01-02T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
+        showStatus: { systemKey: 'DRAFT' },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [
+            {
+              ...mockPlanDocument.shows[1]!,
+              creators: [
+                { creatorId: 'creator_test123', note: 'New Note A' },
+                { creatorId: 'creator_test456', note: 'New Note B' },
+              ],
+            },
+          ],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([showWithoutActuals])
+        .mockResolvedValueOnce([showWithoutActuals]);
+      mockTransactionClient.showCreator.findMany.mockReset().mockResolvedValueOnce([
+        { id: BigInt(200), showId: BigInt(115), creatorId: BigInt(1), note: 'Old Note A', metadata: {}, deletedAt: null, actualStartTime: new Date('2024-01-02T10:05:00Z'), actualEndTime: new Date('2024-01-02T12:00:00Z') },
+        { id: BigInt(201), showId: BigInt(115), creatorId: BigInt(2), note: 'Old Note B', metadata: {}, deletedAt: null, actualStartTime: null, actualEndTime: null },
+      ]);
+      mockTransactionClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
+        { id: BigInt(2), uid: 'creator_test456' },
+      ]);
+
+      await service.publish(scheduleUid, version, userId);
+
+      // The sibling creator with no actuals of its own syncs normally, even though
+      // the parent Show also has no actuals populated.
+      expect(mockTransactionClient.showCreator.update).toHaveBeenCalledWith({
+        where: { id: BigInt(201) },
+        data: { note: 'New Note B' },
+      });
+      // The creator with its own recorded actuals is held back, gated purely on its
+      // own row-level actuals (not a show-level fallback, since the show has none).
+      expect(mockTransactionClient.showCreator.update).not.toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: BigInt(200) },
+      }));
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(115),
+        conflictType: 'update_held_back',
+        heldBack: expect.objectContaining({
+          showCreators: [
+            expect.objectContaining({
+              creatorUid: 'creator_test123',
+              action: 'update',
+              oldNote: 'Old Note A',
+              newNote: 'New Note A',
+            }),
+          ],
+          showPlatforms: [],
+        }),
+      }));
+    });
+
     it('does not treat a show with only COMPLETED/CLOSED tasks as having active work on removal', async () => {
       const removedDraftShow = {
         id: BigInt(113),
@@ -1663,6 +1745,54 @@ describe('publishingService', () => {
         data: { showStatusId: BigInt(9001) },
       });
       expect(result.publishSummary.shows_cancelled).toBe(1);
+      expect(result.publishSummary.shows_pending_resolution).toBe(0);
+    });
+
+    it('holds back a past DRAFT show removal instead of cancelling it when actuals are recorded', async () => {
+      const removedShowWithActuals = {
+        id: BigInt(114),
+        uid: 'show_removed_with_actuals',
+        externalId: 'show_missing_with_actuals',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Removed Show With Actuals',
+        startTime: new Date('2023-12-01T10:00:00Z'),
+        endTime: new Date('2023-12-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: new Date('2023-12-01T10:05:00Z'),
+        actualEndTime: new Date('2023-12-01T12:00:00Z'),
+        showStatus: { systemKey: 'DRAFT' },
+      };
+
+      getScheduleByIdMock.mockResolvedValue({
+        ...mockSchedule,
+        planDocument: { ...mockPlanDocument, shows: [] },
+      });
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([removedShowWithActuals]);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      // Cancellation is held back — not applied.
+      expect(mockTransactionClient.show.update).not.toHaveBeenCalled();
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(114),
+        conflictType: 'removal_held_back',
+        heldBack: expect.objectContaining({
+          showFields: null,
+          showCreators: [],
+          showPlatforms: [],
+          proposedStatusTransition: { from: 'DRAFT', to: 'CANCELLED' },
+        }),
+      }));
+      expect(result.publishSummary.shows_cancelled).toBe(0);
       expect(result.publishSummary.shows_pending_resolution).toBe(0);
     });
   });

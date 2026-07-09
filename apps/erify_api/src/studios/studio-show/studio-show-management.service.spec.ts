@@ -1249,6 +1249,84 @@ describe('studioShowManagementService', () => {
       expect(taskServiceMock.reconcileTaskDueDates).not.toHaveBeenCalled();
       expect(showRepositoryMock.update).not.toHaveBeenCalled();
     });
+
+    /**
+     * Regression test for a real bug found during Task 6 review:
+     * toSchedulePublishImpactRow used to hardcode `resolution_status: 'pending'`
+     * for any stale_conflict row, so a successful apply's own response row
+     * misreported itself as still pending. The fix derives resolution_status
+     * from the persisted audit's `lifecycle`/`outcome` — this asserts the
+     * response of a successful apply reports 'applied', not 'pending'.
+     * findLatestScheduleConflictForShow is called twice by resolveScheduleConflict
+     * (once to read the pending conflict before applying, once to re-read the
+     * now-resolved row for the response), so the two mocked resolutions below
+     * are deliberately different — this only passes if the response is really
+     * built from the second (post-apply) read.
+     */
+    it('returns resolution_status: applied in the response row after a successful apply', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+
+      const openedMetadata = {
+        event: 'schedule_publish_impact',
+        impact_kind: 'stale_conflict',
+        lifecycle: 'opened',
+        conflict_uid: 'conflict_1',
+        conflict_type: 'update_held_back',
+        schedule_uid: 'schedule_1',
+        external_id: 'EXT-1',
+        held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        source: 'google_sheets_schedule_publish',
+      };
+      const resolvedMetadata = {
+        ...openedMetadata,
+        lifecycle: 'resolved',
+        resolves_conflict_uid: 'conflict_1',
+        outcome: 'applied',
+      };
+
+      auditServiceMock.findLatestScheduleConflictForShow
+        .mockResolvedValueOnce({ uid: 'aud_old', createdAt: new Date('2026-01-01T00:00:00.000Z'), metadata: openedMetadata } as any)
+        .mockResolvedValueOnce({ uid: 'aud_new', createdAt: new Date('2026-01-02T00:00:00.000Z'), metadata: resolvedMetadata } as any);
+
+      const result = await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'backfill' }, actorExtId);
+
+      expect(result.resolution_status).toBe('applied');
+    });
+
+    it('returns resolution_status: dismissed in the response row after a successful dismiss', async () => {
+      scheduleConflictServiceMock.dismissConflict.mockResolvedValue({ outcome: 'dismissed' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        uid: 'aud_new',
+        createdAt: new Date('2026-01-02T00:00:00.000Z'),
+        metadata: {
+          event: 'schedule_publish_impact',
+          impact_kind: 'stale_conflict',
+          lifecycle: 'resolved',
+          conflict_uid: 'conflict_1',
+          conflict_type: 'update_held_back',
+          resolves_conflict_uid: 'conflict_1',
+          outcome: 'dismissed',
+          schedule_uid: 'schedule_1',
+          external_id: 'EXT-1',
+          held_back: null,
+          source: 'google_sheets_schedule_publish',
+        },
+      } as any);
+
+      const result = await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'dismiss', reason: 'no longer needed' }, actorExtId);
+
+      expect(result.resolution_status).toBe('dismissed');
+    });
   });
 
   /**
