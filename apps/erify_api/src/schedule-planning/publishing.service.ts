@@ -26,6 +26,7 @@ import type { HeldBackFieldValue, ScheduleConflictHeldBack } from '@/models/sche
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
@@ -58,6 +59,7 @@ export class PublishingService {
     private readonly taskService: TaskService,
     private readonly auditService: AuditService,
     private readonly scheduleConflictService: ScheduleConflictService,
+    private readonly taskTargetService: TaskTargetService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -517,8 +519,16 @@ export class PublishingService {
     }
 
     for (const removed of toRemove) {
-      if (this.isExistingPastOrDone(removed, publishStartedAt)) {
+      if (this.isTerminalStatus(removed, PRESERVED_STATUS_KEYS)) {
         publishSummary.shows_preserved += 1;
+        await this.scheduleConflictService.reconcileShowConflict({
+          showId: removed.id,
+          scheduleUid: schedule.uid,
+          externalId: removed.externalId,
+          actorId: userId,
+          conflictType: 'removal_held_back',
+          heldBack: null,
+        });
         continue;
       }
 
@@ -526,9 +536,7 @@ export class PublishingService {
         if (removed.showStatusId !== statusIds.cancelledPendingResolution) {
           await tx.show.update({
             where: { id: removed.id },
-            data: {
-              showStatusId: statusIds.cancelledPendingResolution,
-            },
+            data: { showStatusId: statusIds.cancelledPendingResolution },
           });
         }
 
@@ -547,51 +555,72 @@ export class PublishingService {
         continue;
       }
 
-      const hasActiveTaskTarget = await tx.taskTarget.findFirst({
-        where: {
-          showId: removed.id,
-          deletedAt: null,
-          task: {
-            deletedAt: null,
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
+      if (this.hasRecordedActuals(removed)) {
+        const activeTaskCount = await this.taskTargetService.countActiveByShowId(removed.id);
+        const proposedStatusTransition = {
+          from: removed.showStatus.systemKey ?? 'DRAFT',
+          to: (activeTaskCount > 0 ? 'CANCELLED_PENDING_RESOLUTION' : 'CANCELLED') as 'CANCELLED' | 'CANCELLED_PENDING_RESOLUTION',
+        };
 
-      const targetStatusId = hasActiveTaskTarget
+        const { recorded } = await this.scheduleConflictService.reconcileShowConflict({
+          showId: removed.id,
+          scheduleUid: schedule.uid,
+          externalId: removed.externalId,
+          actorId: userId,
+          conflictType: 'removal_held_back',
+          heldBack: {
+            showFields: null,
+            showCreators: [],
+            showPlatforms: [],
+            proposedStatusTransition,
+          },
+        });
+        if (recorded) {
+          publishSummary.publish_impacts_recorded += 1;
+        }
+        continue;
+      }
+
+      const activeTaskCount = await this.taskTargetService.countActiveByShowId(removed.id);
+      const targetStatusId = activeTaskCount > 0
         ? statusIds.cancelledPendingResolution
         : statusIds.cancelled;
 
       if (removed.showStatusId !== targetStatusId) {
         await tx.show.update({
           where: { id: removed.id },
-          data: {
-            showStatusId: targetStatusId,
-          },
+          data: { showStatusId: targetStatusId },
         });
       }
 
-      if (hasActiveTaskTarget) {
+      if (activeTaskCount > 0) {
         publishSummary.shows_pending_resolution += 1;
       } else {
         publishSummary.shows_cancelled += 1;
       }
     }
 
-    const relationChangesByShowId = await this.relationSyncService.syncShowRelations(
+    const showActualsById = new Map<bigint, boolean>();
+    [...currentScheduleShows, ...matchingShows].forEach((show) => {
+      showActualsById.set(show.id, show.actualStartTime !== null || show.actualEndTime !== null);
+    });
+
+    const { relationChangesByShowId, heldBackRelationsByShowId } = await this.relationSyncService.syncShowRelations(
       incomingByShowId,
       uidMaps,
       publishSummary,
+      showActualsById,
     );
 
     for (const [showId, candidate] of staleConflictCandidates.entries()) {
-      const heldBack: ScheduleConflictHeldBack | null = candidate.heldBackFields
+      const heldBackRelations = heldBackRelationsByShowId.get(showId);
+      const hasRelationHoldBack = (heldBackRelations?.showCreators.length ?? 0) > 0
+        || (heldBackRelations?.showPlatforms.length ?? 0) > 0;
+      const heldBack: ScheduleConflictHeldBack | null = (candidate.heldBackFields || hasRelationHoldBack)
         ? {
             showFields: candidate.heldBackFields,
-            showCreators: [],
-            showPlatforms: [],
+            showCreators: heldBackRelations?.showCreators ?? [],
+            showPlatforms: heldBackRelations?.showPlatforms ?? [],
             proposedStatusTransition: null,
           }
         : null;
@@ -603,6 +632,33 @@ export class PublishingService {
         actorId: userId,
         conflictType: 'update_held_back',
         heldBack,
+      });
+      if (recorded) {
+        publishSummary.publish_impacts_recorded += 1;
+      }
+    }
+
+    for (const [showId, heldBackRelations] of heldBackRelationsByShowId.entries()) {
+      if (staleConflictCandidates.has(showId)) {
+        continue; // already handled above
+      }
+      const hasRelationHoldBack = heldBackRelations.showCreators.length > 0 || heldBackRelations.showPlatforms.length > 0;
+      if (!hasRelationHoldBack) {
+        continue;
+      }
+      const incoming = incomingByShowId.get(showId);
+      const { recorded } = await this.scheduleConflictService.reconcileShowConflict({
+        showId,
+        scheduleUid: schedule.uid,
+        externalId: incoming?.source.externalId ?? null,
+        actorId: userId,
+        conflictType: 'update_held_back',
+        heldBack: {
+          showFields: null,
+          showCreators: heldBackRelations.showCreators,
+          showPlatforms: heldBackRelations.showPlatforms,
+          proposedStatusTransition: null,
+        },
       });
       if (recorded) {
         publishSummary.publish_impacts_recorded += 1;
@@ -736,16 +792,6 @@ export class PublishingService {
         },
       ],
     });
-  }
-
-  private isExistingPastOrDone(
-    show: ExistingShow,
-    publishDate: Date,
-    preservedStatusKeys = PRESERVED_STATUS_KEYS,
-  ): boolean {
-    const statusKey = show.showStatus.systemKey;
-    return this.isBeforePublishDate(show.startTime, publishDate)
-      || (statusKey !== null && preservedStatusKeys.has(statusKey));
   }
 
   private isTerminalStatus(show: ExistingShow, preservedStatusKeys: Set<string>): boolean {

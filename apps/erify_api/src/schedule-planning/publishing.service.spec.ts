@@ -20,6 +20,7 @@ import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UtilityService } from '@/utility/utility.service';
 
@@ -67,6 +68,7 @@ describe('publishingService', () => {
   let taskService: jest.Mocked<TaskService>;
   let auditService: jest.Mocked<AuditService>;
   let scheduleConflictService: jest.Mocked<ScheduleConflictService>;
+  let taskTargetService: jest.Mocked<TaskTargetService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
@@ -314,6 +316,12 @@ describe('publishingService', () => {
             reconcileShowConflict: jest.fn().mockResolvedValue({ recorded: false }),
           },
         },
+        {
+          provide: TaskTargetService,
+          useValue: {
+            countActiveByShowId: jest.fn().mockResolvedValue(0),
+          },
+        },
       ],
     }).compile();
 
@@ -327,6 +335,7 @@ describe('publishingService', () => {
     taskService = module.get(TaskService);
     auditService = module.get(AuditService);
     scheduleConflictService = module.get(ScheduleConflictService);
+    taskTargetService = module.get(TaskTargetService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -552,6 +561,8 @@ describe('publishingService', () => {
         endTime: new Date('2024-01-01T12:00:00Z'),
         metadata: {},
         deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
         showStatus: {
           systemKey: null,
         },
@@ -1561,6 +1572,98 @@ describe('publishingService', () => {
         conflictType: 'update_held_back',
         heldBack: null,
       }));
+    });
+
+    it('holds back a creator removal when the row has no actuals but the parent Show does', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const showWithActuals = {
+        id: BigInt(112),
+        uid: 'show_past_relation',
+        externalId: 'show_temp_2',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Test Show 2',
+        startTime: new Date('2024-01-02T10:00:00Z'),
+        endTime: new Date('2024-01-02T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: new Date('2024-01-02T10:05:00Z'),
+        actualEndTime: new Date('2024-01-02T12:00:00Z'),
+        showStatus: { systemKey: 'DRAFT' },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: { ...mockPlanDocument, shows: [mockPlanDocument.shows[1]!] },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([showWithActuals])
+        .mockResolvedValueOnce([showWithActuals]);
+      mockTransactionClient.showCreator.findMany.mockReset().mockResolvedValueOnce([
+        { id: BigInt(200), showId: BigInt(112), creatorId: BigInt(1), note: 'Backup host', metadata: {}, deletedAt: null, actualStartTime: null, actualEndTime: null },
+      ]);
+
+      await service.publish(scheduleUid, version, userId);
+
+      expect(mockTransactionClient.showCreator.updateMany).not.toHaveBeenCalled();
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(112),
+        conflictType: 'update_held_back',
+        heldBack: expect.objectContaining({
+          showCreators: expect.arrayContaining([
+            expect.objectContaining({ action: 'remove' }),
+          ]),
+        }),
+      }));
+    });
+
+    it('does not treat a show with only COMPLETED/CLOSED tasks as having active work on removal', async () => {
+      const removedDraftShow = {
+        id: BigInt(113),
+        uid: 'show_removed_draft',
+        externalId: 'show_missing_draft',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Removed Draft Show',
+        startTime: new Date('2024-06-01T10:00:00Z'),
+        endTime: new Date('2024-06-01T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
+        showStatus: { systemKey: 'DRAFT' },
+      };
+
+      getScheduleByIdMock.mockResolvedValue({
+        ...mockSchedule,
+        planDocument: { ...mockPlanDocument, shows: [] },
+      });
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([removedDraftShow]);
+      taskTargetService.countActiveByShowId.mockResolvedValueOnce(0);
+
+      const result = await service.publish(scheduleUid, version, userId);
+
+      expect(taskTargetService.countActiveByShowId).toHaveBeenCalledWith(BigInt(113));
+      expect(mockTransactionClient.show.update).toHaveBeenCalledWith({
+        where: { id: BigInt(113) },
+        data: { showStatusId: BigInt(9001) },
+      });
+      expect(result.publishSummary.shows_cancelled).toBe(1);
+      expect(result.publishSummary.shows_pending_resolution).toBe(0);
     });
   });
 });

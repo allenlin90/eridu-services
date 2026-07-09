@@ -14,6 +14,7 @@ import { ShowModule } from '@/models/show/show.module';
 import { ShowCreatorModule } from '@/models/show-creator/show-creator.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
 import { TaskModule } from '@/models/task/task.module';
+import { TaskTargetModule } from '@/models/task-target/task-target.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UtilityModule } from '@/utility/utility.module';
 
@@ -29,6 +30,7 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowPlatformModule,
     UtilityModule,
     TaskModule,
+    TaskTargetModule,
   ],
   providers: [
     SchedulePlanningService,
