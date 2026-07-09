@@ -40,3 +40,29 @@ export const FK_FIELD_MODEL_MAP = {
   show_status_id: 'showStatus',
   show_standard_id: 'showStandard',
 } as const;
+
+export type DismissConflictParams = {
+  showId: bigint;
+  conflictUid: string;
+  actorId: bigint;
+  reason: string;
+};
+
+export type ApplyConflictParams = DismissConflictParams & {
+  /** Current live show status system key, for the terminal-status eligibility recheck. */
+  currentShowStatus: string;
+  /** Current DB values for every field in the snapshot's `show_fields.changed_fields`, keyed the same way. Empty object for a `removal_held_back` conflict with no field diff. */
+  currentFieldValues: Record<string, unknown>;
+};
+
+export type ResolveConflictResult = {
+  outcome: 'applied' | 'dismissed';
+};
+
+const UPDATE_TERMINAL_STATUS_KEYS = new Set(['LIVE', 'COMPLETED']);
+const REMOVAL_TERMINAL_STATUS_KEYS = new Set(['LIVE', 'COMPLETED', 'CANCELLED', 'CANCELLED_PENDING_RESOLUTION']);
+
+export function isNoLongerEligible(conflictType: 'update_held_back' | 'removal_held_back', currentShowStatus: string): boolean {
+  const terminalSet = conflictType === 'removal_held_back' ? REMOVAL_TERMINAL_STATUS_KEYS : UPDATE_TERMINAL_STATUS_KEYS;
+  return terminalSet.has(currentShowStatus);
+}

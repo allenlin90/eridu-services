@@ -200,4 +200,106 @@ describe('scheduleConflictService', () => {
     expect(call.metadata.held_back.show_fields.old.show_type_id).toEqual({ uid: 'shwtyp_1', name: 'bau' });
     expect(call.metadata.held_back.show_fields.new.show_type_id).toEqual({ uid: 'shwtyp_2', name: 'campaign' });
   });
+
+  describe('dismissConflict / applyConflict', () => {
+    const pendingAudit = (overrides: Partial<any> = {}) => ({
+      uid: 'aud_old',
+      createdAt: new Date(),
+      metadata: {
+        event: 'schedule_publish_impact',
+        impact_kind: 'stale_conflict',
+        lifecycle: 'opened',
+        conflict_uid: 'conflict_1',
+        conflict_type: 'update_held_back',
+        schedule_uid: 'schedule_1',
+        external_id: 'EXT-1',
+        held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        source: 'google_sheets_schedule_publish',
+        ...overrides,
+      },
+    });
+
+    it('dismiss always writes resolved/dismissed without touching show data', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+
+      const result = await service.dismissConflict({ showId: BigInt(1), conflictUid: 'conflict_1', actorId: BigInt(9), reason: 'no longer needed' });
+
+      expect(result.outcome).toBe('dismissed');
+      expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+        actorId: BigInt(9),
+        reason: 'no longer needed',
+        metadata: expect.objectContaining({ lifecycle: 'resolved', outcome: 'dismissed', resolves_conflict_uid: 'conflict_1' }),
+      }));
+    });
+
+    it('dismiss throws CONFLICT_ALREADY_RESOLVED for an unknown or already-resolved conflict_uid', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(null);
+      await expect(service.dismissConflict({ showId: BigInt(1), conflictUid: 'conflict_1', actorId: BigInt(9), reason: 'x' }))
+        .rejects
+        .toThrow('CONFLICT_ALREADY_RESOLVED');
+    });
+
+    it('apply writes the snapshot new values and resolved/applied when current DB state matches the snapshot old values', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+
+      const result = await service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'planner override',
+        currentShowStatus: 'DRAFT',
+        currentFieldValues: { name: 'A' },
+      });
+
+      expect(result.outcome).toBe('applied');
+      expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+        metadata: expect.objectContaining({ lifecycle: 'resolved', outcome: 'applied' }),
+      }));
+    });
+
+    it('apply rejects with CONFLICT_STATE_CHANGED when current DB state has drifted from the snapshot', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+
+      await expect(service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'x',
+        currentShowStatus: 'DRAFT',
+        currentFieldValues: { name: 'SOMETHING ELSE' },
+      })).rejects.toThrow('CONFLICT_STATE_CHANGED');
+    });
+
+    it('apply rejects with SHOW_NO_LONGER_ELIGIBLE and auto-resolves when the show has left scope', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit() as any);
+
+      await expect(service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'x',
+        currentShowStatus: 'COMPLETED',
+        currentFieldValues: { name: 'A' },
+      })).rejects.toThrow('SHOW_NO_LONGER_ELIGIBLE');
+
+      expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+        metadata: expect.objectContaining({ outcome: 'auto_resolved_no_longer_conflicting' }),
+        actorId: null,
+        reason: null,
+      }));
+    });
+
+    it('apply throws CONFLICT_ALREADY_RESOLVED when the conflict_uid no longer matches the pending one (double-resolve)', async () => {
+      auditService.findLatestScheduleConflictForShow.mockResolvedValue(pendingAudit({ conflict_uid: 'conflict_DIFFERENT' }) as any);
+
+      await expect(service.applyConflict({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'x',
+        currentShowStatus: 'DRAFT',
+        currentFieldValues: { name: 'A' },
+      })).rejects.toThrow('CONFLICT_ALREADY_RESOLVED');
+    });
+  });
 });

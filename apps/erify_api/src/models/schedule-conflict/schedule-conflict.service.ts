@@ -2,9 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 
-import type { HeldBackFieldValue, ReconcileShowConflictParams, ScheduleConflictHeldBack } from './schedule-conflict.types';
-import { FK_FIELD_MODEL_MAP } from './schedule-conflict.types';
+import type {
+  ApplyConflictParams,
+  DismissConflictParams,
+  HeldBackFieldValue,
+  ReconcileShowConflictParams,
+  ResolveConflictResult,
+  ScheduleConflictHeldBack,
+} from './schedule-conflict.types';
+import { FK_FIELD_MODEL_MAP, isNoLongerEligible } from './schedule-conflict.types';
 
+import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import type { AuditWithTargets } from '@/models/audit/schemas/audit.schema';
 import { UtilityService } from '@/utility/utility.service';
@@ -78,7 +86,51 @@ export class ScheduleConflictService {
     return { recorded: true };
   }
 
-  /** Called by the resolve endpoint. See Task 6 for `applyConflict`/`dismissConflict`. */
+  async dismissConflict(params: DismissConflictParams): Promise<ResolveConflictResult> {
+    await this.lockShow(params.showId);
+    const pending = await this.requirePendingConflict(params.showId, params.conflictUid);
+
+    await this.writeResolved(params.showId, pending, 'dismissed', { actorId: params.actorId, reason: params.reason });
+    return { outcome: 'dismissed' };
+  }
+
+  async applyConflict(params: ApplyConflictParams): Promise<ResolveConflictResult> {
+    await this.lockShow(params.showId);
+    const pending = await this.requirePendingConflict(params.showId, params.conflictUid);
+
+    if (isNoLongerEligible(pending.conflict_type, params.currentShowStatus)) {
+      await this.writeResolved(params.showId, pending, 'auto_resolved_no_longer_conflicting', null);
+      throw HttpError.conflict('SHOW_NO_LONGER_ELIGIBLE');
+    }
+
+    const snapshotOld = pending.held_back.show_fields?.old ?? {};
+    const drifted = Object.entries(snapshotOld).some(([field, value]) => {
+      return JSON.stringify(params.currentFieldValues[field] ?? null) !== JSON.stringify(this.unwrapForCompare(value));
+    });
+    if (drifted) {
+      throw HttpError.conflict('CONFLICT_STATE_CHANGED');
+    }
+
+    await this.writeResolved(params.showId, pending, 'applied', { actorId: params.actorId, reason: params.reason });
+    return { outcome: 'applied' };
+  }
+
+  /** FK-backed snapshot values are stored as `{uid, name}` — compare by uid, not the whole object, since the caller's `currentFieldValues` supplies a raw comparable value (uid string) for FK fields, per Task 6's controller wiring. */
+  private unwrapForCompare(value: unknown): unknown {
+    if (value && typeof value === 'object' && 'uid' in (value as Record<string, unknown>)) {
+      return (value as { uid: string }).uid;
+    }
+    return value;
+  }
+
+  private async requirePendingConflict(showId: bigint, conflictUid: string): Promise<StaleConflictMetadata> {
+    const latest = await this.auditService.findLatestScheduleConflictForShow(showId);
+    const pending = this.asPendingMetadata(latest);
+    if (!pending || pending.conflict_uid !== conflictUid) {
+      throw HttpError.conflict('CONFLICT_ALREADY_RESOLVED');
+    }
+    return pending;
+  }
 
   private async lockShow(showId: bigint): Promise<void> {
     const tx = this.txHost.tx;

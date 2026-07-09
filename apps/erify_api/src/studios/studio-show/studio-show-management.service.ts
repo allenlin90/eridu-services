@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Transactional } from '@nestjs-cls/transactional';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, ShowPlatform } from '@prisma/client';
 
 import type { AuditTargetType } from '@eridu/api-types/audits';
 import type {
   CancelShowWithResolutionInput,
+  HeldBackPayload,
   RequestCancellationResolutionInput,
+  ResolveScheduleConflictInput,
   ResolveShowCancellationInput,
   SchedulePublishImpactRow,
 } from '@eridu/api-types/shows';
@@ -17,6 +20,7 @@ import type { SchedulePublishImpactAuditTarget } from '@/models/audit/audit.repo
 import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
+import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
 import {
   CreateStudioShowDto,
@@ -31,6 +35,7 @@ import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UserService } from '@/models/user/user.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
@@ -62,6 +67,9 @@ export class StudioShowManagementService {
     private readonly showStatusService: ShowStatusService,
     private readonly taskService: TaskService,
     private readonly auditService: AuditService,
+    private readonly scheduleConflictService: ScheduleConflictService,
+    private readonly taskTargetService: TaskTargetService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {}
 
   @Transactional()
@@ -320,6 +328,208 @@ export class StudioShowManagementService {
     return this.showService.getShowById(showUid, studioShowDetailInclude);
   }
 
+  @Transactional()
+  async resolveScheduleConflict(
+    studioUid: string,
+    showUid: string,
+    conflictUid: string,
+    dto: ResolveScheduleConflictInput,
+    actorExtId: string,
+  ): Promise<SchedulePublishImpactRow> {
+    const show = await this.findStudioShowOrThrow(studioUid, showUid);
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+
+    if (dto.action === 'dismiss') {
+      await this.scheduleConflictService.dismissConflict({
+        showId: show.id,
+        conflictUid,
+        actorId: actor.id,
+        reason: dto.reason,
+      });
+    } else {
+      const latest = await this.auditService.findLatestScheduleConflictForShow(show.id);
+      const metadata = this.asRecord(latest?.metadata);
+      const heldBack = metadata.held_back as HeldBackPayload | undefined;
+      const changedFields = heldBack?.show_fields?.changed_fields ?? [];
+      const conflictType = metadata.conflict_type as 'update_held_back' | 'removal_held_back' | undefined;
+
+      const currentFieldValues = await this.buildCurrentFieldValues(show, changedFields);
+
+      await this.scheduleConflictService.applyConflict({
+        showId: show.id,
+        conflictUid,
+        actorId: actor.id,
+        reason: dto.reason,
+        currentShowStatus: show.showStatus?.systemKey ?? '',
+        currentFieldValues,
+      });
+
+      if (conflictType === 'update_held_back' && (changedFields.includes('start_time') || changedFields.includes('end_time'))) {
+        const showFields = heldBack?.show_fields;
+        if (showFields) {
+          const oldStart = this.toDiffDate(showFields.old.start_time, show.startTime);
+          const oldEnd = this.toDiffDate(showFields.old.end_time, show.endTime);
+          const newStart = this.toDiffDate(showFields.new.start_time, oldStart);
+          const newEnd = this.toDiffDate(showFields.new.end_time, oldEnd);
+          await this.taskService.reconcileTaskDueDates(
+            show.id,
+            { startTime: oldStart, endTime: oldEnd },
+            { startTime: newStart, endTime: newEnd },
+          );
+        }
+      }
+
+      if (conflictType === 'removal_held_back') {
+        const activeTaskCount = await this.taskTargetService.countActiveByShowId(show.id);
+        const targetStatus = await this.showStatusService.getShowStatusBySystemKey(
+          activeTaskCount > 0 ? 'CANCELLED_PENDING_RESOLUTION' : 'CANCELLED',
+        );
+        if (targetStatus) {
+          await this.showRepository.update({ id: show.id }, { showStatus: { connect: { id: targetStatus.id } } });
+        }
+      } else {
+        if (heldBack?.show_fields) {
+          await this.showRepository.update({ id: show.id }, this.toShowUpdateData(heldBack.show_fields));
+        }
+        await this.applyHeldBackRelations(show.id, heldBack);
+      }
+    }
+
+    const updatedAudit = await this.auditService.findLatestScheduleConflictForShow(show.id);
+    if (!updatedAudit) {
+      throw HttpError.internalServerError('SCHEDULE_CONFLICT_RESOLUTION_LOOKUP_FAILED');
+    }
+    const refreshedShow = await this.findStudioShowOrThrow(studioUid, showUid);
+
+    return this.toSchedulePublishImpactRow({
+      audit: updatedAudit,
+      show: refreshedShow,
+    } as unknown as SchedulePublishImpactAuditTarget);
+  }
+
+  /** Parses a snapshot field value into a `Date`, falling back to `fallback` when the field wasn't part of the diff (or, defensively, a live show row missing that field). */
+  private toDiffDate(value: unknown, fallback: Date): Date {
+    if (typeof value === 'string') {
+      return new Date(value);
+    }
+    return fallback instanceof Date ? fallback : new Date(Number.NaN);
+  }
+
+  private async buildCurrentFieldValues(
+    show: ShowWithPayload<typeof studioShowDetailInclude>,
+    changedFields: string[],
+  ): Promise<Record<string, unknown>> {
+    const values: Record<string, unknown> = {};
+    for (const field of changedFields) {
+      switch (field) {
+        case 'name':
+          values.name = show.name;
+          break;
+        case 'start_time':
+          values.start_time = show.startTime ? show.startTime.toISOString() : null;
+          break;
+        case 'end_time':
+          values.end_time = show.endTime ? show.endTime.toISOString() : null;
+          break;
+        case 'client_id':
+          values.client_id = show.client?.uid ?? null;
+          break;
+        case 'studio_id':
+          values.studio_id = show.studio?.uid ?? null;
+          break;
+        case 'studio_room_id':
+          values.studio_room_id = show.studioRoom?.uid ?? null;
+          break;
+        case 'show_type_id':
+          values.show_type_id = show.showType?.uid ?? null;
+          break;
+        case 'show_status_id':
+          values.show_status_id = show.showStatus?.uid ?? null;
+          break;
+        case 'show_standard_id':
+          values.show_standard_id = show.showStandard?.uid ?? null;
+          break;
+        case 'metadata':
+          values.metadata = JSON.stringify(show.metadata ?? {});
+          break;
+        default:
+          break;
+      }
+    }
+    return values;
+  }
+
+  /**
+   * Only plain scalar fields are ever applied here — FK fields inside a real
+   * held_back diff are display-only for this MVP; a planner backfilling a
+   * creator/platform, not a client/studio/room, is the documented common
+   * case. Held-back creator/platform *relation* changes, by contrast, are
+   * fully applied via `applyHeldBackRelations` below — this gap only covers
+   * the six FK-backed `show_fields` entries, not relations. If FK-field
+   * apply is needed later, resolve `{uid,name}` back to an internal id here
+   * before writing.
+   */
+  private toShowUpdateData(showFields: { new: Record<string, unknown> }): ShowUpdateData {
+    const data: ShowUpdateData = {};
+    if (typeof showFields.new.name === 'string')
+      data.name = showFields.new.name;
+    if (typeof showFields.new.start_time === 'string')
+      data.startTime = new Date(showFields.new.start_time);
+    if (typeof showFields.new.end_time === 'string')
+      data.endTime = new Date(showFields.new.end_time);
+    return data;
+  }
+
+  /**
+   * Applies a held-back creator/platform diff by resolving each entry's uid
+   * back to the underlying row and writing the same action relation-sync
+   * would have written directly, had it not been held back — `update` writes
+   * the new note/link fields, `remove` soft-deletes. `restore` (nothing to
+   * conflict with) never reaches here since additions/restores always apply
+   * at publish time and are never held back in the first place.
+   */
+  private async applyHeldBackRelations(showId: bigint, heldBack: HeldBackPayload | undefined): Promise<void> {
+    const tx = this.txHost.tx;
+
+    for (const entry of heldBack?.show_creators ?? []) {
+      const creator = await tx.creator.findFirst({ where: { uid: entry.creator_uid }, select: { id: true } });
+      if (!creator) {
+        continue;
+      }
+      const row = await tx.showCreator.findFirst({ where: { showId, creatorId: creator.id }, select: { id: true } });
+      if (!row) {
+        continue;
+      }
+      if (entry.action === 'remove') {
+        await tx.showCreator.update({ where: { id: row.id }, data: { deletedAt: new Date() } });
+      } else {
+        await tx.showCreator.update({ where: { id: row.id }, data: { note: entry.new_note } });
+      }
+    }
+
+    for (const entry of heldBack?.show_platforms ?? []) {
+      const platform = await tx.platform.findFirst({ where: { uid: entry.platform_uid }, select: { id: true } });
+      if (!platform) {
+        continue;
+      }
+      const row = await tx.showPlatform.findFirst({ where: { showId, platformId: platform.id }, select: { id: true } });
+      if (!row) {
+        continue;
+      }
+      if (entry.action === 'remove') {
+        await tx.showPlatform.update({ where: { id: row.id }, data: { deletedAt: new Date() } });
+      } else {
+        await tx.showPlatform.update({
+          where: { id: row.id },
+          data: { liveStreamLink: entry.new.live_stream_link, platformShowId: entry.new.platform_show_id },
+        });
+      }
+    }
+  }
+
   async getCancellationStatus(studioUid: string, showUid: string) {
     const show = await this.findStudioShowOrThrow(studioUid, showUid);
     return this.showCancellationGateService.getCancellationStatus(show);
@@ -468,20 +678,29 @@ export class StudioShowManagementService {
       relation_changes: relationChanges,
       conflict_uid: isStaleConflict && typeof metadata.conflict_uid === 'string' ? metadata.conflict_uid : null,
       conflict_type: isStaleConflict ? (metadata.conflict_type as 'update_held_back' | 'removal_held_back' | undefined) ?? null : null,
-      resolution_status: isStaleConflict ? 'pending' : null,
+      // A resolved stale_conflict Audit row retains its original `impact_kind`
+      // (see writeResolved) but flips `lifecycle` to 'resolved' and records
+      // `outcome` — surface that outcome here instead of always reporting the
+      // still-pending status, or a just-applied/dismissed conflict's response
+      // row would misreport itself as 'pending'.
+      resolution_status: isStaleConflict
+        ? (metadata.lifecycle === 'resolved' && typeof metadata.outcome === 'string'
+            ? (metadata.outcome as SchedulePublishImpactRow['resolution_status'])
+            : 'pending')
+        : null,
       held_back: isStaleConflict ? (metadata.held_back as SchedulePublishImpactRow['held_back']) ?? null : null,
       show: {
         id: target.show.uid,
         name: target.show.name,
         external_id: target.show.externalId,
-        start_time: target.show.startTime.toISOString(),
-        end_time: target.show.endTime.toISOString(),
-        status_name: target.show.showStatus.name,
-        status_system_key: target.show.showStatus.systemKey,
-        client_id: target.show.client.uid,
-        client_name: target.show.client.name,
+        start_time: target.show.startTime?.toISOString() ?? '',
+        end_time: target.show.endTime?.toISOString() ?? '',
+        status_name: target.show.showStatus?.name ?? null,
+        status_system_key: target.show.showStatus?.systemKey ?? null,
+        client_id: target.show.client?.uid ?? null,
+        client_name: target.show.client?.name ?? null,
       },
-      created_at: target.audit.createdAt.toISOString(),
+      created_at: target.audit.createdAt?.toISOString() ?? '',
     };
   }
 

@@ -12,6 +12,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
+import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
@@ -21,13 +22,21 @@ import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 
+let mockTx: {
+  creator: { findFirst: jest.Mock };
+  showCreator: { findFirst: jest.Mock; update: jest.Mock };
+  platform: { findFirst: jest.Mock };
+  showPlatform: { findFirst: jest.Mock; update: jest.Mock };
+};
+
 const mockPrismaForCls = {
-  $transaction: jest.fn(async (callback: any) => await callback({})),
+  $transaction: jest.fn(async (callback: any) => await callback(mockTx)),
 };
 
 @Module({
@@ -117,9 +126,25 @@ describe('studioShowManagementService', () => {
     findPendingStaleConflictsForStudio: jest.fn(),
     countForTargets: jest.fn(),
     findForTargets: jest.fn(),
+    findLatestScheduleConflictForShow: jest.fn(),
   };
+  const scheduleConflictServiceMock = {
+    applyConflict: jest.fn(),
+    dismissConflict: jest.fn(),
+  };
+  const taskTargetServiceMock = {
+    countActiveByShowId: jest.fn().mockResolvedValue(0),
+  };
+  const actorExtId = 'ext_actor1';
 
   beforeEach(async () => {
+    mockTx = {
+      creator: { findFirst: jest.fn() },
+      showCreator: { findFirst: jest.fn(), update: jest.fn() },
+      platform: { findFirst: jest.fn() },
+      showPlatform: { findFirst: jest.fn(), update: jest.fn() },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         ClsModule.forRoot({
@@ -151,6 +176,8 @@ describe('studioShowManagementService', () => {
         { provide: ShowStatusService, useValue: showStatusServiceMock },
         { provide: TaskService, useValue: taskServiceMock },
         { provide: AuditService, useValue: auditServiceMock },
+        { provide: ScheduleConflictService, useValue: scheduleConflictServiceMock },
+        { provide: TaskTargetService, useValue: taskTargetServiceMock },
       ],
     }).compile();
 
@@ -1087,6 +1114,104 @@ describe('studioShowManagementService', () => {
       });
 
       expect(auditServiceMock.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveScheduleConflict', () => {
+    beforeEach(() => {
+      userServiceMock.getUserByExtId.mockResolvedValue({ id: BigInt(9), uid: 'user_1', name: 'Actor' });
+    });
+
+    it('calls reconcileTaskDueDates with the snapshot old/new times when applying a start_time/end_time diff', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: { show_fields: { changed_fields: ['start_time'], old: { start_time: '2026-01-01T10:00:00.000Z' }, new: { start_time: '2026-01-01T10:30:00.000Z' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'backfill' }, actorExtId);
+
+      expect(taskServiceMock.reconcileTaskDueDates).toHaveBeenCalledWith(
+        BigInt(1),
+        { startTime: new Date('2026-01-01T10:00:00.000Z'), endTime: expect.any(Date) },
+        { startTime: new Date('2026-01-01T10:30:00.000Z'), endTime: expect.any(Date) },
+      );
+    });
+
+    it('applies a held-back creator removal by resolving creator_uid to the underlying row and soft-deleting it', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: {
+            show_fields: null,
+            show_creators: [{ creator_uid: 'creator_jane', action: 'remove', old_note: 'Backup host', new_note: null }],
+            show_platforms: [],
+            proposed_status_transition: null,
+          },
+        },
+      } as any);
+      mockTx.creator.findFirst.mockResolvedValue({ id: BigInt(5) });
+      mockTx.showCreator.findFirst.mockResolvedValue({ id: BigInt(50) });
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'confirmed removal' }, actorExtId);
+
+      expect(mockTx.creator.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { uid: 'creator_jane' } }));
+      expect(mockTx.showCreator.update).toHaveBeenCalledWith({
+        where: { id: BigInt(50) },
+        data: { deletedAt: expect.any(Date) },
+      });
+    });
+
+    it('dismisses a conflict via the service without touching show data', async () => {
+      scheduleConflictServiceMock.dismissConflict.mockResolvedValue({ outcome: 'dismissed' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: { conflict_type: 'update_held_back', held_back: null },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'dismiss', reason: 'no longer needed' }, actorExtId);
+
+      expect(scheduleConflictServiceMock.dismissConflict).toHaveBeenCalledWith({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'no longer needed',
+      });
+      expect(scheduleConflictServiceMock.applyConflict).not.toHaveBeenCalled();
+      expect(showRepositoryMock.update).not.toHaveBeenCalled();
+    });
+
+    it('throws ACTOR_NOT_FOUND when the actor does not resolve', async () => {
+      userServiceMock.getUserByExtId.mockResolvedValue(null);
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+
+      await expect(
+        service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'dismiss', reason: 'x' }, actorExtId),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'ACTOR_NOT_FOUND' }),
+      });
+      expect(scheduleConflictServiceMock.dismissConflict).not.toHaveBeenCalled();
     });
   });
 
