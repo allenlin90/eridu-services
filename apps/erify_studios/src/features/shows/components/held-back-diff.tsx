@@ -63,6 +63,7 @@ export function HeldBackDiff({ heldBack }: { heldBack: HeldBackPayload }) {
               <div className="space-y-1.5">
                 {heldBack.show_creators.map((creator) => (
                   <div key={creator.creator_uid} className="flex flex-wrap items-baseline gap-2">
+                    {/* Payload has no creator name, only uid — see docs/tech-debt/schedule-conflict-held-back-creators-platforms-no-display-name.md */}
                     <span className="font-medium">{creator.creator_uid}</span>
                     {creator.action === 'remove'
                       ? (
@@ -93,6 +94,7 @@ export function HeldBackDiff({ heldBack }: { heldBack: HeldBackPayload }) {
               <div className="space-y-1.5">
                 {heldBack.show_platforms.map((platform) => (
                   <div key={platform.platform_uid} className="flex flex-wrap items-baseline gap-2">
+                    {/* Payload has no platform name, only uid — see docs/tech-debt/schedule-conflict-held-back-creators-platforms-no-display-name.md */}
                     <span className="font-medium">{platform.platform_uid}</span>
                     <span className="text-muted-foreground line-through decoration-destructive">
                       {platform.old.live_stream_link ?? platform.old.platform_show_id ?? m.schedule_conflict_platform_unset()}

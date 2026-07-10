@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import { useState } from 'react';
 
 import type { SchedulePublishImpactRow } from '@eridu/api-types/shows';
@@ -55,13 +56,12 @@ export function ScheduleConflictReviewPanel({ studioId, row, open, onOpenChange 
       open={open}
       onOpenChange={handleOpenChange}
       title={row.show.name}
-      description={`${row.conflict_type === 'removal_held_back' ? m.schedule_conflict_type_removal_label() : m.schedule_conflict_type_update_label()} · ${m.schedule_conflict_opened_prefix()} ${row.created_at}`}
+      description={`${row.conflict_type === 'removal_held_back' ? m.schedule_conflict_type_removal_label() : m.schedule_conflict_type_update_label()} · ${m.schedule_conflict_opened_prefix()} ${format(new Date(row.created_at), 'MMM d, h:mm a')}`}
       footer={(
         <div className="w-full space-y-2">
           <Label htmlFor="conflict-reason">{m.schedule_conflict_reason_label()}</Label>
           <Textarea
             id="conflict-reason"
-            aria-label={m.schedule_conflict_reason_label()}
             placeholder={m.schedule_conflict_reason_placeholder()}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
