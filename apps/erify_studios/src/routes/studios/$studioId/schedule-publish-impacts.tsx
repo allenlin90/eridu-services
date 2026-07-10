@@ -49,8 +49,8 @@ function SchedulePublishImpactsPage() {
 
   const { data, isLoading, isFetching, refetch } = useSchedulePublishImpactsQuery(studioId, params);
   const rows = data?.data ?? [];
-  const total = data?.meta.total ?? 0;
-  const pageCount = data?.meta.totalPages ?? 0;
+  const total = data?.meta?.total ?? 0;
+  const pageCount = data?.meta?.totalPages ?? 0;
   const pendingResolutionCount = rows.filter((row) => row.impact_kind === 'confirmed_future_pending_resolution').length;
   const updatedCount = rows.filter((row) => row.impact_kind === 'confirmed_future_updated').length;
   const needsReviewCount = rows.filter((row) => row.impact_kind === 'stale_conflict' && row.resolution_status === 'pending').length;
