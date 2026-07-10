@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SchedulePublishImpactRow } from '@eridu/api-types/shows';
@@ -50,6 +51,7 @@ function renderPanel(row: SchedulePublishImpactRow | null, onOpenChange = vi.fn(
 describe('scheduleConflictReviewPanel', () => {
   beforeEach(() => {
     vi.mocked(apiClient.post).mockReset();
+    vi.mocked(toast.error).mockReset();
   });
 
   it('disables Apply until a reason is entered', async () => {
@@ -87,6 +89,24 @@ describe('scheduleConflictReviewPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: m.schedule_conflict_action_apply_edit() }));
 
     await waitFor(() => expect(screen.getByText(m.schedule_conflict_ineligible_banner())).toBeInTheDocument());
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('shows a generic error toast and keeps the panel open on CONFLICT_STATE_CHANGED', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { message: 'CONFLICT_STATE_CHANGED' } },
+    });
+    const onOpenChange = vi.fn();
+    renderPanel(baseRow, onOpenChange);
+
+    await userEvent.type(screen.getByLabelText(m.schedule_conflict_reason_label()), 'confirmed with planner');
+    await userEvent.click(screen.getByRole('button', { name: m.schedule_conflict_action_apply_edit() }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
+      'The show has changed since this conflict was opened. Refresh and review the latest data before resolving.',
+    ));
+    expect(screen.queryByText(m.schedule_conflict_ineligible_banner())).not.toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
