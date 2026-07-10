@@ -12,7 +12,6 @@ import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
 export const RESOLVE_CONFLICT_ERROR_MESSAGES: Record<string, string> = {
-  SHOW_NO_LONGER_ELIGIBLE: 'This show is no longer eligible — it left this state since the conflict was opened. The conflict has been closed automatically.',
   CONFLICT_STATE_CHANGED: 'The show has changed since this conflict was opened. Refresh and review the latest data before resolving.',
   CONFLICT_ALREADY_RESOLVED: 'This conflict was already resolved.',
   ACTOR_NOT_FOUND: 'Could not identify the current user. Try signing in again.',
@@ -74,7 +73,7 @@ export function useResolveScheduleConflict(studioId: string) {
     },
     onError: (error) => {
       if (isShowNoLongerEligibleError(error)) {
-        toast.error(`Conflict closed automatically — this show is no longer eligible.`);
+        toast.error('This show is no longer eligible — it was completed through the normal production flow after this conflict was opened. The conflict has been closed automatically.');
         queryClient.invalidateQueries({ queryKey: schedulePublishImpactKeys.listPrefix(studioId) });
         return;
       }
