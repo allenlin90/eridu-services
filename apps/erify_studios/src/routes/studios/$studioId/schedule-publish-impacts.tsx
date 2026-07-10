@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import type { ColumnDef, PaginationState, Updater } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { RefreshCw } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { z } from 'zod';
 
 import type { SchedulePublishImpactRow } from '@eridu/api-types/shows';
@@ -21,6 +21,7 @@ import {
 import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { PageLayout } from '@/components/layouts/page-layout';
 import { useSchedulePublishImpactsQuery } from '@/features/shows/api/get-schedule-publish-impacts';
+import { ScheduleConflictReviewPanel } from '@/features/shows/components/schedule-conflict-review-panel';
 import * as m from '@/paraglide/messages';
 
 const PAGE_SIZE = 25;
@@ -52,8 +53,14 @@ function SchedulePublishImpactsPage() {
   const pageCount = data?.meta.totalPages ?? 0;
   const pendingResolutionCount = rows.filter((row) => row.impact_kind === 'confirmed_future_pending_resolution').length;
   const updatedCount = rows.filter((row) => row.impact_kind === 'confirmed_future_updated').length;
+  const needsReviewCount = rows.filter((row) => row.impact_kind === 'stale_conflict' && row.resolution_status === 'pending').length;
 
-  const columns = useMemo(() => createColumns(studioId), [studioId]);
+  const [selectedRow, setSelectedRow] = useState<SchedulePublishImpactRow | null>(null);
+  const handleReview = useCallback((row: SchedulePublishImpactRow) => {
+    setSelectedRow(row);
+  }, []);
+
+  const columns = useMemo(() => createColumns(studioId, handleReview), [studioId, handleReview]);
 
   const handlePaginationChange = useCallback((updater: Updater<PaginationState>) => {
     const current: PaginationState = {
@@ -117,6 +124,17 @@ function SchedulePublishImpactsPage() {
             />
           </div>
 
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{m.schedule_publish_impacts_all_impacts_heading()}</h3>
+            {needsReviewCount > 0
+              ? (
+                  <span className="text-xs text-muted-foreground">
+                    {m.schedule_publish_impacts_needs_review_count({ count: needsReviewCount })}
+                  </span>
+                )
+              : null}
+          </div>
+
           <DataTable
             data={rows}
             columns={columns}
@@ -127,6 +145,11 @@ function SchedulePublishImpactsPage() {
             pageCount={pageCount}
             paginationState={paginationState}
             onPaginationChange={handlePaginationChange}
+            getRowClassName={(row) => (
+              row.impact_kind === 'stale_conflict' && row.resolution_status !== 'pending'
+                ? 'opacity-50'
+                : undefined
+            )}
             renderFooter={() => (
               <DataTablePagination
                 pagination={{
@@ -141,6 +164,17 @@ function SchedulePublishImpactsPage() {
           />
         </div>
       </PageLayout>
+
+      <ScheduleConflictReviewPanel
+        studioId={studioId}
+        row={selectedRow}
+        open={selectedRow !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedRow(null);
+          }
+        }}
+      />
     </StudioRouteGuard>
   );
 }
@@ -163,7 +197,10 @@ function ImpactSummaryCard({ title, value, description }: {
   );
 }
 
-function createColumns(studioId: string): ColumnDef<SchedulePublishImpactRow>[] {
+function createColumns(
+  studioId: string,
+  onReview: (row: SchedulePublishImpactRow) => void,
+): ColumnDef<SchedulePublishImpactRow>[] {
   return [
     {
       id: 'show',
@@ -187,13 +224,33 @@ function createColumns(studioId: string): ColumnDef<SchedulePublishImpactRow>[] 
     {
       id: 'impact',
       header: m.schedule_publish_impacts_column_impact(),
-      cell: ({ row }) => (
-        <Badge variant={row.original.impact_kind === 'confirmed_future_pending_resolution' ? 'destructive' : 'secondary'}>
-          {row.original.impact_kind === 'confirmed_future_pending_resolution'
-            ? m.schedule_publish_impacts_badge_pending()
-            : m.schedule_publish_impacts_badge_updated()}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const impact = row.original;
+        if (impact.impact_kind === 'stale_conflict') {
+          const isResolved = impact.resolution_status !== 'pending';
+          return (
+            <Badge
+              variant={isResolved ? 'secondary' : 'outline'}
+              className={isResolved ? undefined : 'border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300'}
+            >
+              {isResolved
+                ? (impact.resolution_status === 'applied'
+                    ? m.schedule_publish_impacts_badge_applied()
+                    : impact.resolution_status === 'dismissed'
+                      ? m.schedule_publish_impacts_badge_dismissed()
+                      : m.schedule_publish_impacts_badge_resolved())
+                : m.schedule_publish_impacts_badge_needs_review()}
+            </Badge>
+          );
+        }
+        return (
+          <Badge variant={impact.impact_kind === 'confirmed_future_pending_resolution' ? 'destructive' : 'secondary'}>
+            {impact.impact_kind === 'confirmed_future_pending_resolution'
+              ? m.schedule_publish_impacts_badge_pending()
+              : m.schedule_publish_impacts_badge_updated()}
+          </Badge>
+        );
+      },
     },
     {
       id: 'start_time',
@@ -230,6 +287,24 @@ function createColumns(studioId: string): ColumnDef<SchedulePublishImpactRow>[] 
       id: 'created_at',
       header: m.schedule_publish_impacts_column_recorded(),
       cell: ({ row }) => format(new Date(row.original.created_at), 'MMM d, h:mm a'),
+    },
+    {
+      id: 'review_action',
+      header: '',
+      cell: ({ row }) => {
+        const impact = row.original;
+        if (impact.impact_kind !== 'stale_conflict') {
+          return null;
+        }
+        if (impact.resolution_status !== 'pending') {
+          return <span className="text-xs text-muted-foreground">{m.schedule_publish_impacts_resolved_label()}</span>;
+        }
+        return (
+          <Button type="button" variant="outline" size="sm" onClick={() => onReview(impact)}>
+            {m.schedule_publish_impacts_review_action()}
+          </Button>
+        );
+      },
     },
   ];
 }
