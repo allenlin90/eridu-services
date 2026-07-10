@@ -28,4 +28,4 @@ Resolve each FK-backed field's snapshot `{uid, name}` value back to an internal 
 
 ## Related Context
 
-[`apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md`](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md) § Stale Conflict Rule, [`docs/superpowers/specs/2026-07-08-schedule-publish-actuals-aware-conflict-handling-design.md`](../superpowers/specs/2026-07-08-schedule-publish-actuals-aware-conflict-handling-design.md).
+[`apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md`](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md) § Stale Conflict Rule.

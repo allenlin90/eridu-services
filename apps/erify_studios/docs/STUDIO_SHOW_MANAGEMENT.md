@@ -67,3 +67,25 @@ Access rules:
 - keep route guard and sidebar visibility aligned through the shared access-policy source
 - keep schedule search remote and documented; no dead local-only search affordances
 - keep show-level actuals scoped to `Show.actual_start_time` / `Show.actual_end_time`; creator participation actuals, platform stream/performance facts, and platform violation records are separate task-input workstream concerns and must not be folded into the show update payload
+
+## Schedule Publish Impacts
+
+| Route | Purpose | Access |
+| --- | --- | --- |
+| `/studios/$studioId/schedule-publish-impacts` | Reviews upcoming and stale-conflict impacts of a Google Sheets schedule publish | `ADMIN`, `MANAGER` |
+
+`stale_conflict` rows — sheet edits the backend held back because the show already has recorded actuals, per `apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md` § Stale Conflict Rule — get a `Review` action alongside the two existing FYI impact kinds (`confirmed_future_updated`, `confirmed_future_pending_resolution`), which stay read-only. `Review` opens a docked panel showing the `held_back` diff and a required-reason Apply/Dismiss form.
+
+### Key Frontend Modules
+
+- `src/components/responsive-sheet.tsx` — desktop right-docked sheet / mobile bottom drawer swap, sibling to `responsive-dialog.tsx`
+- `src/features/shows/api/resolve-schedule-conflict.ts` — `useResolveScheduleConflict` mutation hook
+- `src/features/shows/components/held-back-diff.tsx` — pure presentational diff renderer
+- `src/features/shows/components/schedule-conflict-review-panel.tsx` — hosts the diff, reason field, and Apply/Dismiss actions inside `ResponsiveSheet`
+
+### UX Rules
+
+- Apply/Dismiss stay disabled until the reason field is non-empty; the reason is recorded on the show's audit history
+- a resolved `stale_conflict` row stays visible, dimmed (`getRowClassName` on the shared `DataTable`), rather than disappearing immediately — the planner sees the outcome of their action
+- `SHOW_NO_LONGER_ELIGIBLE` shows an inline banner and does not close the panel (the conflict was auto-resolved server-side); the list is invalidated rather than cache-patched since there is no updated row to patch with
+- `held_back.show_creators[]`/`show_platforms[]` render a bare creator/platform uid, not a name — the shipped payload carries no display name for these entries (tracked in [`docs/tech-debt/schedule-conflict-held-back-creators-platforms-no-display-name.md`](../../../docs/tech-debt/schedule-conflict-held-back-creators-platforms-no-display-name.md)); a uid is safe to display per this app's external-ID strategy, just not human-readable

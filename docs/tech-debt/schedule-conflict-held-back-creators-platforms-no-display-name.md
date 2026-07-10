@@ -26,4 +26,4 @@ Resolve `creator_uid`/`platform_uid` to a display name (creator's name; platform
 
 ## Related Context
 
-[`apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md`](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md) § Stale Conflict Rule, [`docs/superpowers/specs/2026-07-08-schedule-publish-actuals-aware-conflict-handling-design.md`](../superpowers/specs/2026-07-08-schedule-publish-actuals-aware-conflict-handling-design.md), [`schedule-conflict-apply-fk-fields-not-written.md`](./schedule-conflict-apply-fk-fields-not-written.md) — a related, narrower gap in the same `held_back` payload family.
+[`apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md`](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md) § Stale Conflict Rule, [`apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md`](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md) § Schedule Publish Impacts, [`schedule-conflict-apply-fk-fields-not-written.md`](./schedule-conflict-apply-fk-fields-not-written.md) — a related, narrower gap in the same `held_back` payload family.
