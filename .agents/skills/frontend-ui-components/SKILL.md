@@ -52,7 +52,8 @@ On viewports below the `md` breakpoint (768px), Radix `Popover`/`Dialog` content
 - **Mobile (< md)**: render a vaul `Drawer` with the same body, switched via `useIsMobile()` from `@eridu/ui`.
 - **One body, two shells**: extract the form/picker body into a shared internal component; never duplicate logic between Dialog and Drawer.
 - **`erify_studios` wrapper**: use `apps/erify_studios/src/components/responsive-dialog.tsx` for app-local Dialog → Drawer conversions before hand-rolling the shell in feature code. It owns the `aria-describedby` suppression — never re-add that prop on top of it.
-- **Precedent**: `ResponsiveDateTimePicker` in `packages/ui/src/components/date-picker.tsx`.
+- **Docked-panel variant**: when the desktop shell needs to be a right-docked `Sheet` rather than a centered `Dialog` (e.g. a review/detail panel next to a list, not a modal), use `apps/erify_studios/src/components/responsive-sheet.tsx` — same `useIsMobile()` swap and mobile `Drawer` body, `Sheet`/`SheetContent` instead of `Dialog`/`DialogContent` on desktop. Mirror its structure for new Sheet-based panels rather than re-deriving the swap from scratch.
+- **Precedent**: `ResponsiveDateTimePicker` in `packages/ui/src/components/date-picker.tsx`; `ScheduleConflictReviewPanel` (`apps/erify_studios/src/features/shows/components/schedule-conflict-review-panel.tsx`) for the Sheet variant.
 
 Applies to: every dialog reachable on a mobile route (actuals editing, shift compensation, task forms, json-form modals, schedule dialogs). Plain confirmations with one button can stay as `Dialog` — escalate when the dialog contains forms, pickers, multi-step content, or anything wider than ~280px.
 

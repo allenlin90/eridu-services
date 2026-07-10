@@ -98,6 +98,10 @@ When a table has both issue badges and bulk actions, keep the two decisions sepa
 - Do not reuse all issue badges as `enableRowSelection`; advisory warnings such as extraction visibility, binding drift, or stale-template context can block a valid backend action.
 - If a list payload omits large lazy-loaded fields such as `snapshot.schema`, do not infer a negative condition from absence alone. Run schema-dependent checks only when the field is actually present, or lazy-load detail before making a blocking decision.
 
+## Row-Level Styling
+
+`DataTable` (`packages/ui/src/components/data-table/data-table-core.tsx`) accepts an optional `getRowClassName?: (row: TData) => string | undefined` prop for per-row conditional styling (e.g. dimming a resolved row). It composes with the existing `onRowClick`-conditional class via `cn()` — pass a function, don't hand-roll a wrapper `<tr>` or a parallel row-styling mechanism. Precedent: `schedule-publish-impacts.tsx` dims resolved `stale_conflict` rows with it.
+
 ## Async Combobox Filters
 
 For filters that query large backend collections (e.g., Clients, Memberships/Users, Shows) in dense tables:
