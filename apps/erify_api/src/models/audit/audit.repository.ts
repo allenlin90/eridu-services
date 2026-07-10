@@ -218,14 +218,22 @@ export class AuditRepository {
   }
 
   /**
-   * Engineering decision: needs `orderBy` + a post-query metadata filter, not
-   * expressible as a plain `findMany({ where })`. The most recent
-   * schedule-publish-impact Audit row for a show, filtered to
-   * `impact_kind: 'stale_conflict'`. Since only one conflict can be
-   * unresolved per show at a time (enforced by the showId advisory lock in
-   * `ScheduleConflictService`), the newest row alone tells the caller whether
-   * a conflict is currently pending: `lifecycle: 'opened'` means pending,
-   * `lifecycle: 'resolved'` or no row at all means not pending.
+   * Engineering decision: needs `orderBy`, not expressible as a plain
+   * `findMany({ where })`. The most recent `impact_kind: 'stale_conflict'`
+   * Audit row for a show. Since only one conflict can be unresolved per show
+   * at a time (enforced by the showId advisory lock in
+   * `ScheduleConflictService`), the newest stale_conflict row alone tells the
+   * caller whether a conflict is currently pending: `lifecycle: 'opened'`
+   * means pending, `lifecycle: 'resolved'` or no row at all means not
+   * pending.
+   *
+   * Filters on `impact_kind: 'stale_conflict'` directly in the `where`
+   * clause, not `event: 'schedule_publish_impact'` filtered after the fact —
+   * a show can have both stale_conflict rows and unrelated
+   * confirmed_future_* event rows in its audit history (e.g. a scalar field
+   * change written outside any actuals-gated diff), and picking the single
+   * newest event of any kind could return a non-stale row and mask a
+   * genuinely pending conflict opened earlier.
    *
    * `createdAt` ties: `reconcileShowConflict` can write a resolved row and
    * its replacement opened row in the same transaction, and Postgres'
@@ -240,8 +248,8 @@ export class AuditRepository {
         showId,
         audit: {
           metadata: {
-            path: ['event'],
-            equals: 'schedule_publish_impact',
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
           },
         },
       },
@@ -249,16 +257,7 @@ export class AuditRepository {
       orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
     });
 
-    if (!target) {
-      return null;
-    }
-
-    const metadata = target.audit.metadata as { impact_kind?: string } | null;
-    if (metadata?.impact_kind !== 'stale_conflict') {
-      return null;
-    }
-
-    return target.audit;
+    return target?.audit ?? null;
   }
 
   /**
@@ -271,6 +270,13 @@ export class AuditRepository {
    * to `lifecycle: 'opened'` in application code — Prisma can't express
    * "opened with no later resolved row for the same conflict_uid" as a plain
    * relational `where`.
+   *
+   * `createdAt` ties: `reconcileShowConflict` can write a resolved row and its
+   * replacement opened row in the same transaction, and Postgres' `now()`
+   * (backing `@default(now())`) returns the same value for every statement in
+   * one transaction — `distinct` with only `createdAt desc` could then pick
+   * the resolved row over its replacement for a given show. `audit.id desc`
+   * as a secondary sort key breaks the tie, same as `findLatestScheduleConflictForShow`.
    */
   async findPendingStaleConflictsForStudio(
     studioUid: string,
@@ -289,7 +295,7 @@ export class AuditRepository {
       },
       distinct: ['showId'],
       include: SCHEDULE_PUBLISH_IMPACT_INCLUDE,
-      orderBy: { audit: { createdAt: 'desc' } },
+      orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
     });
 
     const pending = latestPerShow.filter((target) => {

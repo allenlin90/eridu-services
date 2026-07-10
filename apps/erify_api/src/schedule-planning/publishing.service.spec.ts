@@ -1889,6 +1889,82 @@ describe('publishingService', () => {
       }));
     });
 
+    /**
+     * PR #271 review finding (second pass): a show gated purely by row-level
+     * actuals (not show-level) was only registered for reconciliation when
+     * this publish's diff for that row was non-empty. If a previously-opened
+     * relation-only conflict's diff reverts to match the current state on a
+     * later publish (nothing left to hold back), the finalize loop skipped
+     * the show entirely — `reconcileShowConflict(heldBack: null)` never ran,
+     * so the earlier conflict stayed pending forever instead of
+     * auto-resolving. `rowActualsCandidateShowIds` tracks every show with at
+     * least one actuals-populated creator/platform row, independent of
+     * whether there's a current diff, so this publish still reconciles it.
+     */
+    it('reconciles a still-pending relation-only conflict even when this publish has no diff for the actuals-gated creator', async () => {
+      jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+      const showWithoutActuals = {
+        id: BigInt(116),
+        uid: 'show_no_actuals_3',
+        externalId: 'show_temp_2',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Test Show 2',
+        startTime: new Date('2024-01-02T10:00:00Z'),
+        endTime: new Date('2024-01-02T12:00:00Z'),
+        metadata: {},
+        deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
+        showStatus: { systemKey: 'DRAFT' },
+      };
+      const singleShowSchedule = {
+        ...mockSchedule,
+        planDocument: {
+          ...mockPlanDocument,
+          shows: [
+            {
+              ...mockPlanDocument.shows[1]!,
+              creators: [
+                { creatorId: 'creator_test123', note: 'Same Note' },
+              ],
+            },
+          ],
+        },
+      };
+
+      getScheduleByIdMock.mockResolvedValue(singleShowSchedule);
+      mockTransactionClient.show.findMany
+        .mockReset()
+        .mockResolvedValueOnce([showWithoutActuals])
+        .mockResolvedValueOnce([showWithoutActuals]);
+      mockTransactionClient.showCreator.findMany.mockReset().mockResolvedValueOnce([
+        { id: BigInt(200), showId: BigInt(116), creatorId: BigInt(1), note: 'Same Note', metadata: {}, deletedAt: null, actualStartTime: new Date('2024-01-02T10:05:00Z'), actualEndTime: new Date('2024-01-02T12:00:00Z') },
+      ]);
+      mockTransactionClient.creator.findMany.mockResolvedValue([
+        { id: BigInt(1), uid: 'creator_test123' },
+      ]);
+
+      await service.publish(scheduleUid, version, userId);
+
+      // No diff — the incoming note already matches the existing one, so
+      // nothing is written or held back this publish.
+      expect(mockTransactionClient.showCreator.update).not.toHaveBeenCalled();
+      // But reconciliation must still run so a conflict opened by an earlier
+      // publish for this creator can auto-resolve (heldBack: null), rather
+      // than being skipped outright because this publish's diff is empty.
+      expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(expect.objectContaining({
+        showId: BigInt(116),
+        conflictType: 'update_held_back',
+        heldBack: null,
+      }));
+    });
+
     it('does not treat a show with only COMPLETED/CLOSED tasks as having active work on removal', async () => {
       const removedDraftShow = {
         id: BigInt(113),

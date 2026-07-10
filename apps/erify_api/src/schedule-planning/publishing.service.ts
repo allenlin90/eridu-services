@@ -618,7 +618,7 @@ export class PublishingService {
       showActualsById.set(show.id, show.actualStartTime !== null || show.actualEndTime !== null);
     });
 
-    const { relationChangesByShowId, heldBackRelationsByShowId } = await this.relationSyncService.syncShowRelations(
+    const { relationChangesByShowId, heldBackRelationsByShowId, rowActualsCandidateShowIds } = await this.relationSyncService.syncShowRelations(
       incomingByShowId,
       uidMaps,
       publishSummary,
@@ -656,7 +656,12 @@ export class PublishingService {
         continue; // already handled above
       }
       const hasRelationHoldBack = heldBackRelations.showCreators.length > 0 || heldBackRelations.showPlatforms.length > 0;
-      if (!hasRelationHoldBack) {
+      // Even with nothing held back this publish, a row-actuals candidate
+      // still needs to reconcile: a conflict opened by an earlier publish
+      // for this show's creator/platform relation may still be pending, and
+      // only this call can auto-resolve it once the sheet no longer
+      // disagrees with the current relation state.
+      if (!hasRelationHoldBack && !rowActualsCandidateShowIds.has(showId)) {
         continue;
       }
       const incoming = incomingByShowId.get(showId);
@@ -666,12 +671,14 @@ export class PublishingService {
         externalId: incoming?.source.externalId ?? null,
         actorId: userId,
         conflictType: 'update_held_back',
-        heldBack: {
-          showFields: null,
-          showCreators: heldBackRelations.showCreators,
-          showPlatforms: heldBackRelations.showPlatforms,
-          proposedStatusTransition: null,
-        },
+        heldBack: hasRelationHoldBack
+          ? {
+              showFields: null,
+              showCreators: heldBackRelations.showCreators,
+              showPlatforms: heldBackRelations.showPlatforms,
+              proposedStatusTransition: null,
+            }
+          : null,
       });
       if (recorded) {
         publishSummary.publish_impacts_recorded += 1;

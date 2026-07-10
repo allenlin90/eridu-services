@@ -284,5 +284,49 @@ describe('auditRepository', () => {
         { audit: { id: 'desc' } },
       ]);
     });
+
+    /**
+     * PR #271 review finding (second pass): the `where` clause filtered on
+     * `event: 'schedule_publish_impact'`, which also matches every
+     * confirmed_future_* impact row for the same show. A show can have both
+     * a still-pending stale_conflict row and a later, unrelated
+     * confirmed_future_updated row (e.g. a scalar field change unaffected by
+     * actuals gating) — picking the single newest event of any kind would
+     * return the non-stale row and mask the pending conflict. Filtering on
+     * `impact_kind: 'stale_conflict'` directly ensures only stale_conflict
+     * rows are ever candidates for "latest."
+     */
+    it('filters the where clause to impact_kind: stale_conflict, not just the schedule_publish_impact event', async () => {
+      await repository.findLatestScheduleConflictForShow(BigInt(1));
+
+      const args = txAuditTargetDelegate.findFirst.mock.calls[0]?.[0];
+      expect(args.where.audit.metadata).toEqual({
+        path: ['impact_kind'],
+        equals: 'stale_conflict',
+      });
+    });
+  });
+
+  /**
+   * PR #271 review finding (second pass): this query used Prisma's `distinct`
+   * with only `createdAt desc` as the sort key. `reconcileShowConflict` can
+   * write a resolved row and its replacement opened row in the same
+   * transaction, sharing the same `createdAt` — `distinct` could then pick
+   * the resolved row over its replacement for a given show, hiding the newly
+   * opened conflict from the review queue. `audit.id desc` as a secondary
+   * sort key breaks the tie, same fix as `findLatestScheduleConflictForShow`.
+   */
+  describe('findPendingStaleConflictsForStudio', () => {
+    it('orders by audit.createdAt desc with audit.id desc as a tie-breaker for distinct', async () => {
+      await repository.findPendingStaleConflictsForStudio('studio_1', { take: 25, skip: 0 });
+
+      expect(txAuditTargetDelegate.findMany).toHaveBeenCalledTimes(1);
+      const args = txAuditTargetDelegate.findMany.mock.calls[0]?.[0];
+      expect(args.distinct).toEqual(['showId']);
+      expect(args.orderBy).toEqual([
+        { audit: { createdAt: 'desc' } },
+        { audit: { id: 'desc' } },
+      ]);
+    });
   });
 });

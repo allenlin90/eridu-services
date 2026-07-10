@@ -29,14 +29,16 @@ export class PublishingRelationSyncService {
   ): Promise<{
       relationChangesByShowId: Map<bigint, ShowRelationSyncChanges>;
       heldBackRelationsByShowId: Map<bigint, HeldBackRelations>;
+      rowActualsCandidateShowIds: Set<bigint>;
     }> {
     const tx = this.txHost.tx;
     const showIds = Array.from(incomingByShowId.keys());
     const relationChangesByShowId = new Map<bigint, ShowRelationSyncChanges>();
     const heldBackRelationsByShowId = new Map<bigint, HeldBackRelations>();
+    const rowActualsCandidateShowIds = new Set<bigint>();
 
     if (showIds.length === 0) {
-      return { relationChangesByShowId, heldBackRelationsByShowId };
+      return { relationChangesByShowId, heldBackRelationsByShowId, rowActualsCandidateShowIds };
     }
 
     const existingShowCreators = await tx.showCreator.findMany({
@@ -105,6 +107,22 @@ export class PublishingRelationSyncService {
       const heldBack: HeldBackRelations = { showCreators: [], showPlatforms: [] };
       heldBackRelationsByShowId.set(showId, heldBack);
       const showActualsPopulated = showActualsById.get(showId) ?? false;
+      const showCreators = showCreatorByShowId.get(showId) || [];
+      const showPlatforms = showPlatformByShowId.get(showId) || [];
+
+      // Tracked independent of whether there's a current diff to hold back:
+      // a row-actuals-gated show whose sheet edit reverts to match the
+      // current relation state produces zero heldBack entries this publish,
+      // but a conflict opened by an *earlier* publish may still be pending
+      // for it and needs the reconciliation pass below to see it as a
+      // candidate — the same reason show-level `staleConflictCandidates`
+      // are always registered regardless of whether they have a diff.
+      if (!showActualsPopulated && (
+        showCreators.some((row) => row.actualStartTime !== null || row.actualEndTime !== null)
+        || showPlatforms.some((row) => row.actualStartTime !== null || row.actualEndTime !== null)
+      )) {
+        rowActualsCandidateShowIds.add(showId);
+      }
 
       await this.syncCreatorsForShow({
         showId,
@@ -114,7 +132,7 @@ export class PublishingRelationSyncService {
         changes: showChanges,
         heldBack,
         showActualsPopulated,
-        existingCreators: showCreatorByShowId.get(showId) || [],
+        existingCreators: showCreators,
         creatorUidById,
       });
 
@@ -126,12 +144,12 @@ export class PublishingRelationSyncService {
         changes: showChanges,
         heldBack,
         showActualsPopulated,
-        existingPlatforms: showPlatformByShowId.get(showId) || [],
+        existingPlatforms: showPlatforms,
         platformUidById,
       });
     }
 
-    return { relationChangesByShowId, heldBackRelationsByShowId };
+    return { relationChangesByShowId, heldBackRelationsByShowId, rowActualsCandidateShowIds };
   }
 
   private async syncCreatorsForShow(params: {
