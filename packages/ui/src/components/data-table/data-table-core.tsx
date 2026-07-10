@@ -46,6 +46,7 @@ type DataTableProps<TData> = {
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   getRowId?: (row: TData) => string;
   onRowClick?: (row: TData) => void;
+  getRowClassName?: (row: TData) => string | undefined;
   renderToolbar?: (table: import('@tanstack/react-table').Table<TData>) => React.ReactNode;
   renderFooter?: (table: import('@tanstack/react-table').Table<TData>) => React.ReactNode;
 };
@@ -71,6 +72,7 @@ export function DataTable<TData>({
   onRowSelectionChange,
   getRowId,
   onRowClick,
+  getRowClassName,
   renderToolbar,
   renderFooter,
 }: DataTableProps<TData>) {
@@ -150,7 +152,7 @@ export function DataTable<TData>({
                           ? table.getRowModel().rows.map((row) => (
                               <TableRow
                                 key={row.id}
-                                className={cn(onRowClick && 'cursor-pointer hover:bg-muted/50')}
+                                className={cn(getRowClassName?.(row.original), onRowClick && 'cursor-pointer hover:bg-muted/50')}
                                 onClick={() => onRowClick?.(row.original)}
                               >
                                 {row.getVisibleCells().map((cell) => (
