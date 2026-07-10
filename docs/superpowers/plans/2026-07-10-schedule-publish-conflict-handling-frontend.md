@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - `reason` is required (non-empty) for both `apply` and `dismiss` — the Apply/Dismiss buttons must stay disabled until the reason field is non-empty, matching `resolve-cancellation-dialog.tsx`'s existing pattern.
-- Never expose DB internal IDs — not a new concern here, the backend already resolves every FK-backed `held_back` field to `{uid, name}`; this plan only ever renders `.name`, never a raw id.
+- Never expose DB internal IDs. `show_fields`' FK-backed values resolve to `{uid, name}` (`heldBackFkRefSchema`) — always render `.name`, never a raw id, there. `show_creators[].creator_uid` and `show_platforms[].platform_uid` are external UID strings with no accompanying `name` in the shipped backend contract (`heldBackCreatorEntrySchema`/`heldBackPlatformEntrySchema`) — an external UID is safe to display per this codebase's ID strategy (it's not an internal DB id), but it is not a human-readable name; track the missing display-name enrichment as tech debt rather than treating the UID itself as a leak.
 - i18n: this specific route (`schedule-publish-impacts.tsx`) already uses Paraglide (`m.schedule_publish_impacts_*()`) throughout — stay consistent with it. Add new keys to `apps/erify_studios/src/i18n/messages/en.json`, don't introduce inline English into this file.
 - Naming: snake_case only in raw API payload shapes (already true of `SchedulePublishImpactRow`/`HeldBackPayload`), camelCase everywhere in component/hook code.
 - Match `apps/erify_studios/src/components/responsive-dialog.tsx`'s existing structure exactly when building `ResponsiveSheet` — same prop shape, same `useIsMobile` gating, same `aria-describedby` handling.
