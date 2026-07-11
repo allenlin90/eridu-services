@@ -92,6 +92,26 @@ describe('scheduleConflictReviewPanel', () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
+  /**
+   * PR #272 review finding: mirrors the SHOW_NO_LONGER_ELIGIBLE inline-banner
+   * treatment for the other "state moved out from under you" case — another
+   * manager/session already resolved this exact conflict.
+   */
+  it('shows an inline banner and does not close the panel on CONFLICT_ALREADY_RESOLVED', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue({
+      isAxiosError: true,
+      response: { data: { message: 'CONFLICT_ALREADY_RESOLVED' } },
+    });
+    const onOpenChange = vi.fn();
+    renderPanel(baseRow, onOpenChange);
+
+    await userEvent.type(screen.getByLabelText(m.schedule_conflict_reason_label()), 'confirmed with planner');
+    await userEvent.click(screen.getByRole('button', { name: m.schedule_conflict_action_apply_edit() }));
+
+    await waitFor(() => expect(screen.getByText(m.schedule_conflict_already_resolved_banner())).toBeInTheDocument());
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
   it('shows a generic error toast and keeps the panel open on CONFLICT_STATE_CHANGED', async () => {
     vi.mocked(apiClient.post).mockRejectedValue({
       isAxiosError: true,

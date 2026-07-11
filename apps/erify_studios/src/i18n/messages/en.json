@@ -64,6 +64,7 @@
   "schedule_conflict_reason_placeholder": "Explain why you're applying or dismissing this…",
   "schedule_conflict_reason_hint": "Required — recorded on the show's audit history.",
   "schedule_conflict_ineligible_banner": "This show is no longer eligible — it was completed through the normal production flow after this conflict was opened. The conflict has been closed automatically.",
+  "schedule_conflict_already_resolved_banner": "This conflict was already resolved by someone else. Close this panel and refresh to see the latest state.",
   "schedule_conflict_action_dismiss": "Dismiss",
   "schedule_conflict_action_apply_cancellation": "Apply cancellation",
   "schedule_conflict_action_apply_edit": "Apply edit",

@@ -7,7 +7,7 @@ import { Button, Label, Textarea } from '@eridu/ui';
 import { HeldBackDiff } from './held-back-diff';
 
 import { ResponsiveSheet } from '@/components/responsive-sheet';
-import { isShowNoLongerEligibleError, useResolveScheduleConflict } from '@/features/shows/api/resolve-schedule-conflict';
+import { isConflictAlreadyResolvedError, isShowNoLongerEligibleError, useResolveScheduleConflict } from '@/features/shows/api/resolve-schedule-conflict';
 import * as m from '@/paraglide/messages';
 
 type ScheduleConflictReviewPanelProps = {
@@ -43,6 +43,10 @@ export function ScheduleConflictReviewPanel({ studioId, row, open, onOpenChange 
         onError: (error) => {
           if (isShowNoLongerEligibleError(error)) {
             setIneligibleMessage(m.schedule_conflict_ineligible_banner());
+            return;
+          }
+          if (isConflictAlreadyResolvedError(error)) {
+            setIneligibleMessage(m.schedule_conflict_already_resolved_banner());
           }
         },
       },

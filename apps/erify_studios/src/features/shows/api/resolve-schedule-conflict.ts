@@ -13,7 +13,6 @@ import { apiClient } from '@/lib/api/client';
 
 export const RESOLVE_CONFLICT_ERROR_MESSAGES: Record<string, string> = {
   CONFLICT_STATE_CHANGED: 'The show has changed since this conflict was opened. Refresh and review the latest data before resolving.',
-  CONFLICT_ALREADY_RESOLVED: 'This conflict was already resolved.',
   ACTOR_NOT_FOUND: 'Could not identify the current user. Try signing in again.',
 };
 
@@ -27,6 +26,10 @@ export function getResolveConflictErrorCode(error: unknown): string | null {
 
 export function isShowNoLongerEligibleError(error: unknown): boolean {
   return getResolveConflictErrorCode(error) === 'SHOW_NO_LONGER_ELIGIBLE';
+}
+
+export function isConflictAlreadyResolvedError(error: unknown): boolean {
+  return getResolveConflictErrorCode(error) === 'CONFLICT_ALREADY_RESOLVED';
 }
 
 export async function resolveScheduleConflict(
@@ -74,6 +77,11 @@ export function useResolveScheduleConflict(studioId: string) {
     onError: (error) => {
       if (isShowNoLongerEligibleError(error)) {
         toast.error('This show is no longer eligible — it was completed through the normal production flow after this conflict was opened. The conflict has been closed automatically.');
+        queryClient.invalidateQueries({ queryKey: schedulePublishImpactKeys.listPrefix(studioId) });
+        return;
+      }
+      if (isConflictAlreadyResolvedError(error)) {
+        toast.error('This conflict was already resolved by someone else. Refreshing the list.');
         queryClient.invalidateQueries({ queryKey: schedulePublishImpactKeys.listPrefix(studioId) });
         return;
       }
