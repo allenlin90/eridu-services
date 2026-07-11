@@ -47,6 +47,7 @@ import {
 import { showCreatorCompensationSummaryDto } from './schemas/studio-show-creator-compensation-summary.schema';
 import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list.schema';
 import { UpdateStudioShowCreatorDto } from './schemas/studio-show-creator-update.schema';
+import { ResolveScheduleConflictDto } from './schemas/studio-show-schedule-conflict.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
@@ -58,6 +59,7 @@ import { projectAllowList, stripLegacyAuditSidecar } from '@/lib/utils/allow-lis
 import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
 import { showMechanicCoverageResponseSchema } from '@/models/client-mechanic/schemas/client-mechanic.schema';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
+import { CONFLICT_UID_PREFIX } from '@/models/schedule-conflict/schedule-conflict.service';
 import {
   CreateStudioShowDto,
   showPlatformSummaryRelationSchema,
@@ -453,6 +455,19 @@ export class StudioShowController extends BaseStudioController {
       request?.studioMembership?.role,
       user.ext_id,
     );
+  }
+
+  @Post(':id/schedule-publish-impacts/:conflictUid/resolve')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ZodResponse(schedulePublishImpactRowSchema)
+  async resolveScheduleConflict(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+    @Param('conflictUid', new UidValidationPipe(CONFLICT_UID_PREFIX, 'Conflict')) conflictUid: string,
+    @Body() body: ResolveScheduleConflictDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studioShowManagementService.resolveScheduleConflict(studioId, id, conflictUid, body, user.ext_id);
   }
 
   @Get(':id/cancellation-status')

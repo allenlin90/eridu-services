@@ -169,6 +169,10 @@ export class AuditRepository {
     // Engineering decision: this is a purpose-built review queue query, not a
     // generic `findMany`, because it must page AuditTarget rows joined through
     // upcoming studio-scoped Shows while filtering Audit metadata by event.
+    // `impact_kind: 'stale_conflict'` rows share the same `event` value by
+    // design but are served exclusively by `findPendingStaleConflictsForStudio`
+    // — excluded here via `NOT` so a stale_conflict show's audit rows never
+    // double up across the two sources or leak resolved rows into this queue.
     const where: Prisma.AuditTargetWhereInput = {
       targetType: 'SHOW',
       show: {
@@ -183,6 +187,14 @@ export class AuditRepository {
         metadata: {
           path: ['event'],
           equals: 'schedule_publish_impact',
+        },
+      },
+      NOT: {
+        audit: {
+          metadata: {
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
+          },
         },
       },
     };
@@ -203,6 +215,98 @@ export class AuditRepository {
     ]);
 
     return { items, total };
+  }
+
+  /**
+   * Engineering decision: needs `orderBy`, not expressible as a plain
+   * `findMany({ where })`. The most recent `impact_kind: 'stale_conflict'`
+   * Audit row for a show. Since only one conflict can be unresolved per show
+   * at a time (enforced by the showId advisory lock in
+   * `ScheduleConflictService`), the newest stale_conflict row alone tells the
+   * caller whether a conflict is currently pending: `lifecycle: 'opened'`
+   * means pending, `lifecycle: 'resolved'` or no row at all means not
+   * pending.
+   *
+   * Filters on `impact_kind: 'stale_conflict'` directly in the `where`
+   * clause, not `event: 'schedule_publish_impact'` filtered after the fact —
+   * a show can have both stale_conflict rows and unrelated
+   * confirmed_future_* event rows in its audit history (e.g. a scalar field
+   * change written outside any actuals-gated diff), and picking the single
+   * newest event of any kind could return a non-stale row and mask a
+   * genuinely pending conflict opened earlier.
+   *
+   * `createdAt` ties: `reconcileShowConflict` can write a resolved row and
+   * its replacement opened row in the same transaction, and Postgres'
+   * `now()` (backing `@default(now())`) returns the same value for every
+   * statement in one transaction — so `createdAt` alone can't tell those two
+   * rows apart. `audit.id` (autoincrement, insertion-ordered) breaks the tie.
+   */
+  async findLatestScheduleConflictForShow(showId: bigint): Promise<AuditWithTargets | null> {
+    const target = await this.txHost.tx.auditTarget.findFirst({
+      where: {
+        targetType: 'SHOW',
+        showId,
+        audit: {
+          metadata: {
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
+          },
+        },
+      },
+      include: { audit: { include: AUDIT_WITH_TARGETS_INCLUDE } },
+      orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
+    });
+
+    return target?.audit ?? null;
+  }
+
+  /**
+   * Engineering decision: purpose-built review-queue query, not a generic
+   * `findMany`. All shows in a studio with a currently-pending `stale_conflict`
+   * — no date filter, since past-dated shows are the entire point of this kind
+   * (spec: "the default (no explicit filters) view returns unresolved
+   * stale_conflict rows regardless of the show's date"). Uses Prisma's
+   * `distinct` + `orderBy` to get one row per show (the newest), then filters
+   * to `lifecycle: 'opened'` in application code — Prisma can't express
+   * "opened with no later resolved row for the same conflict_uid" as a plain
+   * relational `where`.
+   *
+   * `createdAt` ties: `reconcileShowConflict` can write a resolved row and its
+   * replacement opened row in the same transaction, and Postgres' `now()`
+   * (backing `@default(now())`) returns the same value for every statement in
+   * one transaction — `distinct` with only `createdAt desc` could then pick
+   * the resolved row over its replacement for a given show. `audit.id desc`
+   * as a secondary sort key breaks the tie, same as `findLatestScheduleConflictForShow`.
+   */
+  async findPendingStaleConflictsForStudio(
+    studioUid: string,
+    opts: { take: number; skip: number },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    const latestPerShow = await this.txHost.tx.auditTarget.findMany({
+      where: {
+        targetType: 'SHOW',
+        show: { studio: { uid: studioUid }, deletedAt: null },
+        audit: {
+          metadata: {
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
+          },
+        },
+      },
+      distinct: ['showId'],
+      include: SCHEDULE_PUBLISH_IMPACT_INCLUDE,
+      orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
+    });
+
+    const pending = latestPerShow.filter((target) => {
+      const metadata = target.audit.metadata as { lifecycle?: string } | null;
+      return metadata?.lifecycle === 'opened';
+    });
+
+    return {
+      items: pending.slice(opts.skip, opts.skip + opts.take),
+      total: pending.length,
+    };
   }
 
   private toTargetCreateInput(

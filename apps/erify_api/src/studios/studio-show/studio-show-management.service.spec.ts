@@ -12,6 +12,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { ScheduleService } from '@/models/schedule/schedule.service';
+import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
@@ -21,13 +22,22 @@ import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { UtilityService } from '@/utility/utility.service';
+
+let mockTx: {
+  creator: { findFirst: jest.Mock };
+  showCreator: { findFirst: jest.Mock; update: jest.Mock; findMany: jest.Mock };
+  platform: { findFirst: jest.Mock };
+  showPlatform: { findFirst: jest.Mock; update: jest.Mock };
+};
 
 const mockPrismaForCls = {
-  $transaction: jest.fn(async (callback: any) => await callback({})),
+  $transaction: jest.fn(async (callback: any) => await callback(mockTx)),
 };
 
 @Module({
@@ -114,11 +124,29 @@ describe('studioShowManagementService', () => {
   const auditServiceMock = {
     create: jest.fn(),
     findSchedulePublishImpactsForStudio: jest.fn(),
+    findPendingStaleConflictsForStudio: jest.fn(),
     countForTargets: jest.fn(),
     findForTargets: jest.fn(),
+    findLatestScheduleConflictForShow: jest.fn(),
   };
+  const scheduleConflictServiceMock = {
+    checkEligibility: jest.fn(),
+    applyConflict: jest.fn(),
+    dismissConflict: jest.fn(),
+  };
+  const taskTargetServiceMock = {
+    countActiveByShowId: jest.fn().mockResolvedValue(0),
+  };
+  const actorExtId = 'ext_actor1';
 
   beforeEach(async () => {
+    mockTx = {
+      creator: { findFirst: jest.fn() },
+      showCreator: { findFirst: jest.fn(), update: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
+      platform: { findFirst: jest.fn() },
+      showPlatform: { findFirst: jest.fn(), update: jest.fn() },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         ClsModule.forRoot({
@@ -150,6 +178,8 @@ describe('studioShowManagementService', () => {
         { provide: ShowStatusService, useValue: showStatusServiceMock },
         { provide: TaskService, useValue: taskServiceMock },
         { provide: AuditService, useValue: auditServiceMock },
+        { provide: ScheduleConflictService, useValue: scheduleConflictServiceMock },
+        { provide: TaskTargetService, useValue: taskTargetServiceMock },
       ],
     }).compile();
 
@@ -1089,6 +1119,505 @@ describe('studioShowManagementService', () => {
     });
   });
 
+  describe('resolveScheduleConflict', () => {
+    beforeEach(() => {
+      userServiceMock.getUserByExtId.mockResolvedValue({ id: BigInt(9), uid: 'user_1', name: 'Actor' });
+      scheduleConflictServiceMock.checkEligibility.mockResolvedValue({ eligible: true });
+    });
+
+    it('calls reconcileTaskDueDates with the snapshot old/new times when applying a start_time/end_time diff', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: { show_fields: { changed_fields: ['start_time'], old: { start_time: '2026-01-01T10:00:00.000Z' }, new: { start_time: '2026-01-01T10:30:00.000Z' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'backfill' }, actorExtId);
+
+      expect(taskServiceMock.reconcileTaskDueDates).toHaveBeenCalledWith(
+        BigInt(1),
+        { startTime: new Date('2026-01-01T10:00:00.000Z'), endTime: expect.any(Date) },
+        { startTime: new Date('2026-01-01T10:30:00.000Z'), endTime: expect.any(Date) },
+      );
+    });
+
+    /**
+     * Finding 1 (final-review fix): `toShowUpdateData` used to only translate
+     * `name`/`start_time`/`end_time` from a held-back diff's `new` values —
+     * `metadata` (a plain scalar, not FK-backed) was silently never written,
+     * even though `resolution_status: 'applied'` was returned to the caller.
+     * This asserts the write actually happens with the parsed metadata
+     * object, not merely that resolution succeeds.
+     */
+    it('applies a held-back metadata diff to the show record on successful apply', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+        metadata: { note: 'old' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: {
+            show_fields: {
+              changed_fields: ['metadata'],
+              old: { metadata: JSON.stringify({ note: 'old' }) },
+              new: { metadata: JSON.stringify({ note: 'new', tag: 'backfilled' }) },
+            },
+            show_creators: [],
+            show_platforms: [],
+            proposed_status_transition: null,
+          },
+        },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'backfill metadata' }, actorExtId);
+
+      expect(showRepositoryMock.update).toHaveBeenCalledWith(
+        { id: BigInt(1) },
+        expect.objectContaining({ metadata: { note: 'new', tag: 'backfilled' } }),
+      );
+    });
+
+    /**
+     * Finding 2 (final-review fix): the drift check must compare against a
+     * show read AFTER the showId advisory lock is held (inside
+     * applyEligibleScheduleConflict's `loadCurrentState` callback passed to
+     * ScheduleConflictService.applyConflict), not the snapshot
+     * resolveScheduleConflict read before any lock was ever taken. This
+     * seeds two different `findByUidAndStudioUid` reads — a stale first read
+     * and a different "fresh" read for every subsequent call — and proves
+     * the callback captured for the lock-protected re-read reflects the
+     * fresh value, not the pre-lock snapshot.
+     */
+    it('rebuilds currentFieldValues from a show read after the lock is held, not the pre-lock snapshot', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid
+        .mockResolvedValueOnce({
+          id: BigInt(1),
+          uid: 'show_1',
+          showStatus: { systemKey: 'DRAFT' },
+          name: 'Stale Name (pre-lock snapshot)',
+        } as any)
+        .mockResolvedValue({
+          id: BigInt(1),
+          uid: 'show_1',
+          showStatus: { systemKey: 'DRAFT' },
+          name: 'Fresh Name (post-lock read)',
+        } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: { show_fields: { changed_fields: ['name'], old: { name: 'Original' }, new: { name: 'Planner Edit' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'x' }, actorExtId);
+
+      expect(scheduleConflictServiceMock.applyConflict).toHaveBeenCalledTimes(1);
+      const passedParams = scheduleConflictServiceMock.applyConflict.mock.calls[0][0];
+      expect(passedParams.loadCurrentState).toEqual(expect.any(Function));
+
+      const freshState = await passedParams.loadCurrentState();
+      expect(freshState.currentFieldValues.name).toBe('Fresh Name (post-lock read)');
+      expect(freshState.currentFieldValues.name).not.toBe('Stale Name (pre-lock snapshot)');
+    });
+
+    /**
+     * PR #271 review finding: `applyConflict`'s relation drift check needs
+     * current creator-note/platform-link values, keyed by uid, built from a
+     * fresh (lock-protected) read — not the pre-lock snapshot. This asserts
+     * `loadCurrentState` actually queries `showCreator` for the held-back
+     * creator uids and reads platform values off the freshly-loaded show.
+     */
+    it('builds currentRelationValues from a fresh showCreator query and the fresh show read', async () => {
+      // loadCurrentState touches this.txHost.tx (via buildCurrentRelationValues),
+      // which is only bound inside the CLS transaction context — so it must be
+      // invoked from within that context, not manually after
+      // resolveScheduleConflict has already returned and the context has torn
+      // down. Capturing it from inside the mocked applyConflict call (which
+      // runs synchronously within applyEligibleScheduleConflict's own
+      // @Transactional() context) preserves that.
+      let capturedState: any;
+      scheduleConflictServiceMock.applyConflict.mockImplementation(async (params: any) => {
+        capturedState = await params.loadCurrentState();
+        return { outcome: 'applied' };
+      });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+        showPlatforms: [{
+          platform: { uid: 'platform_1' },
+          liveStreamLink: 'https://fresh.example.com',
+          platformShowId: 'psid_fresh',
+        }],
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: {
+            show_fields: null,
+            show_creators: [{ creator_uid: 'creator_jane', action: 'update', old_note: 'Backup host', new_note: 'Lead host' }],
+            show_platforms: [{
+              platform_uid: 'platform_1',
+              action: 'update',
+              old: { live_stream_link: 'https://old.example.com', platform_show_id: 'psid_old' },
+              new: { live_stream_link: 'https://new.example.com', platform_show_id: 'psid_new' },
+            }],
+            proposed_status_transition: null,
+          },
+        },
+      } as any);
+      mockTx.showCreator.findMany.mockResolvedValue([
+        { note: 'Backup host', creator: { uid: 'creator_jane' } },
+      ]);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'x' }, actorExtId);
+
+      expect(mockTx.showCreator.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ showId: BigInt(1), creator: { uid: { in: ['creator_jane'] } } }),
+      }));
+      expect(capturedState.currentRelationValues).toEqual({
+        showCreators: { creator_jane: 'Backup host' },
+        showPlatforms: { platform_1: { liveStreamLink: 'https://fresh.example.com', platformShowId: 'psid_fresh' } },
+      });
+    });
+
+    it('applies a held-back creator removal by resolving creator_uid to the underlying row and soft-deleting it', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: {
+          conflict_type: 'update_held_back',
+          held_back: {
+            show_fields: null,
+            show_creators: [{ creator_uid: 'creator_jane', action: 'remove', old_note: 'Backup host', new_note: null }],
+            show_platforms: [],
+            proposed_status_transition: null,
+          },
+        },
+      } as any);
+      mockTx.creator.findFirst.mockResolvedValue({ id: BigInt(5) });
+      mockTx.showCreator.findFirst.mockResolvedValue({ id: BigInt(50) });
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'confirmed removal' }, actorExtId);
+
+      expect(mockTx.creator.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { uid: 'creator_jane' } }));
+      expect(mockTx.showCreator.update).toHaveBeenCalledWith({
+        where: { id: BigInt(50) },
+        data: { deletedAt: expect.any(Date) },
+      });
+    });
+
+    it('dismisses a conflict via the service without touching show data', async () => {
+      scheduleConflictServiceMock.dismissConflict.mockResolvedValue({ outcome: 'dismissed' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        metadata: { conflict_type: 'update_held_back', held_back: null },
+      } as any);
+
+      await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'dismiss', reason: 'no longer needed' }, actorExtId);
+
+      expect(scheduleConflictServiceMock.dismissConflict).toHaveBeenCalledWith({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        actorId: BigInt(9),
+        reason: 'no longer needed',
+      });
+      expect(scheduleConflictServiceMock.applyConflict).not.toHaveBeenCalled();
+      expect(showRepositoryMock.update).not.toHaveBeenCalled();
+    });
+
+    it('throws ACTOR_NOT_FOUND when the actor does not resolve', async () => {
+      userServiceMock.getUserByExtId.mockResolvedValue(null);
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+
+      await expect(
+        service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'dismiss', reason: 'x' }, actorExtId),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'ACTOR_NOT_FOUND' }),
+      });
+      expect(scheduleConflictServiceMock.dismissConflict).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Regression test for the rollback-swallows-write bug: resolveScheduleConflict
+     * must resolve checkEligibility() to completion (its transaction already
+     * committed) BEFORE it throws SHOW_NO_LONGER_ELIGIBLE, and must never call
+     * applyConflict (or any downstream show/task write) for an ineligible show.
+     * If this were still one @Transactional() method write-then-throwing in a
+     * single transaction, checkEligibility wouldn't exist as a separate call at
+     * all — this asserts the call is genuinely separate and precedes the throw.
+     */
+    it('rejects with SHOW_NO_LONGER_ELIGIBLE via checkEligibility — a call already resolved before the throw — without ever calling applyConflict', async () => {
+      scheduleConflictServiceMock.checkEligibility.mockResolvedValue({ eligible: false });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'COMPLETED' },
+      } as any);
+
+      await expect(
+        service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'x' }, actorExtId),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'SHOW_NO_LONGER_ELIGIBLE' }),
+      });
+
+      expect(scheduleConflictServiceMock.checkEligibility).toHaveBeenCalledWith({
+        showId: BigInt(1),
+        conflictUid: 'conflict_1',
+        currentShowStatus: 'COMPLETED',
+      });
+      expect(scheduleConflictServiceMock.applyConflict).not.toHaveBeenCalled();
+      expect(taskServiceMock.reconcileTaskDueDates).not.toHaveBeenCalled();
+      expect(showRepositoryMock.update).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Regression test for a real bug found during Task 6 review:
+     * toSchedulePublishImpactRow used to hardcode `resolution_status: 'pending'`
+     * for any stale_conflict row, so a successful apply's own response row
+     * misreported itself as still pending. The fix derives resolution_status
+     * from the persisted audit's `lifecycle`/`outcome` — this asserts the
+     * response of a successful apply reports 'applied', not 'pending'.
+     * findLatestScheduleConflictForShow is called twice by resolveScheduleConflict
+     * (once to read the pending conflict before applying, once to re-read the
+     * now-resolved row for the response), so the two mocked resolutions below
+     * are deliberately different — this only passes if the response is really
+     * built from the second (post-apply) read.
+     */
+    it('returns resolution_status: applied in the response row after a successful apply', async () => {
+      scheduleConflictServiceMock.applyConflict.mockResolvedValue({ outcome: 'applied' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+
+      const openedMetadata = {
+        event: 'schedule_publish_impact',
+        impact_kind: 'stale_conflict',
+        lifecycle: 'opened',
+        conflict_uid: 'conflict_1',
+        conflict_type: 'update_held_back',
+        schedule_uid: 'schedule_1',
+        external_id: 'EXT-1',
+        held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+        source: 'google_sheets_schedule_publish',
+      };
+      const resolvedMetadata = {
+        ...openedMetadata,
+        lifecycle: 'resolved',
+        resolves_conflict_uid: 'conflict_1',
+        outcome: 'applied',
+      };
+
+      auditServiceMock.findLatestScheduleConflictForShow
+        .mockResolvedValueOnce({ uid: 'aud_old', createdAt: new Date('2026-01-01T00:00:00.000Z'), metadata: openedMetadata } as any)
+        .mockResolvedValueOnce({ uid: 'aud_new', createdAt: new Date('2026-01-02T00:00:00.000Z'), metadata: resolvedMetadata } as any);
+
+      const result = await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'backfill' }, actorExtId);
+
+      expect(result.resolution_status).toBe('applied');
+    });
+
+    it('returns resolution_status: dismissed in the response row after a successful dismiss', async () => {
+      scheduleConflictServiceMock.dismissConflict.mockResolvedValue({ outcome: 'dismissed' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'DRAFT' },
+      } as any);
+      auditServiceMock.findLatestScheduleConflictForShow.mockResolvedValue({
+        uid: 'aud_new',
+        createdAt: new Date('2026-01-02T00:00:00.000Z'),
+        metadata: {
+          event: 'schedule_publish_impact',
+          impact_kind: 'stale_conflict',
+          lifecycle: 'resolved',
+          conflict_uid: 'conflict_1',
+          conflict_type: 'update_held_back',
+          resolves_conflict_uid: 'conflict_1',
+          outcome: 'dismissed',
+          schedule_uid: 'schedule_1',
+          external_id: 'EXT-1',
+          held_back: null,
+          source: 'google_sheets_schedule_publish',
+        },
+      } as any);
+
+      const result = await service.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'dismiss', reason: 'no longer needed' }, actorExtId);
+
+      expect(result.resolution_status).toBe('dismissed');
+    });
+  });
+
+  /**
+   * End-to-end regression test for the actual bug: reproduces the real call
+   * shape (StudioShowManagementService.resolveScheduleConflict calling into
+   * the REAL ScheduleConflictService, not a jest.fn() mock) against a
+   * $transaction mock that genuinely simulates Prisma's commit-on-resolve /
+   * rollback-on-throw semantics — unlike the always-committing passthrough
+   * (`jest.fn(async (cb) => cb(mockTx))`) used everywhere else in this file,
+   * which cannot distinguish a durable write from one that got rolled back.
+   *
+   * Before the fix, resolveScheduleConflict was @Transactional() and called
+   * the (undecorated) applyConflict directly — CLS Propagation.Required
+   * reused that single ambient transaction, so applyConflict's write-then-throw
+   * for SHOW_NO_LONGER_ELIGIBLE got rolled back along with the throw, and the
+   * audit write never landed. This test proves the write now survives.
+   */
+  describe('resolveScheduleConflict transaction integrity (regression: auto-resolve write must survive the SHOW_NO_LONGER_ELIGIBLE throw)', () => {
+    let integrationService: StudioShowManagementService;
+    let durableAuditRows: Array<{ uid: string; metadata: any; actorId: bigint | null; reason: string | null }>;
+
+    beforeEach(async () => {
+      durableAuditRows = [];
+      let currentBuffer: typeof durableAuditRows | null = null;
+
+      const mockTxWithLock = { $executeRaw: jest.fn().mockResolvedValue(undefined) };
+
+      const transactionalPrismaMock = {
+        // Simulates real Prisma $transaction semantics: writes made during the
+        // callback are only visible durably if the callback resolves; if it
+        // throws, they're discarded (never flushed). Nested @Transactional()
+        // calls under CLS Propagation.Required don't call $transaction again —
+        // they reuse the ambient transaction/buffer, exactly like real Prisma.
+        $transaction: jest.fn(async (callback: any) => {
+          const isOutermost = currentBuffer === null;
+          const buffer = isOutermost ? [] : currentBuffer!;
+          const previous = currentBuffer;
+          currentBuffer = buffer;
+          try {
+            const result = await callback(mockTxWithLock);
+            if (isOutermost) {
+              durableAuditRows.push(...buffer);
+            }
+            return result;
+          } finally {
+            currentBuffer = previous;
+          }
+        }),
+      };
+
+      const fakeAuditService = {
+        create: jest.fn(async (payload: any) => {
+          const row = { uid: `aud_new_${durableAuditRows.length}`, metadata: payload.metadata, actorId: payload.actorId ?? null, reason: payload.reason ?? null };
+          (currentBuffer ?? durableAuditRows).push(row);
+          return row;
+        }),
+        findLatestScheduleConflictForShow: jest.fn(async () => {
+          const rows = [...durableAuditRows, ...(currentBuffer ?? [])];
+          return rows.length > 0 ? (rows[rows.length - 1] as any) : null;
+        }),
+      };
+
+      @Module({
+        providers: [{ provide: PrismaService, useValue: transactionalPrismaMock }],
+        exports: [PrismaService],
+      })
+      class IntegrationPrismaModule {}
+
+      const module: TestingModule = await Test.createTestingModule({
+        imports: [
+          ClsModule.forRoot({
+            global: true,
+            middleware: { mount: false },
+            plugins: [
+              new ClsPluginTransactional({
+                imports: [IntegrationPrismaModule],
+                adapter: new TransactionalAdapterPrisma({ prismaInjectionToken: PrismaService }),
+              }),
+            ],
+          }),
+        ],
+        providers: [
+          StudioShowManagementService,
+          ScheduleConflictService,
+          { provide: UtilityService, useValue: { generateBrandedId: jest.fn().mockReturnValue('conflict_fresh') } },
+          { provide: StudioService, useValue: studioServiceMock },
+          { provide: StudioRoomService, useValue: studioRoomServiceMock },
+          { provide: ScheduleService, useValue: scheduleServiceMock },
+          { provide: ShowService, useValue: showServiceMock },
+          { provide: ShowRepository, useValue: showRepositoryMock },
+          { provide: PlatformRepository, useValue: platformRepositoryMock },
+          { provide: ShowPlatformRepository, useValue: showPlatformRepositoryMock },
+          { provide: ShowPlatformService, useValue: showPlatformServiceMock },
+          { provide: ShowOrchestrationService, useValue: showOrchestrationServiceMock },
+          { provide: UserService, useValue: userServiceMock },
+          { provide: ShowCancellationGateService, useValue: showCancellationGateServiceMock },
+          { provide: ShowStatusService, useValue: showStatusServiceMock },
+          { provide: TaskService, useValue: taskServiceMock },
+          { provide: AuditService, useValue: fakeAuditService },
+          { provide: TaskTargetService, useValue: taskTargetServiceMock },
+        ],
+      }).compile();
+
+      integrationService = module.get(StudioShowManagementService);
+
+      userServiceMock.getUserByExtId.mockResolvedValue({ id: BigInt(9), uid: 'user_1', name: 'Actor' });
+      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+        id: BigInt(1),
+        uid: 'show_1',
+        showStatus: { systemKey: 'COMPLETED' },
+      } as any);
+
+      durableAuditRows.push({
+        uid: 'aud_old',
+        metadata: {
+          event: 'schedule_publish_impact',
+          impact_kind: 'stale_conflict',
+          lifecycle: 'opened',
+          conflict_uid: 'conflict_1',
+          conflict_type: 'update_held_back',
+          schedule_uid: 'schedule_1',
+          external_id: 'EXT-1',
+          held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+          source: 'google_sheets_schedule_publish',
+        },
+        actorId: null,
+        reason: null,
+      });
+    });
+
+    it('durably commits the auto-resolve audit write even though the request is ultimately rejected with SHOW_NO_LONGER_ELIGIBLE', async () => {
+      await expect(
+        integrationService.resolveScheduleConflict('studio_1', 'show_1', 'conflict_1', { action: 'apply', reason: 'planner override' }, actorExtId),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ message: 'SHOW_NO_LONGER_ELIGIBLE' }),
+      });
+
+      const latest = durableAuditRows[durableAuditRows.length - 1];
+      expect(latest.metadata).toMatchObject({
+        lifecycle: 'resolved',
+        outcome: 'auto_resolved_no_longer_conflicting',
+        resolves_conflict_uid: 'conflict_1',
+      });
+    });
+  });
+
   describe('listSchedulePublishImpacts', () => {
     it('maps schedule publish impact audits to manager queue rows', async () => {
       const createdAt = new Date('2026-06-29T10:00:00.000Z');
@@ -1122,6 +1651,7 @@ describe('studioShowManagementService', () => {
           },
         ],
       });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
 
       const result = await service.listSchedulePublishImpacts('std_123', {
         page: 2,
@@ -1138,6 +1668,10 @@ describe('studioShowManagementService', () => {
           take: 25,
         },
       );
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        { skip: 25, take: 25 },
+      );
       expect(result.total).toBe(1);
       expect(result.items[0]).toEqual({
         audit_id: 'aud_123',
@@ -1146,6 +1680,10 @@ describe('studioShowManagementService', () => {
         external_id: 'show_external_1',
         changed_fields: ['start_time'],
         relation_changes: { creator_links_added: 1 },
+        conflict_uid: null,
+        conflict_type: null,
+        resolution_status: null,
+        held_back: null,
         show: {
           id: 'show_123',
           name: 'Confirmed Show',
@@ -1159,6 +1697,114 @@ describe('studioShowManagementService', () => {
         },
         created_at: '2026-06-29T10:00:00.000Z',
       });
+    });
+
+    it('returns unresolved stale_conflict rows for a past-dated show by default, alongside upcoming confirmed_future_* rows', async () => {
+      const confirmedFutureFixture = {
+        audit: {
+          uid: 'aud_confirmed',
+          createdAt: new Date('2026-05-01T00:00:00.000Z'),
+          reason: null,
+          metadata: {
+            event: 'schedule_publish_impact',
+            impact_kind: 'confirmed_future_updated',
+            schedule_uid: 'schedule_1',
+            external_id: 'EXT-1',
+            changed_fields: ['name'],
+            relation_changes: {},
+          },
+        },
+        targetId: BigInt(1),
+        show: {
+          uid: 'show_1',
+          externalId: 'EXT-1',
+          name: 'Upcoming Show',
+          startTime: new Date('2026-06-01T10:00:00.000Z'),
+          endTime: new Date('2026-06-01T12:00:00.000Z'),
+          client: { uid: 'client_1', name: 'Client' },
+          showStatus: { name: 'Confirmed', systemKey: 'CONFIRMED' },
+        },
+      };
+      const staleConflictFixture = {
+        audit: {
+          uid: 'aud_stale',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          reason: null,
+          metadata: {
+            event: 'schedule_publish_impact',
+            impact_kind: 'stale_conflict',
+            lifecycle: 'opened',
+            conflict_uid: 'conflict_1',
+            conflict_type: 'update_held_back',
+            schedule_uid: 'schedule_1',
+            external_id: 'EXT-2',
+            held_back: { show_fields: { changed_fields: ['name'], old: { name: 'A' }, new: { name: 'B' } }, show_creators: [], show_platforms: [], proposed_status_transition: null },
+          },
+        },
+        targetId: BigInt(2),
+        show: {
+          uid: 'show_2',
+          externalId: 'EXT-2',
+          name: 'Past Show',
+          startTime: new Date('2026-01-01T10:00:00.000Z'),
+          endTime: new Date('2026-01-01T12:00:00.000Z'),
+          client: { uid: 'client_1', name: 'Client' },
+          showStatus: { name: 'Draft', systemKey: 'DRAFT' },
+        },
+      };
+
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [confirmedFutureFixture], total: 1 });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [staleConflictFixture], total: 1 });
+
+      const result = await service.listSchedulePublishImpacts('studio_1', {});
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items.some((r) => r.impact_kind === 'stale_conflict')).toBe(true);
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledWith('studio_1', expect.objectContaining({ skip: 0, take: 25 }));
+    });
+
+    it('round-trips an FK-backed held_back field as uid+name, never a raw bigint', async () => {
+      const staleConflictFixtureWithFkField = {
+        audit: {
+          uid: 'aud_stale_fk',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          reason: null,
+          metadata: {
+            event: 'schedule_publish_impact',
+            impact_kind: 'stale_conflict',
+            lifecycle: 'opened',
+            conflict_uid: 'conflict_fk1',
+            conflict_type: 'update_held_back',
+            schedule_uid: 'schedule_1',
+            external_id: 'EXT-3',
+            held_back: {
+              show_fields: {
+                changed_fields: ['show_type_id'],
+                old: { show_type_id: { uid: 'shwtyp_1', name: 'bau' } },
+                new: { show_type_id: { uid: 'shwtyp_2', name: 'campaign' } },
+              },
+              show_creators: [],
+              show_platforms: [],
+              proposed_status_transition: null,
+            },
+          },
+        },
+        targetId: BigInt(3),
+        show: {
+          uid: 'show_3',
+          externalId: 'EXT-3',
+          name: 'Show',
+          startTime: new Date('2026-01-01T10:00:00.000Z'),
+          endTime: new Date('2026-01-01T12:00:00.000Z'),
+          client: { uid: 'client_1', name: 'Client' },
+          showStatus: { name: 'Draft', systemKey: 'DRAFT' },
+        },
+      };
+
+      const row = (service as any).toSchedulePublishImpactRow(staleConflictFixtureWithFkField);
+      expect(row.held_back.show_fields.old.show_type_id).toEqual({ uid: 'shwtyp_1', name: 'bau' });
+      expect(typeof row.held_back.show_fields.old.show_type_id).not.toBe('bigint');
+      expect(typeof row.held_back.show_fields.old.show_type_id).not.toBe('number');
     });
   });
 

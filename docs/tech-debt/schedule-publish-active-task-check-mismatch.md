@@ -1,8 +1,12 @@
 # Tech Debt: Schedule Publish's Active-Task Check Disagrees With the Cancellation Gate's
 
-## Current Issue
+## Status: Resolved
 
-`PublishingService`'s remove-path active-task check (used to decide whether a removed show goes straight to `CANCELLED` or to `CANCELLED_PENDING_RESOLUTION`) is an inline query:
+`PublishingService`'s remove-path active-task check and the apply-time re-evaluation both call `TaskTargetService.countActiveByShowId` — the same helper `ShowCancellationGateService` uses (excludes `COMPLETED`/`CLOSED` tasks, same soft-delete handling). Publish-time and apply-time no longer disagree with each other or with the gate about what counts as an active task.
+
+## Original Issue
+
+`PublishingService`'s remove-path active-task check (used to decide whether a removed show goes straight to `CANCELLED` or to `CANCELLED_PENDING_RESOLUTION`) was an inline query:
 
 ```ts
 const hasActiveTaskTarget = await tx.taskTarget.findFirst({
@@ -11,27 +15,7 @@ const hasActiveTaskTarget = await tx.taskTarget.findFirst({
 });
 ```
 
-`ShowCancellationGateService`'s active-task guard (used when resolving a pending cancellation to `CANCELLED`) instead excludes terminal task statuses too — it treats a task as "active" only if it is non-deleted **and** not `COMPLETED`/`CLOSED`.
-
-These are two different definitions of "active task" answering the same underlying question (does this show still have real production work attached?) in two different code paths.
-
-## Why It Matters
-
-A show with only `COMPLETED`/`CLOSED` tasks attached is, by the gate's definition, eligible for `CANCELLED` (no active work remains). By publish's definition, the same show is treated as having active work and gets parked `CANCELLED_PENDING_RESOLUTION` instead of cancelled directly. The two paths can disagree about whether the same show needs human sign-off, which is confusing for whoever is reading the resulting status and not obviously documented anywhere.
-
-## Desired Direction
-
-`TaskTargetRepository.countActiveByShowId` / `TaskTargetService.countActiveByShowId` already exist and already implement the correct definition (excludes `COMPLETED`/`CLOSED`) for `ShowCancellationGateService`. `PublishingService` should call this same helper instead of its own inline `tx.taskTarget.findFirst` query, so the two paths cannot drift.
-
-## Trigger To Fix
-
-- `publishing.service.ts`'s remove-path logic changes again.
-- A studio reports a show parked pending-resolution by publish that the gate would have let resolve straight to `CANCELLED`.
-- The schedule-publish-to-gate unification (see [`docs/ideation/schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md)) is picked up — fixing this becomes nearly free at that point, since both paths end up calling the same gate primitive.
-
-## Acceptance Criteria
-
-- `PublishingService` and `ShowCancellationGateService` use the same active-task definition (same exclusion list, same soft-delete handling) via one shared helper.
+`ShowCancellationGateService`'s active-task guard (used when resolving a pending cancellation to `CANCELLED`) instead excludes terminal task statuses too — it treats a task as "active" only if it is non-deleted **and** not `COMPLETED`/`CLOSED`. A show with only `COMPLETED`/`CLOSED` tasks attached was eligible for `CANCELLED` by the gate's definition but got parked `CANCELLED_PENDING_RESOLUTION` by publish's definition — two different answers to the same question in two different code paths.
 
 ## Related Context
 

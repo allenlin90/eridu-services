@@ -36,6 +36,8 @@ export type ExistingShow = {
   endTime: Date;
   metadata: unknown;
   deletedAt: Date | null;
+  actualStartTime: Date | null;
+  actualEndTime: Date | null;
   showStatus: {
     systemKey: string | null;
   };
@@ -59,4 +61,19 @@ export type ShowRelationSyncChanges = {
   platform_links_added: number;
   platform_links_updated: number;
   platform_links_removed: number;
+};
+
+export type HeldBackRelations = {
+  showCreators: Array<{
+    creatorUid: string;
+    action: 'update' | 'remove';
+    oldNote: string | null;
+    newNote: string | null;
+  }>;
+  showPlatforms: Array<{
+    platformUid: string;
+    action: 'update' | 'remove';
+    old: { liveStreamLink: string | null; platformShowId: string | null };
+    new: { liveStreamLink: string | null; platformShowId: string | null };
+  }>;
 };

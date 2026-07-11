@@ -51,6 +51,7 @@ describe('studioShowController', () => {
     getCancellationStatus: jest.fn(),
     listSchedulePublishImpacts: jest.fn(),
     listShowAudits: jest.fn(),
+    resolveScheduleConflict: jest.fn(),
   };
 
   const clientMechanicServiceMock = {
@@ -608,6 +609,24 @@ describe('studioShowController', () => {
     it('is open to any studio member at the decorator level (service enforces active Duty Manager)', () => {
       const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.requestCancellationResolution);
       expect(roles).toEqual([]);
+    });
+  });
+
+  describe('resolveScheduleConflict', () => {
+    it('passes the actor ext_id through to the service', async () => {
+      const user = { ext_id: 'ext_5' } as any;
+      const body = { action: 'dismiss', reason: 'no longer relevant' } as any;
+      studioShowManagementServiceMock.resolveScheduleConflict.mockResolvedValue({ audit_id: 'aud_1' });
+
+      await controller.resolveScheduleConflict('std_123', 'show_123', 'conflict_1', body, user);
+
+      expect(studioShowManagementServiceMock.resolveScheduleConflict).toHaveBeenCalledWith(
+        'std_123',
+        'show_123',
+        'conflict_1',
+        body,
+        'ext_5',
+      );
     });
   });
 

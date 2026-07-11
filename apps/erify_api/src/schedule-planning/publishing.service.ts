@@ -21,9 +21,12 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { OPERATIONAL_DAY_START_HOUR } from '@/lib/utils/operational-day.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
+import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
+import type { HeldBackFieldValue, ScheduleConflictHeldBack } from '@/models/schedule-conflict/schedule-conflict.types';
 import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { TaskService } from '@/models/task/task.service';
+import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
@@ -55,6 +58,8 @@ export class PublishingService {
     private readonly utilityService: UtilityService,
     private readonly taskService: TaskService,
     private readonly auditService: AuditService,
+    private readonly scheduleConflictService: ScheduleConflictService,
+    private readonly taskTargetService: TaskTargetService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -186,6 +191,8 @@ export class PublishingService {
         endTime: true,
         metadata: true,
         deletedAt: true,
+        actualStartTime: true,
+        actualEndTime: true,
         showStatus: {
           select: {
             systemKey: true,
@@ -221,6 +228,8 @@ export class PublishingService {
           endTime: true,
           metadata: true,
           deletedAt: true,
+          actualStartTime: true,
+          actualEndTime: true,
           showStatus: {
             select: {
               systemKey: true,
@@ -369,11 +378,18 @@ export class PublishingService {
       publishSummary.shows_created += createdShows.length;
     }
 
+    const staleConflictCandidates = new Map<bigint, {
+      externalId: string | null;
+      heldBackFields: { changedFields: string[]; old: Record<string, HeldBackFieldValue>; new: Record<string, HeldBackFieldValue> } | null;
+    }>();
+    const terminalShowIds = new Set<bigint>();
+
     for (const pair of toUpdate) {
       const { incoming, existing } = pair;
 
-      if (this.isExistingPastOrDone(existing, publishStartedAt, UPDATE_PRESERVED_STATUS_KEYS)) {
+      if (this.isTerminalStatus(existing, UPDATE_PRESERVED_STATUS_KEYS)) {
         publishSummary.shows_preserved += 1;
+        terminalShowIds.add(existing.id);
         continue;
       }
 
@@ -381,75 +397,104 @@ export class PublishingService {
 
       const updateData: Record<string, unknown> = {};
       const changedFields: string[] = [];
+      const oldFieldValues: Record<string, HeldBackFieldValue> = {};
+      const newFieldValues: Record<string, HeldBackFieldValue> = {};
+
+      const trackChange = (field: string, oldValue: HeldBackFieldValue, newValue: HeldBackFieldValue, updateKey: string, updateValue: unknown) => {
+        updateData[updateKey] = updateValue;
+        changedFields.push(field);
+        oldFieldValues[field] = oldValue;
+        newFieldValues[field] = newValue;
+      };
 
       if (existing.name !== incoming.source.name) {
-        updateData.name = incoming.source.name;
-        changedFields.push('name');
+        trackChange('name', existing.name, incoming.source.name, 'name', incoming.source.name);
       }
 
       const incomingStart = new Date(incoming.source.startTime);
       if (existing.startTime.getTime() !== incomingStart.getTime()) {
-        updateData.startTime = incomingStart;
-        changedFields.push('start_time');
+        trackChange('start_time', existing.startTime.toISOString(), incomingStart.toISOString(), 'startTime', incomingStart);
       }
 
       const incomingEnd = new Date(incoming.source.endTime);
       if (existing.endTime.getTime() !== incomingEnd.getTime()) {
-        updateData.endTime = incomingEnd;
-        changedFields.push('end_time');
+        trackChange('end_time', existing.endTime.toISOString(), incomingEnd.toISOString(), 'endTime', incomingEnd);
       }
 
       if (existing.clientId !== incoming.clientId) {
-        updateData.clientId = incoming.clientId;
-        changedFields.push('client_id');
+        trackChange('client_id', existing.clientId, incoming.clientId, 'clientId', incoming.clientId);
       }
 
+      // Internal bookkeeping, not a planner-facing field diff: there is no
+      // uid to resolve the old/new scheduleId against for display (it isn't
+      // one of the six FK fields in FK_FIELD_MODEL_MAP, and raw bigint DB
+      // ids must never be exposed via the API), so this intentionally does
+      // not go through trackChange / changedFields / held_back.
       if (existing.scheduleId !== schedule.id) {
         updateData.scheduleId = schedule.id;
-        changedFields.push('schedule_id');
       }
 
       if (existing.studioId !== incoming.studioId) {
-        updateData.studioId = incoming.studioId;
-        changedFields.push('studio_id');
+        trackChange('studio_id', existing.studioId, incoming.studioId, 'studioId', incoming.studioId);
       }
 
       if (existing.studioRoomId !== incoming.studioRoomId) {
-        updateData.studioRoomId = incoming.studioRoomId;
-        changedFields.push('studio_room_id');
+        trackChange('studio_room_id', existing.studioRoomId, incoming.studioRoomId, 'studioRoomId', incoming.studioRoomId);
       }
 
       if (existing.showTypeId !== incoming.showTypeId) {
-        updateData.showTypeId = incoming.showTypeId;
-        changedFields.push('show_type_id');
+        trackChange('show_type_id', existing.showTypeId, incoming.showTypeId, 'showTypeId', incoming.showTypeId);
       }
 
       if (existing.showStatusId !== incoming.showStatusId) {
-        updateData.showStatusId = incoming.showStatusId;
-        changedFields.push('show_status_id');
+        trackChange('show_status_id', existing.showStatusId, incoming.showStatusId, 'showStatusId', incoming.showStatusId);
       }
 
       if (existing.showStandardId !== incoming.showStandardId) {
-        updateData.showStandardId = incoming.showStandardId;
-        changedFields.push('show_standard_id');
+        trackChange('show_standard_id', existing.showStandardId, incoming.showStandardId, 'showStandardId', incoming.showStandardId);
       }
 
       const incomingMetadata = incoming.source.metadata || {};
       if (JSON.stringify(existing.metadata || {}) !== JSON.stringify(incomingMetadata)) {
         updateData.metadata = incomingMetadata;
         changedFields.push('metadata');
+        oldFieldValues.metadata = JSON.stringify(existing.metadata || {});
+        newFieldValues.metadata = JSON.stringify(incomingMetadata);
       }
 
       const wasDeleted = existing.deletedAt !== null;
       const wasCancelled = existing.showStatus.systemKey === 'CANCELLED'
         || existing.showStatus.systemKey === 'CANCELLED_PENDING_RESOLUTION';
 
+      // Internal lifecycle bookkeeping (restore-on-republish), not a
+      // planner-facing field diff — intentionally not tracked into
+      // changed_fields / held_back either.
       if (wasDeleted) {
         updateData.deletedAt = null;
-        changedFields.push('deleted_at');
       }
 
       const timeChanged = updateData.startTime !== undefined || updateData.endTime !== undefined;
+
+      const heldBackFields = changedFields.length > 0
+        ? { changedFields: [...changedFields], old: oldFieldValues, new: newFieldValues }
+        : null;
+
+      if (this.hasRecordedActuals(existing)) {
+        // Always register as a candidate — even with no field diff — so the
+        // reconciliation pass below can auto-resolve a previously-opened
+        // conflict once the sheet no longer disagrees with the show. Only
+        // skip the write (continue) when there's something to actually hold
+        // back.
+        staleConflictCandidates.set(existing.id, {
+          externalId: incoming.source.externalId,
+          heldBackFields,
+        });
+        if (changedFields.length > 0) {
+          // Hold back — do not write. Recorded via staleConflictCandidates
+          // below, once every show in toUpdate has been visited.
+          continue;
+        }
+      }
 
       if (Object.keys(updateData).length > 0) {
         await tx.show.update({
@@ -487,8 +532,16 @@ export class PublishingService {
     }
 
     for (const removed of toRemove) {
-      if (this.isExistingPastOrDone(removed, publishStartedAt)) {
+      if (this.isTerminalStatus(removed, PRESERVED_STATUS_KEYS)) {
         publishSummary.shows_preserved += 1;
+        await this.scheduleConflictService.reconcileShowConflict({
+          showId: removed.id,
+          scheduleUid: schedule.uid,
+          externalId: removed.externalId,
+          actorId: userId,
+          conflictType: 'removal_held_back',
+          heldBack: null,
+        });
         continue;
       }
 
@@ -496,9 +549,7 @@ export class PublishingService {
         if (removed.showStatusId !== statusIds.cancelledPendingResolution) {
           await tx.show.update({
             where: { id: removed.id },
-            data: {
-              showStatusId: statusIds.cancelledPendingResolution,
-            },
+            data: { showStatusId: statusIds.cancelledPendingResolution },
           });
         }
 
@@ -517,44 +568,133 @@ export class PublishingService {
         continue;
       }
 
-      const hasActiveTaskTarget = await tx.taskTarget.findFirst({
-        where: {
-          showId: removed.id,
-          deletedAt: null,
-          task: {
-            deletedAt: null,
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
+      if (this.hasRecordedActuals(removed)) {
+        const activeTaskCount = await this.taskTargetService.countActiveByShowId(removed.id);
+        const proposedStatusTransition = {
+          from: removed.showStatus.systemKey ?? 'DRAFT',
+          to: (activeTaskCount > 0 ? 'CANCELLED_PENDING_RESOLUTION' : 'CANCELLED') as 'CANCELLED' | 'CANCELLED_PENDING_RESOLUTION',
+        };
 
-      const targetStatusId = hasActiveTaskTarget
+        const { recorded } = await this.scheduleConflictService.reconcileShowConflict({
+          showId: removed.id,
+          scheduleUid: schedule.uid,
+          externalId: removed.externalId,
+          actorId: userId,
+          conflictType: 'removal_held_back',
+          heldBack: {
+            showFields: null,
+            showCreators: [],
+            showPlatforms: [],
+            proposedStatusTransition,
+          },
+        });
+        if (recorded) {
+          publishSummary.publish_impacts_recorded += 1;
+        }
+        continue;
+      }
+
+      const activeTaskCount = await this.taskTargetService.countActiveByShowId(removed.id);
+      const targetStatusId = activeTaskCount > 0
         ? statusIds.cancelledPendingResolution
         : statusIds.cancelled;
 
       if (removed.showStatusId !== targetStatusId) {
         await tx.show.update({
           where: { id: removed.id },
-          data: {
-            showStatusId: targetStatusId,
-          },
+          data: { showStatusId: targetStatusId },
         });
       }
 
-      if (hasActiveTaskTarget) {
+      if (activeTaskCount > 0) {
         publishSummary.shows_pending_resolution += 1;
       } else {
         publishSummary.shows_cancelled += 1;
       }
     }
 
-    const relationChangesByShowId = await this.relationSyncService.syncShowRelations(
+    const showActualsById = new Map<bigint, boolean>();
+    [...currentScheduleShows, ...matchingShows].forEach((show) => {
+      showActualsById.set(show.id, show.actualStartTime !== null || show.actualEndTime !== null);
+    });
+
+    const { relationChangesByShowId, heldBackRelationsByShowId, rowActualsCandidateShowIds } = await this.relationSyncService.syncShowRelations(
       incomingByShowId,
       uidMaps,
       publishSummary,
+      showActualsById,
     );
+
+    for (const [showId, candidate] of staleConflictCandidates.entries()) {
+      const heldBackRelations = heldBackRelationsByShowId.get(showId);
+      const hasRelationHoldBack = (heldBackRelations?.showCreators.length ?? 0) > 0
+        || (heldBackRelations?.showPlatforms.length ?? 0) > 0;
+      const heldBack: ScheduleConflictHeldBack | null = (candidate.heldBackFields || hasRelationHoldBack)
+        ? {
+            showFields: candidate.heldBackFields,
+            showCreators: heldBackRelations?.showCreators ?? [],
+            showPlatforms: heldBackRelations?.showPlatforms ?? [],
+            proposedStatusTransition: null,
+          }
+        : null;
+
+      const { recorded } = await this.scheduleConflictService.reconcileShowConflict({
+        showId,
+        scheduleUid: schedule.uid,
+        externalId: candidate.externalId,
+        actorId: userId,
+        conflictType: 'update_held_back',
+        heldBack,
+      });
+      if (recorded) {
+        publishSummary.publish_impacts_recorded += 1;
+      }
+    }
+
+    for (const [showId, heldBackRelations] of heldBackRelationsByShowId.entries()) {
+      if (staleConflictCandidates.has(showId)) {
+        continue; // already handled above
+      }
+      const hasRelationHoldBack = heldBackRelations.showCreators.length > 0 || heldBackRelations.showPlatforms.length > 0;
+      // Even with nothing held back this publish, a row-actuals candidate
+      // still needs to reconcile: a conflict opened by an earlier publish
+      // for this show's creator/platform relation may still be pending, and
+      // only this call can auto-resolve it once the sheet no longer
+      // disagrees with the current relation state.
+      if (!hasRelationHoldBack && !rowActualsCandidateShowIds.has(showId)) {
+        continue;
+      }
+      const incoming = incomingByShowId.get(showId);
+      const { recorded } = await this.scheduleConflictService.reconcileShowConflict({
+        showId,
+        scheduleUid: schedule.uid,
+        externalId: incoming?.source.externalId ?? null,
+        actorId: userId,
+        conflictType: 'update_held_back',
+        heldBack: hasRelationHoldBack
+          ? {
+              showFields: null,
+              showCreators: heldBackRelations.showCreators,
+              showPlatforms: heldBackRelations.showPlatforms,
+              proposedStatusTransition: null,
+            }
+          : null,
+      });
+      if (recorded) {
+        publishSummary.publish_impacts_recorded += 1;
+      }
+    }
+
+    for (const showId of terminalShowIds) {
+      await this.scheduleConflictService.reconcileShowConflict({
+        showId,
+        scheduleUid: schedule.uid,
+        externalId: null,
+        actorId: userId,
+        conflictType: 'update_held_back',
+        heldBack: null,
+      });
+    }
 
     for (const [showId, update] of confirmedFutureUpdates.entries()) {
       const relationChanges = relationChangesByShowId.get(showId) ?? this.createEmptyRelationChanges();
@@ -674,14 +814,13 @@ export class PublishingService {
     });
   }
 
-  private isExistingPastOrDone(
-    show: ExistingShow,
-    publishDate: Date,
-    preservedStatusKeys = PRESERVED_STATUS_KEYS,
-  ): boolean {
+  private isTerminalStatus(show: ExistingShow, preservedStatusKeys: Set<string>): boolean {
     const statusKey = show.showStatus.systemKey;
-    return this.isBeforePublishDate(show.startTime, publishDate)
-      || (statusKey !== null && preservedStatusKeys.has(statusKey));
+    return statusKey !== null && preservedStatusKeys.has(statusKey);
+  }
+
+  private hasRecordedActuals(show: ExistingShow): boolean {
+    return show.actualStartTime !== null || show.actualEndTime !== null;
   }
 
   private isIncomingPastOrDone(
