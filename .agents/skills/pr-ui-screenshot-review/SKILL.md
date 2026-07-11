@@ -81,3 +81,4 @@ This skill produces evidence to attach to a PR description; it does not replace 
 ## Related Skills
 
 - [playwright](../playwright/SKILL.md) — the CLI-wrapper form of browser automation this skill assumes (or the equivalent MCP Playwright tool)
+- [ui-mockup-discussion](../ui-mockup-discussion/SKILL.md) — the pre-implementation counterpart. That skill validates the UX with the user *before* code exists, via a standalone mockup; this skill captures evidence of the *shipped* UI after implementation. A PR whose UX went through that skill should link its settled decision in the description alongside these screenshots, so a reviewer can compare "what was agreed" against "what shipped."
