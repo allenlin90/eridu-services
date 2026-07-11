@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { schedulePublishImpactKeys } from '../get-schedule-publish-impacts';
 import { useResolveScheduleConflict } from '../resolve-schedule-conflict';
 
+import { studioShowKeys } from '@/features/studio-shows/api/get-studio-show';
+import { studioShowsKeys } from '@/features/studio-shows/api/get-studio-shows';
 import { apiClient } from '@/lib/api/client';
 
 vi.mock('@tanstack/react-query', async () => await vi.importActual('@tanstack/react-query'));
@@ -68,6 +70,87 @@ describe('useResolveScheduleConflict', () => {
       '/studios/studio_1/shows/show_1/schedule-publish-impacts/conflict_1/resolve',
       { action: 'apply', reason: 'confirmed' },
     );
+  });
+
+  /**
+   * PR #272 review finding: applying a conflict can write show fields,
+   * relations, and reconcile task due dates on the backend, but onSuccess
+   * previously only patched this page's row — a cached show detail/task
+   * view could keep rendering stale pre-apply state. Mirrors
+   * useResolveShowCancellation's invalidateAfterGateTransition pattern.
+   */
+  it('invalidates show detail and task caches after a successful apply', async () => {
+    const params = { page: 1, limit: 25 };
+    const staleRow = {
+      audit_id: 'aud_1',
+      impact_kind: 'stale_conflict',
+      conflict_uid: 'conflict_1',
+      conflict_type: 'update_held_back',
+      resolution_status: 'pending',
+      held_back: null,
+      schedule_id: null,
+      external_id: 'EXT-1',
+      changed_fields: ['name'],
+      relation_changes: {},
+      show: { id: 'show_1', name: 'Test Show', external_id: 'EXT-1', start_time: '2026-01-01T00:00:00.000Z', end_time: '2026-01-01T02:00:00.000Z', status_name: 'Draft', status_system_key: 'DRAFT', client_id: null, client_name: null },
+      created_at: '2026-01-01T00:00:00.000Z',
+    };
+    const resolvedRow = { ...staleRow, resolution_status: 'applied' };
+
+    queryClient.setQueryData(schedulePublishImpactKeys.list('studio_1', params), {
+      data: [staleRow],
+      meta: { total: 1, totalPages: 1 },
+    });
+    vi.mocked(apiClient.post).mockResolvedValue({ data: resolvedRow });
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useResolveScheduleConflict('studio_1'), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate({ showId: 'show_1', conflictUid: 'conflict_1', data: { action: 'apply', reason: 'confirmed' } });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: studioShowKeys.detail('studio_1', 'show_1') });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: studioShowsKeys.listPrefix('studio_1') });
+  });
+
+  it('does not invalidate show detail or task caches on a successful dismiss', async () => {
+    const params = { page: 1, limit: 25 };
+    const staleRow = {
+      audit_id: 'aud_1',
+      impact_kind: 'stale_conflict',
+      conflict_uid: 'conflict_1',
+      conflict_type: 'update_held_back',
+      resolution_status: 'pending',
+      held_back: null,
+      schedule_id: null,
+      external_id: 'EXT-1',
+      changed_fields: ['name'],
+      relation_changes: {},
+      show: { id: 'show_1', name: 'Test Show', external_id: 'EXT-1', start_time: '2026-01-01T00:00:00.000Z', end_time: '2026-01-01T02:00:00.000Z', status_name: 'Draft', status_system_key: 'DRAFT', client_id: null, client_name: null },
+      created_at: '2026-01-01T00:00:00.000Z',
+    };
+    const resolvedRow = { ...staleRow, resolution_status: 'dismissed' };
+
+    queryClient.setQueryData(schedulePublishImpactKeys.list('studio_1', params), {
+      data: [staleRow],
+      meta: { total: 1, totalPages: 1 },
+    });
+    vi.mocked(apiClient.post).mockResolvedValue({ data: resolvedRow });
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useResolveScheduleConflict('studio_1'), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate({ showId: 'show_1', conflictUid: 'conflict_1', data: { action: 'dismiss', reason: 'keeping current data' } });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: studioShowKeys.detail('studio_1', 'show_1') });
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: studioShowsKeys.listPrefix('studio_1') });
   });
 
   it('invalidates cached lists instead of patching when the show is no longer eligible', async () => {

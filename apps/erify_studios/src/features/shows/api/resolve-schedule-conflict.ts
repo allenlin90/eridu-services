@@ -7,7 +7,9 @@ import type { ResolveScheduleConflictInput, SchedulePublishImpactRow } from '@er
 
 import { schedulePublishImpactKeys } from './get-schedule-publish-impacts';
 
+import { studioShowKeys } from '@/features/studio-shows/api/get-studio-show';
 import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
+import { invalidateStudioTaskQueries } from '@/features/studio-shows/lib/invalidate-studio-task-queries';
 import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
@@ -66,8 +68,16 @@ export function useResolveScheduleConflict(studioId: string) {
   return useMutation({
     mutationFn: ({ showId, conflictUid, data }: { showId: string; conflictUid: string; data: ResolveScheduleConflictInput }) =>
       resolveScheduleConflict(studioId, showId, conflictUid, data),
-    onSuccess: (updatedRow, variables) => {
+    onSuccess: async (updatedRow, variables) => {
       replaceRowInCachedLists(queryClient, studioId, updatedRow);
+      if (variables.data.action === 'apply') {
+        // Applying can write show fields/relations and reconcile task due
+        // dates — invalidate everything else that renders this show's state,
+        // not just this page's row (mirrors useResolveShowCancellation's
+        // invalidateAfterGateTransition). Dismiss leaves the show untouched.
+        await queryClient.invalidateQueries({ queryKey: studioShowKeys.detail(studioId, updatedRow.show.id) });
+        await invalidateStudioTaskQueries({ queryClient, studioId, showIds: [updatedRow.show.id] });
+      }
       toast.success(
         variables.data.action === 'apply'
           ? `Applied — ${updatedRow.show.name} has been updated.`
