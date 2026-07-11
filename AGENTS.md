@@ -202,7 +202,7 @@ method(@StudioParam() studioUid: string) {
 Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and description in its frontmatter. Skills cover these categories:
 
 - **Backend API** — service, repository, controller, orchestration, authorization, database, testing, performance, logging, security patterns
-- **Frontend** — tech stack, UI components, API layer, state management, testing, error handling, performance, i18n, code quality, table views, PWA
+- **Frontend** — tech stack, UI components, API layer, state management, testing, error handling, performance, i18n, code quality, table views, PWA, pre-implementation UX mockup validation
 - **Docs platform** — SSR auth, Astro/Starlight, doc layering, information architecture, user-facing docs
 - **Architecture** — shared API types, design patterns, SOLID, domain refactoring, data compatibility, environment config, package extraction
 - **Feature-specific** — admin/studio list patterns, task templates, schedule continuity, shift schedules, show production lifecycle, file uploads, spreadsheets, and more
@@ -216,9 +216,10 @@ Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and des
 4. Implement the minimal change set first; avoid broad refactors unless requested.
 5. For PWA work in frontend apps, follow `.agents/workflows/pwa-migration.md` in addition to feature-specific skills.
 6. For UI or UX redesign and route layout quality passes, follow `.agents/workflows/ui-ux-pro-max.md`.
-7. Verify each impacted workspace with the checklist below.
-8. For feature, refactor, or behavior changes, run knowledge sync.
-9. For doc or phase-boundary work, run the appropriate lifecycle workflow.
+7. Before writing an implementation plan for a new or undecided frontend UX, validate it with the user via `ui-mockup-discussion` (rendered mockups, not prose descriptions) — see `.agents/skills/ui-mockup-discussion/SKILL.md`.
+8. Verify each impacted workspace with the checklist below.
+9. For feature, refactor, or behavior changes, run knowledge sync.
+10. For doc or phase-boundary work, run the appropriate lifecycle workflow.
 
 ### Verification Checklist (Mandatory)
 Run for every changed workspace or package:

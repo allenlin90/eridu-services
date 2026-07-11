@@ -230,7 +230,8 @@ Only once §1–§3 are done is the verdict **ready to merge**.
 - [ ] Summary matches what was actually delivered — no references to deleted files or stale paths.
 - [ ] Docs section lists canonical paths (not `design/` paths for promoted docs).
 - [ ] Validation section reflects current pass/fail state for all affected workspaces.
-- [ ] If the PR touches UI (Frontend gate or eridu_auth frontend), consider attaching before/after or state-by-state screenshots per `.agents/skills/pr-ui-screenshot-review/SKILL.md` — evidence only, never committed to the repo.
+- [ ] **If the PR touches UI** (Frontend gate or eridu_auth frontend): the PR description embeds in-browser screenshots of the shipped UI states (empty/populated/error/each dialog as relevant) per `.agents/skills/pr-ui-screenshot-review/SKILL.md`. This is required, not optional, for any PR that adds or materially changes rendered UI — evidence only, never committed to the repo. A PR that only tweaks copy, a single style value, or non-visual logic in a UI file may skip this; note the skip reason in the description rather than silently omitting it.
+- [ ] **If the feature's UX was validated pre-implementation** via `ui-mockup-discussion` (rendered mockup + user discussion, not a prose description): the PR description links back to the settled decision — the design/spec doc's UX section, or a one-line summary of what was validated and where. This is what lets a reviewer check the shipped UI against the UX that was actually agreed on, not just against the code diff. If the PR's UX was fully pre-specified (no mockup phase needed), note that instead of leaving the check silently unaddressed.
 
 ---
 

@@ -25,4 +25,4 @@ If `stale_conflict` volume grows enough to matter, replace the two independently
 
 ## Related Context
 
-[`apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md`](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md) § Stale Conflict Rule, [`docs/superpowers/specs/2026-07-08-schedule-publish-actuals-aware-conflict-handling-design.md`](../superpowers/specs/2026-07-08-schedule-publish-actuals-aware-conflict-handling-design.md), [`schedule-publish-sequential-audit-writes.md`](./schedule-publish-sequential-audit-writes.md) (same code path, related batching gap).
+[`apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md`](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md) § Stale Conflict Rule, [`schedule-publish-sequential-audit-writes.md`](./schedule-publish-sequential-audit-writes.md) (same code path, related batching gap).
