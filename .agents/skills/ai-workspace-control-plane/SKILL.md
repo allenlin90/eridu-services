@@ -71,6 +71,7 @@ When changing Open WebUI workspace policy:
 3. Attach only the skills, knowledge, and MCP tools required for the role.
 4. Check `.agents/skills/` before creating any new instruction content.
 5. If the assistant needs repo implementation guidance, reference canonical `.agents` skills instead of duplicating them.
+6. Use [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) when Git-authored company knowledge is added, reorganized, reviewed for staleness, or prepared for sync.
 
 ## MCP decision path
 
@@ -99,3 +100,4 @@ When changing MCP policy:
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — groups/permissions/access-grant mechanics
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — MCP/tool-server registration mechanics
 - [litellm-admin-api](../litellm-admin-api/SKILL.md) — LiteLLM Management API endpoint reference and call mechanics for models, keys, teams, customers, and budgets that this skill governs
+- [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) — content ingestion impact analysis, semantic linting, review deadlines, consolidation, and routing maintenance for the Git-backed company wiki
