@@ -156,6 +156,40 @@ Real example: `ScheduleConflictService.checkEligibility` / `applyConflict` (`app
 
 ---
 
+## Anti-Pattern 4: `createdAt`-Only Ordering Ties Within One Transaction
+
+Postgres' `now()` — backing every `@default(now())` column — returns the **same value for every statement in one transaction**, not wall-clock time per statement. Any query that orders by (or uses Prisma `distinct` keyed on) a `createdAt`-only sort loses its tie-breaker whenever two rows it needs to distinguish were written in the same transaction, and picks between them non-deterministically.
+
+```typescript
+// ❌ BROKEN: if writeA and writeB commit in the same transaction, they can
+// share one createdAt value — ordering by createdAt alone can return either
+// row first, non-deterministically.
+async findLatest(showId: bigint) {
+  return this.tx.event.findFirst({
+    where: { showId },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+// ✅ CORRECT: add the autoincrement id as a secondary sort key. Insertion
+// order within a transaction is still deterministic even when createdAt
+// ties.
+async findLatest(showId: bigint) {
+  return this.tx.event.findFirst({
+    where: { showId },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+  });
+}
+```
+
+The same fix applies to Prisma `distinct`: `distinct` picks the first row per group according to `orderBy`, so a `createdAt`-only `orderBy` has the identical tie-break gap for a `distinct`-per-group query, not just a plain `findFirst`.
+
+This is easy to introduce more than once in the same feature: a single-row `findFirst`/`findLatest`-style lookup and a `distinct`-by-group review-queue query can both need the same tie-breaker independently, and fixing one does not fix the other — grep for every `orderBy: { createdAt: ... }` (or `orderBy: { audit: { createdAt: ... } }` for a related-table sort) touching a table whose rows can be written multiple times in one transaction, not just the one call site a review first flags.
+
+Real example: `AuditRepository.findLatestScheduleConflictForShow` and `findPendingStaleConflictsForStudio` (`apps/erify_api/src/models/audit/audit.repository.ts`) — `ScheduleConflictService.reconcileShowConflict` can write a resolved row and its replacement opened row in the same transaction (see Anti-Pattern 3's real example), so both queries need `[{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }]`, not `createdAt` alone.
+
+---
+
 ## Legacy Pattern (DO NOT USE)
 
 ```typescript
