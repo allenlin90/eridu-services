@@ -6,7 +6,7 @@ Actual agent skills live in `.agents/skills/`. Files under `ai/` are policy mani
 
 ## Deployed baseline
 
-The current deployment runs Open WebUI `0.9.6` and LiteLLM `1.89.3` as two separate Railway services, each with its own PostgreSQL and Redis:
+The current deployment runs Open WebUI `0.10.2` and LiteLLM `1.91.0` as two separate Railway services, each with its own PostgreSQL and Redis:
 
 ```text
 Company users -> Open WebUI -> [OpenAI-compatible API] -> LiteLLM -> providers (OpenRouter / OpenAI / Anthropic / Gemini)
@@ -15,7 +15,7 @@ Company users -> Open WebUI -> [OpenAI-compatible API] -> LiteLLM -> providers (
 - Open WebUI reaches LiteLLM over Railway private networking (`http://<litellm-service>.railway.internal:4000/v1`); public LiteLLM URLs are for the admin UI and external testing only.
 - LiteLLM models, provider credentials, and company model aliases are managed through the LiteLLM Admin UI ("Store Model in DB") or its equivalent Management API, not a repo-managed `config.yaml` — the Railway deployment does not conveniently expose `config.yaml`. See [`litellm/README.md`](litellm/README.md) and [`litellm-admin-api`](../.agents/skills/litellm-admin-api/SKILL.md).
 - Per-user usage tracking is automatic: Open WebUI forwards each user's identity to LiteLLM via global env vars, so no pre-provisioning or sync step is required to record customer usage.
-- Version-sensitive: verify any LiteLLM/Open WebUI capability against `1.89.3` / `0.9.6` before relying on it; do not assume latest-docs behavior applies.
+- Version-sensitive: verify any LiteLLM/Open WebUI capability against `1.91.0` / `0.10.2` before relying on it; do not assume latest-docs behavior applies. Open WebUI's Railway image is pinned to an explicit tag with auto-updates disabled, so this figure stays accurate until a version change goes through [`ai-platform-release-management`](../.agents/skills/ai-platform-release-management/SKILL.md)'s check-and-maintainer-confirm routine. LiteLLM still tracks the `main-stable` image tag, which moves on its own — re-verify its live version (`GET /openapi.json`, `info.version`) before relying on a specific capability.
 
 ## Canonical AI workspace skills
 
@@ -27,6 +27,8 @@ Use these actual agent skills before changing AI workspace files:
 - `.agents/skills/openwebui-groups-permissions/SKILL.md`
 - `.agents/skills/openwebui-mcp-tool-integration/SKILL.md`
 - `.agents/skills/litellm-admin-api/SKILL.md`
+- `.agents/skills/wiki-knowledge-maintainer/SKILL.md`
+- `.agents/skills/ai-platform-release-management/SKILL.md`
 
 ## Component map
 
@@ -46,7 +48,7 @@ Use these actual agent skills before changing AI workspace files:
 3. Use one LiteLLM virtual key for the Open WebUI backend, then forward the Open WebUI user identity on every LiteLLM request via Open WebUI's global user-info header-forwarding env vars (not connection-level custom headers, which are unreliable on this Railway setup).
 4. Keep LiteLLM model routing, budget tiers, and budget-tier assignment policy in Git as reference; apply it via the Admin UI or the Management API (`litellm-admin-api`).
 5. Treat `.agents/skills/` as the canonical repo skill source of truth.
-6. Treat `ai/openwebui/skills/` as export-only; do not put canonical skills there.
+6. Treat `ai/openwebui/skills/` as Open WebUI adapter/import artifacts; do not put canonical engineering skills there.
 7. Use the existing `erify_api` MCP entrypoint as the first operational MCP surface.
 8. Start MCP tools as read-only; add write actions only after audit and approval workflows are defined.
 9. Log business-data access in the MCP service, not only in Open WebUI.
@@ -67,14 +69,21 @@ Use these actual agent skills before changing AI workspace files:
 │  └─ SKILL.md
 ├─ openwebui-mcp-tool-integration/
 │  └─ SKILL.md
-└─ litellm-admin-api/
+├─ litellm-admin-api/
+│  ├─ SKILL.md
+│  └─ references/
+│     └─ endpoints.md
+├─ wiki-knowledge-maintainer/
+│  └─ SKILL.md
+└─ ai-platform-release-management/
    ├─ SKILL.md
    └─ references/
-      └─ endpoints.md
+      └─ procedure.md
 
 ai/
 ├─ architecture/
-│  └─ ai-workspace-summary.md
+│  ├─ ai-workspace-summary.md
+│  └─ llm-knowledge-base-plan.md
 ├─ litellm/
 │  ├─ .env.example
 │  ├─ budget-tiers.example.json
@@ -85,7 +94,11 @@ ai/
 │  ├─ README.md
 │  ├─ workspace-models.example.json
 │  ├─ tool-access.example.json
-│  └─ skills/
+│  ├─ knowledge/
+│  │  └─ README.md
+│  ├─ skills/
+│  │  └─ README.md
+│  └─ synced/
 │     └─ README.md
 └─ mcp/
    └─ README.md
@@ -101,3 +114,8 @@ Before changing AI workspace policy, also check these existing sources:
 - `.agents/skills/table-view-pattern/SKILL.md`
 - `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
 - `apps/erify_api/docs/MCP_SERVER.md`
+
+## Architecture plans
+
+- [`architecture/ai-workspace-summary.md`](architecture/ai-workspace-summary.md) — Open WebUI, LiteLLM, Better Auth, and MCP platform baseline.
+- [`architecture/llm-knowledge-base-plan.md`](architecture/llm-knowledge-base-plan.md) — Migration plan for a Git-backed company wiki using Open WebUI retrieval, scoped knowledge collections, and optional documentation-only MCP lazy loading.

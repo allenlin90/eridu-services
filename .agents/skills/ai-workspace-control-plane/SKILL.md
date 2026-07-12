@@ -44,10 +44,11 @@ Before editing AI workspace files, read the relevant existing source:
 - Apply per-user budget/rate policy at the LiteLLM customer/end-user layer.
 - On this Railway deployment, manage LiteLLM models, provider credentials, and company model aliases through the LiteLLM Admin UI ("Store Model in DB") or its equivalent Management API (see [litellm-admin-api](../litellm-admin-api/SKILL.md)); `config.yaml` is not conveniently exposed either way. Treat repo `ai/litellm/` files as reference/policy for that surface (or a future repo-managed config path), not an actively-applied config.
 - Use the stable company model aliases (`company-fast`, `company-balanced`, `company-reasoning`, `company-coding`) grouped into access groups (`company-general`, `company-power`, `company-admin`); do not invent a parallel alias taxonomy.
-- Verify LiteLLM/Open WebUI capabilities against the deployed versions (LiteLLM `1.89.3`, Open WebUI `0.9.6`) before presenting them as feasible; do not assume latest-docs behavior applies.
+- Verify LiteLLM/Open WebUI capabilities against the deployed versions (LiteLLM `1.91.0`, tracks `main-stable` and moves — re-verify live; Open WebUI `0.10.2`, pinned) before presenting them as feasible; do not assume latest-docs behavior applies.
 - Keep provider API keys in Railway environment variables, not repo files.
 - Use the existing `erify_api` MCP entrypoint for operational MCP before proposing a separate MCP app.
 - Keep operational MCP tools read-only unless auth, audit, idempotency, and rate-limit behavior are designed.
+- Never leave the Open WebUI or LiteLLM Railway image untagged or on an auto-updating tier. Pin an explicit tag with `autoUpdates: disabled` — Open WebUI satisfies this now, LiteLLM's moving `main-stable` tag remains an open remediation item — and route any version change, including the initial LiteLLM pin, through [ai-platform-release-management](../ai-platform-release-management/SKILL.md): a check-and-report routine with a required maintainer confirmation gate, not a silent or automatic bump.
 
 ## LiteLLM decision path
 
@@ -71,6 +72,7 @@ When changing Open WebUI workspace policy:
 3. Attach only the skills, knowledge, and MCP tools required for the role.
 4. Check `.agents/skills/` before creating any new instruction content.
 5. If the assistant needs repo implementation guidance, reference canonical `.agents` skills instead of duplicating them.
+6. Use [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) when Git-authored company knowledge is added, reorganized, reviewed for staleness, or prepared for sync.
 
 ## MCP decision path
 
@@ -99,3 +101,5 @@ When changing MCP policy:
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — groups/permissions/access-grant mechanics
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — MCP/tool-server registration mechanics
 - [litellm-admin-api](../litellm-admin-api/SKILL.md) — LiteLLM Management API endpoint reference and call mechanics for models, keys, teams, customers, and budgets that this skill governs
+- [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) — content ingestion impact analysis, semantic linting, review deadlines, consolidation, and routing maintenance for the Git-backed company wiki
+- [ai-platform-release-management](../ai-platform-release-management/SKILL.md) — pin policy, upstream release checks, maintainer confirmation gate, and rollback for Open WebUI/LiteLLM version changes
