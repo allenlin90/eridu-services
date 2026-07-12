@@ -48,7 +48,7 @@ Before editing AI workspace files, read the relevant existing source:
 - Keep provider API keys in Railway environment variables, not repo files.
 - Use the existing `erify_api` MCP entrypoint for operational MCP before proposing a separate MCP app.
 - Keep operational MCP tools read-only unless auth, audit, idempotency, and rate-limit behavior are designed.
-- Never leave the Open WebUI or LiteLLM Railway image untagged or on an auto-updating tier. Pin an explicit tag with `autoUpdates: disabled`, and route any version change through [ai-platform-release-management](../ai-platform-release-management/SKILL.md) — a check-and-report routine with a required maintainer confirmation gate, not a silent or automatic bump.
+- The target deployment policy is an explicit Open WebUI and LiteLLM image tag with `autoUpdates: disabled`. Open WebUI satisfies it; LiteLLM's moving `main-stable` tag remains a remediation item. Route any version change through [ai-platform-release-management](../ai-platform-release-management/SKILL.md), including the initial LiteLLM pin.
 
 ## LiteLLM decision path
 

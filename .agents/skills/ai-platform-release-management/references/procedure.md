@@ -39,7 +39,7 @@ For a multi-version jump, walk each intermediate release rather than diffing onl
 ```markdown
 ## Open WebUI / LiteLLM version check — <date>
 
-**Current pinned:** open-webui `0.10.2` / litellm `1.91.0`
+**Current deployment:** open-webui `0.10.2` (pinned) / litellm `1.91.0` observed (`main-stable`, pin pending)
 **Latest available:** open-webui `<X>` / litellm `<Y>`
 
 ### Breaking changes / migration notes
@@ -53,10 +53,10 @@ For a multi-version jump, walk each intermediate release rather than diffing onl
 e.g. "Native function calling", "skill on-demand loading", "Event Functions">
 
 ### Downtime / blast radius
-Single-replica service, brief interruption on redeploy (~2 min observed). Recommend a low-traffic window.
+<re-verify replica count; describe expected interruption and recommend a low-traffic window when applicable>
 
 ### Rollback plan
-Repoint `source.image` back to the current pinned tag, redeploy.
+Repoint `source.image` back to the recorded pre-change image reference, redeploy.
 
 ### Recommendation
 <upgrade now / wait / needs a staging test first — state why>
@@ -68,7 +68,7 @@ Do not proceed past this report without explicit maintainer sign-off on the spec
 
 ```bash
 railway environment edit --json <<'JSON'
-{"services":{"<service-id>":{"source":{"image":"ghcr.io/open-webui/open-webui:<new-tag>","autoUpdates":{"type":"disabled"}}}}}
+{"services":{"<service-id>":{"source":{"image":"<approved-image>:<approved-tag>","autoUpdates":{"type":"disabled"}}}}}
 JSON
 ```
 
@@ -78,8 +78,8 @@ Poll to a terminal state before reporting success:
 railway deployment list --service <service-id> --environment <env-id> --json
 ```
 
-`SUCCESS` = deployed. Anything else — triage per the `use-railway` skill's `operate.md` reference; do not claim success on a `DEPLOYING`/`QUEUED` status.
+`SUCCESS` = deployed. For any other state, follow the installed `use-railway` skill and do not claim success on a `DEPLOYING` or `QUEUED` deployment.
 
 ## Optional: recurring check via a scheduled agent
 
-If the maintainer wants this checked automatically (not applied — just checked and reported), use the `schedule` skill to set up a periodic cloud agent that runs the "Routine: Check For New Releases" steps above and reports findings. This is opt-in infrastructure — set it up only when asked, not as a default side effect of this skill.
+If the maintainer wants this checked automatically, create an opt-in Codex automation that runs the "Routine: Check For New Releases" steps and reports findings without applying changes. Do not create recurring infrastructure unless explicitly requested.
