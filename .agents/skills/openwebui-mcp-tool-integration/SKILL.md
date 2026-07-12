@@ -44,7 +44,9 @@ Connection object shape:
   "config": {
     "enable": true,
     "function_name_filter_list": "erify_get_show,erify_query_shows",
-    "access_control": {}
+    "access_grants": [
+      {"principal_type": "group", "principal_id": "<group-uuid>", "permission": "read"}
+    ]
   },
   "info": {
     "id": "erify_api_mcp_livestream",
@@ -61,9 +63,11 @@ Connection object shape:
 - `info.id` becomes the server ID referenced in chat completions as `tool_ids: ["server:mcp:<info.id>"]`.
 - `config.function_name_filter_list` — comma-separated allow-list restricting which functions from
   this connection are exposed. This is the only way to narrow an MCP connection's tool surface.
-- `config.access_control` — access grants for this **connection as a whole**. There is no per-function
-  grant for MCP-discovered tools: granting a group access to a connection exposes every function that
-  connection's `function_name_filter_list` allows through, not a subset chosen per group.
+- `config.access_grants` — a list of `{principal_type: user|group, principal_id, permission: read|write}`
+  entries, same shape as knowledge/tool resource grants elsewhere, gating this **connection as a whole**.
+  There is no per-function grant for MCP-discovered tools: granting a group access to a connection
+  exposes every function that connection's `function_name_filter_list` allows through, not a subset
+  chosen per group.
 
 ### Access granularity: connection-level, not per-tool
 
