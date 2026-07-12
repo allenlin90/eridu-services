@@ -124,9 +124,17 @@ ties groups to these grants.
 
 ## Functions — `/api/v1/functions`
 
-The community client exposes a `client.functions` group mirroring the tools CRUD shape
-(list/create/update/delete/toggle). Confirm exact paths against the live instance before use —
-this catalog only verified `tools`, not `functions`, endpoint-by-endpoint.
+**Confirmed live on `0.10.2`** — registered, activated, triggered via chat completion, and torn down as part of building the knowledge-base Sync Pipe (`ai/openwebui/functions/sync-pipe.py`, `ai/architecture/llm-knowledge-base-plan.md` Sync Contract).
+
+| Method | Path | Purpose | Notes |
+|---|---|---|---|
+| POST | `/api/v1/functions/create` | Register a Function. Body `{id, name, content, meta: {description}}` — `id` must be a valid Python identifier. | Admin-only, regardless of `direct_tool_servers` permission (that only covers OpenAPI tool servers). Function `type` (`pipe`/`filter`/`action`/`event`) is auto-detected from which class (`Pipe`/`Filter`/`Action`/`Event`) the submitted `content` defines — not passed explicitly. `is_active` defaults to `false`. |
+| POST | `/api/v1/functions/id/{id}/toggle` | Activate/deactivate. Must be called (or already active) before a `pipe` is listed in `/api/models` or callable via chat completions. | |
+| POST | `/api/v1/functions/id/{id}/update` | Replace content — same body shape as `/create`. | |
+| DELETE | `/api/v1/functions/id/{id}/delete` | Delete. | |
+| POST | `/api/v1/functions/id/{id}/valves/update` | Set the Function's admin-configured `Valves` (a Pydantic model declared in the Function's own code) — full-replace body matching the Valves schema. | Use this to pass secrets (e.g. an API key) rather than hardcoding them in committed Function source. |
+
+A `pipe`-type Function becomes callable exactly like a model: `POST /api/chat/completions` with `model: "<function-id>"`. **`pipe()` must be declared `async def` and use an async HTTP client if it calls back into Open WebUI's own API** — a synchronous `pipe()` using a blocking HTTP client (e.g. `requests`) deadlocks on the self-call, since it occupies the same event-loop thread that would need to handle the nested request. See `ai/openwebui/functions/README.md` for this and other gotchas found during verification (e.g. `GET /api/v1/knowledge/{id}` never populating `files` on `0.10.2` — use `GET /api/v1/knowledge/{id}/files` instead).
 
 ## Chat & inference
 
