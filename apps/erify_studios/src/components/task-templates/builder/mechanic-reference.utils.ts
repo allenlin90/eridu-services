@@ -43,6 +43,9 @@ export function assignMechanicToLoop(
   mechanic: ClientMechanic,
   loopId: string,
 ): BuilderTemplateSchemaType {
+  // v1 requires globally-unique keys, so the same mechanic checked into a second
+  // loop needs a loop-scoped key; v2 identity is via `id`, so the canonical key
+  // can repeat across loops (mirrors the shared-field insertion handler).
   const isV2 = getSchemaEngine(template) === 'task_template_v2';
   const baseKey = mechanic.id.toLowerCase().replace(/[^a-z0-9_]/g, '_');
   const itemKey = isV2

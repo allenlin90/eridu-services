@@ -59,7 +59,7 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
   const mechanicRef = item.mechanic_ref;
   const mechanic = clientMechanics?.find((m) => m.id === mechanicRef?.mechanic_id);
   const isRetired = mechanic ? mechanic.status === 'retired' : false;
-  const isSuperseded = mechanic ? mechanic.content_revision > mechanicRef?.content_revision : false;
+  const isSuperseded = mechanic ? mechanic.content_revision > (mechanicRef?.content_revision ?? 0) : false;
 
   return (
     <div
@@ -177,7 +177,7 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
                   <div>
                     {isRetired
                       ? 'Operator assignments can keep using this template, but you should transition to an active mechanic if possible.'
-                      : `The catalog has a newer revision (v${mechanic.content_revision}) than the one currently used (v${mechanicRef.content_revision}).`}
+                      : `The catalog has a newer revision (v${mechanic.content_revision}) than the one currently used (v${mechanicRef?.content_revision}).`}
                   </div>
                   {isSuperseded && (
                     <Button

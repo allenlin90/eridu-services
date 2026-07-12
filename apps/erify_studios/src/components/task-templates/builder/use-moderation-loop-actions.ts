@@ -66,8 +66,9 @@ export function useModerationLoopActions(input: {
         const cloned = structuredClone(item);
         cloned.id = createTaskTemplateFieldId();
         cloned.key = stripSourceLoopSuffix(cloned.key, item.group) ?? cloned.key;
-        if (cloned.shared_field_key) {
-          cloned.shared_field_key = stripSourceLoopSuffix(cloned.shared_field_key, item.group);
+        const sourceSharedKey = (cloned as { shared_field_key?: string }).shared_field_key;
+        if (sourceSharedKey) {
+          (cloned as { shared_field_key?: string }).shared_field_key = stripSourceLoopSuffix(sourceSharedKey, item.group);
         }
         cloned.group = clonedLoop.id;
         return cloned;

@@ -28,6 +28,7 @@ export function TaskTemplateFieldsToolbar(props: {
           ? (
               <p className="text-xs text-muted-foreground mt-1">
                 Total duration:
+                {' '}
                 {formattedDuration}
               </p>
             )

@@ -74,6 +74,9 @@ export function ClientMechanicsMatrix({
   }
   if (activeMechanics.length === 0)
     return null;
+  // The grid is wide and not usable on small viewports, so mobile always falls back
+  // to Cards (mechanic fields still render there, read-only, via field-editor's
+  // isMechanicField gate).
   if (isMobile) {
     return (
       <p className="text-xs text-muted-foreground bg-muted/50 border rounded px-3 py-2">
@@ -124,6 +127,11 @@ export function ClientMechanicsMatrix({
           className="h-8 max-w-sm text-sm"
         />
       </div>
+      {/* Mechanics (rows, can run into the dozens once a client's catalog grows) and
+          loops (columns, a handful per template) are deliberately NOT transposed the
+          "obvious" way: a wide grid with one column per mechanic overlaps and becomes
+          illegible past a handful of mechanics. Rows scroll naturally and stay
+          searchable; columns don't. */}
       <CardContent className="p-0 border-t">
         {visibleMechanics.length === 0
           ? (
