@@ -39,7 +39,7 @@ For a multi-version jump, walk each intermediate release rather than diffing onl
 ```markdown
 ## Open WebUI / LiteLLM version check — <date>
 
-**Current deployment:** open-webui `0.10.2` (pinned) / litellm `1.91.0` observed (`main-stable`, pin pending)
+**Current deployment:** open-webui `0.10.2` (pinned) / litellm `1.91.0` (pinned)
 **Latest available:** open-webui `<X>` / litellm `<Y>`
 
 ### Breaking changes / migration notes

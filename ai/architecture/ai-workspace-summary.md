@@ -2,7 +2,7 @@
 
 This document summarizes the integration between the Eridu monorepo, Open WebUI, LiteLLM, Better Auth, and the existing `erify_api` MCP foundation.
 
-The deployed baseline runs Open WebUI `0.10.2` (pinned, auto-updates disabled) and LiteLLM `1.91.0` (tracks the `main-stable` image tag, which moves — re-verify before relying on a specific capability) as two separate Railway services, each with its own PostgreSQL and Redis:
+The deployed baseline runs Open WebUI `0.10.2` and LiteLLM `1.91.0` (both pinned to explicit image tags with auto-updates disabled) as two separate Railway services, each with its own PostgreSQL and Redis:
 
 ```text
 Company users -> Open WebUI -> [OpenAI-compatible API] -> LiteLLM -> providers (OpenRouter / OpenAI / Anthropic / Gemini)

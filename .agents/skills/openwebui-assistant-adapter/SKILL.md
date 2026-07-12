@@ -26,7 +26,7 @@ Open WebUI assistants are staff-facing workspace products. They should adapt can
 - Keep implementation rules in `.agents/skills/`.
 - Prefer LiteLLM model aliases over raw provider names, and use the stable company aliases (`company-fast`, `company-balanced`, `company-reasoning`, `company-coding`); do not invent parallel alias names.
 - Do not add per-user "sync" steps for tracking: LiteLLM records each Open WebUI user as a customer automatically via forwarded headers.
-- Verify LiteLLM/Open WebUI capabilities against the deployed versions (LiteLLM `1.91.0`, tracks `main-stable` and moves — re-verify live; Open WebUI `0.10.2`, pinned) before relying on them.
+- Verify LiteLLM/Open WebUI capabilities against the deployed versions (LiteLLM `1.91.0`, Open WebUI `0.10.2` — both pinned) before relying on them.
 - Attach only the MCP tools needed by the assistant's audience.
 - For operational assistants, use the existing `erify_api` MCP tools and preserve read-only/studio-scoped constraints.
 - Keep wiki maintenance instructions out of employee-facing assistants. Use [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) in the repository workflow instead.

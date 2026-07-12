@@ -4,7 +4,7 @@ This directory contains reference templates for LiteLLM model routing, budget ti
 
 ## Deployed baseline
 
-LiteLLM `1.91.0` runs on Railway as its own service with its own PostgreSQL and Redis, separate from the Open WebUI service. Its image tracks the `main-stable` tag rather than a pinned version, so re-verify the running version (`GET /openapi.json`, `info.version`) before relying on a specific capability. Open WebUI reaches it over Railway private networking:
+LiteLLM `1.91.0` runs on Railway as its own service with its own PostgreSQL and Redis, separate from the Open WebUI service. Its image is pinned to an explicit tag (`v1.91.0`) with auto-updates disabled — see [`ai-platform-release-management`](../../.agents/skills/ai-platform-release-management/SKILL.md) for the version-change routine. Open WebUI reaches it over Railway private networking:
 
 ```text
 http://<litellm-service-name>.railway.internal:4000/v1
@@ -72,6 +72,6 @@ Basic tracking (above) comes first. Budgets and per-customer rate limits are a l
 
 ## Version sensitivity
 
-Do not assume the latest LiteLLM docs apply. Verify any capability against the currently-running version (`1.91.0` as of last check, but this image tracks `main-stable` and moves — see Deployed baseline above) before presenting it as feasible, and prefer the Admin UI over hand-edited `config.yaml` on this Railway deployment.
+Do not assume the latest LiteLLM docs apply. Verify any capability against the currently-running version (`1.91.0`, pinned — see Deployed baseline above) before presenting it as feasible, and prefer the Admin UI over hand-edited `config.yaml` on this Railway deployment.
 
 Provider API keys stay in Railway environment variables. Do not commit real provider keys.
