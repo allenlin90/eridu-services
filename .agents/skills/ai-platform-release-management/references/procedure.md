@@ -60,19 +60,26 @@ Repoint `source.image` back to the recorded pre-change image reference, redeploy
 
 ### Recommendation
 <upgrade now / wait / needs a staging test first — state why>
+
+### Staged change
+<link or reference to the staged Railway config change, once created — see "Stage a proposed pin change" below>
 ```
 
-Do not proceed past this report without explicit maintainer sign-off on the specific version jump.
+## Stage a proposed pin change
 
-## Apply an approved pin change
+Do this as part of the routine, immediately after producing the report — staging is not the confirmation gate, committing is:
 
 ```bash
-railway environment edit --json <<'JSON'
-{"services":{"<service-id>":{"source":{"image":"<approved-image>:<approved-tag>","autoUpdates":{"type":"disabled"}}}}}
-JSON
+railway environment edit --service-config <service> source.image "<candidate-image>:<candidate-tag>" --stage --message "Propose <service> <old-version> -> <new-version>, see report"
 ```
 
-Poll to a terminal state before reporting success:
+`--stage` creates a pending config change; it does not deploy anything. Confirm the response reflects a staged, uncommitted change (not `"committed": true`) before reporting the routine as complete.
+
+## Commit a staged change (maintainer only)
+
+There is no `railway` CLI or MCP command that commits a staged change — it has to happen in the Railway dashboard (Project → Environment → pending changes). If a future CLI/MCP version adds one, treat that as a reason to revisit this skill's gate, not as authorization to use it unattended.
+
+After a maintainer commits the staged change in the dashboard, verify the resulting deployment the same way as any other change:
 
 ```bash
 railway deployment list --service <service-id> --environment <env-id> --json

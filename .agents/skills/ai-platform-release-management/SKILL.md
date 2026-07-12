@@ -21,11 +21,11 @@ Run this whenever changing deployed-version policy and optionally on a recurring
 2. Query the upstream release feed (`open-webui/open-webui`, `BerriAI/litellm`) for releases newer than the pinned or currently observed version.
 3. If nothing newer exists, stop — nothing to report.
 4. If a newer release exists, produce a maintainer-facing report (template in [references/procedure.md](references/procedure.md)) covering: version delta, breaking changes and migration notes, security fixes included, capability changes that affect this repo's documented assumptions (cross-check `ai/architecture/*.md` and any `SKILL.md` that names a specific version-gated behavior), downtime/blast radius, and a rollback plan.
-5. Stop there. Do not apply the version change.
+5. Stage the proposed pin change with `railway environment edit --service-config <service> source.image "<new-tag>" --stage --message "<one-line summary>"` (see [references/procedure.md](references/procedure.md)). `--stage` creates a pending, uncommitted config change — it does not deploy. Attach the report alongside it (as a PR, a chat message, whatever the maintainer will actually see) and stop.
 
 ## Maintainer Confirmation Gate
 
-An agent may draft the report and even stage the config patch, but must not execute the Railway mutation that changes `source.image` without an explicit human go-ahead on that specific report. This is a live, shared, staff-facing system — the general repo rule of confirming before affecting shared systems applies here without exception, regardless of how routine the bump looks.
+Staging, not a promise not to act, is the actual gate: `--stage` deliberately leaves the change uncommitted, and there is no `railway` CLI or MCP command that commits a staged change — only the Railway dashboard can. An agent literally cannot complete a version bump unilaterally once it stages one; a human has to open the dashboard and apply it. Do not look for or improvise a CLI/API path around this — if one turns out to exist, treat that as a reason to tighten this skill, not a shortcut to take. Confirm this dashboard-only behavior the first time the routine actually runs, per the general "verify against the deployed tool version" rule — Railway's CLI capabilities can change.
 
 ## Downtime And Blast Radius
 
@@ -41,7 +41,9 @@ Re-verify, don't just trust the new pin:
 
 ## Rollback
 
-Railway keeps deployment history per service. Reverting is repointing `source.image` back to the previous pinned tag and redeploying — the same mechanism as applying the upgrade, in reverse. Confirm this with the maintainer before an upgrade, not while triaging a live incident.
+Railway keeps deployment history per service. Reverting is repointing `source.image` back to the previous pinned tag and redeploying.
+
+The staging gate above is for proactive upgrades — it deliberately trades speed for review. An active incident is the opposite trade: if a maintainer is present and directing the response, apply the revert directly (`railway environment edit --service-config <service> source.image "<previous-tag>"`, no `--stage`) rather than routing it through a dashboard-only commit step. This still needs a human's go-ahead — the rule against acting unilaterally on a live shared system doesn't relax — but it's the maintainer's real-time direction during triage, not an async sign-off on a staged report.
 
 ## Related Skills
 
