@@ -90,6 +90,42 @@ const v2LoopTemplate: BuilderTemplateSchemaType = {
 };
 
 describe('taskTemplateBuilder v2 field ids', () => {
+  it('passes the current template to the save callback', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+
+    render(
+      <TaskTemplateBuilder
+        template={v2LoopTemplate}
+        onChange={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Save Template' }));
+
+    expect(onSave).toHaveBeenCalledWith(v2LoopTemplate);
+  });
+
+  it('confirms before invoking the discard callback', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+
+    render(
+      <TaskTemplateBuilder
+        template={v2LoopTemplate}
+        onChange={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Discard Draft' }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
   it('uses path-safe field ids when adding a field to a v2 loop', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
