@@ -14,6 +14,7 @@ Open WebUI should be the user-facing AI workspace. It should provide a small set
 | `tool-access.example.json` | Example MCP tool access policy by group. |
 | `skills/` | Open WebUI-importable skill adapters and workspace-facing instructions. |
 | `knowledge/` | Git-authored Markdown knowledge sources and generated manifests for Open WebUI knowledge collections. |
+| `functions/` | Canonical source for Open WebUI Functions (Pipes/Filters/Actions/Events), applied via the Admin API. Function source lives in Open WebUI's own database once deployed, not in Git — this is the reviewed copy. |
 | `synced/` | Git-tracked knowledge base of the **live** Open WebUI config (assistants, groups, tool-server connections, default permissions, and full skill content), pulled read-only via the API. Treat this as the current source of truth for the live setup — the example files above are illustrative templates and may drift from it. |
 
 ## Existing repo skill hierarchy

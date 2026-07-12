@@ -29,6 +29,7 @@ Use these actual agent skills before changing AI workspace files:
 - `.agents/skills/litellm-admin-api/SKILL.md`
 - `.agents/skills/wiki-knowledge-maintainer/SKILL.md`
 - `.agents/skills/ai-platform-release-management/SKILL.md`
+- `.agents/skills/ai-platform-capability-verification/SKILL.md`
 
 ## Component map
 
@@ -75,15 +76,20 @@ Use these actual agent skills before changing AI workspace files:
 │     └─ endpoints.md
 ├─ wiki-knowledge-maintainer/
 │  └─ SKILL.md
-└─ ai-platform-release-management/
+├─ ai-platform-release-management/
+│  ├─ SKILL.md
+│  └─ references/
+│     └─ procedure.md
+└─ ai-platform-capability-verification/
    ├─ SKILL.md
    └─ references/
-      └─ procedure.md
+      └─ known-gaps.md
 
 ai/
 ├─ architecture/
 │  ├─ ai-workspace-summary.md
-│  └─ llm-knowledge-base-plan.md
+│  ├─ llm-knowledge-base-plan.md
+│  └─ skill-classification-inventory.md
 ├─ litellm/
 │  ├─ .env.example
 │  ├─ budget-tiers.example.json
@@ -94,6 +100,9 @@ ai/
 │  ├─ README.md
 │  ├─ workspace-models.example.json
 │  ├─ tool-access.example.json
+│  ├─ functions/
+│  │  ├─ README.md
+│  │  └─ sync-pipe.py
 │  ├─ knowledge/
 │  │  └─ README.md
 │  ├─ skills/

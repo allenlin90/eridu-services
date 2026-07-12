@@ -103,3 +103,4 @@ When changing MCP policy:
 - [litellm-admin-api](../litellm-admin-api/SKILL.md) — LiteLLM Management API endpoint reference and call mechanics for models, keys, teams, customers, and budgets that this skill governs
 - [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) — content ingestion impact analysis, semantic linting, review deadlines, consolidation, and routing maintenance for the Git-backed company wiki
 - [ai-platform-release-management](../ai-platform-release-management/SKILL.md) — pin policy, upstream release checks, maintainer confirmation gate, and rollback for Open WebUI/LiteLLM version changes
+- [ai-platform-capability-verification](../ai-platform-capability-verification/SKILL.md) — verify a claimed Open WebUI/LiteLLM capability against the deployed version (source-level and live-behavior) before building on top of an unverified assumption
