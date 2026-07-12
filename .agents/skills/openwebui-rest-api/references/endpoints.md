@@ -87,6 +87,7 @@ For the tool-server connection shape and the erify_api MCP wiring workflow, see
 | POST | `/api/v1/knowledge/create` | Create a knowledge base | `workspace.knowledge` (+ `sharing.public_knowledge` for public; otherwise forced private) |
 | DELETE | `/api/v1/knowledge/{id}/delete` | Delete a knowledge base | Owner/admin |
 | POST | `/api/v1/knowledge/{id}/file/add` | Add an uploaded file to a knowledge collection | |
+| POST | `/api/v1/knowledge/{id}/access/update` | Full-replace `access_grants` for a knowledge base — body `{"access_grants": [...]}`. **No `id/` segment** — different shape from the tools path below. Confirmed against `open-webui/open-webui` source at the deployed tag (`backend/open_webui/routers/knowledge.py`). | Owner, write-access grantee, or admin |
 
 ## Files & retrieval — `/api/v1/files`, `/api/v1/retrieval`
 
@@ -107,10 +108,14 @@ For the tool-server connection shape and the erify_api MCP wiring workflow, see
 
 Per-resource sharing is a normalized grant, not a field on the group: `{resource_type, resource_id,
 principal_type: user|group, principal_id, permission: read|write}` (`principal_type: user` +
-`principal_id: "*"` means public). Each resource type has its own `.../access/update` endpoint (see
-`tools/id/{id}/access/update` above); models and knowledge bases follow the same pattern under
-their own prefixes. See [openwebui-groups-permissions](../../openwebui-groups-permissions/SKILL.md)
-for the workflow that ties groups to these grants.
+`principal_id: "*"` means public). Each resource type has its own `.../access/update` endpoint, but
+**the exact path shape differs per resource type — don't assume one prefix's shape by analogy to
+another's.** Tools use `tools/id/{id}/access/update` (with an `id/` segment); knowledge bases use
+`knowledge/{id}/access/update` (no `id/` segment, confirmed above from source). Verify the actual
+path for a resource type before scripting a mutation against it — a wrong guess here can silently
+404, or worse, hit a different endpoint than intended. See
+[openwebui-groups-permissions](../../openwebui-groups-permissions/SKILL.md) for the workflow that
+ties groups to these grants.
 
 ## Functions — `/api/v1/functions`
 

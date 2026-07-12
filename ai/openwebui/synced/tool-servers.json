@@ -28,22 +28,12 @@
           },
           {
             "principal_type": "group",
-            "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
             "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
             "permission": "read"
           },
           {
             "principal_type": "group",
-            "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
+            "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
             "permission": "read"
           },
           {
@@ -58,17 +48,7 @@
           },
           {
             "principal_type": "group",
-            "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
             "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
             "permission": "read"
           },
           {

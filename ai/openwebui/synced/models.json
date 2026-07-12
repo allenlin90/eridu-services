@@ -137,13 +137,22 @@
           "meta": null,
           "access_grants": [
             {
-              "id": "9022395e-76c1-4bc5-ad3a-d5bcd32b01ab",
+              "id": "c7c2b315-0de2-4151-bf91-cc3de698f105",
               "resource_type": "knowledge",
               "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
-              "principal_type": "user",
-              "principal_id": "*",
+              "principal_type": "group",
+              "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
               "permission": "read",
-              "created_at": 1781609002
+              "created_at": 1783834068
+            },
+            {
+              "id": "8c282dfd-4f66-4c2c-8fd1-7a5de24cc6db",
+              "resource_type": "knowledge",
+              "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+              "principal_type": "group",
+              "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
+              "permission": "read",
+              "created_at": 1783834068
             }
           ],
           "created_at": 1781609002,
@@ -924,13 +933,22 @@
           "meta": null,
           "access_grants": [
             {
-              "id": "9022395e-76c1-4bc5-ad3a-d5bcd32b01ab",
+              "id": "c7c2b315-0de2-4151-bf91-cc3de698f105",
               "resource_type": "knowledge",
               "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
-              "principal_type": "user",
-              "principal_id": "*",
+              "principal_type": "group",
+              "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
               "permission": "read",
-              "created_at": 1781609002
+              "created_at": 1783834068
+            },
+            {
+              "id": "8c282dfd-4f66-4c2c-8fd1-7a5de24cc6db",
+              "resource_type": "knowledge",
+              "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+              "principal_type": "group",
+              "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
+              "permission": "read",
+              "created_at": 1783834068
             }
           ],
           "created_at": 1781609002,
