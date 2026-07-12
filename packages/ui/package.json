@@ -6,27 +6,27 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./components/*": {
       "types": "./dist/components/*.d.ts",
-      "default": "./src/components/*.tsx"
+      "default": "./dist/components/*.js"
     },
     "./lib/*": {
       "types": "./dist/lib/*.d.ts",
-      "default": "./src/lib/*.ts"
+      "default": "./dist/lib/*.js"
     },
     "./hooks/*": {
       "types": "./dist/hooks/*.d.ts",
-      "default": "./src/hooks/*.ts"
+      "default": "./dist/hooks/*.js"
     },
-    "./styles/globals.css": "./src/styles/globals.css"
+    "./styles/globals.css": "./dist/styles/globals.css"
   },
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "tsc && mkdir -p dist/styles && cp src/styles/globals.css dist/styles/globals.css",
     "dev": "tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
