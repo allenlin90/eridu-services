@@ -15,7 +15,7 @@ For two common, narrower jobs, use the more specific skill instead of re-derivin
 
 - Read `ai-workspace-control-plane` and `openwebui-assistant-adapter` first if the task involves deciding *what* to configure, not just calling the API.
 - Confirm `ENABLE_API_KEYS` is enabled on the deployed instance and that the calling key's user has the needed permission (`workspace.models`, `workspace.knowledge`, admin role, etc.) — a valid Bearer token alone does not bypass per-user permission checks.
-- Verify against the deployed version before relying on any endpoint. `ai-workspace-control-plane` records the deployed baseline as Open WebUI `0.9.6`; the endpoint catalog below is sourced from the `open-webui/docs` main branch and a community client, both of which track the latest release, not necessarily `0.9.6`. Spot-check exact payload shapes against the instance's own Swagger UI (`/docs`, when `ENV=dev`) before scripting a mutation.
+- Verify against the deployed version before relying on any endpoint. `ai-workspace-control-plane` records the deployed baseline as Open WebUI `0.10.2` (pinned, auto-updates disabled — this figure stays accurate until deliberately changed); the endpoint catalog below is sourced from the `open-webui/docs` main branch and a community client, both of which track the latest release, not necessarily `0.10.2`. Spot-check exact payload shapes against the instance's own Swagger UI (`/docs`, when `ENV=dev`) before scripting a mutation.
 
 ## Authentication
 

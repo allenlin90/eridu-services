@@ -22,7 +22,7 @@ Before expanding the system:
 
 Use Git-backed Markdown as the durable source of truth and Open WebUI knowledge collections as the first retrieval layer. Do not send the whole wiki or a complete manifest with every request.
 
-This is intentionally not a zero-RAG design. Open WebUI's built-in retrieval is the most practical MVP for the deployed stack. A private documentation-only MCP service is a later option when deterministic file selection, stronger citations, or retrieval observability justify the extra service.
+This is intentionally not a zero-RAG design. Open WebUI's built-in retrieval is the most practical MVP for the deployed stack. Deterministic file selection, stronger citations, or retrieval observability are built as Open WebUI Functions running inside the existing deployment, not a new standalone service — see Optional Deterministic Retrieval. A separate service is added only if something outside Open WebUI genuinely needs to call this logic directly, and even then it wraps the same Function rather than duplicating its logic.
 
 Prompt caching, large context windows, and generated role packs are optimizations. They do not replace retrieval or access control.
 
@@ -31,13 +31,13 @@ Prompt caching, large context windows, and generated role packs are optimization
 | Component | Responsibility |
 | --- | --- |
 | Git knowledge source | Reviewed Markdown, ownership and sensitivity metadata, source references, and change history. |
-| Knowledge build and sync job | Validation, collection artifact generation, Open WebUI upload/update, processing checks, and reconciliation. |
+| Knowledge sync Pipe | Runs inside Open WebUI. Validation, diff/upload/cleanup, and reconciliation, triggered by a minimal external event — not a standalone service. |
 | Open WebUI | Staff-facing assistants, retrieval, knowledge collections, groups, grants, and chat UX. |
-| Open WebUI skills | Small assistant behavior adapters: citation, escalation, tone, and tool-use rules. |
-| `wiki-knowledge-maintainer` skill | Ingestion impact analysis, semantic linting, consolidation, review deadlines, and routing hierarchy maintenance. |
-| LiteLLM | Stable model aliases, provider routing, usage tracking, budgets, and rate limits. It does not select wiki content. |
+| Open WebUI skills | Small assistant behavior adapters: citation, escalation, tone, and tool-use rules. Stay few and small by design — company content does not belong here (see Skills Versus Knowledge). |
+| `wiki-knowledge-maintainer` skill | Ingestion impact analysis, semantic linting, consolidation, review deadlines, and routing hierarchy maintenance. Runs at PR-authoring time, not as separate CI. |
+| LiteLLM | Stable model aliases, provider routing, usage tracking, budgets, and rate limits. It does not select wiki content. Its MCP semantic tool filter is the reference answer if MCP tool count grows large later (see Optional Deterministic Retrieval). |
 | Better Auth / `eridu_auth` | Canonical user identity and SSO for Open WebUI. |
-| Optional `wiki_mcp` | Private, read-only, deterministic document search and fetch. |
+| Optional deterministic retrieval | An Open WebUI Filter Function first; a standalone `wiki_mcp` only if sharing outside Open WebUI is later required. |
 | Existing `erify_api` MCP | Operational business-data reads. It remains separate from document retrieval. |
 
 ## Repository Placement
@@ -80,6 +80,8 @@ ai/openwebui/knowledge/company-wiki/
 - `intake/` defines the staging workflow. Raw Slack exports, credentials, personal data, and unreviewed bulk dumps are not committed by default.
 - `generated/` contains disposable manifests, routing catalogs, and collection artifacts; people do not edit them.
 
+`apps/eridu_docs` (Astro Starlight developer documentation) is currently suspended in favor of AI-integration priorities and is out of scope for this plan; the wiki here does not depend on it or block on its status. If `eridu_docs` resumes, its content-collection and build tooling may be worth evaluating as a future consolidation target — this plan keeps the wiki independent for now rather than coupling to paused work.
+
 ## Content Contract
 
 Each reviewed content file has a stable ID and explicit governance metadata:
@@ -107,6 +109,8 @@ Wikilinks are optional authoring conveniences. The validator resolves them to st
 
 Use `.agents/skills/wiki-knowledge-maintainer/SKILL.md` as the canonical maintenance workflow. Trigger it whenever reviewed knowledge changes and through a scheduled health check. Do not attach this skill to employee-facing assistants; maintenance instructions do not belong in normal question-answering context.
 
+The change-triggered pass runs at PR-authoring time: the agent drafting a content change runs the skill's deterministic validation and semantic lint before opening the PR, so the PR itself already carries validation results for the human reviewer. This matches the repository's existing convention (`.agents/workflows/pr-review.md`, gated by `/pr-ready`) of agent-run checks ahead of human review rather than a separate CI service; the repo does not currently use GitHub Actions for policy enforcement. Add a GitHub Actions backstop only if agent-run checks prove to be bypassed in practice, not by default.
+
 The maintenance workflow follows the LLM-wiki separation of responsibilities:
 
 - immutable reviewed sources preserve provenance;
@@ -130,7 +134,7 @@ root catalog
 
 The generated root catalog describes domains and access boundaries only. Generated domain catalogs contain one-line retrieval summaries, aliases, and stable IDs for their own pages. `README.md` remains the human entrypoint. Full metadata remains in the generated manifest for validation, sync, and tool use; it is not loaded into every assistant prompt.
 
-Use catalogs and deterministic lexical search first. Split catalogs by domain when selection requires scanning most entries. Add hybrid or vector search, or `wiki_mcp`, only when retrieval evaluations show that hierarchical routing is no longer sufficient.
+Use catalogs and deterministic lexical search over the generated routing surface first — this governs navigation of the catalogs themselves, not how Open WebUI retrieves knowledge-collection content. Open WebUI's own chunk retrieval is vector-similarity by default; hybrid (BM25 + vector) is an opt-in mode, and there is no standalone lexical-only content-retrieval mode. Split catalogs by domain when selection requires scanning most entries. Move to deterministic file-level retrieval (see Optional Deterministic Retrieval) only when retrieval evaluations show that native Open WebUI retrieval and hierarchical routing are no longer sufficient.
 
 ## Skills Versus Knowledge
 
@@ -152,6 +156,14 @@ Move these into knowledge files:
 - legal and HR reference material.
 
 This migration reduces duplicated prompts and allows Open WebUI to retrieve only relevant documents. The existing live skill IDs remain unchanged until their replacement knowledge collections and assistants pass the pilot evaluations.
+
+### Routing And Indexing At Scale
+
+This migration is also the primary answer to metadata growing unbounded, not an afterthought to it:
+
+- **Knowledge scales by construction.** Under Open WebUI's Native (Agentic) function calling, attached knowledge is not enumerated into the prompt; the model calls `list_knowledge` / `query_knowledge_files` on demand. Adding more knowledge collections does not linearly grow what's injected per request. Confirm Native function calling is active as part of Phase 0's disposable-collection verification.
+- **Skills must stay small and few by design.** Once company content lives in Knowledge, the remaining Open WebUI skills are only citation/escalation/tone/tool-use rules — a short, bounded list per assistant. If the skill count or size starts growing again, that is a signal content is being misclassified as a skill, not evidence the routing layer needs to get smarter. Skills already injected full content on every request before Open WebUI `0.10.0`'s on-demand skill loading (`view_skill`) shipped; `Eridu Brain` carrying 17 skills, some tens of KB, was a live cost problem this migration fixes independently of everything else in this plan, and on-demand loading (available now that the instance is pinned to `0.10.2`) is a useful backstop, not the primary control. Confirm it's actually active as part of Phase 0's Native function-calling check.
+- **MCP tools are the one surface without a native Open WebUI fix**, and are out of scope for this plan's initial tool count (four `erify_api` tools). If wiki-related or other MCP tools later push the count into the dozens, LiteLLM's `mcp_semantic_tool_filter` is the reference architecture — it semantically ranks and forwards only the top-K relevant tools per request — but using it requires routing MCP tool connections through LiteLLM's MCP gateway instead of Open WebUI's current direct tool-server connections. That re-routing is a Phase 5+ concern, not required now.
 
 ## Retrieval Architecture
 
@@ -187,7 +199,7 @@ Each assistant attaches only the collections, skills, and MCP tools needed by it
 
 Procedural answers cite the retrieved source at paragraph or step level. For the MVP, the citation target is the stable uploaded filename/document ID exposed by Open WebUI retrieval.
 
-Pilot evaluation must confirm that Open WebUI `0.9.6` reliably exposes usable source citations. If it cannot, do not fake `[[filename]]` citations in the prompt; use `wiki_mcp` or another retrieval adapter that returns explicit document IDs.
+Pilot evaluation must confirm that the deployed Open WebUI version reliably exposes usable source citations. If it cannot, do not fake `[[filename]]` citations in the prompt; use the Optional Deterministic Retrieval Filter Function, which returns explicit document IDs via its own citation events.
 
 When sources are absent, insufficient, stale, or conflicting, return:
 
@@ -219,7 +231,9 @@ The draft includes a proposed path, frontmatter, source references, unresolved q
 
 ## Sync Contract
 
-The Git-to-Open-WebUI sync must be repeatable and fail closed:
+The sync logic runs as an Open WebUI Pipe (a custom model callable via `POST /api/chat/completions`), not a separate service. A minimal external event — a CI step, or any authenticated caller — sends a short trigger message to the Pipe; the Pipe itself performs the sync in-process, using credentials Open WebUI already holds. This keeps the trust boundary inside Open WebUI instead of handing an external runner an admin-equivalent API key. The instance is now pinned to `0.10.2`, so Event Functions are also available — consider migrating the trigger to one, since it registers its own endpoint instead of masquerading as a chat completion.
+
+The sync must be repeatable and fail closed:
 
 1. Validate metadata, links, ownership, review dates, and collection/group mappings.
 2. Build one artifact set per knowledge collection and record content checksums.
@@ -230,11 +244,19 @@ The Git-to-Open-WebUI sync must be repeatable and fail closed:
 7. Export the live state back to `ai/openwebui/synced/` and compare it with the intended state.
 8. Run known-answer, missing-answer, citation, and unauthorized-access smoke tests.
 
-Exact API payloads must be verified against deployed Open WebUI `0.9.6` before implementing mutations. The current endpoint catalog tracks newer upstream documentation and is not sufficient proof of compatibility.
+Use `open-webui/oikb`'s algorithm (checksum diffing, dry-run reconciliation, incremental upload, cleanup) as the reference for steps 2, 3, 4, and 6 when writing the Pipe's sync logic, rather than designing it from scratch — but the code runs inside the Pipe, not as an external CLI invocation. `oikb` does not create knowledge collections or manage group grants, so steps 1, 5, 7, and 8 remain this project's own responsibility either way.
+
+Exact API payloads must be verified against the actually-deployed Open WebUI version (`0.10.2`, pinned per Phase 0) before implementing mutations. The current endpoint catalog tracks newer upstream documentation and is not sufficient proof of compatibility.
 
 ## Optional Deterministic Retrieval
 
-Add a private `wiki_mcp` only if the MVP shows a measured need for deterministic file-level retrieval, explicit source IDs, or better retrieval diagnostics.
+Add deterministic file-level retrieval only if the MVP shows a measured need for it, explicit source IDs, or better retrieval diagnostics than native Open WebUI retrieval provides. Build it as an Open WebUI Filter Function, and do not stand up a separate service for it, including to share it:
+
+1. **Implement as an Open WebUI Filter Function.** A Filter (`file_handler = True`) can read attached collection references, run a deterministic manifest/lexical lookup over the generated wiki tree instead of native chunk retrieval, and emit `citation` events with explicit document IDs — with no new Railway service and no new auth surface, since `__user__` is already available in-process for group-based filtering.
+   Accept these tradeoffs knowingly rather than by default: Functions run arbitrary Python in-process with no sandboxing (Open WebUI has shipped an RCE via exactly this trust model — treat Function-authoring access as admin-equivalent and audit it); their source lives in the Open WebUI database rather than Git, so keep the retrieval logic itself thin and re-derivable from the same generated manifest the sync job already produces.
+2. **If another MCP client (Claude Code, `erify_api` MCP consumers) later needs to call this directly, wrap the same Filter/Function's OpenAPI-compatible endpoint with a thin adapter** — the inverse of the existing `mcpo` project's MCP-to-OpenAPI direction — rather than rebuilding a standalone `wiki_mcp` service with duplicated retrieval logic. Reach for process isolation or a fully independent service only if the adapter itself proves insufficient (e.g. a caller that cannot be Open WebUI-authenticated at all).
+
+If a document-search tool surface is exposed this way (via Filter or its adapter), the tools are:
 
 | Tool | Purpose |
 | --- | --- |
@@ -243,7 +265,7 @@ Add a private `wiki_mcp` only if the MVP shows a measured need for deterministic
 | `wiki_get_doc` | Return one visible reviewed document by stable ID. |
 | `wiki_get_related` | Return visible related documents. |
 
-The service remains read-only and private on Railway. It must enforce caller identity and document visibility itself; Open WebUI assistant attachment is not an authorization boundary. It stays separate from `erify_api` MCP because document access and operational-data access have different policies and audit needs.
+Whatever the surface, it must enforce caller identity and document visibility itself — reuse `@eridu/auth-sdk/server/ssr` (the existing framework-agnostic JWKS verification pattern against `eridu_auth`) for identity if a standalone adapter is ever built rather than building auth from scratch; Open WebUI assistant attachment is not an authorization boundary. Any such surface stays conceptually separate from `erify_api` MCP because document access and operational-data access have different policies and audit needs, even if both end up served through similarly thin adapters.
 
 ## Phased Delivery
 
@@ -251,8 +273,11 @@ The service remains read-only and private on Railway. It must enforce caller ide
 
 - Map each existing live brain skill and knowledge file to behavior, shared knowledge, department knowledge, restricted knowledge, draft, or obsolete content.
 - Verify the `Eridu CMD` collection contents and replace wildcard grants with approved groups before adding sensitive content.
+- Remediate the `eridu_mcp` tool-server connection's instance-wide grant (empty function filter, access granted to all groups) alongside the `Eridu CMD` wildcard; scope both to approved groups before expanding sensitive content.
 - Define the audience and sensitivity vocabulary and its exact Open WebUI group mapping.
-- Verify Open WebUI `0.9.6` upload, processing, collection, grant, deletion, and citation behavior through a disposable test collection.
+- Open WebUI is pinned to `0.10.2` on Railway with auto-updates disabled (it was previously unpinned and had silently drifted past the `0.9.6` this plan originally assumed — a real risk on its own, independent of this project). Future version changes go through [`ai-platform-release-management`](../../.agents/skills/ai-platform-release-management/SKILL.md)'s check-and-maintainer-confirm routine, not another silent drift or a manual one-off.
+- Verify Native (Agentic) function calling is active by default on `0.10.2`, since knowledge and skill on-demand loading both depend on it.
+- Verify Open WebUI upload, processing, collection, grant, deletion, and citation behavior through a disposable test collection, and test the Pipe-based sync trigger, against `0.10.2`.
 
 ### Phase 1: Content Contract And Pilot Corpus
 
@@ -286,7 +311,8 @@ The service remains read-only and private on Railway. It must enforce caller ide
 ### Phase 5: Retrieval And Cost Optimization
 
 - Measure retrieval quality, prompt size, latency, and cost by assistant.
-- Add `wiki_mcp` only if Open WebUI retrieval or citations miss agreed thresholds.
+- Build deterministic retrieval as an Open WebUI Filter Function if Open WebUI retrieval or citations miss agreed thresholds; only wrap it for external MCP clients if a real caller needs that, and only add process isolation if the adapter itself proves insufficient (see Optional Deterministic Retrieval).
+- If MCP tool count has grown enough to matter, evaluate routing tool connections through LiteLLM's MCP gateway with `mcp_semantic_tool_filter` rather than building custom tool-filtering logic.
 - Test generated role packs and provider prompt caching against real traffic.
 - Tune LiteLLM aliases, budgets, and rate limits without moving content routing into LiteLLM.
 

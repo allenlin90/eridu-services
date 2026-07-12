@@ -6,7 +6,7 @@ Actual agent skills live in `.agents/skills/`. Files under `ai/` are policy mani
 
 ## Deployed baseline
 
-The current deployment runs Open WebUI `0.9.6` and LiteLLM `1.89.3` as two separate Railway services, each with its own PostgreSQL and Redis:
+The current deployment runs Open WebUI `0.10.2` and LiteLLM `1.91.0` as two separate Railway services, each with its own PostgreSQL and Redis:
 
 ```text
 Company users -> Open WebUI -> [OpenAI-compatible API] -> LiteLLM -> providers (OpenRouter / OpenAI / Anthropic / Gemini)
@@ -15,7 +15,7 @@ Company users -> Open WebUI -> [OpenAI-compatible API] -> LiteLLM -> providers (
 - Open WebUI reaches LiteLLM over Railway private networking (`http://<litellm-service>.railway.internal:4000/v1`); public LiteLLM URLs are for the admin UI and external testing only.
 - LiteLLM models, provider credentials, and company model aliases are managed through the LiteLLM Admin UI ("Store Model in DB") or its equivalent Management API, not a repo-managed `config.yaml` — the Railway deployment does not conveniently expose `config.yaml`. See [`litellm/README.md`](litellm/README.md) and [`litellm-admin-api`](../.agents/skills/litellm-admin-api/SKILL.md).
 - Per-user usage tracking is automatic: Open WebUI forwards each user's identity to LiteLLM via global env vars, so no pre-provisioning or sync step is required to record customer usage.
-- Version-sensitive: verify any LiteLLM/Open WebUI capability against `1.89.3` / `0.9.6` before relying on it; do not assume latest-docs behavior applies.
+- Version-sensitive: verify any LiteLLM/Open WebUI capability against `1.91.0` / `0.10.2` before relying on it; do not assume latest-docs behavior applies. Open WebUI's Railway image is pinned to an explicit tag with auto-updates disabled, so this figure stays accurate until a version change goes through [`ai-platform-release-management`](../.agents/skills/ai-platform-release-management/SKILL.md)'s check-and-maintainer-confirm routine. LiteLLM still tracks the `main-stable` image tag, which moves on its own — re-verify its live version (`GET /openapi.json`, `info.version`) before relying on a specific capability.
 
 ## Canonical AI workspace skills
 
@@ -28,6 +28,7 @@ Use these actual agent skills before changing AI workspace files:
 - `.agents/skills/openwebui-mcp-tool-integration/SKILL.md`
 - `.agents/skills/litellm-admin-api/SKILL.md`
 - `.agents/skills/wiki-knowledge-maintainer/SKILL.md`
+- `.agents/skills/ai-platform-release-management/SKILL.md`
 
 ## Component map
 
@@ -72,8 +73,12 @@ Use these actual agent skills before changing AI workspace files:
 │  ├─ SKILL.md
 │  └─ references/
 │     └─ endpoints.md
-└─ wiki-knowledge-maintainer/
-   └─ SKILL.md
+├─ wiki-knowledge-maintainer/
+│  └─ SKILL.md
+└─ ai-platform-release-management/
+   ├─ SKILL.md
+   └─ references/
+      └─ procedure.md
 
 ai/
 ├─ architecture/
