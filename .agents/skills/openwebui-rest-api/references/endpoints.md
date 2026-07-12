@@ -84,18 +84,23 @@ For the tool-server connection shape and the erify_api MCP wiring workflow, see
 | Method | Path | Purpose | Permission |
 |---|---|---|---|
 | GET | `/api/v1/knowledge/list` | Knowledge bases the user has write access to | Any user with access |
-| POST | `/api/v1/knowledge/create` | Create a knowledge base | `workspace.knowledge` (+ `sharing.public_knowledge` for public; otherwise forced private) |
-| DELETE | `/api/v1/knowledge/{id}/delete` | Delete a knowledge base | Owner/admin |
-| POST | `/api/v1/knowledge/{id}/file/add` | Add an uploaded file to a knowledge collection | |
-| POST | `/api/v1/knowledge/{id}/access/update` | Full-replace `access_grants` for a knowledge base — body `{"access_grants": [...]}`. **No `id/` segment** — different shape from the tools path below. Confirmed against `open-webui/open-webui` source at the deployed tag (`backend/open_webui/routers/knowledge.py`). | Owner, write-access grantee, or admin |
+| POST | `/api/v1/knowledge/create` | Create a knowledge base. Body `{"name": str, "description": str, "access_grants": Optional[list[dict]]}`. **Confirmed live on `0.10.2`** (full disposable-collection test, see `ai/architecture/llm-knowledge-base-plan.md` Phase 0). | `workspace.knowledge` (+ `sharing.public_knowledge` for public; otherwise forced private) |
+| DELETE | `/api/v1/knowledge/{id}/delete` | Delete a knowledge base. **Confirmed live on `0.10.2`** — verified with a fresh `GET` returning 404 after. | Owner/admin |
+| POST | `/api/v1/knowledge/{id}/file/add` | Add an uploaded file to a knowledge collection. Body `{"file_id": str, "directory_id": Optional[str]}`. Triggers embedding synchronously inside this call — polling `process/status` first is still correct practice (matches the async upload step) but this endpoint doesn't strictly require `status: completed` first, only that the file has *some* processed data (`FILE_NOT_PROCESSED` only fires if `file.data` is empty). **Confirmed live on `0.10.2`.** | Owner, write-access grantee, or admin |
+| POST | `/api/v1/knowledge/{id}/access/update` | Full-replace `access_grants` for a knowledge base — body `{"access_grants": [...]}`. **No `id/` segment** — different shape from the tools path below. **Confirmed live on `0.10.2`**, both via source (`backend/open_webui/routers/knowledge.py`) and a real mutation + independent re-`GET`. | Owner, write-access grantee, or admin |
 
 ## Files & retrieval — `/api/v1/files`, `/api/v1/retrieval`
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/api/v1/files/` | Upload a file for RAG processing |
-| GET | `/api/v1/files/{id}/process/status` | Poll processing status — required before the file is usable |
+| POST | `/api/v1/files/` | Upload a file for RAG processing. Multipart form-data, field name `file`. Response includes `id`, `filename`, `meta`. **Confirmed live on `0.10.2`.** |
+| GET | `/api/v1/files/{id}/process/status` | Poll processing status — required before the file is usable. Returns `{"status": "pending"\|"completed"\|"failed"}` (non-streaming; add `?stream=true` for SSE). **Confirmed live on `0.10.2`** — completed instantly for small text files. |
+| DELETE | `/api/v1/files/{id}` | Delete a file. Also cleans up its knowledge-base associations and vector embeddings automatically — no separate step needed to remove it from a collection first. **Confirmed live on `0.10.2`.** |
 | POST | `/api/v1/retrieval/process/web` | Fetch a URL and store it in a knowledge collection |
+
+### Citation behavior (confirmed on a live disposable test, `0.10.2`)
+
+`POST /api/chat/completions` with `files: [{type: "collection", id}]` returns a `sources` array whose `metadata[i]` correctly corresponds to `document[i]` — tested with two documents containing distinct, verifiable facts; the model both retrieved and cited the correct one. No sign of the community-reported citation-collapse issue on this path. **This only covers direct `files`-param injection on a raw model** — it does not confirm whether Native function calling's `query_knowledge_files` tool call (the path an assistant with *attached* knowledge actually uses) exhibits the same behavior. Verify that path specifically, ideally via a temporary test assistant, before relying on assistant-attached citation quality.
 
 ## Tools — `/api/v1/tools`
 
