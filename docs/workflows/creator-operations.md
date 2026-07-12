@@ -88,7 +88,7 @@ ADMIN and MANAGER review and adjust per-show creator compensation from the show 
 
 ### 6. Cost visibility
 
-Once Wave 2 ships (2.1 cost model + 2.2 line items + 2.3 economics service), a finance or admin user will be able to see per-show cost composed from flat creator assignment snapshots, time-multiplied shift labor (actuals with planned-time fallback), and show-scoped line items. `COMMISSION` and the `HYBRID` commission portion remain unresolved until a future revenue workflow.
+Finance and studio managers can review per-show cost composed from flat creator assignment snapshots, shift labor (actuals with manager-visible planned fallback), and show-scoped line items. `COMMISSION` and the commission portion of `HYBRID` remain unresolved until a future revenue workflow.
 
 Reference: [Economics Cost Model (2.1)](../domain/economics-cost-model.md) · [Phase 4 remaining-work tracker (2.2 + 2.3)](../roadmap/PHASE_4.md)
 

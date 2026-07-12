@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from #238 (built and reviewed, then closed without merging), June 2026
 > **Origin**: Follow-up split off PR #236, after #233 shipped the manual cancellation gate
-> **Related**: [`schedule-publish-removal-no-audit.md`](../tech-debt/schedule-publish-removal-no-audit.md), [`schedule-publish-restore-no-audit.md`](../tech-debt/schedule-publish-restore-no-audit.md), [`schedule-publish-active-task-check-mismatch.md`](../tech-debt/schedule-publish-active-task-check-mismatch.md), [Show Cancellation Gate](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md)
+> **Related**: [`schedule-publish-removal-no-audit.md`](../tech-debt/schedule-publish-removal-no-audit.md), [`schedule-publish-restore-no-audit.md`](../tech-debt/schedule-publish-restore-no-audit.md), [Show Cancellation Gate](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md)
 
 ## What
 
@@ -14,14 +14,14 @@ Schedule publish is currently the only place that moves a show into or out of `C
 
 - Every cancellation-adjacent transition gets the same audit trail, with no special-cased exception.
 - The `gateKind ?? 'show_cancellation'` fallback in `getCancellationStatus` (a workaround for publish-opened gates having no opening `Audit` row) becomes unnecessary.
-- The active-task definition used to decide remove-path disposition and the one used to guard manual `CANCELLED` resolution converge on one helper instead of two that can drift (see the active-task-check-mismatch tech-debt entry).
+- The shared active-task helper remains the single definition for remove-path disposition and manual `CANCELLED` resolution.
 - A show parked pending-resolution by publish, then resolved by publish itself once active tasks clear, can go through `resolvePending` (system actor, `null`) instead of a second special-cased raw status write.
 
 ## Why It Was Deferred
 
 1. The fix reaches into `PublishingService`'s transactional remove/restore loop — a high-traffic, correctness-sensitive path that isn't otherwise broken — to route it through a different service's write path. That's real regression surface for a unification, not a bug fix in isolation.
 2. `ShowCancellationGateService` was designed for two human-driven authorization tiers (Manager/Admin atomic, Duty Manager flag-and-defer). Bolting a third, system-driven gate kind onto it ad hoc, before the state machine and its mechanism are properly scoped, risks baking in assumptions (nullable actor everywhere, a `RESTORE_PREVIOUS` outcome only one `GateKind` uses) that a deliberate state-machine design might shape differently.
-3. The three tech-debt gaps this would close (no audit trail on remove, no audit trail on restore, active-task check mismatch) are real but pre-existing and non-regressing — safe to leave open one more round rather than fix via a larger mechanism change.
+3. The two tech-debt gaps this would close (no audit trail on remove and restore) are real but pre-existing and non-regressing — safe to leave open one more round rather than fix via a larger mechanism change.
 4. Better to design schedule publish's relationship to the cancellation gate (and any future broader lifecycle state machine) once, holistically, than to extend the gate twice — once now for schedule-publish, once later for the state machine.
 
 ## Decision Gates for Promotion

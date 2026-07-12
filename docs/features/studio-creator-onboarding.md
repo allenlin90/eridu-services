@@ -99,4 +99,4 @@ flowchart TD
 
 - Roster management: [studio-creator-roster.md](./studio-creator-roster.md)
 - Creator mapping flows: [creator-mapping.md](./creator-mapping.md)
-- Full availability gate (planned): [PHASE_4.md §PR 9](../roadmap/PHASE_4.md#remaining-prs)
+- Strict creator-availability enforcement is deferred to [Phase 6](../roadmap/PHASE_6.md).

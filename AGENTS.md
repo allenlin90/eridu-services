@@ -125,6 +125,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Use `docs/tech-debt/` for accepted implementation gaps and cleanup issues that should be fixed later; use `docs/ideation/` for deferred product or architecture ideas that need future discovery or PRD promotion.
 - Before merging a PR, run `.agents/workflows/pr-review.md` — or invoke the `/pr-ready` command, which runs that workflow end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and `doc-lifecycle.md` so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
 - During design review, optimization investigations, or phase planning, cross-check `.agents/workflows/ideation-lifecycle.md`.
+- At each phase boundary or at least every three months, run `.agents/workflows/repository-health.md` to reconcile implementation quality, package/test health, documentation lifecycle, skills, and the canonical tech-debt and ideation registers. Keep broad cleanup in separate scoped PRs.
 
 ### Core Engineering Rules
 - Never expose DB internal IDs from API responses. Use UID-based external IDs.
@@ -326,4 +327,3 @@ pnpm sherif
 - Never use `file://` URLs in repository documentation. (Note: This is separate from the agent's communication style in chat/artifacts, which must use `file://` links).
 - Prefer markdown links to canonical docs rather than pasting raw path text when the target should be navigable.
 - After editing docs, validate the touched doc tree for broken relative links before finishing.
-

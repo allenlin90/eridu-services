@@ -17,7 +17,7 @@ This ideation captures the warning surfaces and the small correctness fix so the
 
 Operationally legitimate: assigning multiple ACTIVE templates to one show (e.g., "live moderation" + "post-show audit" — distinct purposes, often non-overlapping shared fields). 149/802 ACTIVE shows in production do this; 148 of them have non-overlapping shared field sets and are working as intended.
 
-Operationally problematic: assigning multiple ACTIVE templates whose shared field sets overlap. The two tasks both contribute to the same `(shared_field_key, group)` report column for the same show. Today's report aggregator at [task-report-run.service.ts:212-214](apps/erify_api/src/models/task-report/task-report-run.service.ts#L212-L214) is first-write-wins:
+Operationally problematic: assigning multiple ACTIVE templates whose shared field sets overlap. The two tasks both contribute to the same `(shared_field_key, group)` report column for the same show. Today's report aggregator at [task-report-run.service.ts:212-214](../../apps/erify_api/src/models/task-report/task-report-run.service.ts#L212-L214) is first-write-wins:
 
 ```typescript
 if (!(columnKey in row)) {
@@ -25,7 +25,7 @@ if (!(columnKey in row)) {
 }
 ```
 
-The second task's value is silently dropped from the CSV export. The user has no warning at assignment time, no warning at submission time, and no warning at report generation time (the existing `DUPLICATE_SOURCE` warning at [task-report-run.service.ts:347-360](apps/erify_api/src/models/task-report/task-report-run.service.ts#L347-L360) only fires for `(show, same template)` duplicates, not cross-template column collisions).
+The second task's value is silently dropped from the CSV export. The user has no warning at assignment time, no warning at submission time, and no warning at report generation time (the existing `DUPLICATE_SOURCE` warning at [task-report-run.service.ts:347-360](../../apps/erify_api/src/models/task-report/task-report-run.service.ts#L347-L360) only fires for `(show, same template)` duplicates, not cross-template column collisions).
 
 Production scope today: 1 show. Future scope: unbounded as templates evolve.
 
@@ -51,7 +51,7 @@ Implementation surface: assignment endpoints in `apps/erify_api/src/task-orchest
 
 ### 2. Report-time warning extension
 
-Extend `buildWarnings` at [task-report-run.service.ts:347-360](apps/erify_api/src/models/task-report/task-report-run.service.ts#L347-L360) to surface cross-template column collisions, not just same-template duplicates. New warning code: `CROSS_TEMPLATE_COLUMN_COLLISION` with `show_id`, `column_key`, and the list of contributing template UIDs.
+Extend `buildWarnings` at [task-report-run.service.ts:347-360](../../apps/erify_api/src/models/task-report/task-report-run.service.ts#L347-L360) to surface cross-template column collisions, not just same-template duplicates. New warning code: `CROSS_TEMPLATE_COLUMN_COLLISION` with `show_id`, `column_key`, and the list of contributing template UIDs.
 
 ### 3. Existing-warning correctness fix
 

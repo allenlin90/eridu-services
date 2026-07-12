@@ -117,7 +117,7 @@ Operators self-read at `/me/shift-compensations?studio_id=&date_from=&date_to=` 
 
 ### 7. Cost visibility (Wave 2.3)
 
-Once 2.3 ships, the economics service reads `StudioShift.hourlyRate` snapshots + block actuals + supplemental line items to produce stable operator compensation rows. Commission-based pay does not apply to operator labor: operators are paid `hourlyRate × duration` plus signed line-item adjustments.
+The economics service reads `StudioShift.hourlyRate` snapshots, block actuals, and supplemental line items to produce operator compensation rows. Commission-based pay does not apply to operator labor: operators are paid `hourlyRate × duration` plus signed line-item adjustments.
 
 ## Data Flow
 

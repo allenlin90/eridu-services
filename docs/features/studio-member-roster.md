@@ -55,4 +55,4 @@ Studio operators previously depended on system-admin-only membership tooling for
 - Shift labor cost semantics: [economics-cost-model.md](../domain/economics-cost-model.md)
 - Creator-side cost input governance: [studio-creator-roster.md](./studio-creator-roster.md)
 - Supplemental cost inputs: [PHASE_4.md §PR 3-10](../roadmap/PHASE_4.md)
-- Creator compensation dedicated-route follow-up: [PHASE_4.md §PR 8.5](../roadmap/PHASE_4.md#pr-85--creator-compensations-dedicated-route)
+- Creator compensation dedicated-route follow-up: [PHASE_4.md](../roadmap/PHASE_4.md)
