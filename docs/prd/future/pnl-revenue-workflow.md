@@ -1,12 +1,12 @@
 # PRD: P&L Revenue Workflow (4.1)
 
-> **Status: Future target.** This document was drafted before [Phase 4 was simplified to a read-only cost reference viewer](./economics-cost-model.md). Treat it as future-feature context, not a Phase 4 close requirement. It must be redrafted when revenue planning restarts. Where this document conflicts with [`economics-cost-model.md`](./economics-cost-model.md) or the Phase 4 task-input actuals plan, the Phase 4 cost model and roadmap win.
+> **Status: Future target.** This document predates [Phase 4's simplified read-only cost reference viewer](../../domain/economics-cost-model.md). Treat it as future-feature context, not a Phase 4 close requirement. Redraft it when revenue planning restarts. Where this document conflicts with [`economics-cost-model.md`](../../domain/economics-cost-model.md) or the Phase 4 task-input actuals plan, the Phase 4 cost model and roadmap win.
 
 > **Status**: ⏭️ Future target
 > **Phase**: Future P&L workstream after simplified Phase 4
 > **Workstream**: P&L revenue ("P") side — completing the P&L model. Resolves the `COMMISSION` / `HYBRID` commission portion that remains pending in Phase 4.
-> **Depends on**: 1.2 Studio Creator Roster ✅ ([feature](../features/studio-creator-roster.md)) · 2.1 Economics Cost Model ✅ ([PRD](./economics-cost-model.md)) · 2.2 Compensation Line Items + Actuals 🔲 · 2.3 Economics Service 🔲 · 3.1 Studio Economics Review 🔲
-> **Canonical semantics**: [economics-cost-model.md](./economics-cost-model.md) — Phase 4 leaves commission components unresolved; future revenue work must use the snapshotted `commissionRate` and the cost model's null-bubbling contract. Phase 4 may add platform-scoped operational facts such as GMV, views, and violation records; this PRD still owns financial revenue semantics, net sales, contribution margin, and commission resolution.
+> **Depends on**: Studio Creator Roster ✅ ([feature](../../features/studio-creator-roster.md)) · Economics Cost Model ✅ ([contract](../../domain/economics-cost-model.md)) · Compensation Line Items + Actuals ✅ · Costs Dashboard ✅
+> **Canonical semantics**: [economics-cost-model.md](../../domain/economics-cost-model.md) — commission components remain unresolved without revenue; future revenue work must use the snapshotted `commissionRate` and the cost model's null-bubbling contract. Platform-scoped operational facts such as GMV, views, and violation records do not define financial revenue semantics, net sales, contribution margin, or commission resolution.
 
 ## Problem
 
@@ -47,7 +47,7 @@ Key questions unanswered today:
 
 3. **Economics service applies revenue to compute `COMMISSION` / `HYBRID`-commission creator costs** — once revenue is present for a show-platform, the engine multiplies revenue by the snapshotted `ShowCreator.commissionRate` to compute commission cost. `StudioCreator.defaultCommissionRate` is never read at this stage — only the per-show assignment snapshot.
 
-4. **Contribution margin calculation** — economics response includes `contribution_margin = total_revenue - resolved_total_cost`. Margin is null when revenue is absent (per [cost-model §7](./economics-cost-model.md#7-nullability-bubbling) null-bubbling).
+4. **Contribution margin calculation** — economics response includes `contribution_margin = total_revenue - resolved_total_cost`. Margin is null when revenue is absent (per [cost-model rollup semantics](../../domain/economics-cost-model.md#null-bubbling-at-rollup-grains)).
 
 5. **Nullable cost resolution** — when revenue resolves the last unresolved input on a row, `cost` becomes non-null and the relevant `unresolved_reasons` disappear. The simplified Phase 4 model does not persist a `cost_state`.
 
@@ -91,7 +91,7 @@ Who enters revenue and when?
 
 ### 4. Numerical precision
 
-**Resolved by [Finance Guardrail #2](../roadmap/../engineering/FINANCE_GUARDRAILS.md).** All financial arithmetic uses `Prisma.Decimal` (backed by `decimal.js`, already in `@prisma/client`) end-to-end. No `Number` / `toFixed(2)` chains in aggregation paths. Future revenue work inherits this rule from 2.2 / 2.3 — no separate decision needed.
+**Resolved by [Finance Guardrail #2](../../engineering/FINANCE_GUARDRAILS.md).** All financial arithmetic uses `Prisma.Decimal` (backed by `decimal.js`, already in `@prisma/client`) end-to-end. No `Number` / `toFixed(2)` chains in aggregation paths. Future revenue work inherits this rule — no separate decision needed.
 
 ## Backwards Compatibility
 
@@ -123,9 +123,7 @@ Who enters revenue and when?
 
 Future revenue design drafts were removed because revenue is no longer required to close Phase 4 and must be redrafted when revenue planning restarts.
 
-- 2.1 Cost Model: [`economics-cost-model.md`](./economics-cost-model.md)
-- 2.2 Compensation Line Items + Actuals: [`compensation-line-items.md`](./compensation-line-items.md)
-- 2.3 Economics Service: [`economics-service.md`](./economics-service.md)
-- 3.1 Studio Economics Review: [`studio-economics-review.md`](./studio-economics-review.md)
-- Business domain definitions: [`docs/domain/BUSINESS.md`](../domain/BUSINESS.md) (GMV vs. sales distinction should be formally defined here before implementation)
-- Phase 4 roadmap: [`PHASE_4.md`](../roadmap/PHASE_4.md)
+- Cost semantics: [`economics-cost-model.md`](../../domain/economics-cost-model.md)
+- Shipped cost workflow: [`post-production-costs.md`](../../features/post-production-costs.md)
+- Business domain definitions: [`BUSINESS.md`](../../domain/BUSINESS.md) (GMV vs. sales distinction should be formally defined here before implementation)
+- Phase 4 roadmap: [`PHASE_4.md`](../../roadmap/PHASE_4.md)

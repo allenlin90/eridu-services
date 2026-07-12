@@ -1,7 +1,7 @@
 # PRD: Studio Reference Data Management
 
-> **Status**: Active
-> **Phase**: 5 — Candidate (Studio Autonomy track)
+> **Status**: Deferred
+> **Phase**: 6 candidate (Studio Autonomy track)
 > **Workstream**: Studio self-service — reference data governance
 > **Depends on**: None (no prerequisite features required)
 > **Blocks**: None (studios operate on system-defined reference data today)

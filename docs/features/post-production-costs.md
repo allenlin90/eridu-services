@@ -1,219 +1,86 @@
 # Feature: Costs Dashboard
 
-> **Status**: ✅ Implemented / Active  
-> **Phase**: 4 — Wave 3 final feature  
-> **Workstream**: L-side P&L visibility — Costs review surface  
-> **Depends on**: PR 12 Fact Binding  
-> **Target Route**: `/studios/:studioId/costs`  
-> **Sidebar Group**: `Analytics` (alongside `/performance`)
+> **Status**: ✅ Shipped — Phase 4 PR 19
+> **Route**: `/studios/:studioId/costs`
+> **Roles**: Studio `ADMIN` and `MANAGER`
+> **Canonical semantics**: [Economics Cost Model](../domain/economics-cost-model.md)
 
----
+## Problem
 
-## 1. Problem & Context
+Studio managers need one operational view of creator payouts and shift labor costs. The underlying assignment snapshots, compensation line items, shift blocks, and actual timestamps already exist, but inspecting those records separately does not answer how much a studio's shows and shifts cost over an operational date range.
 
-Currently, studio managers have no centralized view of post-production **economics and costs**. While creator rates, hourly membership rates, and shift structures are defined, and actual event/shift data is recorded via operators and task approvals, there is no single dashboard to consult the combined economic footprint of a studio. 
+## Users
 
-To bridge this gap, we need a **Costs Dashboard** similar to the `/performance` dashboard. It should aggregate:
-1. **Show costs**: Sourced from show-creator assignments (base fixed/hybrid rates) and any show- or assignment-attached compensation line items (bonuses, allowances, deductions).
-2. **Operator/shift costs**: Sourced from shift blocks (base hourly rate × duration) and any shift- or block-attached line items.
+| Role | Need |
+| --- | --- |
+| Studio Admin | Review show and shift cost composition, unresolved records, and provisional values. |
+| Studio Manager | Monitor operational costs and open the source show or shift when a row needs correction. |
+| Talent Manager / Member | No dashboard access; recipient-facing compensation remains on role-specific surfaces. |
 
-This dashboard will display live-computed cost figures over a shared timezone-aware operational date range, showing a stacked area trend graph of total costs and detailed paginated tables of shows and shifts.
+## What Was Delivered
 
----
+### Dashboard
 
-## 2. Terminology & Cost Calculations
+The Costs entry appears under the studio **Analytics** navigation group beside Performance. The dashboard provides:
 
-All calculations align with the locked [`economics-cost-model.md`](../domain/economics-cost-model.md):
+- an operational date-range picker with a seven-day default unless the studio metadata defines another dashboard range;
+- total, show, and shift cost summary cards with unresolved counts;
+- a lazily loaded daily stacked cost trend;
+- server-paginated Show Payouts and Shift Labor tables;
+- URL-synchronized filters, pagination, sorting, and active tab;
+- source-record drill-ins from cost rows;
+- lazy detail queries so only the active table tab fetches rows.
 
-*   **Show Cost**:
-    *   **Base Subtotal**: Flat agreed rates (`agreedRate` from `ShowCreator` snapshot) of all assigned creators whose compensation package is `FIXED` or `HYBRID`. Creators with `COMMISSION` packages are ignored for base calculations.
-    *   **Line Item Subtotal**: Sum of all `CompensationLineItem` amounts targeting the `Show` itself or any of the `ShowCreator` participations.
-    *   **Total Cost**: Sum of Base Subtotal + Line Item Subtotal.
-    *   **Unresolved Rules**: If any assigned creator has an incomplete agreement snapshot or is pending revenue (for `COMMISSION` or `HYBRID` packages), the total show cost is unresolved (`null`) and is marked with the corresponding reasons (e.g., `COMMISSION_REVENUE_NOT_AVAILABLE`, `AGREEMENT_SNAPSHOT_MISSING`).
-    *   **Duration/Time-Scaling**: Creator show pay is **not** multiplied by duration or start/end deltas.
-*   **Shift Cost**:
-    *   **Base Subtotal**: `StudioShift.hourlyRate` × duration of all blocks within the shift.
-    *   **Line Item Subtotal**: Sum of all line items targeting the `StudioShift` itself or any of its `StudioShiftBlock` blocks.
-    *   **Total Cost**: Sum of Base Subtotal + Line Item Subtotal.
-    *   **Time-Scaling**: Block duration uses actual timestamps (`actualStartTime`/`actualEndTime`) if both are present. If actuals are missing or incomplete (exactly one present), it falls back to planned times (`startTime`/`endTime`) and emits warnings.
-    *   **Unresolved Rules**: If both actual and planned times are missing for a block, the shift cost is unresolved (`null`) with reason `PLANNED_TIME_MISSING`.
+### API surface
 
----
+All endpoints are studio-scoped and protected for `ADMIN` and `MANAGER`:
 
-## 3. API Contracts (`@eridu/api-types/costs`)
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /studios/:studioId/costs/summary` | Return cost totals, unresolved counts, currency/locale, and operational-day trend points. |
+| `GET /studios/:studioId/costs/shows` | Return paginated show cost rows with creator and line-item breakdowns. |
+| `GET /studios/:studioId/costs/shifts` | Return paginated shift cost rows with block and line-item breakdowns. |
 
-### 3.1 Shared Query Schemas
+The shared request and response contracts live in [`@eridu/api-types/costs`](../../packages/api-types/src/costs/costs.schema.ts). External identifiers are UIDs and monetary values are decimal strings.
 
-```typescript
-export const costsQuerySchema = z.object({
-  start_date: z.iso.datetime(),
-  end_date: z.iso.datetime(),
-  client_id: z.union([z.string(), z.array(z.string())]).optional(),
-  show_type_id: z.union([z.string(), z.array(z.string())]).optional(),
-  show_standard_id: z.union([z.string(), z.array(z.string())]).optional(),
-});
+### Cost semantics
 
-export const costsShowsQuerySchema = costsQuerySchema.extend({
-  page: z.coerce.number().int().min(1).optional().default(1),
-  limit: z.coerce.number().int().min(1).optional().default(10),
-  name: z.string().optional(),
-  sort: z.string().optional(), // e.g. start_time:desc,total_cost:asc
-});
+- A show's base cost uses snapshotted `ShowCreator` agreement terms. Creator show pay is not multiplied by show duration.
+- Show and assignment compensation line items are added to the show subtotal.
+- `COMMISSION` and the commission portion of `HYBRID` remain unresolved until the future revenue workflow defines the applicable revenue input.
+- Shift labor uses `StudioShift.hourlyRate × block duration` plus shift/block compensation line items.
+- Complete actual timestamps determine shift-block duration. Manager operational views may use planned fallback when actuals are missing or incomplete, with explicit calculation warnings.
+- Missing agreement data or unusable planned/actual times produce nullable cost rows with explicit unresolved reasons; missing values are never converted to zero.
+- Summary totals include resolved rows. Trend points use the same operational-day assignment as their subtotals so the trend reconciles with the summary.
 
-export const costsShiftsQuerySchema = costsQuerySchema.extend({
-  page: z.coerce.number().int().min(1).optional().default(1),
-  limit: z.coerce.number().int().min(1).optional().default(10),
-  member_name: z.string().optional(), // case-insensitive contains on the shift operator's name
-  role: z.string().optional(), // persisted lowercase STUDIO_ROLE value (e.g. `member`/`manager`) matched on the operator's active membership
-  is_duty_manager: z.boolean().optional(), // shift-level StudioShift.isDutyManager flag — orthogonal to membership role
-  status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).optional(),
-  sort: z.string().optional(), // e.g. date:desc,total_cost:asc
-});
-```
+## Key Product Decisions
 
-### 3.2 Response Schemas
+- This is a live operational reference view, not a settlement ledger. Costs are derived from current snapshots, actuals, and active line items.
+- Contribution margin and financial revenue semantics remain outside this feature.
+- Planned fallback is visible only on manager operational surfaces and is always labeled as provisional.
+- Recipient self-views keep stricter actual-backed monetary visibility and do not inherit this dashboard's planned fallback.
+- Performance and Costs share the Analytics navigation group but retain separate operational and financial semantics.
 
-#### `GET /studios/:studioId/costs/summary`
-Returns dashboard summary statistics and daily trend data coordinates (Show vs. Shift vs. Total Costs).
-```typescript
-export const costsTrendCoordinateSchema = z.object({
-  date: z.string(), // YYYY-MM-DD (local operational day)
-  show_cost: z.string(), // decimal string
-  shift_cost: z.string(), // decimal string
-  total_cost: z.string(), // decimal string (show_cost + shift_cost)
-});
+## Acceptance Record
 
-export const costsSummaryResponseSchema = z.object({
-  total_cost: z.string(),
-  show_cost_subtotal: z.string(),
-  shift_cost_subtotal: z.string(),
-  unresolved_shows_count: z.number().int(),
-  total_shows_count: z.number().int(),
-  unresolved_shifts_count: z.number().int(),
-  total_shifts_count: z.number().int(),
-  trend: z.array(costsTrendCoordinateSchema),
-  currency: z.string(),
-  locale: z.string(),
-});
-```
+- [x] Admin and Manager can open the studio Costs dashboard; other studio roles are denied.
+- [x] Summary, show, and shift endpoints use shared Zod response contracts.
+- [x] Dashboard date range, filters, pagination, sorting, and active tab are URL-synchronized.
+- [x] Show and shift tables are server-paginated and only the active detail tab fetches.
+- [x] Decimal strings remain precise through API and presentation boundaries.
+- [x] Unresolved rows and planned-fallback calculations are surfaced explicitly.
+- [x] Daily trend totals reconcile with the corresponding resolved summary subtotals.
+- [x] Service and controller behavior have focused automated tests.
 
-#### `GET /studios/:studioId/costs/shows`
-Paginated, sorted list of shows with creator and line item cost breakdowns.
-```typescript
-export const showCreatorCostDetailSchema = z.object({
-  show_creator_uid: z.string(),
-  creator_name: z.string(),
-  creator_alias_name: z.string(),
-  compensation_type: z.string().nullable(),
-  agreed_rate: z.string().nullable(),
-  commission_rate: z.string().nullable(),
-  base_amount: z.string().nullable(),
-  adjustment_total: z.string(),
-  total_amount: z.string().nullable(),
-  unresolved_reason: z.string().nullable(),
-});
+## Technical References
 
-export const showCostResponseSchema = z.object({
-  id: z.string(), // show uid
-  name: z.string(),
-  start_time: z.string(), // ISO datetime
-  end_time: z.string(), // ISO datetime
-  client_name: z.string().nullable(),
-  show_type_name: z.string().nullable(),
-  show_standard_name: z.string().nullable(),
-  creators: z.array(showCreatorCostDetailSchema),
-  line_item_subtotal: z.string(),
-  total_cost: z.string().nullable(), // null if any unresolved creators
-  unresolved_reasons: z.array(z.string()),
-  calculation_warnings: z.array(z.string()),
-  actuals_source: z.string(),
-});
+| Layer | Reference |
+| --- | --- |
+| Contract | [`packages/api-types/src/costs/costs.schema.ts`](../../packages/api-types/src/costs/costs.schema.ts) |
+| Backend | [`StudioCostsController`](../../apps/erify_api/src/studios/studio-costs/studio-costs.controller.ts), [`StudioCostsService`](../../apps/erify_api/src/studios/studio-costs/studio-costs.service.ts) |
+| Frontend | [`costs.tsx`](../../apps/erify_studios/src/routes/studios/$studioId/costs.tsx), [`studio-costs`](../../apps/erify_studios/src/features/studio-costs/) |
+| Domain | [Economics Cost Model](../domain/economics-cost-model.md), [Finance Guardrails](../engineering/FINANCE_GUARDRAILS.md) |
 
-export const paginatedShowCostsResponseSchema = createPaginatedResponseSchema(showCostResponseSchema);
-```
+## Open Documentation Work
 
-#### `GET /studios/:studioId/costs/shifts`
-Paginated, sorted list of operator shifts with blocks and line item cost breakdowns.
-```typescript
-export const shiftBlockCostDetailSchema = z.object({
-  block_uid: z.string(),
-  start_time: z.string(), // ISO datetime
-  end_time: z.string(), // ISO datetime
-  actual_start_time: z.string().nullable(),
-  actual_end_time: z.string().nullable(),
-  duration_hours: z.string(),
-  line_item_subtotal: z.string(),
-  total_cost: z.string().nullable(),
-  calculation_warnings: z.array(z.string()),
-});
-
-export const shiftCostResponseSchema = z.object({
-  id: z.string(), // shift uid
-  date: z.string(), // YYYY-MM-DD
-  member_name: z.string(),
-  member_role: z.string(),
-  hourly_rate: z.string(),
-  status: z.string(),
-  blocks: z.array(shiftBlockCostDetailSchema),
-  line_item_subtotal: z.string(),
-  total_cost: z.string().nullable(),
-  unresolved_reasons: z.array(z.string()),
-  calculation_warnings: z.array(z.string()),
-  actuals_source: z.string(),
-});
-
-export const paginatedShiftCostsResponseSchema = createPaginatedResponseSchema(shiftCostResponseSchema);
-```
-
----
-
-## 4. UI/UX Design
-
-The Costs view will live at `/studios/:studioId/costs` and mimic the `/performance` architecture for high cohesion:
-
-### 4.1 Navigation & Layout
-- **Sidebar Revamp**: Introduce a new navigation group `"Analytics"` or `"Performance & Costs"` inside `apps/erify_studios/src/config/sidebar-config.tsx`. This group will contain:
-  1. **Performance**: Link to `/studios/:studioId/performance` (icon: `TrendingUp`)
-  2. **Costs**: Link to `/studios/:studioId/costs` (icon: `Receipt` or `DollarSign`)
-- **Configurable Default Range**: Uses `DatePickerWithRange` to select the date range. If absent from URL, defaults to the studio settings configured range `defaultDashboardRangeDays` (or `7` days if not set).
-- **Localization**: All currency figures formatted dynamically in Thai Baht (`฿`) or the studio's configured locale settings with thousands separators.
-
-### 4.2 Dashboard Modules
-1. **Summary Cards**:
-   - **Total Costs**: Shows combined Show + Shift cost (green/curated palette).
-   - **Show Costs Subtotal**: With unresolved shows count (e.g. `฿124,500.00 — 2 shows pending revenue`).
-   - **Shift Costs Subtotal**: With unresolved shifts count (e.g. `฿48,200.00 — 1 shift pending actuals`).
-2. **Costs Trend Graph**:
-   - A Recharts Stacked Area chart showing **Show Costs** and **Shift Costs** stacked to display the **Total Cost**.
-   - Hovering displays a tooltip breakdown.
-3. **Detail Tables Section (Tabs)**:
-   - Contains a Radix Tabs interface with two views:
-     - **Show Costs** tab: Displays shows table with client, show type, creator list, adjustments subtotal, total cost, warnings (e.g. orange exclamation badge for planned fallback), and a details link targeting the compensation tab (`/shows/:showId/compensation`).
-     - **Shift Costs** tab: Displays operator shifts table with operator name, role, date, status, duration, adjustments subtotal, total cost, warnings, and details link (`/shifts/:shiftId`).
-   - Both tables support server-side pagination, server-side text search (Show Costs by show `name`, Shift Costs by operator `member_name` — both wired through the table's `columnFilters`/`onColumnFiltersChange` into the route's `*_name` search param), and multi-sort priorities synced to URL state.
-   - **Only the active tab's breakdown fetches.** Each tab's paginated query is `enabled` only while its tab is selected (`enabled: activeTab === 'shows' | 'shifts'`), per the operations-review-surface lazy-sub-resource rule — an unopened tab costs zero rows.
-   - **Shift "Member Role" filter** is a single selector spanning two data-model concepts. `Operator` → membership role `member`; `Manager` → membership role `manager`; `Duty Manager` → the shift-level `is_duty_manager` flag. The UI discriminator is translated to API params by `features/studio-costs/lib/shift-role-filter.ts` (`toShiftRoleQueryParams`) so the dropdown options and the persisted query values can't drift.
-
----
-
-## 5. Implementation Roadmap (Tasks 19.1–19.5)
-
-To implement this surface cleanly, task 19 in `PHASE_4.md` is redesigned into the following five execution segments:
-
-*   **PR 19.1: Shared API Schemas & DTO Types**
-    *   Create `packages/api-types/src/costs` defining all query, summary, show-costs, and shift-costs Zod schemas.
-    *   Export these schemas and infer types in `packages/api-types/src/index.ts`.
-*   **PR 19.2: Backend Costs Module, Controller & Services**
-    *   Create NestJS `studio-costs` module, controller, and service in `apps/erify_api/src/studios/studio-costs`.
-    *   Implement pure live-calculators for show costs and shift costs, integrating DB queries for `Show`, `ShowCreator`, `StudioShift`, and `CompensationLineItem` with timezone-aware daily trend aggregation via the shared [`operational-day.util`](../../apps/erify_api/src/lib/utils/operational-day.util.ts) (shared with `StudioPerformanceService`). The trend reconciles with the reported subtotals — each resolved cost lands in exactly one operational-day bucket (`sum(trend) === subtotal`).
-    *   Resolve date range defaults from a shared studio setting (`metadata.planning.defaultDashboardRangeDays`), defaulting to 7.
-    *   Write service and controller unit tests matching the patterns in `studio-performance.service.spec.ts`.
-*   **PR 19.3: Frontend Sidebar & Route Configuration**
-    *   Add `/studios/$studioId/costs` route tree node in `apps/erify_studios/src/routes`.
-    *   Modify `sidebar-config.tsx` to group `/performance` and `/costs` under a new `"Analytics"` or `"Performance & Costs"` group.
-    *   Establish route guards restricting access to `ADMIN` and `MANAGER` roles only.
-*   **PR 19.4: Frontend Costs Dashboard & Trend Graph**
-    *   Implement the main `/costs` dashboard structure with summary card components, date picker range sync, and lazy-loaded Recharts stacked area trend graph.
-*   **PR 19.5: Frontend Show & Shift Costs Tables**
-    *   Build responsive, server-paginated, filterable, and sort-supported tables for Show Costs and Shift Costs using tabbed navigation.
-    *   Integrate warnings/unresolved badge tooltips and links to detailed entity pages.
+The internal docs app does not yet have a role-scoped Costs Dashboard guide. Add one when the operations documentation workstream next covers studio analytics.

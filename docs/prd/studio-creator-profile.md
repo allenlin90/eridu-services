@@ -1,7 +1,7 @@
 # PRD: Studio Creator Profile Editing
 
-> **Status**: Active
-> **Phase**: 5 — Candidate (Studio Autonomy track)
+> **Status**: Deferred
+> **Phase**: 6 candidate (Studio Autonomy track)
 > **Workstream**: Studio self-service — creator profile management
 > **Depends on**: Studio Creator Onboarding — ✅ tracked (`docs/features/studio-creator-onboarding.md`)
 > **Blocks**: None (workaround exists via system admin)
