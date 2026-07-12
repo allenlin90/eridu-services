@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build": "tsc && mkdir -p dist/styles && cp src/styles/globals.css dist/styles/globals.css",
-    "dev": "tsc --watch --preserveWatchOutput",
+    "dev": "mkdir -p dist/styles && cp src/styles/globals.css dist/styles/globals.css && tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "test": "vitest run"
