@@ -104,7 +104,17 @@ ai/
 │  │  ├─ README.md
 │  │  └─ sync-pipe.py
 │  ├─ knowledge/
-│  │  └─ README.md
+│  │  ├─ README.md
+│  │  └─ company-wiki/
+│  │     ├─ README.md
+│  │     ├─ AGENTS.md
+│  │     ├─ CHANGELOG.md
+│  │     ├─ intake/
+│  │     ├─ content/
+│  │     ├─ generated/          (gitignored, derived)
+│  │     └─ tools/
+│  │        ├─ wiki-schema.json
+│  │        └─ validate-wiki
 │  ├─ skills/
 │  │  └─ README.md
 │  └─ synced/

@@ -284,7 +284,7 @@ Whatever the surface, it must enforce caller identity and document visibility it
 
 ### Phase 1: Content Contract And Pilot Corpus
 
-- Create the wiki structure, frontmatter schema, validator, and generated manifest.
+- **Done.** Wiki structure, frontmatter schema, and validator are built and tested: `ai/openwebui/knowledge/company-wiki/{intake,content,generated,tools}`, `tools/wiki-schema.json` (sensitivity/status/audience vocabulary — Member/Team-Lead/Manager tiers per pillar, `org-general`/Admin auto-granted, never listed explicitly), `tools/validate-wiki` (required fields, enum, date, duplicate-id, and wikilink validation; `--write-manifest` emits `generated/wiki-manifest.json` with per-document `expanded_group_grants`). Validated against fixtures covering all five defect classes (missing/invalid fields, invalid enums, unknown audience tag, bad date ordering, duplicate id, broken wikilink) plus a clean pass with shorthand expansion (`company-wide` -> all 10 groups, pillar shorthand -> that pillar's 3 tiers).
 - Add the `wiki-knowledge-maintainer` change-triggered and routine lint workflows.
 - Migrate a small shared/onboarding corpus from existing live content.
 - Keep raw intake outside the published content path.

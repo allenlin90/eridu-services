@@ -56,3 +56,6 @@ yarn-error.log*
 
 # Superpowers brainstorming mockups (local-only)
 .superpowers/
+
+# Company wiki generated manifests (derived, regenerate via validate-wiki --write-manifest)
+ai/openwebui/knowledge/company-wiki/generated/*

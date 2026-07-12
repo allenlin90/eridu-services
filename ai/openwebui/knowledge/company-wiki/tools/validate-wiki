@@ -1,0 +1,227 @@
+#!/usr/bin/env node
+/**
+ * Deterministic validator for ai/openwebui/knowledge/company-wiki/content/**\/*.md.
+ *
+ * Not a general YAML parser — this repo's wiki frontmatter is intentionally flat
+ * (scalars and one-level string arrays only, see wiki-schema.json). If a future
+ * document needs nested YAML, that's a signal to reconsider the schema, not to
+ * grow this parser.
+ *
+ * Usage: tools/validate-wiki [--write-manifest]
+ * Exit code 0 = all documents valid. Non-zero = at least one error; details on stderr.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.resolve(__dirname, '..');
+const CONTENT_DIR = path.join(ROOT, 'content');
+const SCHEMA_PATH = path.join(__dirname, 'wiki-schema.json');
+const MANIFEST_PATH = path.join(ROOT, 'generated', 'wiki-manifest.json');
+
+const schema = JSON.parse(fs.readFileSync(SCHEMA_PATH, 'utf8'));
+const allowedAudienceTags = new Set([
+  ...schema.audiences.groups,
+  ...Object.keys(schema.audiences.shorthands),
+]);
+
+// Directory-local docs (README.md, per-domain index files) are not wiki documents
+// and carry no frontmatter — skip them rather than treating them as validation failures.
+const NON_CONTENT_FILENAMES = new Set(['README.md']);
+
+function findMarkdownFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  const out = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...findMarkdownFiles(full));
+    else if (entry.isFile() && entry.name.endsWith('.md') && !NON_CONTENT_FILENAMES.has(entry.name)) out.push(full);
+  }
+  return out;
+}
+
+// Splits a scalar array like "[a, b, c]" into ["a", "b", "c"]. No nested structures.
+function parseInlineArray(raw) {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return null;
+  const inner = trimmed.slice(1, -1).trim();
+  if (inner === '') return [];
+  return inner.split(',').map((s) => stripQuotes(s.trim()));
+}
+
+function stripQuotes(s) {
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    return s.slice(1, -1);
+  }
+  return s;
+}
+
+// Extracts and parses the --- delimited frontmatter block. Returns { frontmatter, body, errors }.
+function parseFrontmatter(raw, filePath) {
+  const errors = [];
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!match) {
+    errors.push(`${filePath}: missing --- frontmatter block at top of file`);
+    return { frontmatter: {}, body: raw, errors };
+  }
+  const [, fmBlock, body] = match;
+  const frontmatter = {};
+  const lines = fmBlock.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$/);
+    if (!m) {
+      errors.push(`${filePath}: unparseable frontmatter line: "${line}"`);
+      continue;
+    }
+    const [, key, rawValue] = m;
+    if (rawValue.trim() === '') {
+      errors.push(`${filePath}: frontmatter field "${key}" has an empty value`);
+      continue;
+    }
+    const arr = parseInlineArray(rawValue);
+    frontmatter[key] = arr !== null ? arr : stripQuotes(rawValue.trim());
+  }
+  return { frontmatter, body, errors };
+}
+
+function isValidDate(s) {
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+}
+
+function expandAudiences(tags) {
+  const expanded = new Set();
+  for (const tag of tags) {
+    if (schema.audiences.shorthands[tag]) {
+      schema.audiences.shorthands[tag].forEach((g) => expanded.add(g));
+    } else {
+      expanded.add(tag);
+    }
+  }
+  return [...expanded];
+}
+
+function validateDocument(filePath, frontmatter, parseErrors) {
+  const errors = [...parseErrors];
+  const rel = path.relative(ROOT, filePath);
+
+  for (const field of schema.requiredFields) {
+    if (!(field in frontmatter)) {
+      errors.push(`${rel}: missing required field "${field}"`);
+    }
+  }
+  if (errors.length) return errors; // don't cascade checks against missing fields
+
+  if (!Array.isArray(frontmatter.audiences) || frontmatter.audiences.length === 0) {
+    errors.push(`${rel}: "audiences" must be a non-empty array`);
+  } else {
+    for (const tag of frontmatter.audiences) {
+      if (!allowedAudienceTags.has(tag)) {
+        errors.push(`${rel}: unknown audience tag "${tag}" (see tools/wiki-schema.json for allowed values)`);
+      }
+    }
+  }
+
+  if (!schema.sensitivity[frontmatter.sensitivity]) {
+    errors.push(`${rel}: invalid sensitivity "${frontmatter.sensitivity}" (allowed: ${Object.keys(schema.sensitivity).join(', ')})`);
+  }
+
+  if (!schema.status[frontmatter.status]) {
+    errors.push(`${rel}: invalid status "${frontmatter.status}" (allowed: ${Object.keys(schema.status).join(', ')})`);
+  }
+
+  if (!isValidDate(frontmatter.reviewed_at)) {
+    errors.push(`${rel}: "reviewed_at" must be an ISO date (YYYY-MM-DD), got "${frontmatter.reviewed_at}"`);
+  }
+  if (!isValidDate(frontmatter.review_by)) {
+    errors.push(`${rel}: "review_by" must be an ISO date (YYYY-MM-DD), got "${frontmatter.review_by}"`);
+  }
+  if (isValidDate(frontmatter.reviewed_at) && isValidDate(frontmatter.review_by)) {
+    if (Date.parse(frontmatter.review_by) < Date.parse(frontmatter.reviewed_at)) {
+      errors.push(`${rel}: "review_by" (${frontmatter.review_by}) is before "reviewed_at" (${frontmatter.reviewed_at})`);
+    }
+  }
+
+  return errors;
+}
+
+function findWikilinks(body) {
+  const links = [];
+  const re = /\[\[([a-zA-Z0-9_.-]+)\]\]/g;
+  let m;
+  while ((m = re.exec(body)) !== null) links.push(m[1]);
+  return links;
+}
+
+function main() {
+  const writeManifest = process.argv.includes('--write-manifest');
+  const files = findMarkdownFiles(CONTENT_DIR);
+
+  const allErrors = [];
+  const docs = [];
+  const idsSeen = new Map(); // id -> file path, for duplicate detection
+
+  for (const filePath of files) {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const { frontmatter, body, errors: parseErrors } = parseFrontmatter(raw, path.relative(ROOT, filePath));
+    const errors = validateDocument(filePath, frontmatter, parseErrors);
+    allErrors.push(...errors);
+
+    if (frontmatter.id) {
+      if (idsSeen.has(frontmatter.id)) {
+        allErrors.push(
+          `${path.relative(ROOT, filePath)}: duplicate id "${frontmatter.id}" (already used by ${path.relative(ROOT, idsSeen.get(frontmatter.id))})`
+        );
+      } else {
+        idsSeen.set(frontmatter.id, filePath);
+      }
+    }
+
+    docs.push({
+      path: path.relative(ROOT, filePath),
+      frontmatter,
+      wikilinks: findWikilinks(body),
+    });
+  }
+
+  // Wikilink resolution: every [[id]] must reference a known document id.
+  const knownIds = new Set(idsSeen.keys());
+  for (const doc of docs) {
+    for (const link of doc.wikilinks) {
+      if (!knownIds.has(link)) {
+        allErrors.push(`${doc.path}: broken wikilink [[${link}]] — no document with that id`);
+      }
+    }
+  }
+
+  if (allErrors.length > 0) {
+    console.error(`validate-wiki: ${allErrors.length} error(s) across ${files.length} file(s):\n`);
+    for (const err of allErrors) console.error(`  - ${err}`);
+    process.exit(1);
+  }
+
+  console.log(`validate-wiki: ${files.length} document(s) valid.`);
+
+  if (writeManifest) {
+    const manifest = {
+      generated_at: new Date().toISOString(),
+      documents: docs.map((d) => ({
+        id: d.frontmatter.id,
+        path: d.path,
+        title: d.frontmatter.title,
+        owner: d.frontmatter.owner,
+        sensitivity: d.frontmatter.sensitivity,
+        status: d.frontmatter.status,
+        audiences: d.frontmatter.audiences,
+        expanded_group_grants: expandAudiences(d.frontmatter.audiences),
+        review_by: d.frontmatter.review_by,
+      })),
+    };
+    fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
+    fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n');
+    console.log(`validate-wiki: wrote ${path.relative(ROOT, MANIFEST_PATH)}`);
+  }
+}
+
+main();
