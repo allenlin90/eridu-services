@@ -119,3 +119,4 @@ Before changing AI workspace policy, also check these existing sources:
 
 - [`architecture/ai-workspace-summary.md`](architecture/ai-workspace-summary.md) — Open WebUI, LiteLLM, Better Auth, and MCP platform baseline.
 - [`architecture/llm-knowledge-base-plan.md`](architecture/llm-knowledge-base-plan.md) — Migration plan for a Git-backed company wiki using Open WebUI retrieval, scoped knowledge collections, and optional documentation-only MCP lazy loading.
+- [`architecture/skill-classification-inventory.md`](architecture/skill-classification-inventory.md) — Per-file classification of the 19 live Open WebUI skills, reference input for Phase 1/3 content migration.
