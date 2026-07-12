@@ -109,14 +109,28 @@ For the tool-server connection shape and the erify_api MCP wiring workflow, see
 | POST | `/api/v1/tools/create` | Create a tool (ID, name, Python content) |
 | POST | `/api/v1/tools/id/{id}/access/update` | Set read/write access grants per user/group |
 
-## Resource access grants (models, knowledge, tools, prompts)
+## Skills — `/api/v1/skills`
+
+**Confirmed live on `0.10.2`**, including on-demand loading behavior — see `ai-platform-capability-verification` skill and `ai/architecture/llm-knowledge-base-plan.md` (Skills Versus Knowledge § Routing And Indexing At Scale).
+
+| Method | Path | Purpose | Notes |
+|---|---|---|---|
+| POST | `/api/v1/skills/create` | Create a skill. Body `{id, name, description, content, access_grants}`. | `is_active: true` by default (unlike Functions, no separate toggle needed). `id` gets lowercased and space-to-hyphen normalized server-side. |
+| POST | `/api/v1/skills/id/{id}/update` | Replace a skill — same body shape as `/create`. | |
+| POST | `/api/v1/skills/id/{id}/access/update` | Set read/write access grants — same normalized-grant shape as knowledge/tools. | |
+| DELETE | `/api/v1/skills/id/{id}/delete` | Delete. | |
+
+**On-demand loading**: a skill attached via `skill_ids: [...]` on a chat completion (or via a model's `meta.skillIds`) loads on demand — the model receives only a compact `<available_skills>` manifest (id/name/description) and must call the builtin `view_skill(id)` tool to get full content — **provided the request has a valid top-level `session_id`** (not nested under `metadata`) and the model isn't using legacy function calling. A skill explicitly `$mention`-ed in the message, or a request without a valid `session_id`, gets its full content injected directly instead — verify which behavior a given caller actually triggers rather than assuming.
+
+## Resource access grants (models, knowledge, tools, skills, prompts)
 
 Per-resource sharing is a normalized grant, not a field on the group: `{resource_type, resource_id,
 principal_type: user|group, principal_id, permission: read|write}` (`principal_type: user` +
 `principal_id: "*"` means public). Each resource type has its own `.../access/update` endpoint, but
 **the exact path shape differs per resource type — don't assume one prefix's shape by analogy to
-another's.** Tools use `tools/id/{id}/access/update` (with an `id/` segment); knowledge bases use
-`knowledge/{id}/access/update` (no `id/` segment, confirmed above from source). Verify the actual
+another's.** Tools and skills both use an `id/` segment (`tools/id/{id}/access/update`,
+`skills/id/{id}/access/update`); knowledge bases don't (`knowledge/{id}/access/update`) — each
+confirmed above from its own source, not inferred from the others. Verify the actual
 path for a resource type before scripting a mutation against it — a wrong guess here can silently
 404, or worse, hit a different endpoint than intended. See
 [openwebui-groups-permissions](../../openwebui-groups-permissions/SKILL.md) for the workflow that
