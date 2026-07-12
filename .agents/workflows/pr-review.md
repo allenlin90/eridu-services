@@ -152,6 +152,7 @@ Applies to any change under `packages/*`.
 - [ ] Internal cross-package dependencies use `workspace:*` — never `file:` or pinned versions.
 - [ ] `tsconfig.json` includes `declaration: true`, `declarationMap: true`, `sourceMap: true`, `outDir: "dist"`.
 - [ ] No path mappings to workspace `src/` in consuming apps — TS resolves via `package.json` exports.
+- [ ] If `build` copies/generates a non-TS static asset into `dist/` (stylesheet, image, etc.), `dev` produces it too before the watch starts. Verify by simulating a fresh clone (`rm -rf packages/<pkg>/dist` then run the app's `dev`/`dev:*` script) — a package asset that only `build` creates must not 500 the consumer's dev server.
 - [ ] If `package.json` changed: `pnpm install` was re-run and `pnpm-lock.yaml` is committed in the same change.
 - [ ] Sherif passes: `pnpm sherif` — no version mismatches across the workspace.
 

@@ -181,7 +181,8 @@ method(@StudioParam() studioUid: string) {
 ### Monorepo Package Rules
 - Keep internal package versions as `workspace:*`.
 - Default pattern: package exports should point to compiled artifacts in `dist/`.
-- Current codebase has mixed export patterns (for example, `@eridu/ui` exports runtime entries from `src` while types come from `dist`). Mixed export packages are refactor debt, not an alternate standard. Avoid unrelated drive-by rewiring, but when package export/build behavior is in scope, align toward compiled `dist/` exports unless a concrete compatibility blocker is documented.
+- Runtime shared packages export JavaScript, declarations, source maps, and package-owned static assets from `dist/`. Do not point runtime export conditions at TypeScript source; package builds must materialize every exported target before consumer builds run.
+- A package's `dev` script must also produce every exported target that `build` produces, including non-TS static assets `tsc --watch` won't touch (e.g. copying a stylesheet into `dist/`). A fresh clone must not need a manual `build` before `pnpm dev`/`dev:studios`/`dev:creators` works.
 - Prefer package exports with both `types` and runtime entry definitions in `package.json`.
 - Avoid path mappings from apps directly into workspace package sources unless the package already uses that pattern and the task explicitly requires it.
 - For package or bundler changes, verify pnpm symlink behavior and affected `optimizeDeps` or build config expectations.

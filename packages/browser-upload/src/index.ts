@@ -246,7 +246,7 @@ function supportsWorkerCompression(): boolean {
 }
 
 async function compressInWorker(file: File, options: PrepareImageForUploadOptions): Promise<Blob> {
-  const worker = new Worker(new URL('./image-compress.worker.ts', import.meta.url), { type: 'module' });
+  const worker = new Worker(new URL('./image-compress.worker.js', import.meta.url), { type: 'module' });
 
   try {
     const fileArrayBuffer = await file.arrayBuffer();
