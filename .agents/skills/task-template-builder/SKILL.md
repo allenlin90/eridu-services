@@ -60,6 +60,19 @@ Unlike `system_fact_key`/`shared_field_key`, `mechanic_ref` is **not** v2-exclus
 - Per-loop `(mechanic_id, group)` uniqueness is enforced at the same validation layer, not as a DB constraint — `TaskTemplateMechanicRef` is a denormalized, write-on-save link table (S2) for coverage queries, not the source of truth (that's the JSON `mechanic_ref` inside `currentSchema.items[]`).
 - The repository syncs `TaskTemplateMechanicRef` with a transactional delete-then-recreate per `(templateId, snapshotId)` on every create/update — see `TaskTemplateRepository.syncMechanicRefsForTemplate`.
 
+### 9. Builder Composition Boundaries
+
+Keep [`task-template-builder.tsx`](../../../apps/erify_studios/src/components/task-templates/builder/task-template-builder.tsx) as the stable composition root and state/query owner. Feature-local modules own cohesive concerns:
+
+- `task-template-settings-card.tsx`: template identity, task type, workflow mode, and client binding.
+- `client-mechanics-matrix.tsx`: Loop x Mechanic assignment presentation.
+- `use-moderation-loop-actions.ts` + `moderation-loops-list.tsx`: loop mutation controller and card composition.
+- `task-template-fields-section.tsx`: standard DnD field list and fields/loops toolbar.
+- `task-template-builder-chrome.tsx`: validation messages, save/cancel actions, and deferred preview.
+- `mechanic-reference.utils.ts`: shared mechanic assignment and upgrade transforms used by the matrix and field cards.
+
+Keep `template` and `onChange` in the composition root's latest-props ref so DnD and extracted callbacks mutate the current template rather than a stale render snapshot.
+
 ## Checklist
 
 - [ ] Field validation uses shared Zod schema from `@eridu/api-types/task-management`
@@ -72,3 +85,4 @@ Unlike `system_fact_key`/`shared_field_key`, `mechanic_ref` is **not** v2-exclus
 - [ ] Shared-field queries revalidated on mount, invalidated after mutations
 - [ ] Shared-field load failures surfaced in UI
 - [ ] No duplicate validation logic between frontend and backend
+- [ ] New builder behavior lands in the matching feature-local boundary instead of regrowing the composition root

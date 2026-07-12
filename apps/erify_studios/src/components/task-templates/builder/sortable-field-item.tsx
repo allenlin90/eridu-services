@@ -16,6 +16,7 @@ import {
 } from '@eridu/ui';
 
 import { FieldEditor } from './field-editor';
+import { buildMechanicUpgradePatch } from './mechanic-reference.utils';
 import type { FieldItem } from './schema';
 import { isMechanicField, isSharedField } from './schema';
 
@@ -55,7 +56,7 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
     onUpdate(item.id, updates);
   }, [item.id, onUpdate]);
 
-  const mechanicRef = (item as any).mechanic_ref;
+  const mechanicRef = item.mechanic_ref;
   const mechanic = clientMechanics?.find((m) => m.id === mechanicRef?.mechanic_id);
   const isRetired = mechanic ? mechanic.status === 'retired' : false;
   const isSuperseded = mechanic ? mechanic.content_revision > mechanicRef?.content_revision : false;
@@ -133,14 +134,7 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
                     title="Upgrade to latest catalog revision"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onUpdate(item.id, {
-                        label: mechanic.instruction_label,
-                        description: mechanic.instruction_body,
-                        mechanic_ref: {
-                          ...mechanicRef,
-                          content_revision: mechanic.content_revision,
-                        },
-                      });
+                      onUpdate(item.id, buildMechanicUpgradePatch(item, mechanic));
                       toast.success('Field upgraded to latest mechanic catalog version');
                     }}
                   >
@@ -191,14 +185,7 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
                       size="sm"
                       className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1 h-7 text-[11px]"
                       onClick={() => {
-                        onUpdate(item.id, {
-                          label: mechanic.instruction_label,
-                          description: mechanic.instruction_body,
-                          mechanic_ref: {
-                            ...mechanicRef,
-                            content_revision: mechanic.content_revision,
-                          },
-                        });
+                        onUpdate(item.id, buildMechanicUpgradePatch(item, mechanic));
                         toast.success('Field upgraded to latest mechanic catalog version');
                       }}
                     >
