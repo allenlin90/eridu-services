@@ -271,7 +271,7 @@ Whatever the surface, it must enforce caller identity and document visibility it
 
 ### Phase 0: Inventory And Access Remediation
 
-- Map each existing live brain skill and knowledge file to behavior, shared knowledge, department knowledge, restricted knowledge, draft, or obsolete content.
+- Map each existing live brain skill and knowledge file to behavior, shared knowledge, department knowledge, restricted knowledge, draft, or obsolete content — see [`skill-classification-inventory.md`](skill-classification-inventory.md) for a first pass. This is a content-owner review task, not a pipeline dependency; the sync/retrieval pipeline itself is content-agnostic and doesn't need this done first.
 - Verify the `Eridu CMD` collection contents and replace wildcard grants with approved groups before adding sensitive content.
 - Remediate the `eridu_mcp` tool-server connection's instance-wide grant (empty function filter, access granted to all groups) alongside the `Eridu CMD` wildcard; scope both to approved groups before expanding sensitive content.
 - Define the audience and sensitivity vocabulary and its exact Open WebUI group mapping.
