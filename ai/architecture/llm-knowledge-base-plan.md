@@ -199,7 +199,7 @@ Each assistant attaches only the collections, skills, and MCP tools needed by it
 
 Procedural answers cite the retrieved source at paragraph or step level. For the MVP, the citation target is the stable uploaded filename/document ID exposed by Open WebUI retrieval.
 
-Pilot evaluation must confirm that the deployed Open WebUI version reliably exposes usable source citations. If it cannot, do not fake `[[filename]]` citations in the prompt; use the Optional Deterministic Retrieval Filter Function, which returns explicit document IDs via its own citation events.
+Confirmed on `0.10.2` via a disposable two-document test collection: direct `files: [{type: "collection", id}]` retrieval (a raw `POST /api/chat/completions` call, not routed through an assistant) returns per-chunk `metadata` correctly aligned to its own `document` content — the model cited the right file for the right fact, with no sign of the community-reported `documents[0]` citation collapse. **Not yet confirmed**: whether an assistant's *attached* knowledge, retrieved via Native function calling's `query_knowledge_files` tool call (a different code path from direct `files` injection), exhibits the same correct per-file citation behavior — verify this specifically before relying on it for a real assistant, ideally via a temporary test assistant rather than modifying a live one. If either path proves unreliable, do not fake `[[filename]]` citations in the prompt; use the Optional Deterministic Retrieval Filter Function, which returns explicit document IDs via its own citation events.
 
 When sources are absent, insufficient, stale, or conflicting, return:
 
@@ -278,7 +278,7 @@ Whatever the surface, it must enforce caller identity and document visibility it
 - Open WebUI is pinned to `0.10.2` on Railway with auto-updates disabled (it was previously unpinned and had silently drifted past the `0.9.6` this plan originally assumed — a real risk on its own, independent of this project). Future version changes go through [`ai-platform-release-management`](../../.agents/skills/ai-platform-release-management/SKILL.md)'s check-and-maintainer-confirm routine, not another silent drift or a manual one-off.
 - LiteLLM is pinned to `1.91.0` on Railway with auto-updates disabled (it was previously tracking the moving `main-stable` tag). Applied via the same check-and-stage-and-confirm routine as the Open WebUI pin.
 - Verify Native (Agentic) function calling is active by default on `0.10.2`, since knowledge and skill on-demand loading both depend on it.
-- Verify Open WebUI upload, processing, collection, grant, deletion, and citation behavior through a disposable test collection, and test the Pipe-based sync trigger, against `0.10.2`.
+- Open WebUI upload, processing, collection, grant, deletion, and direct-retrieval citation behavior verified through a disposable test collection on `0.10.2` (create, upload, poll, add-to-collection, grant, cite, delete — all confirmed, cleanly torn down). Native-function-calling citation behavior (the path assistants with attached knowledge actually use) is still unverified — see Citation And Escalation Contract. The Sync Pipe itself is not yet built, so its trigger is not yet tested.
 
 ### Phase 1: Content Contract And Pilot Corpus
 
