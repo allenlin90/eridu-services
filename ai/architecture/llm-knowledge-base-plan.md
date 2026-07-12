@@ -276,7 +276,7 @@ Whatever the surface, it must enforce caller identity and document visibility it
 - Remediate the `eridu_mcp` tool-server connection's instance-wide grant (empty function filter, access granted to all groups) alongside the `Eridu CMD` wildcard; scope both to approved groups before expanding sensitive content.
 - Define the audience and sensitivity vocabulary and its exact Open WebUI group mapping.
 - Open WebUI is pinned to `0.10.2` on Railway with auto-updates disabled (it was previously unpinned and had silently drifted past the `0.9.6` this plan originally assumed — a real risk on its own, independent of this project). Future version changes go through [`ai-platform-release-management`](../../.agents/skills/ai-platform-release-management/SKILL.md)'s check-and-maintainer-confirm routine, not another silent drift or a manual one-off.
-- LiteLLM still uses the moving `main-stable` tag. Treat this as an unresolved deployment-policy gap: prepare an explicit-version pin and rollback report through `ai-platform-release-management`, then apply it only with maintainer approval.
+- LiteLLM is pinned to `1.91.0` on Railway with auto-updates disabled (it was previously tracking the moving `main-stable` tag). Applied via the same check-and-stage-and-confirm routine as the Open WebUI pin.
 - Verify Native (Agentic) function calling is active by default on `0.10.2`, since knowledge and skill on-demand loading both depend on it.
 - Verify Open WebUI upload, processing, collection, grant, deletion, and citation behavior through a disposable test collection, and test the Pipe-based sync trigger, against `0.10.2`.
 

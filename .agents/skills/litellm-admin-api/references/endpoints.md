@@ -4,7 +4,7 @@ Sourced from `docs.litellm.ai` (main branch — `docs/proxy/model_management`, `
 `customers`, `customer_usage`, `model_access_groups`, `access_control`, `cost_tracking`,
 `budget_fallbacks`, `tag_budgets`). Confirm exact payload shapes against the deployed instance
 before shipping a script that depends on a specific field — the docs track the latest release, not
-necessarily the deployed version (`1.91.0` as of last check, but this image tracks `main-stable` and moves — see `ai/litellm/README.md`). `/model/info` and `/model/new` are explicitly BETA per
+necessarily the deployed version (`1.91.0`, pinned — see `ai/litellm/README.md`). `/model/info` and `/model/new` are explicitly BETA per
 LiteLLM's own docs.
 
 All paths below are relative to the deployed base URL (`LITELLM_HOST` from `ai/litellm/.env`, or the

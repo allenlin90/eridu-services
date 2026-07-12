@@ -10,7 +10,7 @@ Use this skill for the *mechanics* of calling LiteLLM's Management API. It does 
 ## Before using this skill
 
 - Read `ai-workspace-control-plane` and `ai/litellm/README.md` first if the task involves deciding *what* to configure (which alias, which access group, which budget tier), not just calling the API.
-- Verify against the deployed version before relying on any endpoint. The baseline is LiteLLM `1.91.0` (see `ai/README.md`), but that image tracks the `main-stable` tag and moves on its own — confirm the live version (`GET /openapi.json`, `info.version`) rather than trusting this number. The reference below is sourced from `docs.litellm.ai` (main branch, tracks latest release). Spot-check unfamiliar payload shapes against the deployed instance's Swagger UI (`<host>/`, LiteLLM serves interactive docs at the proxy root) before scripting a mutation.
+- Verify against the deployed version before relying on any endpoint. The baseline is LiteLLM `1.91.0`, pinned (see `ai/README.md`). The reference below is sourced from `docs.litellm.ai` (main branch, tracks latest release) and may still drift ahead of what's deployed. Spot-check unfamiliar payload shapes against the deployed instance's Swagger UI (`<host>/`, LiteLLM serves interactive docs at the proxy root) before scripting a mutation.
 - `/model/info` and `/model/new` are documented as BETA by LiteLLM itself — treat their exact response shape as subject to change across versions.
 
 ## Authentication

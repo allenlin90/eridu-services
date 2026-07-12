@@ -9,7 +9,7 @@ Open WebUI and LiteLLM run on Railway as container images (`ghcr.io/open-webui/o
 
 ## Core Policy
 
-- **Always pin to an explicit tag.** Never leave `source.image` bare (defaults to `latest`) and never use a moving tag like `main-stable` as the deployed policy, only as a stopgap. An untagged Open WebUI image on this deployment silently drifted two minor versions with zero record of it before anyone noticed — this is not a hypothetical risk. Open WebUI now satisfies this rule; LiteLLM still uses `main-stable` and must be treated as an open remediation item until an explicit pin is approved and applied.
+- **Always pin to an explicit tag.** Never leave `source.image` bare (defaults to `latest`) and never use a moving tag like `main-stable` as the deployed policy, only as a stopgap. An untagged Open WebUI image on this deployment silently drifted two minor versions with zero record of it before anyone noticed — this is not a hypothetical risk. Both Open WebUI and LiteLLM now satisfy this rule.
 - **Always set `source.autoUpdates.type` to `disabled`.** Railway's `patch`/`minor` auto-update tiers apply and deploy without review — that reintroduces the same silent-drift problem this policy exists to prevent. There is no Railway-native "notify but don't apply" tier; that gate has to be this skill's routine, not Railway config.
 - A pin is a checkpoint, not a freeze. The point is that version changes go through the routine below, not that the version never changes.
 
@@ -29,7 +29,7 @@ Staging, not a promise not to act, is the actual gate: `--stage` deliberately le
 
 ## Downtime And Blast Radius
 
-Both services ran `numReplicas: 1` at the last deployment check — re-verify replica count before each change, since a single-replica service cannot provide a rolling zero-downtime upgrade. Applying a pin change redeploys the service and briefly interrupts it (observed: ~2 minutes from config commit to the new deployment reaching `RUNNING`). Time upgrades for low-traffic windows, and say so explicitly in the report rather than assuming the reader knows.
+Both services ran `numReplicas: 1` at the last deployment check — re-verify replica count before each change, since a single-replica service cannot provide a rolling zero-downtime upgrade. Applying a pin change redeploys the service and briefly interrupts it — observed ~2 minutes for Open WebUI, but the `litellm-database` image took ~4.5 minutes (likely DB migrations on startup), so don't assume Open WebUI's timing applies to LiteLLM. Time upgrades for low-traffic windows, and say so explicitly in the report rather than assuming the reader knows.
 
 ## After Applying An Upgrade
 
