@@ -26,6 +26,7 @@ Studio operators need the studios workspace to behave like a stable app shell: i
 - iOS browsers keep waiting workers pending for an explicit user-triggered update path.
 - Settings exposes app-shell recovery actions for update checks, service-worker unregister, cache clearing, and reload.
 - Workbox serves the SPA fallback from `/` for hosts that canonicalize `index.html`, with `/` included in precaching through `templatedURLs`.
+- The production static server maps `/` and extensionless client routes to the app shell; asset-like misses return 404 so a CDN cannot cache HTML under a CSS or JavaScript URL.
 - API requests remain `NetworkOnly` in Workbox so TanStack Query owns API data caching.
 
 ## Key Product Decisions
@@ -35,6 +36,7 @@ Studio operators need the studios workspace to behave like a stable app shell: i
 - **iOS manual update path**: installed iOS PWA reload loops are avoided by skipping automatic `controllerchange` reloads on iOS.
 - **One cache authority for API data**: service-worker API caching is avoided because TanStack Query persistence owns application data freshness.
 - **Root fallback precaching**: when Workbox binds navigation fallback to `/`, `/` itself must be in the precache manifest.
+- **Asset misses stay asset misses**: the host must return 404 for missing asset-like paths rather than applying the SPA fallback.
 
 ## Acceptance Record
 
@@ -46,6 +48,7 @@ Studio operators need the studios workspace to behave like a stable app shell: i
 - [x] Settings provides update and recovery actions
 - [x] Workbox navigation fallback excludes API routes
 - [x] Workbox navigation fallback binds to a precached `/` shell URL
+- [x] Production hosting serves the app shell at `/` and extensionless client routes while missing asset-like paths return 404
 - [x] API traffic remains `NetworkOnly` in service-worker runtime caching
 
 ## Forward References

@@ -11,6 +11,14 @@ Feature-level context lives in [Frontend PWA App Shell](../../../docs/features/f
 
 Push notification delivery and advanced offline mutation workflows are intentionally deferred.
 
+## Static Hosting Policy
+
+- The production server explicitly rewrites `/` and extensionless client routes to `index.html`.
+- Asset-like requests, including `.css`, `.js`, images, and the web manifest, must never use the SPA fallback. A missing asset must return 404 instead of HTML.
+- This boundary prevents a CDN from caching `index.html` under a hashed asset URL during a deployment overlap, which would make the app appear unstyled or fail with MIME-type errors.
+- If an asset URL was already poisoned, purge that exact URL from the external CDN after deploying the corrected server configuration.
+- See [`pwa-best-practices` skill § Static Hosting / SPA Fallback](../../../.agents/skills/pwa-best-practices/SKILL.md) for the pattern and the browser-cache verification gotcha before changing this again.
+
 ## Update Policy
 
 - Update strategy: `prompt` via `vite-plugin-pwa`, with runtime auto-apply on non-iOS and manual apply on iOS.
@@ -37,3 +45,6 @@ Available actions:
 3. Confirm the app updates to latest shell and reloads cleanly.
 4. Confirm outdated caches are removed.
 5. Use the **Reset App Shell** action in Settings and verify app reloads in a clean state.
+6. Request `/` and a nested extensionless route; confirm both return the app's `index.html`, not a directory listing.
+7. Request a nonexistent `.css` or `.js` asset and confirm it returns 404 rather than `index.html`.
+8. Verify with `curl` first (server/CDN behavior, no client cache involved), then in an incognito/private window or with DevTools "Disable cache" + hard reload. A plain reload in an already-open regular browser tab can show a stale result in either direction — DevTools "Clear site data" and unregistering the service worker do not clear the browser's HTTP disk cache, which independently honors `Cache-Control: max-age` on hashed assets.
