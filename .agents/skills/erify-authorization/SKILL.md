@@ -1,6 +1,6 @@
 ---
 name: erify-authorization
-description: Implement erify_api guards, roles, studio membership, and permissions. Use the auth skill for login and JWT flows.
+description: Implement erify_api guards, roles, studio membership, and permissions; not login or JWT flows.
 ---
 
 # erify_api Authorization Patterns

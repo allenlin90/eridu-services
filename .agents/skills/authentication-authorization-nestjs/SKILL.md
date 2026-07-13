@@ -1,6 +1,6 @@
 ---
 name: authentication-authorization-nestjs
-description: Implement eridu_auth login, session, JWT, and cross-app auth. Use erify-authorization for erify_api permissions.
+description: Implement eridu_auth login, sessions, JWT, and cross-app auth; not erify_api permissions.
 ---
 
 # Authentication & Authorization (Comprehensive)

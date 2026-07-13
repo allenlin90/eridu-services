@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: Configure linting, testing, and type safety. Use the enforcer for repo audits and SOLID for design review.
+description: Configure linting, testing, and type safety. Use other skills for repo or design audits.
 ---
 
 # Code Quality Skill

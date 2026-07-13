@@ -1,6 +1,6 @@
 ---
 name: engineering-best-practices-enforcer
-description: Audit eridu-services against established repo patterns. Use code-quality for tooling and SOLID for design.
+description: Audit eridu-services against repo patterns; use code-quality for tooling and SOLID for design.
 ---
 
 # Engineering Best Practices Enforcer

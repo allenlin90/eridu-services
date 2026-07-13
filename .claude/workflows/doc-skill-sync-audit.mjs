@@ -2,7 +2,7 @@ export const meta = {
   name: 'doc-skill-sync-audit',
   description: 'Audit .agents skills/workflows/rules and docs/PRDs against current code; fix drift, generalize implementation details, retire shipped specs',
   phases: [
-    { title: 'Skills Audit', detail: 'Haiku review + Sonnet fix across 71 skills in 10 batches' },
+    { title: 'Skills Audit', detail: 'Haiku review + Sonnet fix across 74 skills in 10 batches' },
     { title: 'Workflows & Rules Audit', detail: 'Haiku review + Sonnet fix for .agents/workflows and .agents/rules' },
     { title: 'Misc Docs Audit', detail: 'Haiku review + Sonnet fix for engineering/workflow docs and READMEs; retire shipped superpowers spec' },
     { title: 'PRD & Roadmap Sync', detail: 'Verify and fix doc-drift items identified in the implementation audit' },
@@ -213,6 +213,9 @@ const SKILL_BATCHES = [
       '.agents/skills/engineering-best-practices-enforcer/SKILL.md',
       '.agents/skills/agent-instruction-maintenance/SKILL.md',
       '.agents/skills/plan-workflow-completeness/SKILL.md',
+      '.agents/skills/pr-ready/SKILL.md',
+      '.agents/skills/repository-health/SKILL.md',
+      '.agents/skills/knowledge-sync/SKILL.md',
       '.agents/skills/eridu-skill-creator/SKILL.md',
       '.agents/skills/write-a-skill/SKILL.md',
     ],

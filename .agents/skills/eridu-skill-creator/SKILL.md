@@ -1,6 +1,6 @@
 ---
 name: eridu-skill-creator
-description: Maintain repo-local portable Agent Skills and routing. Use write-a-skill for generic skill creation.
+description: Maintain repo-local portable Agent Skills and routing; use write-a-skill for generic creation.
 ---
 
 # Skill Creator

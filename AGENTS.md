@@ -122,13 +122,13 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - If another workspace shares the dependency, align versions and verify those dependents too.
 
 #### Knowledge And Doc Lifecycle
-- After feature delivery, behavior changes, or refactors, run `.agents/workflows/knowledge-sync.md`.
+- After feature delivery, behavior changes, or refactors, run the `knowledge-sync` skill.
 - When a phase closes, PRDs ship, or docs are reorganized, run `.agents/workflows/doc-lifecycle.md`.
 - When a backwards-incompatible schema redesign lands for a shipped feature, run `.agents/workflows/feature-version-cutover.md` (manual trigger). It decides whether to update docs in place or promote the feature doc to a versioned folder (`v1.md` archived, `README.md` describing v2), and enforces same-PR updates across all related docs and skills.
 - Use `docs/tech-debt/` for accepted implementation gaps and cleanup issues that should be fixed later; use `docs/ideation/` for deferred product or architecture ideas that need future discovery or PRD promotion.
-- Before merging a PR, run `.agents/workflows/pr-review.md` — or invoke the `/pr-ready` command, which runs that workflow end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and `doc-lifecycle.md` so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
+- Before merging a PR, run the `pr-ready` skill, which executes `.agents/workflows/pr-review.md` end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and `doc-lifecycle.md` so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
 - During design review, optimization investigations, or phase planning, cross-check `.agents/workflows/ideation-lifecycle.md`.
-- At each phase boundary or at least every three months, run `.agents/workflows/repository-health.md` to reconcile implementation quality, package/test health, documentation lifecycle, skills, and the canonical tech-debt and ideation registers. Keep broad cleanup in separate scoped PRs.
+- At each phase boundary or at least every three months, run the `repository-health` skill to reconcile implementation quality, package/test health, documentation lifecycle, skills, and the canonical tech-debt and ideation registers. Keep broad cleanup in separate scoped PRs.
 
 ### Core Engineering Rules
 - Never expose DB internal IDs from API responses. Use UID-based external IDs.
@@ -211,7 +211,7 @@ Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and des
 - **Docs platform** — SSR auth, Astro/Starlight, doc layering, information architecture, user-facing docs
 - **Architecture** — shared API types, design patterns, SOLID, domain refactoring, data compatibility, environment config, package extraction
 - **Feature-specific** — admin/studio list patterns, task templates, schedule continuity, shift schedules, show production lifecycle, file uploads, spreadsheets, and more
-- **Meta and tooling** — agent instruction maintenance, code quality, doc hygiene, engineering best practices, database CLI, Playwright, security, skill creation
+- **Meta and tooling** — agent instruction maintenance, workflow bridges, code quality, doc hygiene, engineering best practices, database CLI, Playwright, security, skill creation
 - **AI workspace / platform ops** — Open WebUI + LiteLLM + Better Auth SSO governance, MCP exposure and tool access policy, files under `ai/` and `scripts/ai/`
 
 ### Standard Task Workflow
