@@ -867,6 +867,45 @@
         "created_at": 1783441943
     },
     {
+        "id": "eridu-general",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "base_model_id": "MiniMax-M3",
+        "name": "Eridu General",
+        "params": {},
+        "meta": {
+            "profile_image_url": "/static/favicon.png",
+            "description": null,
+            "capabilities": {
+                "file_context": true,
+                "vision": false,
+                "file_upload": false,
+                "web_search": false,
+                "image_generation": false,
+                "code_interpreter": false,
+                "terminal": false,
+                "citations": true,
+                "status_updates": true,
+                "builtin_tools": true
+            },
+            "suggestion_prompts": null,
+            "tags": []
+        },
+        "access_grants": [
+            {
+                "id": "a3171635-5777-4246-94b1-f5fdcd878ddd",
+                "resource_type": "model",
+                "resource_id": "eridu-general",
+                "principal_type": "user",
+                "principal_id": "*",
+                "permission": "read",
+                "created_at": 1783664407
+            }
+        ],
+        "is_active": true,
+        "updated_at": 1783664407,
+        "created_at": 1783664407
+    },
+    {
         "id": "eridu-brain",
         "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
         "base_model_id": "MiniMax-M3",
@@ -985,48 +1024,9 @@
                 "created_at": 1783444946
             }
         ],
-        "is_active": true,
-        "updated_at": 1783444946,
+        "is_active": false,
+        "updated_at": 1783934917,
         "created_at": 1781707840
-    },
-    {
-        "id": "eridu-general",
-        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-        "base_model_id": "MiniMax-M3",
-        "name": "Eridu General",
-        "params": {},
-        "meta": {
-            "profile_image_url": "/static/favicon.png",
-            "description": null,
-            "capabilities": {
-                "file_context": true,
-                "vision": false,
-                "file_upload": false,
-                "web_search": false,
-                "image_generation": false,
-                "code_interpreter": false,
-                "terminal": false,
-                "citations": true,
-                "status_updates": true,
-                "builtin_tools": true
-            },
-            "suggestion_prompts": null,
-            "tags": []
-        },
-        "access_grants": [
-            {
-                "id": "a3171635-5777-4246-94b1-f5fdcd878ddd",
-                "resource_type": "model",
-                "resource_id": "eridu-general",
-                "principal_type": "user",
-                "principal_id": "*",
-                "permission": "read",
-                "created_at": 1783664407
-            }
-        ],
-        "is_active": true,
-        "updated_at": 1783664407,
-        "created_at": 1783664407
     },
     {
         "id": "company-wiki-pilot",
@@ -1161,14 +1161,15 @@
                     "created_at": 1783915061,
                     "updated_at": 1783915061,
                     "files": null,
-                    "write_access": true
+                    "write_access": true,
+                    "type": "collection"
                 }
             ]
         },
         "access_grants": [],
         "is_active": true,
-        "updated_at": 1783934034,
-        "created_at": 1783934034
+        "updated_at": 1783935262,
+        "created_at": 1783935262
     }
 ]
 

@@ -63,6 +63,23 @@ workflow, see [openwebui-groups-permissions](../../openwebui-groups-permissions/
 Prefer `create` / `model/update` / `model/delete` for single-model changes; reserve `sync` for an
 intentional full reconcile since it silently deletes anything missing from the payload.
 
+**`/api/v1/models/model/update` is broken on `0.10.2`** — confirmed live: it returns a bare `500
+Internal Server Error` (no JSON body) for essentially any payload, including a fresh disposable
+model with a trivial `{id, name, base_model_id, meta: {description}, params: {}}` body. Not a
+payload-shape issue on the caller's side — a minimal payload missing required fields correctly
+returns a `422` with field-level detail from the same endpoint, so routing/validation works; the
+handler itself throws once past validation. **Workaround: delete the model and recreate it via
+`/api/v1/models/create`** (same `id`, full desired state) instead of trying to `update` in place.
+
+**A model's `meta.knowledge[]` entry must include `"type": "collection"`** (for a knowledge base;
+`"file"` or `"note"` for those) or the builtin `list_knowledge`/`query_knowledge_files` tools
+silently skip it — `backend/open_webui/tools/builtin.py` branches on `item.get('type')` and has no
+fallback for a missing type. Confirmed live: an assistant created with a knowledge entry copied
+verbatim from `GET /api/v1/knowledge/{id}` (which has no `type` field at all) answered every
+knowledge question with "no documents were available" — a real assistant, not a broken retrieval
+pipeline. A working entry needs `type` (and ideally the other fields a real Open WebUI-authored
+entry carries, e.g. `user`) added explicitly; don't assume the raw Knowledge object is attach-ready.
+
 ## Configs — `/api/v1/configs`
 
 | Method | Path | Purpose |
