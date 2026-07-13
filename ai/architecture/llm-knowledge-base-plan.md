@@ -302,10 +302,11 @@ Whatever the surface, it must enforce caller identity and document visibility it
 
 ### Phase 2: Open WebUI Pilot
 
-- Create scoped collections and one Company Wiki pilot assistant using `company-balanced`.
-- Attach only shared and onboarding knowledge.
-- Disable external web search and unnecessary MCP tools.
-- Test known answers, missing answers, stale/conflicting sources, citations, and cross-group denial.
+- **Partially done.** `company-wiki-pilot` is live (`base_model_id: MiniMax-M3` — `company-balanced` does not exist on live LiteLLM, confirmed via `GET /v1/models`; see `ai/openwebui/synced/README.md` known-gaps), with the real Company Wiki collection and the new `citation-escalation-contract` skill attached. No external web search or other tools attached — knowledge + one behavior skill only, nothing to disable. Currently private (no group access grants yet) pending a decision on who pilots it.
+- Attach only shared and onboarding knowledge — trivially true today (only shared content exists so far), revisit once department content is migrated.
+- Known-answer test: exercised via API — the model correctly loads `citation-escalation-contract` on demand (`view_skill` tool call observed) and enumerates knowledge before answering (`list_knowledge`), rather than answering from general knowledge. Final-answer citation correctness still requires the real chat UI to observe (tool-execution loop lives in the streaming/websocket path, not reproducible via plain HTTP — see Citation And Escalation Contract).
+- Missing-answer test: exercised via API with a question outside the corpus ("maternity leave policy") — model checked the skill contract and knowledge sources rather than answering immediately; whether the final response follows the exact "AI Information Gap" format still needs the real UI.
+- Cross-group denial: **not yet meaningfully testable** — both migrated documents are `sensitivity: internal`, `audiences: company-wide`, so there is no restricted-audience content in the collection yet to deny access to. Revisit once a department- or restricted-tier document exists.
 
 ### Phase 3: Controlled Department Migration
 
