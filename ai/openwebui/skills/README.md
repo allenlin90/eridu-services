@@ -2,6 +2,10 @@
 
 This directory contains repo-authored adapter or import artifacts for Open WebUI skills. It is separate from `../synced/skills/`, which is the read-only export of skill content currently deployed in Open WebUI.
 
+## Adapters in this directory
+
+- `citation-escalation-contract.md` — the citation-format and information-gap escalation behavior for any assistant with a Company Wiki knowledge collection attached. Generated from `ai/architecture/llm-knowledge-base-plan.md` § Citation And Escalation Contract — update that section first, not this file directly.
+
 Do not put canonical agent skills here. Actual agent skills must live in:
 
 ```text
