@@ -40,20 +40,48 @@ Function DB shape (`backend/open_webui/models/functions.py`, `Function` table): 
 (admin-configurable config), `is_active`, `is_global`. `is_global=True` means the Function is applied
 to every chat automatically — no per-model opt-in needed.
 
-## Function CRUD is admin-only, full stop
+## Function source mutation is admin-only, listing/user-valves are not
 
-`backend/open_webui/routers/functions.py`: every route (`create`, `id/{id}/update`,
-`id/{id}/delete`, `id/{id}/toggle`, `id/{id}/toggle/global`, `id/{id}/valves/update`, `sync`,
-`load/url`) depends on `get_admin_user`. There is no permission flag that lets a non-admin user create
-or edit a Function. This matches and confirms the trust-model note already in
-`ai/openwebui/functions/README.md`.
+`backend/open_webui/routers/functions.py`: every route that creates, changes, deletes, toggles, or
+touches admin-configured valves — `create`, `id/{id}/update`, `id/{id}/delete`, `id/{id}/toggle`,
+`id/{id}/toggle/global`, `id/{id}/valves/update`, `sync`, `load/url`, `export`, `list`, `id/{id}`
+(single-function admin fetch) — depends on `get_admin_user`. There is no permission flag that lets a
+non-admin user create or edit a Function's source. This matches and confirms the trust-model note
+already in `ai/openwebui/functions/README.md`.
 
-## Tools are not admin-only by default
+Two routes are the exception, and neither exposes or lets a caller touch a Function's source: the
+plain listing endpoint (`GET /`, basic `FunctionResponse` fields only) and the three
+`id/{id}/valves/user*` routes (a user's own valve *preferences*, distinct from the admin-configured
+`valves` on the Function itself) all depend on `get_verified_user`. Don't characterize Functions as
+"every route is admin-only" — characterize it as "every route that can create or change a Function's
+source or admin config is admin-only."
 
-`backend/open_webui/routers/tools.py`: `create` and `id/{id}/update` depend on `get_verified_user`,
-then explicitly check `has_permission(user.id, 'workspace.tools', ...)` (or `workspace.tools_import`)
-— an admin always passes, but so does any user granted that permission. Only `load/url` is hard-gated
-to `get_admin_user` ("meant for *trusted* internal use", per the source's own comment).
+## Tool source mutation needs `workspace.tools`; ownership covers the rest
+
+`backend/open_webui/routers/tools.py`, `create`: depends on `get_verified_user`, then explicitly
+checks `has_permission(user.id, 'workspace.tools', ...)` (or `workspace.tools_import`) — an admin
+always passes, but so does any user granted that permission. Creation always requires it, since
+creating a Tool always means `exec()`-ing new source.
+
+`id/{id}/update` is more granular: it first requires the caller be the Tool's owner
+(`tools.user_id == user.id`), hold a `write` `AccessGrants` entry on it, or be admin — *then*, only if
+`form_data.content != tools.content` (the submitted Python source actually differs from what's
+stored), it additionally requires `workspace.tools`/`workspace.tools_import`, exactly as `create`
+does. A metadata-only update (rename, description, valves, access grants) by the owner or a
+write-grantee does **not** need `workspace.tools` at all.
+
+`id/{id}/delete` requires only the same ownership/write-grant/admin check as update — `workspace.tools`
+is never checked for deletion, since deleting doesn't execute code.
+
+Only `load/url` is hard-gated to `get_admin_user` regardless of any permission ("meant for *trusted*
+internal use", per the source's own comment) — that's the one Tool route as strict as every Function
+route.
+
+**Practical read**: `workspace.tools` is specifically the "can author/execute new Python" gate for
+Tools, not a general Tools-CRUD gate. Granting it should be treated as equivalent to granting
+Function-authoring trust. Ownership or a write access-grant is the correct, narrower check for
+non-content Tool changes — don't require `workspace.tools` for those, and don't assume it's checked
+on every Tool route just because it gates creation.
 
 Tool DB shape (`backend/open_webui/models/tools.py`, `Tool` table): `id`, `user_id` (owner), `name`,
 `content` (Python source), `specs` (OpenAPI-style function specs derived from the code), `meta`,
@@ -67,9 +95,10 @@ connection (`configs.tool_servers`, connection-level grants only — see
 
 **Practical consequence**: granting a group or user `workspace.tools` (see the permission table in
 [openwebui-groups-permissions](../../openwebui-groups-permissions/SKILL.md)) is equivalent to
-granting them Function-authoring-level trust, even though Tools read as the "lighter-weight" mechanism
-in upstream docs. Don't grant it by instance default; treat it the same as any other admin-equivalent
-grant.
+granting them Function-source-authoring-level trust, even though Tools read as the "lighter-weight"
+mechanism in upstream docs. Don't grant it by instance default; treat it the same as any other
+admin-equivalent grant. It is specifically the source-mutation gate, though — see the section above
+for which Tool routes it does and doesn't cover.
 
 ## Pipe manifold: one Function, many models
 

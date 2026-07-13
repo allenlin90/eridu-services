@@ -16,10 +16,10 @@ Use this skill when deciding **how** to add a new capability to Open WebUI — n
 
 | Mechanism | Who decides to run it | Where it runs | Repo source | Access model |
 |---|---|---|---|---|
-| **Function — Pipe** | Admin activates it; user selects it like a model | In-process (Open WebUI's own container) | `ai/openwebui/functions/` | Admin-only CRUD |
-| **Function — Filter** | Runs automatically on every message it's attached to | In-process | `ai/openwebui/functions/` | Admin-only CRUD; scope via global flag or per-model `filterIds` |
-| **Function — Action** | User clicks a chat UI button | In-process | `ai/openwebui/functions/` | Admin-only CRUD; scope via global flag or per-model `actionIds` |
-| **Tool** | The model decides mid-conversation (function calling) | In-process | `ai/openwebui/tools/` (create when the first Tool ships — doesn't exist yet) | **Not admin-gated by default** — any verified user with the `workspace.tools` permission can create/run one |
+| **Function — Pipe** | Admin activates it; user selects it like a model | In-process (Open WebUI's own container) | `ai/openwebui/functions/` | Admin-only to author/change its source |
+| **Function — Filter** | Runs automatically on every message it's attached to | In-process | `ai/openwebui/functions/` | Admin-only to author/change its source; scope via global flag or per-model `filterIds` |
+| **Function — Action** | User clicks a chat UI button | In-process | `ai/openwebui/functions/` | Admin-only to author/change its source; scope via global flag or per-model `actionIds` |
+| **Tool** | The model decides mid-conversation (function calling) | In-process | `ai/openwebui/tools/` (create when the first Tool ships — doesn't exist yet) | **Authoring/changing its source needs `workspace.tools` — not admin-only by default.** Owning it (or a write grant) is enough for metadata edits or deletion |
 | **Tool Server** (MCP/OpenAPI) | The model decides mid-conversation, same as a Tool | External service, called over HTTP | N/A — it's a connection to an existing service, not source in this repo | Admin-only to register; connection-level group grants (see [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md)) |
 
 **Pipelines** (the separate `open-webui/pipelines` worker container) is a sixth, legacy option: superseded by Pipe/Filter Functions for most cases per current upstream docs. See "Pipelines: legacy, avoid by default" below before reaching for it.
@@ -27,7 +27,7 @@ Use this skill when deciding **how** to add a new capability to Open WebUI — n
 ## Decision path
 
 1. **Does an existing MCP/OpenAPI server already expose this capability, or should it (shared, reusable, has its own auth/rate-limit story)?** → Tool Server. Stop here, use [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md); this is not Function/Tool work.
-2. **Should the model decide when to invoke it, with arguments the model fills in?** → Tool, unless the logic needs admin-only trust (see Trust below) — then wrap it as a Pipe instead and accept the coarser access model.
+2. **Should the model decide when to invoke it, with arguments the model fills in?** → Tool, unless authoring/changing its source should stay admin-only (see Trust model below) — then wrap it as a Pipe instead and accept the coarser access model.
 3. **Does every message need automatic transformation (redaction, logging, moderation, prompt injection) with no model decision involved?** → Filter. Decide global (every chat) vs scoped (`filterIds` on specific Workspace Models) — default to scoped; only make a Filter global when the behavior must be universal (see [ai-platform-capability-verification](../ai-platform-capability-verification/SKILL.md)'s evidence-over-inference discipline before assuming "global" is required).
 4. **Does the user need an explicit chat-UI button to trigger something (re-run, escalate, export)?** → Action, same global/scoped scoping rule as Filter.
 5. **Does this need to appear as its own selectable model, or several related ones from one integration** (e.g. a knowledge-sync trigger, a custom-provider bridge, one Pipe exposing multiple sub-models)? → Pipe. A single Pipe module can define a `pipes` attribute/method returning a list to register multiple sub-models (`{pipe_id}.{sub_id}`) — one Function, several models — see [references/mechanism-reference.md](references/mechanism-reference.md) for the exact mechanism. Don't hand-author N near-duplicate Pipe functions when one manifold Pipe covers it.
@@ -39,10 +39,12 @@ Current upstream Open WebUI docs describe the separate `open-webui/pipelines` wo
 
 ## Trust model
 
-Functions and Tools both execute arbitrary Python inside Open WebUI's own process with no sandboxing (the RCE trust model `ai/openwebui/functions/README.md` already documents for Functions, `CVE-2025-64496`/`GHSA-cm35-v4vp-5xvx`). The two mechanisms differ sharply in who can trigger that trust by default:
+Functions and Tools both execute arbitrary Python inside Open WebUI's own process with no sandboxing (the RCE trust model `ai/openwebui/functions/README.md` already documents for Functions, `CVE-2025-64496`/`GHSA-cm35-v4vp-5xvx`). The axis that matters is **who can author or change the executable source**, not "who can touch the resource at all" — read-only and metadata-only routes are looser on both mechanisms than the source-mutating ones:
 
-- **Functions are admin-only CRUD**, full stop — confirmed in `v0.10.2` source, every Function route depends on `get_admin_user`.
-- **Tools are not** — Tool CRUD depends on `get_verified_user` plus a `workspace.tools` (or `workspace.tools_import`) permission check. Any user holding that permission can author and run arbitrary server-side Python. Treat granting `workspace.tools` as equivalent to granting Function-authoring trust, and gate it the same way through [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — do not assume "it's just a Tool" is inherently lower-risk than a Function.
+- **Functions: every route that creates, mutates, deletes, or toggles a Function's source or admin-configured valves is admin-only** (`get_admin_user`, confirmed in `v0.10.2` source: `create`, `update`, `delete`, `toggle`, `toggle/global`, `valves/update`, `load/url`, `sync`, `export`). Two routes are looser but never touch source: the plain listing (`GET /`) and the three `valves/user/*` routes (a user's own valve preferences) accept any verified user.
+- **Tools: creating a Tool, or changing an existing Tool's source, requires `workspace.tools` (or `workspace.tools_import`)** — any verified user holding that permission can author/execute arbitrary server-side Python, not just admins. Metadata-only changes (rename, description, valves, access grants) and deletion are looser: they only require being the Tool's owner, holding a `write` access grant on it, or being admin — `workspace.tools` is not re-checked for those, since they don't `exec()` new code.
+
+Treat granting `workspace.tools` as equivalent to granting Function-source-authoring trust, and gate it the same way through [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — do not assume "it's just a Tool" is inherently lower-risk than a Function, and do not assume every Tool route needs that same high bar (ownership/write-grant is the correct, narrower check for non-content changes).
 
 ## Where source lives in this repo
 
@@ -54,7 +56,7 @@ Functions and Tools both execute arbitrary Python inside Open WebUI's own proces
 ## Quality gate
 
 - [ ] Mechanism choice matches the decision path above, not "whichever I've used before."
-- [ ] If a Tool was chosen, `workspace.tools` grant scope was considered explicitly, not left at whatever the instance default is.
+- [ ] If a Tool was chosen, who can create it or change its source (`workspace.tools`) was considered explicitly, distinct from who can own/rename/delete it — not left at whatever the instance default is.
 - [ ] If a Filter/Action was chosen, global-vs-scoped was a deliberate choice, not a default.
 - [ ] A manifold Pipe (`pipes` attribute) was considered before authoring multiple near-duplicate Pipe functions.
 - [ ] Pipelines was not reached for without checking whether a Pipe/Filter Function or a real backend service already covers the need.
