@@ -6,6 +6,7 @@
     "watchPatterns": [
       "/apps/erify_studios/src/**",
       "/apps/erify_studios/package.json",
+      "/apps/erify_studios/serve.json",
       "/packages/api-types/**",
       "/packages/auth-sdk/**",
       "/packages/ui/**",
