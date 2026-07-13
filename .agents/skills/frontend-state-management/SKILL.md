@@ -1,6 +1,6 @@
 ---
 name: frontend-state-management
-description: Provides comprehensive state management patterns for React applications. This skill should be used when deciding how to manage different types of state, choosing state management solutions, or implementing state logic.
+description: Design React server, URL, form, and local state boundaries with correct TanStack Query caching and invalidation.
 ---
 
 # Frontend State Management

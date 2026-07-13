@@ -1,6 +1,6 @@
 ---
 name: frontend-bundle-splitting
-description: How to split a large eager JS bundle into cacheable vendor chunks with Vite/Rollup manualChunks — when one big entry/vendor chunk dominates first load. Use when reducing bundle size, configuring build.rollupOptions.output.manualChunks, or deciding what to code-split vs vendor-chunk in a Vite + React app. Generic guidance, grounded in the official Vite & Rollup docs.
+description: Split large Vite and React bundles into cacheable Rollup vendor chunks when one eager entry dominates load.
 ---
 
 # Frontend Bundle Splitting (Vite / Rollup `manualChunks`)

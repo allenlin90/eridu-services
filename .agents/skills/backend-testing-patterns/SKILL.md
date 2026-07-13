@@ -1,6 +1,6 @@
 ---
 name: backend-testing-patterns
-description: Testing patterns for erify_api NestJS backend. Use when writing service unit tests, controller tests, guard tests, or orchestration service tests. Covers NestJS TestingModule setup, project-specific test helpers, mocking strategies, and what to assert at each layer. The erify_api test runner is Jest (not Vitest).
+description: Test erify_api services, controllers, guards, and orchestration with Jest, TestingModule, repo helpers, and mocks.
 ---
 
 # Backend Testing Patterns

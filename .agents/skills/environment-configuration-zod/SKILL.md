@@ -1,6 +1,6 @@
 ---
 name: environment-configuration-zod
-description: Enforces the Zod-based environment configuration pattern. Use this skill when reading, adding, or modifying environment variables (e.g., process.env or import.meta.env). Outlines how to define a central Zod schema, infer strict types, enforce defaults, and gracefully crash on missing required keys.
+description: Manage backend and frontend environment variables through central Zod schemas with typed defaults and startup validation.
 ---
 
 # Environment Configuration Zod Pattern

@@ -1,6 +1,6 @@
 ---
 name: pr-ui-screenshot-review
-description: Capture UI-state screenshots with Playwright as visual review evidence for a PR, and embed them in the PR description without committing them to the repo. Use only when the PR's diff touches rendered frontend code — erify_studios, erify_creators, an app's own frontend (e.g. apps/eridu_auth/src/frontend), or packages/ui components. Do not use for backend-only (erify_api, eridu_auth's server-side src/lib and src/db), schema/migration-only, or docs/skill/workflow-only PRs — there is no rendered UI to capture. Pairs with /pr-ready as an evidence step, not a replacement for it.
+description: Capture Playwright screenshots as PR evidence only for rendered frontend diffs, not backend or docs-only changes.
 ---
 
 # PR UI Screenshot Review
@@ -80,5 +80,5 @@ This skill produces evidence to attach to a PR description; it does not replace 
 
 ## Related Skills
 
-- [playwright](../playwright/SKILL.md) — the CLI-wrapper form of browser automation this skill assumes (or the equivalent MCP Playwright tool)
+- [eridu-playwright](../eridu-playwright/SKILL.md) — the repo CLI-wrapper form of browser automation this skill assumes (or the equivalent MCP Playwright tool)
 - [ui-mockup-discussion](../ui-mockup-discussion/SKILL.md) — the pre-implementation counterpart. That skill validates the UX with the user *before* code exists, via a standalone mockup; this skill captures evidence of the *shipped* UI after implementation. A PR whose UX went through that skill should link its settled decision in the description alongside these screenshots, so a reviewer can compare "what was agreed" against "what shipped."

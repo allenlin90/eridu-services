@@ -1,6 +1,6 @@
 ---
 name: table-view-pattern
-description: Provides patterns for building and optimizing large frontend tabular views across the eridu-services monorepo. Use when building or refactoring server-driven tables, dense tabular UIs, virtualized grids, inline editing, saved views, and table URL state in erify_creators, erify_studios, or shared @eridu/ui.
+description: Build shared server-driven tables, URL state, grids, editing, and saved views, not card-based Studio lists.
 ---
 
 # Table View Pattern

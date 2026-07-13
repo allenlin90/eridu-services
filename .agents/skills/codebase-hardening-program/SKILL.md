@@ -1,6 +1,6 @@
 ---
 name: codebase-hardening-program
-description: How to run a multi-PR, behavior-preserving quality/convention hardening program across a large app or workspace (audit → ranked themes → work-item backlog → one PR per item → reconcile → retire). Use when auditing and incrementally hardening an existing codebase to its own canonical patterns without shipping behavior changes — e.g. the apps/erify_api backend pass (done) and the apps/erify_studios frontend pass (next).
+description: Run a multi-PR, behavior-preserving hardening program to audit, slice, verify, and reconcile quality work.
 ---
 
 # Codebase Hardening Program

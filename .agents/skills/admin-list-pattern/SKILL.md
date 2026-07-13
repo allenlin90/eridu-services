@@ -1,6 +1,6 @@
 ---
 name: admin-list-pattern
-description: Provides full-stack patterns for implementing searchable, paginated lists in the Erify Admin section. This skill should be used when adding or updating admin tables that require server-side filtering and debounced search.
+description: Build searchable, server-paginated Erify Admin tables. Use table-view-pattern for shared mechanics.
 ---
 
 # Admin List Integration Pattern

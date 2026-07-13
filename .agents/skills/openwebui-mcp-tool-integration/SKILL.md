@@ -1,6 +1,6 @@
 ---
 name: openwebui-mcp-tool-integration
-description: Register, verify, and reference MCP or OpenAPI tool servers — such as this monorepo's erify_api MCP — as Open WebUI Tool Server connections via the API. Use when wiring a new MCP integration from this monorepo into Open WebUI, adding an external tool server, or troubleshooting an existing tool-server connection.
+description: Register and verify erify_api MCP, external MCP, or OpenAPI tool servers as Open WebUI connections.
 ---
 
 # Open WebUI MCP / Tool Server Integration

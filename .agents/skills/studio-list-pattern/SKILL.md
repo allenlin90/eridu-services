@@ -1,6 +1,6 @@
 ---
 name: studio-list-pattern
-description: Provides patterns for implementing infinite scroll lists with sticky toolbars in Erify Studios. This skill should be used when building studio-scoped list pages with card-based layouts, debounced search, and offset-based pagination via useInfiniteQuery.
+description: Build card-based infinite-scroll Studio lists. Use admin-list-pattern for admin tables or table-view-pattern for grids.
 ---
 
 # Studio List Pattern

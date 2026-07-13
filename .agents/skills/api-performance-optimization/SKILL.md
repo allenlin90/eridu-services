@@ -1,6 +1,6 @@
 ---
 name: api-performance-optimization
-description: Patterns for auditing and improving erify_api query performance and response efficiency. Use when detecting N+1 queries, reducing over-fetching, designing lean select/include strategies, replacing in-memory joins with DB aggregations, adding pagination guards, or defining API performance baselines before scaling. Complements database-patterns which covers the basic N+1 and Promise.all rules.
+description: Improve measured erify_api query performance. Use for N+1, over-fetching, aggregation, or pagination work.
 ---
 
 # API Performance Optimization

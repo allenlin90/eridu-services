@@ -1,6 +1,6 @@
 ---
 name: ai-platform-release-management
-description: Manage Open WebUI and LiteLLM version upgrades on the Railway deployment — pinned-but-reviewable image tags, a routine check for new upstream releases, a maintainer-confirmed upgrade gate with breaking-change and downtime risk assessment, and rollback. Use when changing the deployed Open WebUI or LiteLLM image/version, auditing whether the live version matches documented baselines, investigating unexpected platform behavior that might be a version drift, or setting up a recurring version-check routine.
+description: Manage Railway upgrades and rollback for Open WebUI or LiteLLM. Use for version, release, and drift work.
 ---
 
 # AI Platform Release Management

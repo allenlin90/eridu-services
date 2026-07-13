@@ -5,6 +5,9 @@ import { parseDocument } from 'yaml'
 
 const SKILLS_DIRECTORY = '.agents/skills'
 const CODEX_FALLBACK_CATALOG_BUDGET = 8_000
+const DESCRIPTION_PREFERRED_MIN = 80
+const DESCRIPTION_PREFERRED_MAX = 160
+const DESCRIPTION_HARD_MAX = 200
 const NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const LOCAL_LINK_PATTERN = /\[[^\]]*\]\(([^)]+)\)/g
 
@@ -53,8 +56,18 @@ function validateMetadata(metadata, directoryName, filePath) {
     return null
   }
 
-  if (description.length > 1_024) {
-    errors.push(`${filePath}: description exceeds the 1,024-character standard limit`)
+  if (description.length > DESCRIPTION_HARD_MAX) {
+    errors.push(
+      `${filePath}: description exceeds the ${DESCRIPTION_HARD_MAX}-character routing limit`,
+    )
+  } else if (
+    description.length < DESCRIPTION_PREFERRED_MIN ||
+    description.length > DESCRIPTION_PREFERRED_MAX
+  ) {
+    warnings.push(
+      `${filePath}: description is ${description.length} characters; ` +
+        `prefer ${DESCRIPTION_PREFERRED_MIN}-${DESCRIPTION_PREFERRED_MAX}`,
+    )
   }
 
   return { name, description }
@@ -115,9 +128,30 @@ async function validateCodexMetadata(skillDirectory) {
 
     if (metadata && (typeof metadata !== 'object' || Array.isArray(metadata))) {
       errors.push(`${metadataPath}: metadata must be a YAML mapping`)
+      return true
     }
+
+    const policy = metadata?.policy
+    if (policy === undefined) return true
+
+    if (typeof policy !== 'object' || policy === null || Array.isArray(policy)) {
+      errors.push(`${metadataPath}: policy must be a YAML mapping`)
+      return true
+    }
+
+    const allowImplicitInvocation = policy.allow_implicit_invocation
+    if (
+      allowImplicitInvocation !== undefined &&
+      typeof allowImplicitInvocation !== 'boolean'
+    ) {
+      errors.push(`${metadataPath}: policy.allow_implicit_invocation must be a boolean`)
+      return true
+    }
+
+    return allowImplicitInvocation ?? true
   } catch (error) {
     if (error.code !== 'ENOENT') throw error
+    return true
   }
 }
 
@@ -129,6 +163,8 @@ async function main() {
     .sort((left, right) => left.name.localeCompare(right.name))
   const names = new Map()
   let totalDescriptionCharacters = 0
+  let implicitDescriptionCharacters = 0
+  let explicitOnlySkillCount = 0
 
   for (const entry of entries) {
     const skillDirectory = path.join(skillsRoot, entry.name)
@@ -148,9 +184,15 @@ async function main() {
 
     const metadata = extractFrontmatter(content, skillPath)
     const validatedMetadata = validateMetadata(metadata, entry.name, skillPath)
+    const allowImplicitInvocation = await validateCodexMetadata(skillDirectory)
 
     if (validatedMetadata) {
       totalDescriptionCharacters += validatedMetadata.description.length
+      if (allowImplicitInvocation) {
+        implicitDescriptionCharacters += validatedMetadata.description.length
+      } else {
+        explicitOnlySkillCount += 1
+      }
 
       const priorPath = names.get(validatedMetadata.name)
       if (priorPath) {
@@ -163,12 +205,11 @@ async function main() {
     }
 
     await validateLocalLinks(content, skillDirectory, skillPath)
-    await validateCodexMetadata(skillDirectory)
   }
 
-  if (totalDescriptionCharacters > CODEX_FALLBACK_CATALOG_BUDGET) {
+  if (implicitDescriptionCharacters > CODEX_FALLBACK_CATALOG_BUDGET) {
     warnings.push(
-      `combined descriptions use ${totalDescriptionCharacters.toLocaleString()} characters; ` +
+      `implicitly invocable descriptions use ${implicitDescriptionCharacters.toLocaleString()} characters; ` +
         `Codex may shorten or omit entries beyond its ${CODEX_FALLBACK_CATALOG_BUDGET.toLocaleString()}-character fallback catalog budget`,
     )
   }
@@ -183,7 +224,10 @@ async function main() {
   }
 
   console.log(
-    `Validated ${entries.length} skills (${totalDescriptionCharacters.toLocaleString()} description characters).`,
+    `Validated ${entries.length} skills ` +
+      `(${totalDescriptionCharacters.toLocaleString()} total description characters; ` +
+      `${implicitDescriptionCharacters.toLocaleString()} implicitly invocable; ` +
+      `${explicitOnlySkillCount} explicit-only).`,
   )
 }
 

@@ -1,6 +1,6 @@
 ---
 name: solid-principles
-description: Provides SOLID design principles guidance for both frontend (React) and backend (NestJS) code. This skill should be used when generating, reviewing, or refactoring code to ensure adherence to Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles.
+description: Review React or NestJS design against SOLID boundaries. Use code-quality or the enforcer for tooling and conventions.
 ---
 
 # SOLID Principles Skill

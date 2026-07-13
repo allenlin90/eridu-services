@@ -1,6 +1,6 @@
 ---
 name: plan-workflow-completeness
-description: Audit a multi-PR implementation plan for workflow-and-cycle gaps before it ships. Use when writing or revising any transient implementation plan, or when a phase or workstream is being signed off.
+description: Audit multi-PR plans for missing workflow steps and incomplete cycles before phase or workstream sign-off.
 ---
 
 # Plan Workflow Completeness

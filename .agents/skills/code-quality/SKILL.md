@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: Provides general code quality and best practices guidance applicable across languages and frameworks. Focuses on linting, testing, and type safety. Use when auditing code for quality issues, configuring linters, or enforcing type safety standards.
+description: Configure linting, testing, and type safety. Use the enforcer for repo audits and SOLID for design review.
 ---
 
 # Code Quality Skill

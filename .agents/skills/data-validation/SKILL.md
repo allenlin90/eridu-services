@@ -1,6 +1,6 @@
 ---
 name: data-validation
-description: Provides comprehensive guidance for input validation, data serialization, and ID management in backend APIs. This skill should be used when designing validation schemas, transforming request/response data, mapping database IDs to external identifiers, and ensuring type safety across API boundaries.
+description: Design backend Zod validation, serialization, external UID mapping, and typed API-to-service transformations.
 ---
 
 # Data Validation

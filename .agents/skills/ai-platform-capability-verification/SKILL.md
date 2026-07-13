@@ -1,7 +1,6 @@
 ---
 name: ai-platform-capability-verification
-description: >-
-  Verify a claimed Open WebUI or LiteLLM capability against the actually-deployed version — not release notes, not a generic endpoint catalog, not a plausible-looking API guess. Use whenever a design decision rests on "does X actually work this way on our instance" (citation behavior, on-demand loading, an endpoint's exact request shape, an access-control boundary) before building on top of an unverified assumption. Covers both source-level verification (read the deployed tag's code) and live-behavior verification (disposable resource: create, exercise, observe, tear down).
+description: Verify deployed Open WebUI or LiteLLM behavior from tagged source and live probes before relying on capability claims.
 ---
 
 # AI Platform Capability Verification

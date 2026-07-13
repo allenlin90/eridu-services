@@ -1,6 +1,6 @@
 ---
 name: agent-instruction-maintenance
-description: Maintain and update agent instruction files (AGENTS.md, .claude/CLAUDE.md, .agents/ skills and workflows). Use when adding rules to AGENTS.md, updating agent behavioral guidelines, reorganizing agent instruction ownership, auditing CLAUDE.md parity, or integrating new skills/workflows into the canonical routing map.
+description: Maintain shared agent instructions, adapters, skills, rules, and workflows. Use for routing or ownership changes.
 ---
 
 # Agent Instruction Maintenance

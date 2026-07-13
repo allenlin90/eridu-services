@@ -1,6 +1,6 @@
 ---
 name: railway-template-config
-description: Configure and manage runtime config files when deploying services directly from Docker images or templates in Railway without an attached Git repository. Use when deploying a template directly on Railway and needing custom configuration files, or when writing startup commands to generate YAML/JSON config files from environment variables.
+description: Generate startup YAML or JSON config for Railway Docker or template services deployed without Git.
 ---
 
 # Railway Template Config Pattern

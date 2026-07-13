@@ -1,6 +1,6 @@
 ---
 name: soft-delete-restore
-description: Patterns for implementing restore workflows on soft-deleted records in erify_api. Use when adding restore capability to any model (task templates, show creators, shifts, etc.), designing restore permission rules, handling optimistic version conflicts on restore, or building restore endpoints and audit trails.
+description: Restore soft-deleted erify_api records with correct permissions, optimistic conflicts, endpoints, and audit history.
 ---
 
 # Soft Delete Restore Pattern

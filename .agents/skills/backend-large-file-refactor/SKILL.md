@@ -1,6 +1,6 @@
 ---
 name: backend-large-file-refactor
-description: Use when developing, auditing, or refactoring apps/erify_api NestJS files that are over roughly 600 lines, mix several backend concerns, hide duplicated logic, or invite Rails-style mixins/concerns.
+description: Refactor erify_api NestJS files over roughly 600 lines or mixing service, controller, repository, or orchestration concerns.
 ---
 
 # Backend Large-File Refactor

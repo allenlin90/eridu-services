@@ -1,6 +1,6 @@
 ---
 name: jsonb-analytics-snapshot
-description: Defines one lightweight Postgres-hosted analytics snapshot pattern. Use when implementing analytics, dashboards, or historical aggregation where high read performance is required and the team has chosen a snapshot/read-model approach instead of querying OLTP tables directly.
+description: Build Postgres JSONB read-model snapshots for fast dashboards or historical aggregates outside OLTP tables.
 ---
 
 # JSONB Analytics Snapshot Pattern

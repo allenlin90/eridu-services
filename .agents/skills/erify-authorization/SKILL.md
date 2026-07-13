@@ -1,6 +1,6 @@
 ---
 name: erify-authorization
-description: Patterns for implementing authorization in erify_api with current StudioMembership + AdminGuard behavior, plus planned RBAC references. Use when implementing or reviewing guards, permissions, role-based access, or studio-scoped endpoint protection.
+description: Implement erify_api guards, roles, studio membership, and permissions. Use the auth skill for login and JWT flows.
 ---
 
 # erify_api Authorization Patterns

@@ -1,6 +1,6 @@
 ---
 name: litellm-admin-api
-description: Call the LiteLLM Proxy Management API directly to read or change server-side configuration — models, model access groups, virtual keys, teams, internal users, customers/end-users, budgets, and spend. Use when scripting LiteLLM setup/config changes, verifying LITELLM_ADMIN_KEY in ai/litellm/.env, or automating what ai-workspace-control-plane and ai/litellm/README.md govern as LiteLLM policy.
+description: Operate the LiteLLM Management API for models, access, keys, teams, users, budgets, and spend.
 ---
 
 # LiteLLM Proxy Management API

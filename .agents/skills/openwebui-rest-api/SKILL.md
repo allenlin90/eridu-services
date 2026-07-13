@@ -1,6 +1,6 @@
 ---
 name: openwebui-rest-api
-description: Call the Open WebUI REST API directly to read or change server-side configuration — models, users, groups, knowledge, tools, functions, banners, and API keys. Use when scripting Open WebUI setup/config changes, verifying the OPEN_WEBUI_API_KEY in ai/openwebui/.env, or automating what openwebui-assistant-adapter designs as manifests.
+description: Operate the Open WebUI REST API for models, users, groups, knowledge, tools, functions, banners, and keys.
 ---
 
 # Open WebUI REST API

@@ -1,6 +1,6 @@
 ---
 name: spreadsheet
-description: Use when tasks involve creating, editing, analyzing, or formatting spreadsheets (.xlsx, .csv, .tsv) with formula-aware workflows, cached recalculation, and visual review.
+description: Create, edit, analyze, or format xlsx, csv, and tsv files. Not for database creator mapping.
 ---
 
 # Spreadsheet Skill

@@ -1,6 +1,6 @@
 ---
 name: excel-creator-mapping
-description: Maps creators to shows in the database from Excel schedule files. Use when importing/mapping Excel creator schedules to shows in the local or production database, or when user mentions mapping creators from spreadsheets.
+description: Map creators from Excel schedules to database shows. Use spreadsheet for workbook-only editing or analysis.
 ---
 
 # Excel Creator Mapping

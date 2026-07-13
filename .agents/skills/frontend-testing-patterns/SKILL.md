@@ -1,6 +1,6 @@
 ---
 name: frontend-testing-patterns
-description: Provides comprehensive testing strategies and patterns for React applications. This skill should be used when writing tests, setting up testing infrastructure, or deciding what to test.
+description: Test React applications with appropriate strategy, infrastructure, component tests, integration tests, and mocks.
 ---
 
 # Frontend Testing Patterns

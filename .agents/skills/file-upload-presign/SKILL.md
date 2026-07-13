@@ -1,6 +1,6 @@
 ---
 name: file-upload-presign
-description: Covers the presigned upload system for Cloudflare R2. Use this skill when implementing or modifying file upload flows, adding new upload use cases, changing file size limits, or debugging upload routing. Covers backend validation rules, frontend compression, storage directory routing, and MATERIAL_ASSET template policy enforcement.
+description: Implement Cloudflare R2 presigned uploads with validation, compression, size limits, routing, and material policies.
 ---
 
 # File Upload — Presigned URL

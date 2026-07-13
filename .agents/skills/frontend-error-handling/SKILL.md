@@ -1,6 +1,6 @@
 ---
 name: frontend-error-handling
-description: Provides error handling patterns for React applications. This skill should be used when implementing error boundaries, API error interceptors, error tracking, or user-friendly error messages.
+description: Handle React failures with error boundaries, API interceptors, tracking, user-safe messages, and recovery.
 ---
 
 # Frontend Error Handling

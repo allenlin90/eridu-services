@@ -1,6 +1,6 @@
 ---
 name: domain-refactor-cutover-strategy
-description: Multi-phase domain renaming and cutover strategy. Use when planning or executing a large-scale rename (models, routes, contracts, UI) across the monorepo, or when reviewing a cutover scope branch for completeness and safety.
+description: Plan large domain renames across models, routes, contracts, and UI with phased cutovers and compatibility windows.
 ---
 
 # Domain Refactor Cutover Strategy

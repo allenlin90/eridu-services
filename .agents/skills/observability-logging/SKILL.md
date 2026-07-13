@@ -1,6 +1,6 @@
 ---
 name: observability-logging
-description: Structured logging patterns for erify_api and eridu_auth. Use when adding logging to a service, deciding what to log at which level, avoiding sensitive data in logs, or setting up observability in a new module. Covers NestJS Logger usage, log level selection, what to never log, and frontend error reporting patterns.
+description: Add structured, privacy-safe logging to erify_api or eridu_auth with correct levels and event selection.
 ---
 
 # Observability & Logging

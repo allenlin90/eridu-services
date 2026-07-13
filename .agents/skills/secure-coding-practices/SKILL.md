@@ -1,6 +1,6 @@
 ---
 name: secure-coding-practices
-description: Implementation-level security checklist for erify_api and erify_studios. Use when writing a new endpoint, adding file upload handling, building an auth flow, or reviewing code for security issues. Covers input validation, ID exposure prevention, SQL injection, rate limiting, secrets management, and OWASP-relevant patterns for this stack. Distinct from security-threat-model which produces architectural threat assessments.
+description: Secure erify_api and erify_studios endpoints, uploads, and auth. Use the threat skill for architecture.
 ---
 
 # Secure Coding Practices
@@ -54,4 +54,4 @@ CORS is app-level — don't override per-controller. File downloads: `Content-Di
 - [data-validation](../data-validation/SKILL.md) — Zod schema patterns, UID rules
 - [observability-logging](../observability-logging/SKILL.md) — What must never appear in logs
 - [file-upload-presign](../file-upload-presign/SKILL.md) — Secure presigned upload contract
-- [security-threat-model](../security-threat-model/SKILL.md) — Architectural threat analysis
+- [eridu-security-threat-model](../eridu-security-threat-model/SKILL.md) — Architectural threat analysis

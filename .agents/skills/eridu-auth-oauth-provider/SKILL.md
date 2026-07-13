@@ -1,6 +1,6 @@
 ---
 name: eridu-auth-oauth-provider
-description: Patterns for eridu_auth acting as an OAuth2/OIDC provider (identity server) for downstream clients like Open WebUI — oauthProvider plugin config, the consent page, the admin client-management UI, and safe coexistence with the JWT/session bridge erify_studios/erify_creators/eridu_docs already depend on. Use when adding/changing OAuth client config, the consent flow, or integrating a new OIDC consumer against eridu_auth.
+description: Extend eridu_auth as an OAuth2 or OIDC provider for consent, client management, consumer integration, and JWT coexistence.
 ---
 
 # eridu_auth OAuth/OIDC Provider
