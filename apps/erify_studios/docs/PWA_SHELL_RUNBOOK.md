@@ -11,6 +11,16 @@ Feature-level context lives in [Frontend PWA App Shell](../../../docs/features/f
 
 Push notification delivery and advanced offline mutation workflows are intentionally deferred.
 
+## Static Hosting Policy
+
+The production server currently runs `serve`'s unconstrained `-s` SPA fallback, which
+carries a known CDN cache-poisoning risk during deployment overlaps (accepted, not yet
+fixed here) — see
+[`docs/tech-debt/erify-studios-unconstrained-spa-fallback.md`](../../../docs/tech-debt/erify-studios-unconstrained-spa-fallback.md)
+for why, and the [`pwa-best-practices` skill § Static Hosting / SPA Fallback](../../../.agents/skills/pwa-best-practices/SKILL.md)
+for the corrected pattern (already applied to `erify_creators`) to use when this is
+revisited.
+
 ## Update Policy
 
 - Update strategy: `prompt` via `vite-plugin-pwa`, with runtime auto-apply on non-iOS and manual apply on iOS.
