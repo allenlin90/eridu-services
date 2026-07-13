@@ -14,14 +14,18 @@ Keep agent instruction files accurate, non-duplicated, and correctly layered.
 | `AGENTS.md` | All shared agent guidance | Any rule/pattern/convention changes |
 | `.claude/CLAUDE.md` | Claude Code redirect only (≤30 lines) | Claude-specific paths change |
 | `.agents/skills/*/SKILL.md` | Domain implementation patterns | Feature/architecture changes |
+| `.agents/skills/*/agents/openai.yaml` | Codex-only skill presentation, invocation policy, and MCP dependencies | Codex integration changes |
 | `.agents/workflows/*.md` | Repeatable process definitions | Process steps change |
-| `.agents/rules/*.md` | Mandatory house rules | New cross-cutting constraints |
-| `.claude/memory/*.md` | Tool-specific supplementary refs | Durable knowledge changes |
+| `.agents/rules/*.{md,mdc}` | Mandatory house rules | New cross-cutting constraints |
+| `.agents/memory/*.md` | Shared durable implementation context | Cross-tool architectural context changes |
+| `.claude/memory/*.md` | Claude-specific supplementary refs | Claude-only context changes |
 
 ## Architecture Rules
 
 - **`AGENTS.md` is canonical** — all tools read from it; adapters redirect, don't duplicate
+- **`.agents/skills/` is portable** — shared skill instructions must work across supported agents
 - **`.claude/CLAUDE.md` is thin** — redirect + Claude-specific paths + startup flow; ≤30 lines
+- **Vendor adapters stay local** — use `agents/openai.yaml` for Codex-only skill metadata; keep Claude-only configuration in `.claude/` or justified Claude frontmatter
 - **No rule duplication** — one canonical location per rule; delete copies
 
 ## Workflow
@@ -33,13 +37,13 @@ Map content to destination: behavioral guideline → `AGENTS.md`, domain pattern
 Preserve existing content. Match heading level and bullet style.
 
 ### 3. Update Skill Routing if Needed
-New/renamed skill → update `AGENTS.md` § Skill Routing (alphabetical within category).
+New/renamed skill → update the matching category in `AGENTS.md` § Skill Routing.
 
 ### 4. Check for Duplication
-Verify: `.claude/CLAUDE.md` doesn't duplicate, memory files don't contradict, no verbatim copies in other skills.
+Verify: `.claude/CLAUDE.md` doesn't duplicate, shared guidance has not leaked into a vendor adapter, memory files don't contradict, and no verbatim copies exist in other skills.
 
 ### 5. Verify Parity
-Every skill in `.agents/skills/` has a routing entry. Every workspace listed. Dev commands current.
+Every skill in `.agents/skills/` is represented by a routing category. Every workspace is listed. Dev commands are current. Run `pnpm agents:validate` after any skill change.
 
 ## Content Quality Rules
 
@@ -54,4 +58,6 @@ Every skill in `.agents/skills/` has a routing entry. Every workspace listed. De
 - [ ] No duplication between `AGENTS.md` and `.claude/CLAUDE.md`
 - [ ] `.claude/CLAUDE.md` still ≤30 lines
 - [ ] Skill routing map complete
+- [ ] `pnpm agents:validate` passes
+- [ ] Vendor-specific content lives in the correct adapter
 - [ ] Memory files don't contradict updated guidance

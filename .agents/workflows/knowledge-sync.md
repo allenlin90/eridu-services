@@ -46,11 +46,12 @@ Run when any of these are true:
 
 4. **Update workflows/rules when process changed**
    - If this change introduces a repeatable process, update/create `.agents/workflows/*.md`.
-   - If it should be mandatory, update `.agents/rules/*.md` and `AGENTS.md`.
+   - If it should be mandatory, update `.agents/rules/*.{md,mdc}` and `AGENTS.md`.
    - For pagination consistency mandates, update both implementation guidance and review gates so the shared stack is checked during coding, code review, and PR review.
 
 5. **Update memory references**
-   - Record durable project knowledge in `.claude/memory/*.md` (choose the most relevant file).
+   - Record cross-tool durable project knowledge in `.agents/memory/*.md` (choose the most relevant file).
+   - Keep `.claude/memory/*.md` for Claude-specific supplementary context only.
    - Prefer concise deltas: what changed, why, and where canonical docs live.
 
 6. **Sanity check links and discoverability**
