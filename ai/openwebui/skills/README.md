@@ -15,6 +15,7 @@ Do not put canonical agent skills here. Actual agent skills must live in:
 ## Current canonical AI workspace skills
 
 - `.agents/skills/ai-workspace-control-plane/SKILL.md`
+- `.agents/skills/openwebui-extensibility-design/SKILL.md`
 - `.agents/skills/openwebui-assistant-adapter/SKILL.md`
 - `.agents/skills/openwebui-rest-api/SKILL.md`
 - `.agents/skills/openwebui-groups-permissions/SKILL.md`

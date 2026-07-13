@@ -2,6 +2,8 @@
 
 Canonical source for Open WebUI Functions (Pipes/Filters/Actions/Events) applied via the Admin API (`.agents/skills/openwebui-rest-api/SKILL.md`). Function source lives in Open WebUI's own database once deployed, not in Git — these files are the reviewed, git-tracked copy that gets applied through the API, matching the pattern used for `ai/litellm/` and other `ai/openwebui/` policy files.
 
+Deciding whether a new capability belongs here as a Function (vs. a Tool, a Tool Server, or the legacy Pipelines framework) is covered by `.agents/skills/openwebui-extensibility-design/SKILL.md`, not this file.
+
 ## `sync-pipe.py`
 
 The knowledge-base Sync Pipe (`ai/architecture/llm-knowledge-base-plan.md`, Sync Contract). Runs inside Open WebUI, triggered by a minimal external event (`POST /api/chat/completions` targeting it as a model), and does the checksum-diff/upload/cleanup work in-process using credentials Open WebUI already holds.

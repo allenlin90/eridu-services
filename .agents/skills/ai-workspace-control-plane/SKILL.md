@@ -69,10 +69,11 @@ When changing Open WebUI workspace policy:
 
 1. Define the assistant's business purpose.
 2. Choose a LiteLLM model alias, not a raw provider unless explicitly needed.
-3. Attach only the skills, knowledge, and MCP tools required for the role.
-4. Check `.agents/skills/` before creating any new instruction content.
-5. If the assistant needs repo implementation guidance, reference canonical `.agents` skills instead of duplicating them.
-6. Use [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) when Git-authored company knowledge is added, reorganized, reviewed for staleness, or prepared for sync.
+3. If the capability needs new code (not just wiring an existing skill/knowledge/tool), use [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) to decide the mechanism (Function, Tool, Tool Server, or — rarely — a Pipelines worker) and where its source lives before writing anything.
+4. Attach only the skills, knowledge, and MCP tools required for the role.
+5. Check `.agents/skills/` before creating any new instruction content.
+6. If the assistant needs repo implementation guidance, reference canonical `.agents` skills instead of duplicating them.
+7. Use [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) when Git-authored company knowledge is added, reorganized, reviewed for staleness, or prepared for sync.
 
 ## MCP decision path
 
@@ -97,6 +98,7 @@ When changing MCP policy:
 ## Related Skills
 
 - [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — implementation details for eridu_auth acting as the OAuth2/OIDC identity server that Open WebUI (and future consumers) authenticate against
+- [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) — decides which mechanism (Function, Tool, Tool Server, or legacy Pipeline) a new Open WebUI capability should use, and where its source lives, before this skill's Open WebUI decision path attaches it to an assistant
 - [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — endpoint reference and call mechanics for scripting Open WebUI configuration changes that this skill governs
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — groups/permissions/access-grant mechanics
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — MCP/tool-server registration mechanics
