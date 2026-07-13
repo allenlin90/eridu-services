@@ -4,6 +4,7 @@ import process from 'node:process'
 import { parseDocument } from 'yaml'
 
 const SKILLS_DIRECTORY = '.agents/skills'
+const CLAUDE_COMMANDS_DIRECTORY = '.claude/commands'
 const CODEX_FALLBACK_CATALOG_BUDGET = 8_000
 const DESCRIPTION_PREFERRED_MIN = 80
 const DESCRIPTION_PREFERRED_MAX = 160
@@ -155,6 +156,33 @@ async function validateCodexMetadata(skillDirectory) {
   }
 }
 
+async function validateClaudeCommandNames(repositoryRoot, names) {
+  const commandsRoot = path.join(repositoryRoot, CLAUDE_COMMANDS_DIRECTORY)
+  let entries
+
+  try {
+    entries = await readdir(commandsRoot, { withFileTypes: true })
+  } catch (error) {
+    if (error.code === 'ENOENT') return
+    throw error
+  }
+
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.md')) continue
+
+    const commandName = entry.name.slice(0, -'.md'.length)
+    const conflictingSkillPath = names.get(commandName)
+
+    if (conflictingSkillPath) {
+      errors.push(
+        `${path.join(commandsRoot, entry.name)}: command name "${commandName}" collides with ` +
+          `skill ${conflictingSkillPath}; Claude Code resolves slash commands and skills through ` +
+          'the same name, so both cannot exist',
+      )
+    }
+  }
+}
+
 async function main() {
   const repositoryRoot = process.cwd()
   const skillsRoot = path.join(repositoryRoot, SKILLS_DIRECTORY)
@@ -206,6 +234,8 @@ async function main() {
 
     await validateLocalLinks(content, skillDirectory, skillPath)
   }
+
+  await validateClaudeCommandNames(repositoryRoot, names)
 
   if (implicitDescriptionCharacters > CODEX_FALLBACK_CATALOG_BUDGET) {
     warnings.push(
