@@ -48,6 +48,10 @@ src/
 
 **Tailwind v4**: CSS-first config in `index.css` using `@import "tailwindcss"` + `@theme { ... }`
 
+When a shared package exports its Tailwind stylesheet from `dist/`, its `@source`
+glob must include emitted JavaScript (`.js`) as well as source TypeScript. Otherwise
+consumer builds omit the package's utility classes even though its theme tokens load.
+
 ## Checklist
 
 - [ ] Vite + React + TypeScript

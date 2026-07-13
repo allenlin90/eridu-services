@@ -1,4 +1,4 @@
-@source "../**/*.{ts,tsx}";
+@source "../**/*.{js,ts,tsx}";
 
 @import "tw-animate-css";
 
