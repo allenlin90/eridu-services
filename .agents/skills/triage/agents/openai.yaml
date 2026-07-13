@@ -1,2 +1,6 @@
+interface:
+  display_name: "Issue Triage"
+  short_description: "Advance issues through the triage state machine"
+  default_prompt: "Use $triage to review the requested issues, recommend the next state, and apply only the approved triage outcome."
 policy:
   allow_implicit_invocation: false

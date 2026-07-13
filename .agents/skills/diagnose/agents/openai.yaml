@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagnose"
+  short_description: "Reproduce, isolate, and fix hard regressions"
+  default_prompt: "Use $diagnose to build a deterministic feedback loop, find the root cause, implement the fix, and add a regression test."
