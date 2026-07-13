@@ -1,2 +1,6 @@
+interface:
+  display_name: "Planning Skills Setup"
+  short_description: "Configure issue tracking, labels, and domain docs"
+  default_prompt: "Use $setup-matt-pocock-skills to configure this repository's issue tracker, triage labels, and domain documentation context."
 policy:
   allow_implicit_invocation: false

@@ -1,2 +1,6 @@
+interface:
+  display_name: "Repository Health"
+  short_description: "Audit repository quality and knowledge drift"
+  default_prompt: "Use $repository-health to run the canonical repository health audit and return severity-ordered findings."
 policy:
   allow_implicit_invocation: false

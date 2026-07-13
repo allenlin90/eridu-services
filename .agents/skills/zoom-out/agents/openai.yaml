@@ -1,2 +1,6 @@
+interface:
+  display_name: "Zoom Out"
+  short_description: "Map unfamiliar code at a higher architecture level"
+  default_prompt: "Use $zoom-out to map the relevant modules, callers, and domain boundaries before returning to implementation detail."
 policy:
   allow_implicit_invocation: false

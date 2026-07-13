@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Mockup Discussion"
+  short_description: "Validate undecided UX with rendered mockups"
+  default_prompt: "Use $ui-mockup-discussion to ground this UX decision in the real app, render distinct mockups, and record the settled direction."

@@ -1,2 +1,6 @@
+interface:
+  display_name: "Production Data Sync"
+  short_description: "Replace local databases with production snapshots"
+  default_prompt: "Use $prod-data-sync to verify the safety prerequisites, replace the local databases with production snapshots, and validate the result."
 policy:
   allow_implicit_invocation: false
