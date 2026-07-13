@@ -30,6 +30,12 @@
         "erify-member", "erify-team-lead", "erify-manager",
         "erisa-member", "erisa-team-lead", "erisa-manager",
         "finance-manager", "hr-manager"
+      ],
+      "managers": [
+        "commerce-team-lead", "commerce-manager",
+        "erify-team-lead", "erify-manager",
+        "erisa-team-lead", "erisa-manager",
+        "finance-manager", "hr-manager"
       ]
     },
     "note": "org-general (the GM, read-only) and admins (read-write) are never listed in a document's audiences — they're granted automatically at sync time on every collection, regardless of sensitivity, matching the same reasoning already applied to the eridu_mcp and Eridu CMD grant fixes."
