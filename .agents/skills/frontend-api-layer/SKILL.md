@@ -1,6 +1,6 @@
 ---
 name: frontend-api-layer
-description: Provides patterns for structuring the API layer in React applications. This skill should be used when setting up API clients, defining API request declarations, or integrating with TanStack Query for data fetching.
+description: Structure React API clients, request declarations, TanStack Query integration, and frontend transport boundaries.
 ---
 
 # Frontend API Layer

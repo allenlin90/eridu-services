@@ -1,6 +1,6 @@
 ---
 name: openwebui-assistant-adapter
-description: Design Open WebUI Workspace Models and assistant manifests from canonical repo skills. Use when creating or updating Open WebUI assistants, imported skill adapters, tool access manifests, or files under ai/openwebui/.
+description: Design Open WebUI Workspace Models and assistant manifests from repo skills, tool access, and ai/openwebui files.
 ---
 
 # Open WebUI Assistant Adapter

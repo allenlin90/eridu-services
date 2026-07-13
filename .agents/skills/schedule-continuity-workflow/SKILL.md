@@ -1,6 +1,6 @@
 ---
 name: schedule-continuity-workflow
-description: Feature workflow for schedule planning continuity. Use when implementing or reviewing schedule update/validate/publish behavior, Google Sheets planning integration, and pending-resolution handling.
+description: Implement schedule update, validate, and publish continuity with Google Sheets and pending-resolution handling.
 ---
 
 # Schedule Continuity Workflow

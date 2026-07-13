@@ -1,6 +1,6 @@
 ---
 name: operations-review-surface
-description: Patterns for building the studio Operations review surfaces in erify_studios (`/task-review`, `/show-run-review`, `/task-setup`, `/studios/:studioId/costs`, and `/studios/:studioId/performance`). Use BEFORE adding or changing an operational-day-scoped review screen — the lean-summary + lazy-paginated-sub-resources read model, URL-synced multi-tab DataTables, per-tab "export the full filtered set" CSV, and the 06:00–05:59 operational-day window computed on the frontend. Required reading before cloning `show-run-summary` for a new review surface.
+description: Build erify_studios operational-day reviews with lean summaries, paginated tabs, URL state, and full-filter exports.
 ---
 
 # Operations Review Surface

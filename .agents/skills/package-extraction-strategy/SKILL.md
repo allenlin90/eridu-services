@@ -1,6 +1,6 @@
 ---
 name: package-extraction-strategy
-description: Guidance for deciding when to extract shared monorepo packages and how to structure code for future extraction. Use when evaluating whether logic should move to a shared package or when designing new features that may have multiple consumers.
+description: Decide when shared logic belongs in a monorepo package and prepare multi-consumer boundaries for extraction.
 ---
 
 # Package Extraction Strategy

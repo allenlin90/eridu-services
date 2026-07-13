@@ -1,6 +1,6 @@
 ---
 name: data-compatibility-migration
-description: Frontend data compatibility and fallback patterns for API contract migrations. Use when building UI that must handle both old and new API response shapes during a cutover, or when centralizing field-access helpers for dual-field responses.
+description: Preserve frontend compatibility across API cutovers with dual response shapes, fallback accessors, and staged fields.
 ---
 
 # Data Compatibility Migration

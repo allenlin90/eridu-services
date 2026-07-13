@@ -1,6 +1,6 @@
 ---
-name: skill-creator
-description: Guide for creating or refining agent skills in this repo. Use when adding a skill, auditing trigger metadata, reorganizing references/scripts, or aligning skills with repo workflows and documentation ownership.
+name: eridu-skill-creator
+description: Maintain repo-local portable Agent Skills and routing. Use write-a-skill for generic skill creation.
 ---
 
 # Skill Creator
@@ -33,11 +33,14 @@ Create or refine skills so they are easy to trigger, cheap to load, and grounded
 ### Keep frontmatter sharp
 
 - `description` is the trigger surface. State both what the skill does and when it should be used.
+- Prefer 80–160 characters and never exceed 200. Lead with the capability, then the trigger, plus at most one important exclusion or neighboring skill.
+- Keep the implicitly invocable catalog within the validator's 8,000-character fallback budget.
 - Prefer concrete repo language over generic prose.
 - Keep `name` and `description` portable across supported agents.
 - Use optional Agent Skills fields only when the shared skill needs them.
 - Preserve client-specific frontmatter only when that client requires it in `SKILL.md`; document why it cannot live in an adapter.
 - Put Codex-only display metadata, invocation policy, and MCP dependencies in `agents/openai.yaml`.
+- Set `policy.allow_implicit_invocation: false` for manually initiated modes and operations that should require explicit `$skill-name` invocation.
 
 ### Keep the body procedural
 

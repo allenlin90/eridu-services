@@ -1,6 +1,6 @@
 ---
 name: fact-extraction-pipeline
-description: Patterns for adding extractors and write surfaces to the PR 12 fact-extraction pipeline (`apps/erify_api/src/orchestration/fact-extraction/`). Use BEFORE implementing any new `IngestionExtractor`, paired-atomic write, `SystemFactKey`, numeric performance fact, or hydrated-scope target type. Required reading before adding any new extractor or follow-on work. The "State-transition handoff between co-submitted facts" section is mandatory before adding ANY fact whose write semantics depend on another fact's value in the same submission.
+description: Extend erify_api fact extraction with extractors, SystemFactKey, paired writes, numeric facts, or hydrated scopes.
 ---
 
 # Fact Extraction Pipeline

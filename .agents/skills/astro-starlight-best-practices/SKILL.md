@@ -1,6 +1,6 @@
 ---
 name: astro-starlight-best-practices
-description: Best-practice guardrails for Astro + Starlight docs apps in this repo. Use when building or changing eridu_docs routes, rendering mode, middleware/auth flows, search behavior, content structure, component overrides, or asset/env handling.
+description: Apply Astro and Starlight guardrails in eridu_docs for routes, rendering, auth, search, content, or assets.
 ---
 
 # Astro + Starlight Best Practices

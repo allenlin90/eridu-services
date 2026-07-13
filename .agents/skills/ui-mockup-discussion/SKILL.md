@@ -1,6 +1,6 @@
 ---
 name: ui-mockup-discussion
-description: Validate a new or undecided frontend UX with the user before writing an implementation plan, using rendered visual mockups (Artifact, grounded in the real @eridu/ui design system) as the discussion medium instead of prose descriptions. Use during design/spec review or brainstorming for any feature whose UX isn't already settled — a new page, a new flow, a new panel/dialog shape, a redesign. Do not use once an implementation plan already exists, and do not use for a UX that's already fully specified (e.g. "add a column to this existing table") — go straight to implementation.
+description: Validate undecided frontend UX with rendered @eridu/ui mockups before planning, not after the UX is settled.
 ---
 
 # UI Mockup Discussion

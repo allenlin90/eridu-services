@@ -1,6 +1,6 @@
 ---
 name: backend-controller-pattern-nestjs
-description: NestJS controller patterns for erify_api. Use when adding, changing, or reviewing admin, studio, me, backdoor, or integration controllers, including route shape, guards, Zod responses, UID validation, DTO-to-service payload mapping, pagination, and throttle profile decisions.
+description: Build erify_api NestJS controllers with correct routes, guards, Zod responses, UID validation, and payload mapping.
 ---
 
 # NestJS Controller Patterns

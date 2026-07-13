@@ -1,6 +1,6 @@
 ---
 name: service-pattern-nestjs
-description: Comprehensive NestJS service implementation patterns. This skill should be used when implementing Model Services, Orchestration Services, or business logic with NestJS decorators.
+description: Implement erify_api NestJS model services and business logic. Use orchestration for cross-model workflows.
 ---
 
 # Service Pattern - NestJS

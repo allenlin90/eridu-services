@@ -1,6 +1,6 @@
 ---
 name: pwa-best-practices
-description: Comprehensive patterns for building high-quality Progressive Web Apps (PWA) with Vite and React. Focuses on avoiding anti-patterns like "Double Caching", ensuring long-term maintainability, and synchronizing Service Worker caching with application-level data managers like TanStack Query. Use when building or hardening PWA support, configuring service workers, or debugging caching issues.
+description: Build Vite and React PWAs with correct service workers, offline behavior, installability, and cache coordination.
 ---
 
 # PWA Best Practices

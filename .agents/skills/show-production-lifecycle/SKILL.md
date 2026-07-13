@@ -1,6 +1,6 @@
 ---
 name: show-production-lifecycle
-description: Livestream show lifecycle, entity relationships, state transitions, readiness conditions, and operational role boundaries. Use when implementing or reviewing show CRUD, status transitions, readiness gates, cancellation/resolution workflows, post-production completion, creator/platform assignment as lifecycle records, or any feature that touches the show as the central operational record.
+description: Implement livestream Show relationships, readiness, transitions, cancellation, completion, and assignments.
 ---
 
 # Show Production Lifecycle

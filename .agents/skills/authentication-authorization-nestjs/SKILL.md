@@ -1,6 +1,6 @@
 ---
 name: authentication-authorization-nestjs
-description: Comprehensive authentication and authorization patterns for Eridu Services. This skill should be used when implementing login flows, protecting endpoints, enforcing permissions, or designing API security for both backend and frontend.
+description: Implement eridu_auth login, session, JWT, and cross-app auth. Use erify-authorization for erify_api permissions.
 ---
 
 # Authentication & Authorization (Comprehensive)

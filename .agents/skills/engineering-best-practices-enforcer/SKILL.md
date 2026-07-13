@@ -1,6 +1,6 @@
 ---
 name: engineering-best-practices-enforcer
-description: Enforces repo-aligned engineering best practices for review and refactoring. This skill should be used when auditing or refactoring code across eridu-services with priority on local architecture/context, then official framework docs, then principles such as SOLID.
+description: Audit eridu-services against established repo patterns. Use code-quality for tooling and SOLID for design.
 ---
 
 # Engineering Best Practices Enforcer

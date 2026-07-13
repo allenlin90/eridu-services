@@ -1,6 +1,6 @@
 ---
 name: eridu-docs-information-architecture
-description: Use when restructuring eridu_docs content, sidebar navigation, landing pages, or doc placement rules. Enforces a workflow and function-first information architecture for the Astro Starlight docs app instead of genre-first buckets like guides, SOPs, and FAQ.
+description: Structure eridu_docs by workflow and function when changing sidebars, landing pages, or content placement.
 ---
 
 # eridu_docs Information Architecture

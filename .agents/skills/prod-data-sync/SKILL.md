@@ -1,6 +1,6 @@
 ---
 name: prod-data-sync
-description: Sync production Postgres data into local databases for high-fidelity development and migration verification. Use when a feature must be exercised against real prod-shaped data (real cardinalities, JSON envelope variants, referential edge cases) and local seed data is insufficient.
+description: Sync production Postgres into local databases when explicit testing needs real cardinalities or edge cases.
 ---
 
 # Prod Data Sync

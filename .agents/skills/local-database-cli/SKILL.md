@@ -1,6 +1,6 @@
 ---
 name: local-database-cli
-description: Use when asked to run raw SQL queries, inspect schemas, verify data, or interact directly with the local Docker PostgreSQL development databases from an agent terminal.
+description: Query local Docker PostgreSQL from an agent terminal for raw SQL, schema inspection, and data verification.
 ---
 
 # Local Database CLI Querying

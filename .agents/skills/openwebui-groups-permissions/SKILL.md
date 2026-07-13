@@ -1,6 +1,6 @@
 ---
 name: openwebui-groups-permissions
-description: Manage Open WebUI user groups, default/group permission sets, and per-resource access grants (models, knowledge, tools/skills) via the API. Use when creating or updating a group, changing workspace/chat/feature permissions, adding or removing users from a group, or deciding which group can use an imported tool, model, or knowledge base.
+description: Manage Open WebUI groups, permissions, users, and model, knowledge, or tool grants through the API.
 ---
 
 # Open WebUI Groups & Permissions

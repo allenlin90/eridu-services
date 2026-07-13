@@ -1,6 +1,6 @@
 ---
 name: repository-pattern-nestjs
-description: Comprehensive Prisma repository implementation patterns for NestJS. This skill should be used when implementing repositories that extend BaseRepository or use Prisma delegates.
+description: Implement erify_api Prisma repositories with BaseRepository, delegates, typed payloads, and clear data-access boundaries.
 ---
 
 # Repository Pattern - Prisma/NestJS

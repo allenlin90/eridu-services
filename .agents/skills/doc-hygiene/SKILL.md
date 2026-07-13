@@ -1,6 +1,6 @@
 ---
 name: doc-hygiene
-description: Keep any doc that can be updated and reasoned about — ideation drafts, feature docs, PRDs, architecture references, skills, workflows, canonical docs, READMEs — clean of reasoning artifacts so each revision reads as the current state, not the path that produced it. Trigger any time a doc is being refined, refactored, reorganized, or amended, regardless of whether it is committed. Trigger especially when about to write phrases like "after auditing", "verified on <date>", "previously listed as a blocker", "now resolved", "originally framed as", or numbered gap/decision lists whose items are already addressed. The doc body is for the current truth; reasoning trails belong in commits, PRs, or explicitly-named decision logs.
+description: Rewrite PRDs, design docs, READMEs, skills, and workflows as current truth without audit or process narration.
 ---
 
 # Doc Hygiene

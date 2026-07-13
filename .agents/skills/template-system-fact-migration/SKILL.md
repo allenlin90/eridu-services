@@ -1,11 +1,6 @@
 ---
 name: template-system-fact-migration
-description: >
-  Use when expanding the SystemFactKey catalog, onboarding task templates that need
-  operational fact extraction, a prod-db-sync reveals task templates without
-  system_fact_key bindings, or a field-type mismatch (e.g. select where checkbox or
-  multiselect is required) blocks binding a template field to the fact-extraction
-  pipeline.
+description: Migrate task templates onto SystemFactKey for catalog expansion, missing bindings, or field-type mismatches.
 ---
 
 # Template System Fact Migration

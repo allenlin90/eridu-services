@@ -1,6 +1,6 @@
 ---
 name: ai-workspace-control-plane
-description: Govern Open WebUI, LiteLLM, Better Auth SSO, Railway deployment, and MCP integration as one AI workspace control plane. Use when changing AI platform architecture, LiteLLM routing or budgets, Open WebUI assistant/model policy, SSO integration, MCP exposure, or files under ai/ and scripts/ai/.
+description: Govern Open WebUI, LiteLLM, Better Auth SSO, Railway, and MCP as one control plane for policy or architecture work.
 ---
 
 # AI Workspace Control Plane

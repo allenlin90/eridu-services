@@ -1,6 +1,6 @@
 ---
 name: frontend-performance
-description: Provides performance optimization patterns for React applications. This skill should be used when optimizing bundle size, implementing code splitting, reducing re-renders, or improving web vitals.
+description: Improve measured React performance through code splitting, render control, and Web Vitals work.
 ---
 
 # Frontend Performance

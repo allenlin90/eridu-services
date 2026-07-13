@@ -1,6 +1,6 @@
 ---
-name: playwright
-description: Use when the task requires automating a real browser from the terminal (navigation, form filling, snapshots, screenshots, data extraction, UI-flow debugging) via playwright-cli or the bundled wrapper script.
+name: eridu-playwright
+description: Automate eridu-services browser flows with bundled Playwright CLI scripts for navigation, forms, screenshots, or UI debugging.
 ---
 
 # Playwright CLI Skill
@@ -19,7 +19,7 @@ If unavailable, pause and ask user to install Node.js/npm.
 
 ```bash
 export CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
-export PWCLI="$CODEX_HOME/skills/playwright/scripts/playwright_cli.sh"
+export PWCLI="$(git rev-parse --show-toplevel)/.agents/skills/eridu-playwright/scripts/playwright_cli.sh"
 ```
 
 ## Core Workflow

@@ -1,6 +1,6 @@
 ---
 name: shift-schedule-pattern
-description: Patterns for implementing and extending the Studio Shift Schedule feature. This skill should be used when working on shift CRUD, shift blocks, calendar/alignment orchestration, duty-manager coverage, operational-day boundaries, task-readiness checks, or the frontend shift schedule UX.
+description: Extend Studio Shift Schedule CRUD, blocks, calendar alignment, duty coverage, operational days, or task readiness.
 ---
 
 # Shift Schedule Pattern

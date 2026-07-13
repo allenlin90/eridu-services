@@ -1,6 +1,6 @@
 ---
 name: wiki-knowledge-maintainer
-description: Maintain the Git-backed company wiki under ai/openwebui/knowledge by ingesting reviewed content, checking review deadlines, resolving unclear or conflicting statements, repairing links and routing metadata, consolidating duplication, and reorganizing the knowledge hierarchy as it grows. Use whenever wiki content is added or changed, when a routine wiki health check is requested or scheduled, or when retrieval quality suggests routing and abstraction drift.
+description: Maintain ai/openwebui/knowledge through ingest, review, conflict resolution, link repair, routing, and deduplication.
 ---
 
 # Wiki Knowledge Maintainer

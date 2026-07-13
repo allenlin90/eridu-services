@@ -1,6 +1,6 @@
 ---
 name: orchestration-service-nestjs
-description: Patterns for implementing Orchestration Services in NestJS. Use when coordinating multiple model services for complex workflows like bulk task generation, show assignment, or any operation spanning multiple domain models.
+description: Build NestJS orchestration services for workflows spanning multiple model services or domains.
 ---
 
 # Orchestration Service Pattern - NestJS
