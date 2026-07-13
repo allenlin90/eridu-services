@@ -2,6 +2,7 @@
   "name": "monorepo",
   "private": true,
   "scripts": {
+    "agents:validate": "node scripts/validate-agent-skills.mjs",
     "build": "turbo build",
     "dev": "turbo dev --concurrency=20",
     "dev:creators": "turbo dev --filter=erify_creators... --filter=erify_api... --filter=eridu_auth...",
@@ -18,7 +19,8 @@
     "@commitlint/config-conventional": "^20.0.0",
     "husky": "^9.1.7",
     "turbo": "^2.7.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "yaml": "^2.8.3"
   },
   "packageManager": "pnpm@10.32.1",
   "engines": {

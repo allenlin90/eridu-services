@@ -1,6 +1,7 @@
 ---
 name: monorepo-doc-layering
-description: This skill should be used when creating, restructuring, or reviewing documentation in eridu-services so docs are placed in the correct layer: root roadmap/product, app implementation docs, app design docs, or package READMEs.
+description: >-
+  This skill should be used when creating, restructuring, or reviewing documentation in eridu-services so docs are placed in the correct layer: root roadmap/product, app implementation docs, app design docs, or package READMEs.
 ---
 
 # Monorepo Doc Layering

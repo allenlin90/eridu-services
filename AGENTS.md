@@ -78,7 +78,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Tool-Specific Notes
 
+- **Codex**: discovers `.agents/skills/` natively. Keep shared instructions in `SKILL.md`; put Codex-only presentation, invocation policy, and tool dependencies in `agents/openai.yaml` inside the skill.
 - **Claude Code**: see `.claude/CLAUDE.md` for loading behavior, paths, and adapter rules.
+- **Google Antigravity**: discovers `.agents/skills/` and `.agents/rules/` natively. Keep their shared content tool-neutral.
 - **OpenCode**: `opencode.json` loads this file. Skills are routed from `.agents/skills/` via `.opencode/skills` symlink.
 
 ## Project-Specific Guidelines
@@ -106,6 +108,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 #### Skill-First Development
 - Before implementing any feature, load the relevant skill from `.agents/skills/<skill-name>/SKILL.md`.
 - Prefer the routing map in this file for quick lookup, but treat the skill directory itself as authoritative.
+- After adding or changing a skill, run `pnpm agents:validate`.
 
 #### Dependency Changes
 - The cloud build runs `pnpm install --frozen-lockfile`. `pnpm-lock.yaml` is authoritative; `package.json` changes alone are not enough.
@@ -249,6 +252,7 @@ For feature/refactor work, also run the refactor-parity checks in [`.agents/work
 
 ### Useful Commands
 ```bash
+pnpm agents:validate
 pnpm dev
 pnpm dev:creators
 pnpm dev:studios
