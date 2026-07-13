@@ -1,8 +1,8 @@
 """
 title: Knowledge Sync Pipe
 author: eridu-services
-version: 0.3.0
-description: Phase 0 proof-of-concept for the knowledge-base Sync Pipe. Diffs a document set against a target Open WebUI knowledge collection (checksum-based create/update/remove), triggered externally via a chat completion. _source_documents() is the seam Phase 1 replaces with a real fetch (e.g. the GitHub Contents API) against ai/openwebui/knowledge/company-wiki/content/. Verified end-to-end against a live disposable test collection on 0.10.2 (create, idempotent no-op, update, create, obsolete-removal), then torn down — this file was not left deployed.
+version: 0.4.0
+description: Diffs the company wiki content tree against a target Open WebUI knowledge collection (checksum-based create/update/remove), triggered externally via a chat completion. Fetches real content from GitHub raw at a pinned ref — see content_paths in Valves. Verified end-to-end against a live disposable test collection on 0.10.2 (create, idempotent no-op, update, create, obsolete-removal) before this fetch was wired in; see ai/architecture/llm-knowledge-base-plan.md Sync Contract.
 requirements: httpx
 """
 
@@ -18,23 +18,33 @@ class Pipe:
     class Valves(BaseModel):
         api_key: str = Field(default="", description="Admin API key for internal loopback calls to this same Open WebUI instance.")
         base_url: str = Field(default="http://localhost:8080", description="Internal Open WebUI base URL (loopback).")
-        collection_id: str = Field(default="", description="Target knowledge collection id. Empty = create one named 'Sync Pipe Test Collection' on first run.")
+        collection_id: str = Field(default="", description="Target knowledge collection id. Empty = create one named 'Company Wiki' on first run.")
+        github_owner: str = Field(default="allenlin90", description="GitHub org/user that owns the content repo.")
+        github_repo: str = Field(default="eridu-services", description="GitHub repo name.")
+        github_ref: str = Field(default="master", description="Branch, tag, or commit SHA to fetch content from. Public repo — no token required.")
+        content_paths: str = Field(
+            default="ai/openwebui/knowledge/company-wiki/content/shared/company-wiki-overview.md",
+            description="Comma-separated list of file paths (relative to repo root) to sync. Phase 1 pilot uses an explicit list; a later phase can replace this with a recursive GitHub Contents API listing of the content/ tree.",
+        )
 
     def __init__(self):
         self.valves = self.Valves()
 
-    # --- Phase 0 placeholder source. Phase 1 replaces this with a real fetch. ---
-    def _source_documents(self):
-        return [
-            {
-                "path": "doc-a.md",
-                "content": "# Doc A\n\nThis is placeholder document A for the Sync Pipe proof-of-concept.\n",
-            },
-            {
-                "path": "doc-b.md",
-                "content": "# Doc B\n\nThis is placeholder document B for the Sync Pipe proof-of-concept.\n",
-            },
-        ]
+    async def _source_documents(self, client):
+        paths = [p.strip() for p in self.valves.content_paths.split(",") if p.strip()]
+        docs = []
+        for repo_path in paths:
+            url = f"https://raw.githubusercontent.com/{self.valves.github_owner}/{self.valves.github_repo}/{self.valves.github_ref}/{repo_path}"
+            resp = await client.get(url)
+            resp.raise_for_status()
+            # Knowledge file names must be unique within a collection; use the
+            # content-relative path (after .../content/) so different domain
+            # folders can't collide, and Open WebUI shows a readable filename.
+            content_root = "company-wiki/content/"
+            idx = repo_path.find(content_root)
+            display_path = repo_path[idx + len(content_root):] if idx != -1 else repo_path
+            docs.append({"path": display_path, "content": resp.text})
+        return docs
 
     def _headers(self):
         return {"Authorization": f"Bearer {self.valves.api_key}"}
@@ -46,8 +56,8 @@ class Pipe:
             f"{self.valves.base_url}/api/v1/knowledge/create",
             headers=self._headers(),
             json={
-                "name": "Sync Pipe Test Collection",
-                "description": "Created by the Phase 0 Sync Pipe proof-of-concept. Safe to delete.",
+                "name": "Company Wiki",
+                "description": "Synced from ai/openwebui/knowledge/company-wiki/content/ by the Knowledge Sync Pipe. Do not edit files here directly — changes are overwritten on the next sync.",
             },
         )
         resp.raise_for_status()
@@ -103,7 +113,7 @@ class Pipe:
             async with httpx.AsyncClient(timeout=30) as client:
                 collection_id = await self._get_or_create_collection(client, report)
                 existing = await self._existing_files(client, collection_id)
-                source_docs = self._source_documents()
+                source_docs = await self._source_documents(client)
                 source_paths = {d["path"] for d in source_docs}
 
                 for doc in source_docs:
