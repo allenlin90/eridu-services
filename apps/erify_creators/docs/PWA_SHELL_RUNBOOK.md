@@ -47,3 +47,4 @@ Available actions:
 5. Use the **Reset App Shell** action in Settings and verify the app reloads in a clean state (IndexedDB TanStack Query cache is purged).
 6. Request `/` and a nested extensionless route; confirm both return the app's `index.html`, not a directory listing.
 7. Request a nonexistent `.css` or `.js` asset and confirm it returns 404 rather than `index.html`.
+8. Verify with `curl` first (server/CDN behavior, no client cache involved), then in an incognito/private window or with DevTools "Disable cache" + hard reload. A plain reload in an already-open regular browser tab can show a stale result in either direction — DevTools "Clear site data" and unregistering the service worker do not clear the browser's HTTP disk cache, which independently honors `Cache-Control: max-age` on hashed assets.
