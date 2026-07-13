@@ -1,0 +1,33 @@
+{
+    "items": [
+        {
+            "id": "e52ebe6f-667d-4ab1-b1cc-1b1ea92152b2",
+            "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+            "hash": "44858d075f6b17ebf0362ca7455a2f645236b410e2da3db8a9b1bdcb3647ae54",
+            "filename": "shared.company-wiki-overview.md",
+            "data": null,
+            "meta": {
+                "name": "shared.company-wiki-overview.md",
+                "content_type": "text/markdown",
+                "size": 2023,
+                "file_hash": "44858d075f6b17ebf0362ca7455a2f645236b410e2da3db8a9b1bdcb3647ae54",
+                "data": {
+                    "file_hash": "44858d075f6b17ebf0362ca7455a2f645236b410e2da3db8a9b1bdcb3647ae54"
+                },
+                "collection_name": "0f0de3c0-7168-4871-ab99-7ed95af8f953"
+            },
+            "created_at": 1783915758,
+            "updated_at": 1783915759,
+            "user": {
+                "id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+                "name": "Allen",
+                "role": "admin",
+                "email": "ht016746@gmail.com"
+            }
+        }
+    ],
+    "directories": [],
+    "breadcrumbs": [],
+    "total": 1
+}
+

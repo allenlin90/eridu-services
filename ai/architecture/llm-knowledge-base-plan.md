@@ -237,6 +237,8 @@ The sync logic runs as an Open WebUI Pipe (a custom model callable via `POST /ap
 
 `_source_documents()` is now wired to a real fetch: GitHub raw content at a pinned `github_ref` (default `master`) for an explicit `content_paths` list in Valves, not a hardcoded placeholder or a directory walk. The repo is public, so no token is required — but that also means source-layer confidentiality is only as strong as "don't put `department`/`restricted` content in this repo's `content/` yet"; see `ai/openwebui/functions/README.md`'s known-constraint note. The explicit path list is a deliberate Phase 1 simplification; replacing it with a recursive GitHub Contents API listing is a later-phase improvement once the corpus outgrows manual maintenance.
 
+**Deployed live, not just tested disposably.** `company_wiki_sync` is deployed persistently in Open WebUI (not torn down) and has synced one real document into a real "Company Wiki" knowledge collection, granted read access to `Org - General` plus all 11 pillar/finance/hr groups per the document's `audiences: [company-wide]`. Two more real bugs surfaced deploying it live for the first time (both fixed, both confirmed via independent re-reads, not just the Pipe's own report): existing-file matching by repo path broke because Open WebUI flattens uploaded filenames to their basename — fixed by matching on the document's frontmatter `id` instead; and leaving `collection_id` unset in Valves after the first run creates a new collection on every subsequent trigger — `collection_id` is now pinned. See `ai/openwebui/synced/README.md` and `ai/openwebui/synced/{knowledge,knowledge-files,functions}.json` for the live record.
+
 The sync must be repeatable and fail closed:
 
 1. Validate metadata, links, ownership, review dates, and collection/group mappings.
@@ -287,8 +289,8 @@ Whatever the surface, it must enforce caller identity and document visibility it
 ### Phase 1: Content Contract And Pilot Corpus
 
 - **Done.** Wiki structure, frontmatter schema, and validator are built and tested: `ai/openwebui/knowledge/company-wiki/{intake,content,generated,tools}`, `tools/wiki-schema.json` (sensitivity/status/audience vocabulary — Member/Team-Lead/Manager tiers per pillar, `org-general`/Admin auto-granted, never listed explicitly), `tools/validate-wiki` (required fields, enum, date, duplicate-id, and wikilink validation; `--write-manifest` emits `generated/wiki-manifest.json` with per-document `expanded_group_grants`). Validated against fixtures covering all five defect classes (missing/invalid fields, invalid enums, unknown audience tag, bad date ordering, duplicate id, broken wikilink) plus a clean pass with shorthand expansion (`company-wide` -> all 10 groups, pillar shorthand -> that pillar's 3 tiers).
+- **Partially done.** The Sync Pipe now fetches real content (GitHub raw at a pinned ref) and is deployed live and running against a real "Company Wiki" collection with correct grants — see Sync Contract above. One real document is synced (`shared.company-wiki-overview.md`, a meta doc about the wiki itself), proving the pipeline end to end. Migrating a real shared/onboarding corpus *from existing live Open WebUI skill content* (per `ai/architecture/skill-classification-inventory.md`) has not started.
 - Add the `wiki-knowledge-maintainer` change-triggered and routine lint workflows.
-- Migrate a small shared/onboarding corpus from existing live content.
 - Keep raw intake outside the published content path.
 - Add a fixed evaluation set with authoritative expected source IDs.
 

@@ -1,0 +1,28 @@
+{
+  "id": "company_wiki_sync",
+  "name": "Company Wiki Sync",
+  "type": "pipe",
+  "is_active": true,
+  "is_global": false,
+  "meta": {
+    "description": "Syncs ai/openwebui/knowledge/company-wiki/content/ from GitHub into the Company Wiki knowledge collection. Trigger with a chat completion.",
+    "manifest": {
+      "title": "Knowledge Sync Pipe",
+      "author": "eridu-services",
+      "version": "0.4.1",
+      "description": "Diffs the company wiki content tree against a target Open WebUI knowledge collection (checksum-based create/update/remove), triggered externally via a chat completion. Fetches real content from GitHub raw at a pinned ref \u2014 see content_paths in Valves. Verified end-to-end against a live disposable test collection on 0.10.2 (create, idempotent no-op, update, create, obsolete-removal) before this fetch was wired in; see ai/architecture/llm-knowledge-base-plan.md Sync Contract. Matches existing files by the document's frontmatter id, not its repo path \u2014 Open WebUI flattens uploaded filenames to their basename, which broke path-based matching on re-sync (see functions/README.md gotchas).",
+      "requirements": "httpx"
+    }
+  },
+  "valves": {
+    "base_url": "http://localhost:8080",
+    "collection_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+    "github_owner": "allenlin90",
+    "github_repo": "eridu-services",
+    "github_ref": "master",
+    "content_paths": "ai/openwebui/knowledge/company-wiki/content/shared/company-wiki-overview.md",
+    "api_key": "<redacted, see ai/openwebui/.env>"
+  },
+  "note": "content omitted here -- canonical source is ai/openwebui/functions/sync-pipe.py, applied via POST /api/v1/functions/id/{id}/update per that file's deploy instructions."
+}
+
