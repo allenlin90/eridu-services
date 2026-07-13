@@ -1,6 +1,6 @@
 ---
 name: agent-instruction-maintenance
-description: Maintain shared agent instructions, adapters, skills, rules, and workflows. Use for routing or ownership changes.
+description: Maintain shared agent instructions, adapters, skills, rules, and workflows for routing changes.
 ---
 
 # Agent Instruction Maintenance

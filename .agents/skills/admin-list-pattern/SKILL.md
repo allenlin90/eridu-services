@@ -1,6 +1,6 @@
 ---
 name: admin-list-pattern
-description: Build searchable, server-paginated Erify Admin tables. Use table-view-pattern for shared mechanics.
+description: Build searchable, paginated Erify Admin tables; use table-view-pattern for shared mechanics.
 ---
 
 # Admin List Integration Pattern

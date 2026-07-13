@@ -1,6 +1,6 @@
 ---
 name: pr-ui-screenshot-review
-description: Capture Playwright screenshots as PR evidence only for rendered frontend diffs, not backend or docs-only changes.
+description: Capture Playwright PR evidence for rendered frontend diffs, not backend or docs-only changes.
 ---
 
 # PR UI Screenshot Review
@@ -74,9 +74,9 @@ curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "<raw-url>"
 - Stop the dev server(s) you started.
 - Remove local scratch screenshot files and any temporary git clone used for the Gist push.
 
-## Relationship to /pr-ready
+## Relationship to pr-ready
 
-This skill produces evidence to attach to a PR description; it does not replace any gate in `.agents/workflows/pr-review.md`. For a UI-touching PR, run this after (or alongside) the Verification gate, then fold the updated PR description into the same Wrap-up step `/pr-ready` already performs — don't treat screenshot capture as a separate, later pass.
+This skill produces evidence to attach to a PR description; it does not replace any gate in `.agents/workflows/pr-review.md`. For a UI-touching PR, run this after (or alongside) the Verification gate, then fold the updated PR description into the same Wrap-up step the `pr-ready` skill already performs — don't treat screenshot capture as a separate, later pass.
 
 ## Related Skills
 

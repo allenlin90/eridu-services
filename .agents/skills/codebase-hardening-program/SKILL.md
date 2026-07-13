@@ -36,7 +36,7 @@ audit (fan-out) → ranked themes + open decisions → work-item backlog (compan
 2. **Two companion docs.** A static **plan** (themes + decisions) and a living **work-item backlog** (one WI per fix: scope, test strategy, acceptance, decision dependency, risk). Parallel PRs do **not** edit the tracker — reconcile after merges to avoid conflicts.
 3. **Sequence:** bugs/security → transaction & type foundations → decomposition → convention sweep + tests. Restructure only on a correct, typed substrate.
 4. **Execute.** Per PR: confirm the finding against source, make the minimal scoped change (no drive-by refactors), keep baseline green, run `lint`/`typecheck`/`test` (+`build` when wiring/deps change), update docs/skills in the same PR.
-5. **Retire.** When the program is done, **move residual/deferred items into `docs/tech-debt/`** (don't lose open decisions), delete the planning docs, update memories/skills that referenced them, and run `/pr-ready`.
+5. **Retire.** When the program is done, **move residual/deferred items into `docs/tech-debt/`** (don't lose open decisions), delete the planning docs, update memories/skills that referenced them, and run the `pr-ready` skill.
 
 ## Behavior-preserving techniques
 
