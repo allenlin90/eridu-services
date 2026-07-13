@@ -12,7 +12,7 @@
     "lint": "eslint . --fix",
     "typecheck": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && tsc -b --noEmit",
     "preview": "vite preview",
-    "start": "npx serve ./dist -c ../serve.json",
+    "start": "npx serve -s ./dist",
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage"
