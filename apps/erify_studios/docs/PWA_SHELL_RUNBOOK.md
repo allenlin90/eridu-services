@@ -24,7 +24,7 @@ Push notification delivery and advanced offline mutation workflows are intention
 
 ## Static Hosting Policy
 
-- The production server rewrites extensionless client routes to `index.html`.
+- The production server explicitly rewrites `/` and extensionless client routes to `index.html`.
 - Asset-like requests, including `.css`, `.js`, images, and the web manifest, must never use the SPA fallback. A missing asset must return 404 instead of HTML.
 - This boundary prevents a CDN from caching `index.html` under a hashed asset URL during a deployment overlap, which would make the app appear unstyled or fail with MIME-type errors.
 - If an asset URL was already poisoned, purge that exact URL from the external CDN after deploying the corrected server configuration.
@@ -44,5 +44,5 @@ Available actions:
 3. Confirm the app updates to latest shell and reloads cleanly.
 4. Confirm outdated caches are removed.
 5. Use the **Reset App Shell** action in Settings and verify app reloads in a clean state.
-6. Request a nested extensionless route and confirm it returns the app shell.
+6. Request `/` and a nested extensionless route; confirm both return the app's `index.html`, not a directory listing.
 7. Request a nonexistent `.css` or `.js` asset and confirm it returns 404 rather than `index.html`.

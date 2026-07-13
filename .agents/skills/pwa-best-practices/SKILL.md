@@ -46,7 +46,7 @@ Never cache the same API response in both SW and TanStack Query. Causes stale da
 - Keep route URL/search-param behavior unchanged during PWA migration
 - Keep PWA bootstrap in app entry + config boundaries (not feature modules)
 - No duplicate caches for same API payload
-- Limit the production host's SPA fallback to client-route navigations. Missing asset-like paths such as `.css` and `.js` must return 404, never `index.html`, so intermediary caches cannot poison immutable asset URLs.
+- Explicitly map `/` and extensionless client-route navigations to the app shell. Missing asset-like paths such as `.css` and `.js` must return 404, never `index.html`, so intermediary caches cannot poison immutable asset URLs.
 - Document PWA env/config for deterministic deployments
 
 ## Verification
@@ -57,4 +57,4 @@ pnpm --filter <app> lint && pnpm --filter <app> typecheck && pnpm --filter <app>
 
 Manual: install prompt, SW update behavior, offline app-shell loading, online→offline→online transition.
 
-At the production HTTP boundary, also verify that a nested extensionless route returns the app shell, a real hashed asset returns its correct MIME type, and a nonexistent `.css` or `.js` asset returns 404.
+At the production HTTP boundary, also verify that `/` and a nested extensionless route return the app's `index.html` rather than a directory listing, a real hashed asset returns its correct MIME type, and a nonexistent `.css` or `.js` asset returns 404.
