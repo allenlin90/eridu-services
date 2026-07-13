@@ -60,11 +60,8 @@ A blanket `serve -s ./dist` SPA fallback rewrites *any* unmatched path — inclu
 temporarily-missing hashed asset during a deployment overlap — to `index.html` with a
 cacheable `200`. A CDN (Cloudflare) can then cache that HTML response under the exact
 hashed `.css`/`.js` URL, so every later request for that asset serves unstyled HTML
-(MIME mismatch) until the poisoned URL is purged. `erify_creators` fixes this
-(`apps/erify_creators/serve.json`); `erify_studios` currently still runs the
-unconstrained `serve -s` fallback and accepts this risk — see
-`docs/tech-debt/erify-studios-unconstrained-spa-fallback.md` before re-attempting a fix
-there.
+(MIME mismatch) until the poisoned URL is purged. Both `erify_studios` and
+`erify_creators` run the corrected pattern (`serve.json` in each app).
 
 Correct `serve.json` pattern — **both** rules are required:
 
