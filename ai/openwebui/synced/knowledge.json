@@ -1,0 +1,122 @@
+{
+    "id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+    "name": "Company Wiki",
+    "description": "Synced from ai/openwebui/knowledge/company-wiki/content/ by the Knowledge Sync Pipe. Do not edit files here directly \u2014 changes are overwritten on the next sync.",
+    "meta": null,
+    "access_grants": [
+        {
+            "id": "4283f1d7-0ab9-4df4-8e16-455fa14a5bd0",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "e106c804-2eec-49c9-8bc8-d03d4744cfa5",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "253c37bb-69fa-4580-bc89-6d450c568d05",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "75fef625-9fc8-4f1a-a0cb-d22310efc714",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "da7bcdd6-a453-4d6d-aab2-a4f2dd1c7368",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "e452d1df-b035-4587-bcb5-373a5d2e28da",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "ef1114f0-9ca2-4163-991a-b3d19ee39101",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "d6cd6201-f254-47db-b38c-53ac02a9268b",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "e681fc7f-4fa4-47a1-97bc-c33c11897bde",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "9b8092c8-cc24-416e-ae45-1576ca6343f8",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "fc990554-126a-43db-bf10-952e28aa01b2",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
+            "permission": "read",
+            "created_at": 1783915916
+        },
+        {
+            "id": "f6befd2f-89a3-4ca1-ac2f-361b97b8fd93",
+            "resource_type": "knowledge",
+            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+            "principal_type": "group",
+            "principal_id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
+            "permission": "read",
+            "created_at": 1783915916
+        }
+    ],
+    "created_at": 1783915061,
+    "updated_at": 1783915061,
+    "files": null,
+    "write_access": true
+}
+
