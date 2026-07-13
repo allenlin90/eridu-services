@@ -1,14 +1,15 @@
 """
 title: Knowledge Sync Pipe
 author: eridu-services
-version: 0.4.0
-description: Diffs the company wiki content tree against a target Open WebUI knowledge collection (checksum-based create/update/remove), triggered externally via a chat completion. Fetches real content from GitHub raw at a pinned ref — see content_paths in Valves. Verified end-to-end against a live disposable test collection on 0.10.2 (create, idempotent no-op, update, create, obsolete-removal) before this fetch was wired in; see ai/architecture/llm-knowledge-base-plan.md Sync Contract.
+version: 0.4.1
+description: Diffs the company wiki content tree against a target Open WebUI knowledge collection (checksum-based create/update/remove), triggered externally via a chat completion. Fetches real content from GitHub raw at a pinned ref — see content_paths in Valves. Verified end-to-end against a live disposable test collection on 0.10.2 (create, idempotent no-op, update, create, obsolete-removal) before this fetch was wired in; see ai/architecture/llm-knowledge-base-plan.md Sync Contract. Matches existing files by the document's frontmatter id, not its repo path — Open WebUI flattens uploaded filenames to their basename, which broke path-based matching on re-sync (see functions/README.md gotchas).
 requirements: httpx
 """
 
 import asyncio
 import hashlib
 import json
+import re
 
 import httpx
 from pydantic import BaseModel, Field
@@ -37,13 +38,18 @@ class Pipe:
             url = f"https://raw.githubusercontent.com/{self.valves.github_owner}/{self.valves.github_repo}/{self.valves.github_ref}/{repo_path}"
             resp = await client.get(url)
             resp.raise_for_status()
-            # Knowledge file names must be unique within a collection; use the
-            # content-relative path (after .../content/) so different domain
-            # folders can't collide, and Open WebUI shows a readable filename.
-            content_root = "company-wiki/content/"
-            idx = repo_path.find(content_root)
-            display_path = repo_path[idx + len(content_root):] if idx != -1 else repo_path
-            docs.append({"path": display_path, "content": resp.text})
+            text = resp.text
+            # Open WebUI's file storage flattens any path sent as the upload filename
+            # down to its basename, so a repo-relative path like "shared/doc.md" is
+            # stored as just "doc.md" -- breaking existing-file lookup by path on
+            # re-sync (confirmed live: it re-uploads and Open WebUI then rejects the
+            # duplicate content). Use the document's own frontmatter `id` instead --
+            # already guaranteed unique across content/ by tools/validate-wiki -- as
+            # the stable filename, since it isn't subject to that flattening collision.
+            match = re.search(r"^id:\s*(\S+)\s*$", text, re.MULTILINE)
+            if not match:
+                raise ValueError(f"{repo_path}: no 'id' field found in frontmatter")
+            docs.append({"path": f"{match.group(1)}.md", "content": text})
         return docs
 
     def _headers(self):
