@@ -14,7 +14,7 @@ This directory is the durable, git-tracked record of **what's actually configure
 | `default-permissions.json` | `GET /api/v1/users/default/permissions` | Instance-wide default `UserPermissions` baseline |
 | `skills/*.md` | `GET /api/v1/skills/export` | Full content of all 19 Open WebUI Skills (the "Eridu Brain"), one file per skill ID, verbatim including YAML frontmatter |
 | `knowledge.json` | `GET /api/v1/knowledge/{id}` | The live "Company Wiki" knowledge collection (Phase 1 pilot) — `access_grants` (12: `Org - General` + all 11 pillar/finance/hr groups, all `read`). `files` is `null` here by design — that endpoint never populates it on `0.10.2` (see `ai/openwebui/functions/README.md` gotchas); see `knowledge-files.json` for the real file listing. |
-| `knowledge-files.json` | `GET /api/v1/knowledge/{id}/files` | Actual files attached to the Company Wiki collection — currently 1 (`shared.company-wiki-overview.md`, keyed by the document's frontmatter `id`, not its repo path). |
+| `knowledge-files.json` | `GET /api/v1/knowledge/{id}/files` | Actual files attached to the Company Wiki collection — currently 2 (`shared.company-wiki-overview.md`, `shared.governance-ops.md`; each keyed by the document's frontmatter `id`, not its repo path). |
 | `functions.json` | `GET /api/v1/functions/id/{id}` + `.../valves` | The deployed `company_wiki_sync` Sync Pipe Function's metadata, active state, and valves (`api_key` redacted — see `ai/openwebui/.env`). Source content itself is not duplicated here; canonical source is `ai/openwebui/functions/sync-pipe.py`, applied via the deploy steps in `ai/openwebui/functions/README.md`. |
 
 ## Groups roster (id → name)
