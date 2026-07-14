@@ -10,9 +10,9 @@ Use this skill when deciding **how** to add a new capability to Open WebUI — n
 ## Before using this skill
 
 - Read [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) first if the task is broader platform policy, not a single capability decision.
-- Confirm the deployed Open WebUI version (`ai-workspace-control-plane` records the pinned baseline). Every claim below was verified against `v0.10.2` source directly — see [references/mechanism-reference.md](references/mechanism-reference.md) for citations. Re-verify after any version bump via [ai-platform-capability-verification](../ai-platform-capability-verification/SKILL.md); do not assume upstream docs (which track latest, not the pin) apply unchanged.
+- Confirm the deployed Open WebUI version (`ai-workspace-control-plane` records the pinned baseline). Every claim below was verified against source — the pinned `v0.10.2` app source for behavior, the `open-webui/docs` repo's own current source for the Pipelines legacy-status claim specifically — see [references/mechanism-reference.md](references/mechanism-reference.md) for citations. Re-verify after any version bump via [ai-platform-capability-verification](../ai-platform-capability-verification/SKILL.md); do not assume upstream docs (which track latest, not the pin) apply unchanged.
 
-## The five mechanisms
+## The six mechanisms
 
 | Mechanism | Who decides to run it | Where it runs | Repo source | Access model |
 |---|---|---|---|---|
@@ -20,13 +20,14 @@ Use this skill when deciding **how** to add a new capability to Open WebUI — n
 | **Function — Filter** | Runs automatically on every message it's attached to | In-process | `ai/openwebui/functions/` | Admin-only to author/change its source; scope via global flag or per-model `filterIds` |
 | **Function — Action** | User clicks a chat UI button | In-process | `ai/openwebui/functions/` | Admin-only to author/change its source; scope via global flag or per-model `actionIds` |
 | **Tool** | The model decides mid-conversation (function calling) | In-process | `ai/openwebui/tools/` (create when the first Tool ships — doesn't exist yet) | **Authoring/changing its source needs `workspace.tools` — not admin-only by default.** Owning it (or a write grant) is enough for metadata edits or deletion |
-| **Tool Server** (MCP/OpenAPI) | The model decides mid-conversation, same as a Tool | External service, called over HTTP | N/A — it's a connection to an existing service, not source in this repo | Admin-only to register; connection-level group grants (see [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md)) |
+| **Tool Server — admin connection** (MCP or OpenAPI) | The model decides mid-conversation, same as a Tool | External service, called over HTTP | N/A — it's a connection to an existing service, not source in this repo | Admin-only to register; connection-level group grants (see [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md)) |
+| **Tool Server — direct/personal** (OpenAPI only, never MCP) | The model decides, same as above, but only within the session that attached it | External service, called over HTTP directly from the browser, per chat request | N/A | Any user holding `features.direct_tool_servers` (admins always have it) — **not persisted server-side and not in the admin connection list**; see [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) for the permission itself |
 
-**Pipelines** (the separate `open-webui/pipelines` worker container) is a sixth, legacy option: superseded by Pipe/Filter Functions for most cases per current upstream docs. See "Pipelines: legacy, avoid by default" below before reaching for it.
+**Pipelines** (the separate `open-webui/pipelines` worker container) is a seventh, legacy option: superseded by Pipe/Filter Functions for most cases per current upstream docs. See "Pipelines: legacy, avoid by default" below before reaching for it.
 
 ## Decision path
 
-1. **Does an existing MCP/OpenAPI server already expose this capability, or should it (shared, reusable, has its own auth/rate-limit story)?** → Tool Server. Stop here, use [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md); this is not Function/Tool work.
+1. **Does an existing MCP/OpenAPI server already expose this capability, or should it (shared, reusable, has its own auth/rate-limit story)?** → Tool Server — admin connection. Stop here, use [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md); this is not Function/Tool work. If instead this is one user's own ad hoc OpenAPI server for their own chats only (not something to grant to a group), that's the direct/personal path — a client-side attachment gated by `features.direct_tool_servers`, not an admin registration; route to [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) for the permission grant, not `openwebui-mcp-tool-integration`.
 2. **Should the model decide when to invoke it, with arguments the model fills in?** → Tool, unless authoring/changing its source should stay admin-only (see Trust model below) — then wrap it as a Pipe instead and accept the coarser access model.
 3. **Does every message need automatic transformation (redaction, logging, moderation, prompt injection) with no model decision involved?** → Filter. Decide global (every chat) vs scoped (`filterIds` on specific Workspace Models) — default to scoped; only make a Filter global when the behavior must be universal (see [ai-platform-capability-verification](../ai-platform-capability-verification/SKILL.md)'s evidence-over-inference discipline before assuming "global" is required).
 4. **Does the user need an explicit chat-UI button to trigger something (re-run, escalate, export)?** → Action, same global/scoped scoping rule as Filter.
@@ -35,7 +36,7 @@ Use this skill when deciding **how** to add a new capability to Open WebUI — n
 
 ## Pipelines: legacy, avoid by default
 
-Current upstream Open WebUI docs describe the separate `open-webui/pipelines` worker as legacy: Pipe Functions replaced its custom-provider/RAG/routing use case, and Filter Functions replaced its message pre/post-processing use case, both in-process and without a companion container to operate. This repo has never deployed a Pipelines service — `ai/openwebui/functions/sync-pipe.py` (a Pipe Function) already does exactly what a Pipeline would have been reached for. Do not stand up a Pipelines worker for a new capability unless the workload is genuinely too heavy/stateful for an in-process Function *and* a real backend service isn't a better fit — get explicit sign-off first, since it adds a new deployed service with its own release-management burden (see [ai-platform-release-management](../ai-platform-release-management/SKILL.md)).
+The `open-webui/docs` source itself (not just search snippets — see [references/mechanism-reference.md](references/mechanism-reference.md) for the exact fetch) carries a `:::danger` banner on its own Pipelines index page: **"Pipelines are legacy and are no longer recommended,"** predating the in-process Functions/Tools system that "now covers the same use cases without running a separate worker container," and directing custom-provider/RAG/routing needs to a Pipe Function, pre/post-processing needs to a Filter Function, and external HTTP integrations to an OpenAPI/MCP tool server — "kept for reference and for existing deployments only." This repo has never deployed a Pipelines service — `ai/openwebui/functions/sync-pipe.py` (a Pipe Function) already does exactly what a Pipeline would have been reached for. Do not stand up a Pipelines worker for a new capability unless the workload is genuinely too heavy/stateful for an in-process Function *and* a real backend service isn't a better fit — get explicit sign-off first, since it adds a new deployed service with its own release-management burden (see [ai-platform-release-management](../ai-platform-release-management/SKILL.md)).
 
 ## Trust model
 
@@ -56,6 +57,7 @@ Treat granting `workspace.tools` as equivalent to granting Function-source-autho
 ## Quality gate
 
 - [ ] Mechanism choice matches the decision path above, not "whichever I've used before."
+- [ ] If a Tool Server was chosen, admin connection vs. direct/personal (OpenAPI-only) was a deliberate choice, not assumed — they have different persistence, sharing, and permission models.
 - [ ] If a Tool was chosen, who can create it or change its source (`workspace.tools`) was considered explicitly, distinct from who can own/rename/delete it — not left at whatever the instance default is.
 - [ ] If a Filter/Action was chosen, global-vs-scoped was a deliberate choice, not a default.
 - [ ] A manifold Pipe (`pipes` attribute) was considered before authoring multiple near-duplicate Pipe functions.

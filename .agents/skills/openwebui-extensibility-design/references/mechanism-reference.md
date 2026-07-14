@@ -1,10 +1,12 @@
 # Open WebUI Extensibility Mechanism Reference
 
-Detailed, source-cited backing for the decision table in `SKILL.md`. Every claim below was verified
-by reading Open WebUI's own backend source at tag `v0.10.2` (this repo's pinned version per
+Detailed, source-cited backing for the decision table in `SKILL.md`. Most claims below were verified
+by reading Open WebUI's own backend/frontend source at tag `v0.10.2` (this repo's pinned version per
 `ai-workspace-control-plane`), fetched 2026-07-13 via
-`https://raw.githubusercontent.com/open-webui/open-webui/v0.10.2/backend/open_webui/<path>`. Treat
-this as a snapshot, not a living doc — re-verify with
+`https://raw.githubusercontent.com/open-webui/open-webui/v0.10.2/<path>`. The Pipelines legacy-status
+claim (last section) is sourced differently — from the `open-webui/docs` project's own `main` branch,
+not the pinned app tag, since Pipelines is documentation/policy content rather than app behavior; that
+section says so explicitly. Treat this as a snapshot, not a living doc — re-verify with
 [ai-platform-capability-verification](../../ai-platform-capability-verification/SKILL.md) before
 trusting a specific line after any version bump, and update the citations here when you do.
 
@@ -100,6 +102,42 @@ mechanism in upstream docs. Don't grant it by instance default; treat it the sam
 admin-equivalent grant. It is specifically the source-mutation gate, though — see the section above
 for which Tool routes it does and doesn't cover.
 
+## Tool Server: admin connection vs. direct/personal (`features.direct_tool_servers`)
+
+`openwebui-groups-permissions` documents `features.direct_tool_servers` as letting "a non-admin user
+add their own OpenAPI tool server," which reads like a lighter-weight variant of admin Tool Server
+registration. Source shows it's a genuinely different mechanism, not a permission relaxation on the
+same one:
+
+- The admin connection list (`backend/open_webui/routers/configs.py`): `GET`/`POST
+  /api/v1/configs/tool_servers` and `POST /api/v1/configs/tool_servers/verify` all depend on
+  `get_admin_user`, with **no permission flag that relaxes this** — `features.direct_tool_servers`
+  does not grant access to these routes. This is the persistent, shared, group-grantable connection
+  list `openwebui-mcp-tool-integration` covers, and it supports both `type: "mcp"` and `type:
+  "openapi"`.
+- The direct/personal path is client-side and per-request, not a registration at all.
+  `backend/open_webui/main.py` strips a chat-completion request's `tool_servers` field entirely
+  unless the caller is admin or holds `features.direct_tool_servers`
+  (`has_permission(user.id, 'features.direct_tool_servers', ...)`, with a comment noting this mirrors
+  a matching strip in `user/settings/update`). `backend/open_webui/utils/middleware.py` reads it back
+  out of `metadata.get('tool_servers')` as **"Client side tools"** (explicit comment, contrasted with
+  `tool_ids` as "Server side tools") and injects each entry's `specs` directly into that one request's
+  tool list — nothing is written to the `tool_server` admin config table, no group grant applies, and
+  it only affects the chat session that attached it.
+- The frontend UI for this (`src/lib/components/chat/ToolServersModal.svelte`) states directly:
+  *"Open WebUI can use tools provided by any OpenAPI server"* and links to
+  `open-webui/openapi-servers` — **OpenAPI only**. Nothing in this client-attachment code path
+  accepts `type: "mcp"`; MCP tool servers only exist through the admin connection list above.
+
+**Practical read**: don't describe `features.direct_tool_servers` as "a non-admin way to register a
+Tool Server" without qualifying it — it's a non-admin way to attach *their own OpenAPI server to their
+own chat requests*, ephemeral and ungoverned by the group-grant model the admin connection list uses.
+An agent choosing between "shared, reusable, needs group access control" (→ admin connection,
+`openwebui-mcp-tool-integration`) and "one user's own ad hoc integration, OpenAPI only, no
+persistence" (→ `features.direct_tool_servers`, `openwebui-groups-permissions`) needs both paths
+named, or it will steer every Tool Server request toward the admin-only path even when a user already
+has the lighter-weight option available.
+
 ## Pipe manifold: one Function, many models
 
 `backend/open_webui/functions.py`, `get_function_models()`:
@@ -160,19 +198,29 @@ set correctly).
 
 ## Pipelines legacy status
 
-Not verifiable from `open-webui/open-webui` source (it's a separate repository,
-`open-webui/pipelines`) — this claim is sourced from current official docs content, not a source read,
-so hold it more loosely than the source-verified facts above:
+Not verifiable from `open-webui/open-webui` source (Pipelines is a separate repository,
+`open-webui/pipelines`, run as its own container). `docs.openwebui.com` itself returned HTTP 403 to
+direct fetches during this research pass (likely bot-blocking a non-browser client) — but the docs
+*site's own source repository*, `open-webui/docs`, is fetchable directly and isn't blocked, which is
+what the claim below is actually sourced from (not search snippets):
 
-- [Tools & Functions (Plugins)](https://docs.openwebui.com/features/extensibility/plugin/)
-- [Pipelines](https://docs.openwebui.com/features/extensibility/pipelines/)
-- [Pipes](https://docs.openwebui.com/features/extensibility/pipelines/pipes/)
+`https://raw.githubusercontent.com/open-webui/docs/main/docs/features/extensibility/pipelines/index.mdx`,
+top of page, a `:::danger` admonition block:
 
-Current docs state Pipelines' custom-provider/RAG/routing use case is superseded by Pipe Functions,
-and its message pre/post-processing use case by Filter Functions — both in-process, no companion
-worker container required. The docs describe existing Pipelines pages as kept for reference/existing
-deployments, not as the recommended path for new work. `docs.openwebui.com` returned HTTP 403 to
-direct fetches during this research pass (likely bot-blocking) — the summary above came from search
-snippets, not a full page read. Re-confirm by reading the actual pages (browser or a different fetch
-path) before making Pipelines-adoption claims stronger than "legacy, avoid by default" in a
-maintainer-facing report.
+> **Pipelines are legacy and are no longer recommended.** They predate the in-process Functions
+> (Pipes, Filters, Actions) and Tools system, which now covers the same use cases without running a
+> separate worker container.
+>
+> - Custom provider / RAG / request routing (a Pipeline **pipe**) → use a Pipe Function.
+> - Message pre/post-processing (a Pipeline **filter**) → use a Filter Function.
+> - Connecting an external HTTP service → use an OpenAPI or MCP tool server.
+>
+> These pages are kept for reference and for existing deployments only. New work should target
+> Functions, Tools, or external tool servers instead.
+
+This is the docs project's own current-main content, not a third party's summary of it, so it's solid
+evidence for "legacy, avoid by default" as stated in `SKILL.md` — but note it's dated to when this
+reference was fetched (2026-07-13) against the docs repo's `main` branch, which is not itself pinned
+to Open WebUI app releases the way `v0.10.2` is. Re-fetch this URL (or check for a
+`open-webui/pipelines` archival notice) before treating it as still current after a significant time
+gap, the same discipline `ai-platform-capability-verification` applies to everything else here.
