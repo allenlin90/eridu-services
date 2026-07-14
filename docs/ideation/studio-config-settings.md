@@ -72,6 +72,19 @@ This document unifies three previously scattered ideation tracks:
 
 ---
 
+### 8. Lifecycle Gate Enforcement Levels (Deferred from Phase 5 Item 19)
+
+*   **Current Logic:** Phase 5 item 19 (lifecycle state-gate enforcement) ships **warning-level only with hardcoded defaults**: the shared readiness/completion condition contract (Phase 5 items 11/12) renders as advisory warnings on the item 18 transition surfaces, and no transition is ever blocked. The state machine itself (item 18) carries only minimal intrinsic requirements — a valid transition edge, a permitted role, and a reason where the transition class requires one.
+*   **The Problem:** Whether a missing condition should *block* a transition is inherently studio policy, not platform truth. Association records regularly complete late in real operations — creator mapping often lands after the moment a manager needs to confirm a show — so a hardcoded `block` level would freeze daily workflow the moment a studio's actual sequence doesn't match the assumption (the same failure mode items 1–2 and 7 describe for readiness gating).
+*   **Deferred configuration scope (owned here, promoted on demand):**
+    *   per-studio enforcement level per condition (`off` / `warning` / `block`) over the shared condition schema from Phase 5 items 11/12;
+    *   required-condition selection (which planning/completion conditions a studio actually cares about);
+    *   waiver/override flows for `block`-level conditions, with audit reason;
+    *   any grace-period semantics for late-arriving records (e.g. creator mapping, imported performance facts).
+*   **Constraint:** `block` must remain per-studio opt-in configuration, never default behavior. Enforcement and its configuration surface ship together, never enforcement alone (same rule as §7).
+
+---
+
 ## Proposed Unified Solution: Studio Settings Schema
 
 Introduce a structured JSONB `settings` field inside the `Studio` model in `schema.prisma`.
@@ -207,6 +220,7 @@ This consolidated topic should be promoted to a PRD and scheduled for execution 
 3.  **Studio Settings Dashboard Epic:** The product roadmap schedules a general **Studio Settings and Preferences UI** phase.
 4.  **Operational-day drift becomes user-visible:** surfaces disagree on the same window (e.g. PR #205's report-vs-dashboard mismatch), or the performance-vs-shift-alignment boundary disagreement (gap §6) produces a wrong-day bucket in production. Each interim per-surface patch raises the cost of *not* unifying on a studio timezone.
 5.  **Mechanic enforcement requested (§7):** product defines a concrete standard for "which mechanics a show requires" (even for one client/show-standard), or repeated account-manager sign-off requests for the same client signal the manual conversation should become configuration.
+6.  **Hard lifecycle gates requested (§8):** a studio operationally needs `block`-level transition enforcement after Phase 5 item 19's warning-only delivery, or repeated transition-warning overrides signal that per-studio condition configuration is due.
 
 ---
 

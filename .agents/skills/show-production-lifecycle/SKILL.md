@@ -95,13 +95,13 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`.
 
-**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 8 and 16.
+**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 9 and 20.
 
-### Show issue ownership contract (Phase 5 item 8)
+### Show issue ownership contract (Phase 5 item 9)
 
 Show-level issues are dedicated advisory operational records anchored to `Show`; they are not tasks, audits, or state gates. Manual issues and extraction-detected attendance/platform anomalies share the same ownership and resolution workflow. Automated reconciliation joins the existing per-fact transaction so the source fact, extraction audit, and required issue commit or roll back together.
 
-Use explicit synchronous orchestration for this required single-consumer handoff. Do not introduce a generic event bus, NestJS CQRS, or a no-op notification seam. Promote to a durable outbox/event publisher when item 13 adds notifications as a second independently retryable consumer. The locked technical contract is [SHOW_ISSUE_OWNERSHIP_DESIGN.md](../../../apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md).
+Use explicit synchronous orchestration for this required single-consumer handoff. Do not introduce a generic event bus, NestJS CQRS, or a no-op notification seam. Promote to a durable outbox/event publisher when item 15 adds notifications as a second independently retryable consumer. The locked technical contract is [SHOW_ISSUE_OWNERSHIP_DESIGN.md](../../../apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md).
 
 ### 3. Post-Production (live → completed)
 
@@ -125,16 +125,19 @@ Use explicit synchronous orchestration for this required single-consumer handoff
 
 **Current behavior**: Schedule publish sets `cancelled_pending_resolution` automatically when active tasks exist. Manual cancellation uses the cancellation gate: Admin/Manager users can cancel directly from show detail, active Duty Managers can open pending resolution from the dashboard, and Admin/Manager users resolve pending shows to `cancelled` or `completed`. Audit rows are the history source.
 
-### State-gate task invariants
+### Status write paths and gate invariants
 
-`STATE_GATE` tasks are system workflow records, not ordinary production tasks. Any endpoint or service that touches generic task assignment, claiming, completion, bulk reassignment, or task DTO serialization must prove whether state-gate tasks are included or explicitly excluded.
+There is **no task-based state-gate mechanism**: no `STATE_GATE` value exists in `TaskType` or anywhere in code. The shipped gate (`ShowCancellationGateService`, PR #233) is entirely `Show.status` + `Audit`-row based with zero Task-model involvement. Whether a future gate becomes task-backed is a design decision for Phase 5 item 18, not a current constraint.
 
-- Claim routes must verify the task is a state gate before mutating assignment or writing gate history.
-- Generic task completion paths must not complete state gates; show status resolution must happen in the same backend transaction as the gate task completion.
-- Bulk assignment paths for ordinary show tasks must exclude `STATE_GATE` unless they route through the gate reassignment/audit flow.
+`Show.status` is currently written by four independent paths with uneven validation: the studio generic edit (blocks entering/leaving `CANCELLED` and `CANCELLED_PENDING_RESOLUTION`), the admin generic edit (no transition validation — Phase 5 item 8 closes this bypass), `ShowCancellationGateService` (reason capture, actor-tier checks, active-task guard, Audit history), and schedule publish (direct status writes, no audit — tracked tech debt). Phase 5 item 18 converges these into one canonical transition service.
+
+Invariants that must hold when touching status writes:
+
+- Only the cancellation gate may move a show into or out of `CANCELLED` / `CANCELLED_PENDING_RESOLUTION`; generic edit paths keep their guards, and studio status lookups keep excluding gate-owned statuses.
+- Gate history lives in `Audit` rows (`metadata.field = show_status`, `metadata.event = opened | resolved`); do not store gate state in JSONB metadata or a parallel table.
+- `CANCELLED` outcomes require zero active tasks (shared active-task definition); `COMPLETED` outcomes do not use that guard.
+- Concurrent resolution relies on conditional status updates; validate the transition before the conditional write, not inside it.
 - Backend guards must enforce terminal-state rules even when the frontend hides an action; never rely on UI visibility to protect `completed` or other terminal records.
-- If a system task is snapshotless, every DTO/schema that serializes tasks must accept that shape intentionally, or the creation path must attach a valid snapshot.
-- Authorization must match the rendered action: if managers see a Claim/Resolve action, the backend route must allow that role or the UI must hide the action.
 
 **Gap (Phase 5)**: The focused cancellation workflow is implemented. Remaining cancellation-adjacent gaps are focused pending-resolution queue/discovery, notifications, comments/follow-up ownership, and full lifecycle state enforcement.
 
@@ -234,4 +237,4 @@ Do not duplicate guidance from these skills. Reference them for their owned doma
 8. **Platform metrics live on ShowPlatform.** `gmv`, `ctr`, `cto`, `viewerCount` are per-platform, not per-show. Aggregate in queries, not in schema.
 9. **Violations are append-only.** `ShowPlatformViolation` uses `supersededAt` for soft-history. Do not update or delete violation rows.
 10. **Compensation snapshots are downstream.** `CompensationLineItemTarget` connects shows and show-creators to the compensation system. Do not compute compensation in show services.
-11. **State gates are special task workflows.** Do not let `STATE_GATE` tasks flow through generic claim, complete, or bulk assignment paths without an explicit invariant check and audit behavior.
+11. **Status transitions are gate-owned.** Do not add new direct `Show.status` write paths. Cancellation statuses move only through the cancellation gate, and new transition logic belongs in the canonical transition service scoped by Phase 5 item 18 — not in controllers or generic edit payload builders.
