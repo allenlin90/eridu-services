@@ -32,6 +32,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | 8   | [Show-level issue ownership](#8-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement               | —          | 🔲 Planned    |
 | 9   | [Advisory planning readiness checklist](#9-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition             | 1, 2       | 🔲 Planned    |
 | 10  | [Post-production completion review checklist](#10-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records | 6, 7, 8    | 🔲 Planned    |
+| 19  | [Schedule publish impact review enhancements](#19-schedule-publish-impact-review-enhancements) — filters, persisted publish-run batches, and scoped past-show creator-mapping backfill for `/schedule-publish-impacts` | —          | 🚧 In progress |
 
 ### Operational Efficiency (Candidates)
 
@@ -172,6 +173,12 @@ Aggregate existing planning signals into one advisory checklist for the current 
 **Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §3; [`operations-review-surface`](../../.agents/skills/operations-review-surface/SKILL.md) skill
 
 Define a show-level post-production checklist for review, reporting, and later export: closure tasks submitted/approved, actual end present, creator attendance finalized, platform performance facts present, correction/import review status, and unresolved issue status. This is a read-only completion review until item 14 and item 15 unblock lifecycle state enforcement.
+
+### 19. Schedule publish impact review enhancements
+
+**Source**: [`schedule-continuity-workflow`](../../.agents/skills/schedule-continuity-workflow/SKILL.md) skill; design spec [`2026-07-13-schedule-publish-impacts-improvements-design.md`](../superpowers/specs/2026-07-13-schedule-publish-impacts-improvements-design.md)
+
+Add show-time/change-time/impact-kind/status filters and accurate server-side summary counts to `/studios/:studioId/schedule-publish-impacts`. Persist a `PublishRun` model so a Google Sheets (or future studio-native) publish is a first-class, filterable audit unit instead of an implicit `Audit.createdAt` cluster. Add a narrowly-scoped, fill-gap-only creator-mapping backfill for past shows with no `ShowCreator` mapping: the Sheet already sends per-show `creators` data, so backfill stays on the same `/validate`/`/publish` API and reuses that data via a bounded, separately-tested service step rather than a new endpoint or button — `publish()`'s main diff+upsert path is untouched, and `/validate` surfaces the backfill-eligible count non-blockingly before commit. Existing mappings are never overridden, since `ShowCreator` can be targeted by a `CompensationLineItem` and no settlement/freeze guard exists yet. Relationship to items 4, 8, 9/15 documented in the spec (see spec §3, §5, "Relationship to Other Phase 5 Items").
 
 ### 11. Bulk show detail editing
 
