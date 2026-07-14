@@ -29,7 +29,7 @@ Each row is one workstream or deliverable. Rows are ordered top-to-bottom as exe
 | 5   | [Schedule-change task reconciliation](#5-schedule-change-task-reconciliation) — update eligible generated task due dates when show timing changes                                  | —          | ✅ Done       |
 | 6   | [Import platform performance data](#6-import-platform-performance-data) — controlled manual export/upload flow before platform API integration                                     | —          | 🔲 Planned    |
 | 7   | [Show performance correction](#7-show-performance-correction) — managers can correct missing/inaccurate performance metrics from any source with audit reason                      | —          | ✅ Done       |
-| 8   | [Show-level issue ownership](#8-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement               | —          | 🔲 Planned    |
+| 8   | [Show-level issue ownership](#8-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement               | —          | 📐 Ready      |
 | 9   | [Advisory planning readiness checklist](#9-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition             | 1, 2       | 🔲 Planned    |
 | 10  | [Post-production completion review checklist](#10-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records | 6, 7, 8    | 🔲 Planned    |
 | 19  | [Schedule publish impact review enhancements](#19-schedule-publish-impact-review-enhancements) — filters, persisted publish-run batches, and scoped past-show creator-mapping backfill for `/schedule-publish-impacts` | —          | 🚧 In progress |
@@ -156,11 +156,17 @@ Start with a controlled manual export/upload flow (CSV or spreadsheet) for impor
 
 ### 8. Show-level issue ownership
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2; [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
+**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2; [`Show-Level Issue Ownership Design`](../../apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md); [`late-material-edit-audit-policy.md`](../ideation/late-material-edit-audit-policy.md)
 
-Define a narrow show-level issue record (or task-like workflow) that traces blockers: missing creator, equipment dysfunction, utility outage, platform violations, and post-production follow-up. Each issue has an owner, due date, severity, evidence, status, escalation path, and resolution record. In this pickup phase, issues are operational records for review and later export; they do not drive state transitions until the state machine is unblocked.
+Implement a dedicated `ShowIssue` operational record for creator attendance, equipment dysfunction, utility outage, platform violations, and post-production follow-up. Each issue has an owner, due date, severity, evidence, status, manual escalation state, optimistic version, and resolution record. Issues are advisory records for review and later export; they do not drive state transitions until items 14 and 15.
 
-**Issue sourcing must include automated/audit-detected anomalies, not just manually filed ones.** Today the fact-extraction pipeline already writes `ShowPlatformViolation[]` rows, `attendanceMissing`/`attendanceReason`, and missing-performance-fact gaps across every lifecycle phase (pre-production through post-production) — but these land as silent data with no connection to an issue record; a manager only sees them by actively opening `/task-review` or `/show-run-review`. This item's issue record should be the landing point for those extraction-detected anomalies (in addition to manually opened issues), so "audit flagged a problem" and "someone filed a problem" produce the same kind of trackable record. Notification on open/severity-change is item 13's scope, not this item's — but the record this item defines is what item 13 fires off of.
+Automated sourcing is limited to facts that positively report an anomaly: active `ShowPlatformViolation` rows and `ShowCreator.attendanceMissing`. Reconciliation runs synchronously in the existing per-fact transaction so the fact, extraction audit, and required issue commit or roll back together. Source correction resolves the same issue identity; replay does not create duplicates. Missing performance is a derived absence rather than a fact-extraction event and remains item 10's policy decision.
+
+The API uses one studio-scoped `/show-issues` collection with UID-only external identifiers and real database pagination. Show detail receives an Issues tab, while Show Run Review receives a lean unresolved count and lazy paginated Issues tab. Assignment, severity, escalation, resolution, reopening, and automated evidence changes use standard `Audit` history.
+
+**Architecture boundary**: use explicit `ShowIssueWorkflowService` and `ShowIssueReconciliationService` orchestration, not a generic event bus or NestJS CQRS. Item 13 is the promotion point for a durable outbox/event publisher if notifications become a second independent consumer.
+
+**Implementation readiness**: the data model, roles, route shape, automated identity/resolution rules, transaction boundary, read surfaces, performance contract, and deferrals are locked in the linked design. No product or architecture decision blocks implementation.
 
 ### 9. Advisory planning readiness checklist
 

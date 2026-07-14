@@ -34,5 +34,6 @@ Active (in progress):
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Planned follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
 3. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
+4. [Show-Level Issue Ownership](../../erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md) — 📐 Cross-app Phase 5 item 8 design locked for implementation
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
