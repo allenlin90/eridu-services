@@ -327,6 +327,7 @@ pnpm sherif
 - Do not use `rtk` for commands that require interactive prompts or streaming outputs.
 
 ### Documentation & Link Hygiene
+- All markdown files must be formatted in accordance with the repository's native ESLint rules. Run `pnpm lint:markdown` to verify and `pnpm format:markdown` to automatically fix formatting.
 - Markdown links in repository documentation (e.g., `docs/`, `apps/README.md`) must use **relative paths** from the current document.
 - Never use absolute filesystem paths (such as `/Users/...`) in Markdown links.
 - Never use `file://` URLs in repository documentation. (Note: This is separate from the agent's communication style in chat/artifacts, which must use `file://` links).

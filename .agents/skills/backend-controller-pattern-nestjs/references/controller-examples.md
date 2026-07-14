@@ -253,8 +253,8 @@ import { ZodSerializerDto } from 'nestjs-zod';
 
 @Controller('google-sheets/schedules')
 export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
-  
-  // Note: Google Sheets often uses explicit @ApiZodResponse + @ZodSerializerDto 
+
+  // Note: Google Sheets often uses explicit @ApiZodResponse + @ZodSerializerDto
   // instead of a wrapper if specific description tuning is needed.
   @Get()
   @ApiZodResponse(createPaginatedResponseSchema(scheduleDto))

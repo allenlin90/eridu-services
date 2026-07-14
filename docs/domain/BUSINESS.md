@@ -774,7 +774,6 @@ erDiagram
       datetime updated_at
     }
 
-
     tasks {
       int id PK
       string uid

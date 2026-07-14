@@ -319,14 +319,14 @@ type UseInfiniteScrollOptions = {
 
 /**
  * Hook for implementing infinite scroll using Intersection Observer
- * 
+ *
  * @example
  * const sentinelRef = useInfiniteScroll({
  *   fetchNextPage,
  *   hasNextPage,
  *   isFetchingNextPage,
  * });
- * 
+ *
  * return (
  *   <>
  *     {items.map(item => <Item key={item.id} {...item} />)}

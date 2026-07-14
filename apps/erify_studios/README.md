@@ -318,9 +318,9 @@ export const Route = createFileRoute('/system/studios')({
 
 function StudiosPageRoute() {
   const isAdmin = useIsSystemAdmin();
-  
+
   if (!isAdmin) return <AdminAccessDenied />;
-  
+
   return <StudiosPage />;
 }
 ```
@@ -631,5 +631,5 @@ See `package.json` for exact versions of:
 
 ---
 
-**Last Updated**: March 2026  
+**Last Updated**: March 2026
 **Maintainers**: Eridu Services Team

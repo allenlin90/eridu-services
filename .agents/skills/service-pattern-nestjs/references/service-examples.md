@@ -309,7 +309,7 @@ async createManyUsers(users: CreateUserDto[]) {
     ...u,
     uid: this.generateUid()
   }));
-  
+
   // Single DB Call
   return this.userRepository.createMany(data);
 }

@@ -6,7 +6,7 @@
 
 ## Problem
 
-Generic task templates in Erify are highly customizable and modular, but the data captured in task sheets lives as generic, untyped JSON blobs in `task.content`. 
+Generic task templates in Erify are highly customizable and modular, but the data captured in task sheets lives as generic, untyped JSON blobs in `task.content`.
 Because generic task inputs are not useful until they are associated with canonical facts:
 1. Managers need reviewed task submissions to become trusted records for actual start/end times, host attendance, platform violations, and platform performance facts.
 2. The database needs structured, indexed columns for these metrics so aggregation, real-time lateness calculation, performance dashboards, and platform violation tracking do not depend on arbitrary JSON field names.

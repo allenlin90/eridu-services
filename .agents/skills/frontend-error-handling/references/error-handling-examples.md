@@ -273,7 +273,7 @@ export function useUpdateTaskTemplate(studioId: string) {
   return useMutation({
     mutationFn: ({ templateId, data }: { templateId: string; data: UpdateTaskTemplateDto }) =>
       updateTaskTemplate(studioId, templateId, data),
-    
+
     onMutate: async ({ templateId, data }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['task-templates', studioId] });
@@ -297,7 +297,7 @@ export function useUpdateTaskTemplate(studioId: string) {
       if (context?.previousTemplates) {
         queryClient.setQueryData(['task-templates', studioId], context.previousTemplates);
       }
-      
+
       toast.error('Failed to update template');
     },
 

@@ -184,6 +184,18 @@ pnpm --filter <workspace> test
 pnpm --filter <workspace> build   # required when package wiring, exports, or tsconfig changed
 ```
 
+Run the repository-wide markdown formatting check:
+
+```bash
+pnpm lint:markdown
+```
+
+If formatting errors are found, you can format them automatically with:
+
+```bash
+pnpm format:markdown
+```
+
 Workspaces: `erify_api` · `eridu_auth` · `erify_studios` · `erify_creators` · `@eridu/api-types` · `@eridu/auth-sdk` · `@eridu/ui` · `@eridu/i18n`
 
 All checks must pass before merge.
@@ -244,7 +256,7 @@ Only once §1–§3 are done is the verdict **ready to merge**.
 - [ ] No Prisma types in service signatures; no business logic in controllers.
 - [ ] All implemented design docs promoted; no `✅` items remaining in any Design table.
 - [ ] All PRDs for shipped features promoted to `docs/features/`.
-- [ ] lint ✅ · typecheck ✅ · test ✅ · build ✅ for all affected workspaces.
+- [ ] lint / lint:markdown ✅ · typecheck ✅ · test ✅ · build ✅ for all affected workspaces.
 - [ ] **Wrap-up done**: skills/workflows/rules synced for patterns this PR established; canonical docs and memory updated; design docs/PRDs/superpowers specs this PR completed are retired and links are clean; roadmap row status updated in this PR.
 - [ ] **Folded into the PR**: wrap-up changes committed, pushed, and the PR description updated to match delivery.
 - [ ] PR description references canonical paths and reflects current state.

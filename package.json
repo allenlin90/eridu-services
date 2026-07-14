@@ -9,6 +9,8 @@
     "dev:docs": "turbo dev --filter=eridu_docs... --filter=eridu_auth...",
     "dev:studios": "turbo dev --concurrency=15 --filter=erify_studios... --filter=erify_api... --filter=eridu_auth...",
     "lint": "turbo lint",
+    "lint:markdown": "node format-markdown.mjs --check",
+    "format:markdown": "node format-markdown.mjs",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "sherif": "pnpm dlx sherif@latest",
@@ -17,6 +19,8 @@
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@eridu/eslint-config": "workspace:*",
+    "eslint": "^9.39.1",
     "husky": "^9.1.7",
     "turbo": "^2.7.5",
     "typescript": "^5.9.3",

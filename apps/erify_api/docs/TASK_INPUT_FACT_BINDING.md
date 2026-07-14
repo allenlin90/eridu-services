@@ -179,7 +179,6 @@ erDiagram
 
 Deletion semantics: deleting a `Show`/`ShowCreator`/`ShowPlatform`/`StudioShift` cascades only into the `AuditTarget` junction rows; the parent `Audit` envelope is never deleted, preserving the historical timeline (see PRD §2.C).
 
-
 ```prisma
 model Audit {
   id        BigInt                              @id @default(autoincrement())

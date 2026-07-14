@@ -50,10 +50,10 @@ describe('UserService', () => {
     // 1. Arrange (Mock dependencies)
     const mockRepo = { findByUid: vi.fn().mockResolvedValue(user) };  // Vitest — not jest.fn()
     const service = new UserService(mockRepo as any);
- 
+
     // 2. Act
     const result = await service.getUser('u_1');
- 
+
     // 3. Assert
     expect(result).toEqual(user);
     expect(mockRepo.findByUid).toHaveBeenCalledWith('u_1');
@@ -69,7 +69,7 @@ describe('UserService', () => {
   ```typescript
   // BAD
   const data: any = req.body;
-  
+
   // GOOD
   const data: CreateUserDto = req.body;
   ```

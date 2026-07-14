@@ -27,7 +27,7 @@ Currently, the system is highly optimized for the template-to-task workflow:
 Relax the strictness around template associations and define the contract for creating ad-hoc tasks.
 
 - **Modify `task.schema.ts`:**
-  - Update the base `taskSchema` to make `snapshotId` nullable: 
+  - Update the base `taskSchema` to make `snapshotId` nullable:
     ```typescript
     snapshotId: z.bigint().nullable()
     ```

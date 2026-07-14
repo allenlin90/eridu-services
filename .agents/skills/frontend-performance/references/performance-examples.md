@@ -34,7 +34,7 @@ export function TaskTemplatePage() {
   return (
     <div>
       <h1>Task Template</h1>
-      
+
       <Suspense fallback={<LoadingSpinner />}>
         <TaskTemplateBuilder />
       </Suspense>

@@ -51,4 +51,3 @@ Harden creator assignment eligibility by extending the availability endpoint wit
 - `pnpm --filter erify_api build`
 - `pnpm --filter erify_api test`
 - Targeted smoke: loose mode unchanged, strict overlap, not-in-roster, inactive creator, same-show reassign
-

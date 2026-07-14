@@ -148,7 +148,7 @@ export const profileResponseSchema = z.object({
 ### 🛡️ Onboarding Fallback Guards
 We will render custom full-page layouts inside `__root.tsx` to handle onboarding exceptions with rich aesthetics:
 
-1. **`UnlinkedCreatorView`**: 
+1. **`UnlinkedCreatorView`**:
    - *Aesthetics*: Elegant deep HSL slate background with a glass-like centered card and subtle glowing outline.
    - *Copy*: "Account Unlinked. Your account is not yet connected to a Creator Profile. Please contact your studio manager to link your account."
 2. **`NoStudioAssociationView`**:

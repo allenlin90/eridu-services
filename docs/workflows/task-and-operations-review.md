@@ -61,7 +61,6 @@ Studio managers review submitted operator task checklists for the operational da
 * **Needs Attention Tab**: Isolates task anomalies, strictly defined as tasks that are **Unassigned** or **Unsubmitted and Overdue** (`PENDING`, `IN_PROGRESS`, or `BLOCKED` status past their due date).
 * *Note: A task in `REVIEW` status is never flagged as "Overdue" or placed in "Needs Attention" just because the due date has passed. The operator completed their role on time; it is simply waiting for the manager.*
 
-
 ### 4. Multi-Selection and Bulk Approval
 Managers use individual row checkboxes (or the table header toggle to select all eligible rows) to select tasks they wish to confirm:
 * **Selection Eligibility**: A row is selectable only when it clears the *hard* bulk-approval blockers — it must be in `REVIEW` status and have an assignee. Advisory issue badges (Binding Drift, Zero Facts, No Fact Bindings) remain visible for reviewer context but do **not** block selection, because single approval follows the same backend transition and extraction path.

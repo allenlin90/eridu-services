@@ -745,7 +745,7 @@ sequenceDiagram
     App->>SessionProvider: checkSession() (one-time)
     SessionProvider->>SDK: getSession()
     SDK->>Auth: Check session (HTTP)
-    
+
     alt No valid session
         Auth-->>SDK: No session
         SDK-->>App: session = null

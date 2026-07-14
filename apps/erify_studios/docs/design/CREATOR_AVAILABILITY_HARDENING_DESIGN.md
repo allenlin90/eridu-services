@@ -41,4 +41,3 @@ Integrate strict availability feedback into creator assignment flows without reg
 - `pnpm --filter erify_studios build`
 - `pnpm --filter erify_studios test`
 - Manual smoke: loose browse, strict confirm, overlap badge, inactive include, write-time conflict handling
-

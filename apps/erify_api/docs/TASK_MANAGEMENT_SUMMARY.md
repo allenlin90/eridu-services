@@ -8,7 +8,7 @@
 
 ## Architecture at a Glance
 
-**"Task as Form"** — one Task record = one complete checklist/form (not one row per checkbox).  
+**"Task as Form"** — one Task record = one complete checklist/form (not one row per checkbox).
 A show with 3 task types → 3 DB records instead of 60.
 
 ### Core Entities
@@ -124,13 +124,13 @@ PR 12.4 keeps submitted-task confirmation in Task Review at `/task-review` and a
 
 ## Current Implementation Status
 
-✅ Template CRUD, bulk generation, assignment, reassignment, operator tasks  
+✅ Template CRUD, bulk generation, assignment, reassignment, operator tasks
 ✅ v2 `system_fact_key` schema validation for PR 12 operational fact bindings
 ✅ Confirmed-task extraction model: task submissions in `REVIEW` remain review inputs; approval to `COMPLETED` populates target fact columns
-✅ Optimistic locking, advisory locks, soft-delete with resumption  
-✅ Action-based workflow endpoints, operator state machine enforcement, studio review queue UI in `erify_studios`  
-⚠️ Admin/manager transition whitelist is still not enforced on `/studios/:studioId/tasks/:id/action`  
-✅ Submission window validation (SETUP before show start, ACTIVE/CLOSURE after show start)  
+✅ Optimistic locking, advisory locks, soft-delete with resumption
+✅ Action-based workflow endpoints, operator state machine enforcement, studio review queue UI in `erify_studios`
+⚠️ Admin/manager transition whitelist is still not enforced on `/studios/:studioId/tasks/:id/action`
+✅ Submission window validation (SETUP before show start, ACTIVE/CLOSURE after show start)
 ✅ Audit metadata (`task.metadata.audit.last_transition`)
 ✅ Studio shows `needs_attention` filtering via shift-alignment readiness warnings (no tasks / unassigned tasks / missing required task types)
 ✅ Bulk review approve: manager bulk approval of eligible `REVIEW` tasks with atomic transaction processing and extraction summaries
