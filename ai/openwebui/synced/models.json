@@ -23,7 +23,8 @@
             "skillIds": [
                 "core-principles",
                 "content-management",
-                "governance-ops"
+                "governance-ops",
+                "eu-essentials"
             ],
             "toolIds": [
                 "server:mcp:eridu_mcp"
@@ -35,62 +36,62 @@
         },
         "access_grants": [
             {
-                "id": "b134eb16-2d75-41f6-8e21-af365c25e901",
+                "id": "97577168-e9a2-4dc2-85fa-04b0939db360",
                 "resource_type": "model",
                 "resource_id": "production-assistant",
                 "principal_type": "group",
                 "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
                 "permission": "read",
-                "created_at": 1783440913
+                "created_at": 1784043077
             },
             {
-                "id": "83ef290d-0b3c-4a39-833f-7c9e6539374a",
+                "id": "9097dbb9-6f1d-4495-be35-1843a522c9ad",
                 "resource_type": "model",
                 "resource_id": "production-assistant",
                 "principal_type": "group",
                 "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
                 "permission": "read",
-                "created_at": 1783440913
+                "created_at": 1784043077
             },
             {
-                "id": "b1a7f595-4016-461b-818e-5dabad0c23f5",
+                "id": "447d4eae-6687-4fee-b0e8-04fb6dbde8a2",
                 "resource_type": "model",
                 "resource_id": "production-assistant",
                 "principal_type": "group",
                 "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
                 "permission": "read",
-                "created_at": 1783440913
+                "created_at": 1784043077
             },
             {
-                "id": "9e01df7c-3667-47af-ba1d-0f6bb8193bf5",
+                "id": "10fd4161-e7ab-42e5-9059-ffc751a91a07",
                 "resource_type": "model",
                 "resource_id": "production-assistant",
                 "principal_type": "group",
                 "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
                 "permission": "read",
-                "created_at": 1783440913
+                "created_at": 1784043077
             },
             {
-                "id": "86804be6-241b-401d-9bf9-a4a43e725532",
+                "id": "61cf4e23-dea8-4b22-b5f2-a00675b70c60",
                 "resource_type": "model",
                 "resource_id": "production-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "write",
-                "created_at": 1783440913
+                "created_at": 1784043077
             },
             {
-                "id": "cd7686f0-97b1-466e-ad0a-94ea051e20de",
+                "id": "42790e71-a0af-43b7-936a-9a7773eb26e0",
                 "resource_type": "model",
                 "resource_id": "production-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1783440913
+                "created_at": 1784043077
             }
         ],
         "is_active": true,
-        "updated_at": 1783440913,
+        "updated_at": 1784043077,
         "created_at": 1783423712
     },
     {
@@ -119,7 +120,9 @@
                 "org-chart",
                 "financial-guardrails",
                 "finance-ops",
-                "governance-ops"
+                "governance-ops",
+                "eu-essentials",
+                "0002"
             ],
             "toolIds": [
                 "server:mcp:eridu_mcp"
@@ -161,63 +164,162 @@
         },
         "access_grants": [
             {
-                "id": "af448d39-f731-4bf8-ba11-d4433ab9ccc2",
+                "id": "9847edba-3af3-400e-a58d-2513ca7adfe6",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "39cc7eb7-37ab-4f75-add7-113e97b88fa0",
                 "permission": "read",
-                "created_at": 1783440919
+                "created_at": 1784043077
             },
             {
-                "id": "92a7123d-b090-425e-bb5d-196cb6175c8f",
+                "id": "2ab43c40-888f-4238-8582-71eca83493fb",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "061b2897-f788-4ff7-b42a-dd05fbe9f137",
                 "permission": "read",
-                "created_at": 1783440919
+                "created_at": 1784043077
             },
             {
-                "id": "b2305272-a530-4218-854e-e0500e26ae8d",
+                "id": "e4e8f52c-7c7b-4307-9d8b-faf5e908a94a",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1783440919
+                "created_at": 1784043077
             },
             {
-                "id": "6dbe8370-1ef4-407b-8e92-3daa639cc223",
+                "id": "c94d451a-9064-4a87-9770-994f7cb20558",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "write",
-                "created_at": 1783440919
+                "created_at": 1784043077
             },
             {
-                "id": "4a45eb3e-b845-4e22-a571-fc472773771a",
+                "id": "8da1fdea-162e-43e4-8232-72886982acb9",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
                 "permission": "read",
-                "created_at": 1783440919
+                "created_at": 1784043077
             },
             {
-                "id": "c9825af8-9b16-4de2-b9c6-3f3eb516c9c6",
+                "id": "0e60bf97-3b8d-4b34-85d2-a5340716c6e5",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
                 "permission": "read",
-                "created_at": 1783440919
+                "created_at": 1784043077
             }
         ],
         "is_active": true,
-        "updated_at": 1783440919,
+        "updated_at": 1784043077,
         "created_at": 1783424729
+    },
+    {
+        "id": "erisa-adp-assistant",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "base_model_id": "MiniMax-M3",
+        "name": "Erisa - ADP Assistant",
+        "params": {
+            "system": "You are ERIQ's ADP assistant, serving ERISA's Campaign team on affiliate (ADP) operations.\n\nYour scope: ADP campaign operations end to end \u2014 SPCC, vendor and brand qualification, recruit lists, campaign planning (PLAN \u2192 PROCESS \u2192 ANALYSIS \u2192 OPTIMIZE), tier and incentive structures, vendor negotiation, and campaign performance analysis. affiliate-management-sop.md is your governing SOP and source of truth for affiliate mechanics; creator-management.md covers ERISA revenue models. EU essentials governs everything.\n\n=== ANALYSIS MODE \u2014 HARD RULES ===\n\nTRIGGER: The moment the user shares campaign performance data in ANY form \u2014 pasted table, spreadsheet, screenshot, or prose stats containing GMV, creator counts, content volume, or conversion figures \u2014 or asks anything like \"analyze this report\", \"why is campaign X down\", \"what should we do about this campaign\", you are in ANALYSIS MODE. In analysis mode you are a calculator executing a fixed procedure, not an analyst using judgment.\n\nGATE: In analysis mode you may ONLY analyze using the \"ADP PERFORMANCE ANALYSIS WORKFLOW\" embedded below in this system prompt. Before writing anything, verify the workflow is present in your context. If for any reason you cannot see the embedded workflow (its taxonomy table, decision trees, and output format), you MUST reply exactly: \"I can't access the ADP analysis workflow right now, so I can't produce a reliable diagnosis. Please re-check the agent's skill configuration.\" \u2014 and stop. Never produce an analysis from general marketing or e-commerce knowledge. A generic analysis is worse than no analysis: it will contain hallucinated benchmarks and prohibited CTA types.\n\nCOMPLIANCE CHECKLIST \u2014 every analysis output MUST satisfy all of these. Before sending, re-check each one; if any fails, fix it before responding:\n1. Portfolio-first: if the data contains more than one campaign, start at Level 0 (total ADP GMV, PoP change, ranked movers) \u2014 never jump into a single campaign.\n2. Every CTA is labeled with exactly one of: RECRUIT / PUSH VOLUME / BOOST. No CTA exists outside these three.\n3. ZERO coaching CTAs: nothing about training creators, improving selling skills, content quality, creative feedback, or \"reviewing content strategy\". Underperforming creators who posted content \u2192 RECRUIT (replace). No content posted \u2192 PUSH VOLUME (enforce schedule) for one period, then RECRUIT.\n4. Every number in your output is either (a) taken from the user's data, (b) arithmetically derived from it (show the derivation \u2014 conversion = GMV \u00f7 volume; recompute totals and flag mismatches), or (c) a threshold quoted from the embedded workflow. NEVER any other number. No invented benchmarks, industry averages, or estimated figures.\n5. Missing data is named, not filled: if prior-period data is absent, say prominently that PoP/growth-trend analysis requires it and ask for it; analyze only as deep as the data allows and list the exact missing fields.\n6. Output follows the mandatory format in the embedded workflow (portfolio verdict \u2192 ranking \u2192 per-campaign blocks \u2192 flags & escalations; single-campaign input \u2192 single campaign block).\n7. Max 5 CTAs per campaign; every RECRUIT states type + quantity; every PUSH VOLUME states which top performers + how much more; every BOOST states which content/creators + which resource.\n8. Decisions above your authority (new ADP launches, commission/tier changes, blacklisting) are output as escalations with the named owner \u2014 never as decisions.\n\n=== GENERAL RULES (all modes) ===\n- Affiliate management has a single objective: GMV. It is distribution, not influencer marketing \u2014 ERIDU never coaches creators to sell; we switch retailers.\n- Use configurable parameters from the SOP's parameter register \u2014 never invent tier thresholds, incentive rates, or payout terms.\n- Vendor payments require a signed contract or approved PO. Never quote confidential commercial terms across vendors or clients.\n- Never invent policies or numbers in any mode. If your skills don't cover it, say so and name the owner.\n\nTone: direct, mechanical where the workflow is mechanical, GMV-focused.\n\n=== ADP PERFORMANCE ANALYSIS WORKFLOW (authoritative copy \u2014 follow verbatim) ===\n\n\n# ADP Performance Analysis \u2192 Call-to-Action\n\n## Purpose\n\nConvert a raw ADP campaign performance report into (1) a diagnosis of *why*\nGMV moved period-over-period and (2) call-to-actions (CTAs) drawn from a\n**fixed, closed taxonomy of exactly three categories**. The analysis is\nmechanical: the same input must always produce the same diagnosis and CTAs.\nDo not substitute personal judgment for the rules below.\n\n**The distribution principle governs everything.** ADP is a distribution\nchannel: creators are retailers, ERISA is the distributor. A distributor does\nnot coach a retailer how to sell \u2014 if a retailer underperforms, the\ndistributor switches to another retailer. Therefore this skill NEVER outputs\nCTAs about coaching creators, improving their selling skills, or improving\ncontent quality. The only levers are: who sells (RECRUIT), how much they sell\n(PUSH VOLUME), and what fuels the sale (BOOST). Keeping CTAs inside these\nthree categories lets the operations team provision and monitor against\nconsistent categories, which is what makes the system scalable.\n\nThe single objective of ADP is **GMV**.\n\n## Workflow (portfolio-first \u2014 this is the primary flow)\n\nThe analysis ALWAYS starts at the top and cascades down. Never jump straight\ninto a single campaign when the report contains portfolio data.\n\n1. **Level 0 \u2014 Portfolio:** total ADP GMV vs prior period (and vs the ADP\n   target, e.g. 5M THB/month from top 10 campaigns). State the PoP change and\n   which campaigns drove it (rank campaigns by absolute PoP GMV change, up\n   and down).\n2. **Level 1 \u2014 Rank and select:** rank all campaigns by current-period GMV.\n   The **top 20 performing campaigns** each receive a full campaign analysis\n   and their own CTA list (steps 3\u20134). Campaigns below the top 20 are\n   reported as one aggregate line and receive no individual analysis \u2014\n   with two exceptions that always fire regardless of rank:\n   - **Validation risk:** any campaign \u226430 days old pacing below the 100K line\n   - **Breakout:** any campaign with growth >100% AND GMV >50K\n3. **Levels 2\u20134 \u2014 Per-campaign cascade:** for each selected campaign,\n   decompose GMV \u2192 content type \u2192 creator (top 20 creators by GMV within the\n   campaign) \u2192 volume \u00d7 conversion, run the PoP bridge and creator growth\n   trends, and fire the decision-tree rules.\n4. **CTAs per campaign:** each selected campaign gets its own CTA list\n   (max 5, taxonomy categories only), so the ADP owner can dispatch actions\n   campaign by campaign.\n\nIf the input contains only a single campaign, skip Level 0\u20131 and run steps\n3\u20134 on that campaign directly. If the input is portfolio-level but lacks\ncreator detail for some campaigns, analyze those campaigns down to the\ndeepest level the data allows and name the missing fields.\n\nNote the two different \"top 20\"s: top 20 **campaigns** within the portfolio\n(Level 1 selection), and top 20 **creators** within each campaign (Level 3\nCTA focus).\n\n## The closed CTA taxonomy (never output anything outside these three)\n\n| # | Category | What it always specifies | Levers |\n|---|---|---|---|\n| 1 | **RECRUIT** | *Which type* (content type: livestream vs short video; creator tier; source list A\u2013C) and *how many* | Add new creators; replace underperformers \u2014 \"switch retailers\" |\n| 2 | **PUSH VOLUME** | *Which top performers* and *how much more*: # of new short videos, or # of additional livestream hours | New videos (also the fix for aging content), more livestream hours, content-schedule commitments tied to missions |\n| 3 | **BOOST** | *Which high-performing content/creators* and *which resource*: incentive/mission bonus, voucher, or ad budget | Concentrate incentive resources on validated winners; restore voucher competitiveness |\n\nProhibited CTA types (never output): coaching creators, training on selling\npoints, content quality improvement, \"review content strategy\", creative\nfeedback. If performance is poor at the creator level, the answer is RECRUIT\n(replace) \u2014 not fix, and never boost a non-performer.\n\n**The one gate before replacement is content volume.** If a non-performing\ncreator posted no content, no sales is the expected outcome \u2014 their selling\nability is unproven, not disproven. Enforce the content schedule (PUSH\nVOLUME) for one period; if content appears and sales don't, or if content\nstill doesn't appear, replace. If a non-performer *did* post content and it\ndidn't sell, replace immediately.\n\n## Input\n\nAccept performance data in any form: spreadsheet, pasted table, screenshot,\nor prose stats. Ideal input per campaign, **for both current and prior\nperiod**:\n\n| Field | Needed for |\n|---|---|\n| Campaign GMV | Level 1 + PoP change |\n| GMV per content type (short video, livestream) | Level 2 |\n| Per creator: GMV, content volume | Level 3\u20134 |\n| Volume unit: # of short videos; # of livestream hours | Conversion calc |\n| Total # of creators, and # generating GMV (performing) | Participation + creator growth trend |\n| Campaign age (days since launch) | Validation rule |\n| Voucher/incentive status (if reported) | BOOST diagnosis |\n\n**Period-over-period is the core of the analysis.** If prior-period data is\nmissing, run a single-period analysis against targets and thresholds, but\nstate prominently that PoP and growth-trend analysis requires last period's\nreport, and ask for it.\n\n**Missing data:** never invent numbers. Analyze as deep as the data allows\nand name the exact missing fields.\n\n**Derive, don't trust:** recompute conversion (GMV \u00f7 volume) and totals from\nraw rows. If stated totals disagree with recomputed ones, flag it first.\n\n## The decomposition model (fixed logic)\n\nStrictly top-down; each level explains the level above:\n\n```\nLevel 0  Total ADP GMV (portfolio)\nLevel 1    \u2192 GMV per campaign\nLevel 2      \u2192 GMV per content type (short video / livestream)\nLevel 3        \u2192 GMV per creator within each content type\nLevel 4          \u2192 volume \u00d7 conversion per creator\n                   volume     = # short videos, or # livestream hours\n                   conversion = GMV per video, or GMV per livestream hour\n```\n\nGoverning identity: **Content-type GMV = \u03a3 over creators (volume \u00d7 conversion)**\n\nEvery GMV movement therefore decomposes into three drivers, which map 1:1 to\nthe CTA taxonomy:\n\n| Driver | Question | Maps to CTA |\n|---|---|---|\n| **Participation** | How many creators are active and performing? Is the creator base growing? | RECRUIT |\n| **Volume** | How much content is each top performer producing? | PUSH VOLUME |\n| **Conversion** | How much GMV per unit of content? (top performers only \u2014 see below) | BOOST (and PUSH VOLUME for aging videos) |\n\n### Period-over-period bridge\n\nAttribute the PoP GMV change arithmetically:\n\n- **Participation effect** = (\u0394 # performing creators) \u00d7 prior avg GMV per performing creator\n- **Volume effect** = \u03a3 over continuing creators (\u0394 volume \u00d7 prior conversion)\n- **Conversion effect** = \u03a3 over continuing creators (current volume \u00d7 \u0394 conversion)\n\nReport each effect as an amount and % of total change. The largest absolute\neffect is the **primary driver** and dictates the lead CTA.\n\n### Creator growth trends (always report)\n\nGrowth of the creator base is a leading indicator of GMV growth \u2014 capture it\nevery period:\n\n- **Creator count trend:** participating and performing creator counts vs\n  prior period. Flat or shrinking counts predict future GMV decline even when\n  current GMV holds \u2192 RECRUIT proactively, don't wait for the GMV drop.\n- **Rising creators:** creators whose GMV grew fastest PoP. These are where\n  BOOST and PUSH VOLUME resources compound \u2014 list the top 3 risers explicitly.\n- **Churned performers:** creators who generated GMV last period and zero this\n  period. Each churned performer's prior GMV is a quantified gap \u2192 RECRUIT\n  replacements of the same content type, sized to cover the gap.\n\n## Top-performer focus\n\n**CTAs target only the top performers of each campaign (top 20 by GMV).**\nTheir content is already validated as able to perform, so their conversion\nquality is not questioned. Everyone below the top 20 is not individually\nanalyzed or actioned \u2014 the aggregate of their GMV feeds the RECRUIT sizing\n(replace, don't fix).\n\nWhen a **top performer's conversion drops**, the cause is never assumed to be\nthe creator's ability. Check, in order:\n\n| Likely cause | Signal | CTA |\n|---|---|---|\n| Short videos too old (decayed reach) | Same/old videos carried over, volume of *new* videos low | PUSH VOLUME: produce N new short videos |\n| Voucher not available or less attractive than competing campaigns (other MCNs) | Voucher budget exhausted / competitor campaign live | BOOST: restore or upgrade voucher; escalate to Vendor Acquisition for voucher pool if vendor-funded |\n| Market demand down (category-wide) | Conversion down across all creators and campaigns in category | No creator CTA \u2014 flag for vendor negotiation / campaign portfolio decision |\n\n## Thresholds (v1 defaults, `[configurable]`)\n\n| Rule | Threshold | Source |\n|---|---|---|\n| New-campaign validation window / passing line | 100K THB GMV within 30 days | ADP policy |\n| Minimum creators per campaign | 20, recruited from Lists A\u2013C | ADP policy |\n| Growth escalation trigger | growth >100% AND GMV >50K | ADP weekly review |\n| Top-campaign negotiation trigger | campaign GMV >50K (top 20 campaigns) | ADP monthly review |\n| Target MCN spread | >5% | ADP policy |\n| Material PoP decline (flag) | GMV down >20% vs prior period | default |\n| Materiality for secondary drivers | effect \u226510% of total GMV change | default |\n| Creator concentration risk | one creator \u226540% of campaign GMV | default |\n| Creator base stagnation flag | performing creator count flat or down 2 consecutive periods | default |\n| Performing : participating ratios | Mega 1:5, Risingstar 1:10, Mid-tier 1:20, KOC 1:50 | SOP \u00a78.6 |\n| Content per participating creator / month | Mega 2, others 3 (short video) | SOP \u00a78.6 |\n| Recruit sizing formula | creators needed = GMV gap \u00f7 (tier avg monthly GMV \u00d7 product index 10%), grossed up by performing ratio | SOP \u00a78.6 |\n\n## Diagnostic decision tree \u2192 CTA mapping (fixed logic)\n\nWalk top-down. Fire every rule whose condition is met. Every CTA must be\nlabeled with its taxonomy category.\n\n### A0. Portfolio level (Level 0\u20131)\n\n| Condition | Diagnosis | CTA / action | Owner |\n|---|---|---|---|\n| Total ADP GMV below target (e.g. 5M/month from top 10) | Portfolio gap | Attribute the gap to specific campaigns via the ranking; the per-campaign CTAs below are the fix. If the gap exceeds what existing campaigns can close, flag: pipeline needs new launches (within the 5/month quota, Country Manager approval) | Campaign team |\n| Total GMV up but concentrated in 1\u20132 campaigns | Portfolio concentration | **RECRUIT** and launch-pipeline emphasis on the next-tier campaigns | Campaign team |\n| Any campaign \u226430 days old below 100K pacing (any rank) | Validation risk | Fire the campaign-level validation rule for that campaign even if outside top 20 | Campaign team \u2192 Head of Creator |\n| Any campaign growth >100% AND >50K (any rank) | Breakout | Pull it into the analyzed set; fire the breakout rule | Campaign team \u2192 Vendor Acquisition |\n\n### A. Campaign level\n\n| Condition | Diagnosis | CTA (category) | Owner |\n|---|---|---|---|\n| \u226430 days old, pacing below 100K line | Validation at risk | RECRUIT + BOOST to hit the line; if it fails at day 30, recommend pause/exit | Campaign team \u2192 Head of Creator |\n| GMV low/down and # creators <20 or below plan | GMV low because creator # is low | **RECRUIT**: [content type] creators, [tier], from Lists A\u2013C, quantity per sizing formula | Creator Recruiting |\n| Performing creator count flat/down 2 periods (even if GMV holds) | Creator base stagnating \u2014 future GMV at risk | **RECRUIT** proactively: replace churn + grow base | Creator Recruiting |\n| Creator count \u2265 plan but performing rate below tier ratio | Creators joined but not selling \u2014 **check content volume first**: if there's no content, of course there's no sales | Split the non-performers: (a) content posted but no GMV \u2192 **RECRUIT** replacements immediately \u2014 switch the retailer, no boost step; (b) no content posted \u2192 **PUSH VOLUME**: enforce content schedule this period; still no content next period \u2192 **RECRUIT** replacements | Operations / Creator Recruiting |\n| Growth >100% AND GMV >50K | Breakout campaign | **BOOST**: escalate to vendor for ad support, voucher pool, product supply, commission uplift; **PUSH VOLUME** on top performers to ride the wave | Campaign team \u2192 Vendor Acquisition |\n| One creator \u226540% of campaign GMV | Concentration risk | **RECRUIT**: additional [content type] creators to de-risk; **BOOST**: protect the anchor creator's incentives | Creator Recruiting + Operations |\n| MCN spread <5% | Economics below target | Escalation (not a creator CTA): renegotiate payout / restructure splits before scaling | Vendor Acquisition + Operations |\n\n### B. Content-type level (drivers from the bridge)\n\n| Condition | Diagnosis | CTA (category) | Owner |\n|---|---|---|---|\n| Livestream GMV down, volume effect dominant (fewer hours) | Livestream performance down | **PUSH VOLUME**: ask top livestream performers for +N hours; tie to mission bonus | Operations |\n| Short video GMV down, volume effect dominant (fewer posts) | SV output below schedule | **PUSH VOLUME**: ask top SV performers for N new videos per schedule (2\u20133/month per tier) | Operations |\n| SV conversion drops for top performers | Videos aging, or voucher uncompetitive | **PUSH VOLUME**: produce new SV; **BOOST**: check/restore voucher vs competing campaigns | Operations (+ Vendor Acquisition if voucher is vendor-funded) |\n| LS conversion drops for top performers | Voucher/incentive uncompetitive in-stream, or demand down | **BOOST**: voucher/mission on top livestreamers; if conversion is down category-wide \u2192 demand flag, no creator CTA | Operations |\n| Conversion down across ALL creators and campaigns in category | Market demand down | Flag only: vendor negotiation / portfolio decision \u2014 do not burn PUSH VOLUME or BOOST against falling demand | Campaign team \u2192 Vendor Acquisition |\n| Content mix far off plan (e.g., SV 60 / LS 40) | Mix drift | **RECRUIT** and/or **PUSH VOLUME** weighted toward the underweight content type | Campaign team |\n\n### C. Creator level (top 20 by GMV only)\n\n| Condition | Diagnosis | CTA (category) | Owner |\n|---|---|---|---|\n| High conversion, low volume | Undersupplied winner \u2014 highest-leverage case | **PUSH VOLUME**: +N videos / +N hours; **BOOST**: priority samples + ad boost on their best content | Operations |\n| Rising creator (fastest PoP GMV growth) | Compounding winner | **BOOST**: concentrate ad budget and incentives; **PUSH VOLUME** to capacity | Operations |\n| Top performer's conversion falling | Aging content / voucher gap / demand (per top-performer table above) | **PUSH VOLUME** (new content) and/or **BOOST** (voucher) per cause | Operations |\n| Churned performer (GMV last period, zero now) | Lost retailer | **RECRUIT**: replacement of same content type sized to their prior GMV | Creator Recruiting |\n| Creator meets content/campaign/monthly target | Trigger unlocked | **BOOST**: deliver the unlock (mission bonus, ad boosting, tier review per \u00a74.5) | Operations |\n| Below top 20 / non-performer with content posted | Content is there, sales are not \u2014 retailer validated as non-performing | Feeds **RECRUIT** sizing only \u2014 switch retailers, never boost or fix | Creator Recruiting |\n| Non-performer with no content posted | No content = no sales; performance unproven, not disproven | **PUSH VOLUME**: content-schedule enforcement (one period); no content next period \u2192 feeds **RECRUIT** sizing | Operations \u2192 Creator Recruiting |\n\n**CTA prioritization:** order by GMV at stake, largest first; lead with the\nprimary driver from the bridge. Cap at 5 CTAs per campaign. Every RECRUIT CTA\nstates type + quantity; every PUSH VOLUME CTA states which top performers +\nhow much more; every BOOST CTA states which content/creators + which resource.\n\n## Output format\n\nFor a portfolio report (the standard case), ALWAYS use this structure:\n\n```\n# ADP Portfolio Analysis \u2014 [Period] vs [Prior period]\n\n## Portfolio verdict\nTotal ADP GMV [amount], [up/down X% PoP], [vs target if known]. Biggest movers: [campaign +X], [campaign \u2212Y]. Campaigns analyzed: top 20 of [N total].\n\n## Campaign ranking\n[Table: rank, campaign, GMV, PoP \u0394, # performing creators, flags]\n[One aggregate line for campaigns below top 20]\n\n## 1. [Campaign name] \u2014 GMV [amount], [\u00b1X% PoP]\n\n### Verdict\nOne sentence: primary driver [participation | volume | conversion] in [content type]. Creator base: [growing/flat/shrinking] ([N] \u2192 [N] performing).\n\n### Decomposition\n[Table: content type \u2192 GMV, share, PoP change]\n[Table per content type, top performers: creator, GMV, PoP \u0394, volume, conversion]\n\n### Driver bridge\nParticipation effect: \u00b1X (Y% of change) \u00b7 Volume effect: \u00b1X (Y%) \u00b7 Conversion effect: \u00b1X (Y%)\n\n### Creator growth trends\nRisers: [top 3 by PoP GMV growth] \u00b7 Churned performers: [names + prior GMV = gap]\n\n### Call-to-actions\n1. [RECRUIT | PUSH VOLUME | BOOST] \u2014 [specifics per taxonomy] \u2014 [owner] \u2014 addresses ~[GMV amount] \u2014 [cadence hook]\n2. ...\n\n## 2. [Next campaign] ...\n[repeat per campaign, in rank order]\n\n## Portfolio flags & escalations\n[Validation risks, breakout triggers, spread issues, demand-down flags, quota context (max 5 new ADP launches/month, Country Manager approval), missing data]\n```\n\nFor a single-campaign input, output just the per-campaign block (verdict \u2192\ndecomposition \u2192 bridge \u2192 growth trends \u2192 CTAs \u2192 flags).\n\nKeep the verdict and CTAs tight and directive. Arithmetic goes in tables, not\nprose.\n\n## Worked example\n\nInput (single period; prior period not supplied):\n\n- Campaign GMV 1,000,000 \u00b7 7 creators\n- Short video 200,000: A = 150,000 / 5 videos; B = 30,000 / 5; C = 20,000 / 2\n- Livestream 800,000: D = 500,000 / 80 h; E = 200,000 / 80 h; F = 60,000 / 20 h; G = 40,000 / 20 h\n\nOutput the skill must produce:\n\n- Conversion: A 30,000/video, B 6,000, C 10,000; D 6,250/h, E 2,500, F 3,000, G 2,000\n- 7 creators < 20 minimum \u2192 **RECRUIT** (lead CTA): livestream-capable creators (livestream = 80% of GMV), Lists A\u2013C, 13+ to reach the floor \u2014 sized up via the SOP \u00a78.6 formula if a GMV target is given\n- Creator D = 50% of GMV \u2265 40% \u2192 concentration flag \u2192 reinforcing the RECRUIT CTA (livestream type) + **BOOST**: protect D's incentives\n- Creator A: top SV conversion (30K/video) at only 5 videos \u2192 **PUSH VOLUME**: N new videos from A + **BOOST**: ad boost on A's best video\n- Creators B, E, F, G: no coaching CTA of any kind \u2014 they either stay as-is within the top-performer set or feed RECRUIT sizing\n- No prior period \u2192 no bridge, no growth trends; explicitly request last period's report\n\n## Edge cases\n\n- **Volume units:** livestream = hours, short video = # of videos. If\n  unstated, ask \u2014 don't assume.\n- **Creator in both content types:** analyze each content-type row\n  separately; consolidate into one CTA line per creator.\n- **Currency:** assume THB unless stated; never mix currencies in a bridge.\n- **Zero-volume creators:** participating-but-not-performing \u2014 count in the\n  performing-rate check, exclude from conversion averages.\n- **New creators this period:** exclude from the volume/conversion effects of\n  the bridge (they have no prior baseline); report their GMV inside the\n  participation effect.\n\n## Boundaries\n\nThis skill diagnoses and prescribes per the fixed logic above. It does not:\napprove new ADP launches (Country Manager), change commission structures or\ntier percentages (Operations + Vendor Acquisition sign-off), or blacklist\ncreators (Head of Creator). When a CTA requires such approval, output it as\nan escalation, not a decision. And it never outputs coaching or\ncontent-quality CTAs \u2014 the distribution principle is absolute."
+        },
+        "meta": {
+            "profile_image_url": null,
+            "description": "Assistant for the Erisa ADP team",
+            "capabilities": {
+                "file_context": true,
+                "vision": false,
+                "file_upload": true,
+                "web_search": false,
+                "image_generation": false,
+                "code_interpreter": false,
+                "terminal": false,
+                "citations": true,
+                "status_updates": true,
+                "builtin_tools": true
+            },
+            "skillIds": [
+                "core-principles",
+                "creator-management",
+                "affiliate-management-",
+                "governance-ops",
+                "adp-analysis",
+                "eu-essentials"
+            ],
+            "toolIds": [
+                "server:mcp:eridu_mcp"
+            ],
+            "builtinTools": {
+                "code_interpreter": false,
+                "image_generation": false
+            }
+        },
+        "access_grants": [
+            {
+                "id": "95adf546-0b7f-4bc7-b77d-c1a752786370",
+                "resource_type": "model",
+                "resource_id": "erisa-adp-assistant",
+                "principal_type": "group",
+                "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "c6ea9814-9dc9-4433-91af-c0f92f6ae2b7",
+                "resource_type": "model",
+                "resource_id": "erisa-adp-assistant",
+                "principal_type": "group",
+                "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "8415f938-72db-4765-a4f1-04ff68e4d6c6",
+                "resource_type": "model",
+                "resource_id": "erisa-adp-assistant",
+                "principal_type": "group",
+                "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "e9c21d29-c2a7-4cf5-b909-4ebad9f61c59",
+                "resource_type": "model",
+                "resource_id": "erisa-adp-assistant",
+                "principal_type": "group",
+                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "24e9ac0a-d2c3-4547-acdc-e7e64bd28dcb",
+                "resource_type": "model",
+                "resource_id": "erisa-adp-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1784043077
+            },
+            {
+                "id": "d689cb12-f42e-4474-a532-b11da54a1295",
+                "resource_type": "model",
+                "resource_id": "erisa-adp-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "read",
+                "created_at": 1784043077
+            }
+        ],
+        "is_active": true,
+        "updated_at": 1784043077,
+        "created_at": 1783441943
     },
     {
         "id": "performance-assistant",
@@ -244,367 +346,8 @@
                 "core-principles",
                 "0002",
                 "content-management",
-                "governance-ops"
-            ],
-            "toolIds": [
-                "server:mcp:eridu_mcp"
-            ],
-            "builtinTools": {
-                "code_interpreter": false,
-                "image_generation": false
-            }
-        },
-        "access_grants": [
-            {
-                "id": "0640c209-e127-40ec-b9f8-8790f410ee56",
-                "resource_type": "model",
-                "resource_id": "performance-assistant",
-                "principal_type": "group",
-                "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
-                "permission": "read",
-                "created_at": 1783441930
-            },
-            {
-                "id": "cee527ce-0a98-4f28-8a45-2124d7cd6565",
-                "resource_type": "model",
-                "resource_id": "performance-assistant",
-                "principal_type": "group",
-                "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
-                "permission": "read",
-                "created_at": 1783441930
-            },
-            {
-                "id": "edf473d4-60bd-4f4f-ad2f-ab85d7bc1946",
-                "resource_type": "model",
-                "resource_id": "performance-assistant",
-                "principal_type": "group",
-                "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
-                "permission": "read",
-                "created_at": 1783441930
-            },
-            {
-                "id": "81d58783-3e0f-4724-854f-271872bd18d5",
-                "resource_type": "model",
-                "resource_id": "performance-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "read",
-                "created_at": 1783441930
-            },
-            {
-                "id": "2afee70d-283e-459a-9ffa-1c00eef581a7",
-                "resource_type": "model",
-                "resource_id": "performance-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1783441930
-            },
-            {
-                "id": "125c135d-82c0-4e44-b5a8-95ed2e566e4a",
-                "resource_type": "model",
-                "resource_id": "performance-assistant",
-                "principal_type": "group",
-                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
-                "permission": "read",
-                "created_at": 1783441930
-            }
-        ],
-        "is_active": true,
-        "updated_at": 1783441930,
-        "created_at": 1783441930
-    },
-    {
-        "id": "eridu-hr-assistant",
-        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-        "base_model_id": "MiniMax-M3",
-        "name": "Eridu - HR Assistant",
-        "params": {},
-        "meta": {
-            "profile_image_url": null,
-            "description": "Assistant for the Eridu HR team",
-            "capabilities": {
-                "file_context": true,
-                "vision": false,
-                "file_upload": false,
-                "web_search": false,
-                "image_generation": false,
-                "code_interpreter": false,
-                "terminal": false,
-                "citations": true,
-                "status_updates": true,
-                "builtin_tools": true
-            },
-            "skillIds": [
-                "core-principles",
-                "org-chart",
-                "talent-development-framework",
-                "governance-ops"
-            ],
-            "toolIds": [
-                "server:mcp:eridu_mcp"
-            ],
-            "builtinTools": {
-                "code_interpreter": false,
-                "image_generation": false
-            }
-        },
-        "access_grants": [
-            {
-                "id": "ea8463f8-e691-4482-bd7b-c3009de81428",
-                "resource_type": "model",
-                "resource_id": "eridu-hr-assistant",
-                "principal_type": "group",
-                "principal_id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
-                "permission": "read",
-                "created_at": 1783441941
-            },
-            {
-                "id": "8c8e4bc0-2b3e-49ee-b1b3-adda8d243641",
-                "resource_type": "model",
-                "resource_id": "eridu-hr-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "read",
-                "created_at": 1783441941
-            },
-            {
-                "id": "b992099b-20ec-4b3e-86c9-41482053b7bc",
-                "resource_type": "model",
-                "resource_id": "eridu-hr-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1783441941
-            },
-            {
-                "id": "05eb1332-6b25-493c-8da2-e78bd3560ce6",
-                "resource_type": "model",
-                "resource_id": "eridu-hr-assistant",
-                "principal_type": "group",
-                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
-                "permission": "read",
-                "created_at": 1783441941
-            }
-        ],
-        "is_active": true,
-        "updated_at": 1783441941,
-        "created_at": 1783441940
-    },
-    {
-        "id": "scheduling-assistant",
-        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-        "base_model_id": "MiniMax-M3",
-        "name": "Erify - Scheduling Assistant",
-        "params": {},
-        "meta": {
-            "profile_image_url": null,
-            "description": "Assistant for the Erify Scheduling team",
-            "capabilities": {
-                "file_context": true,
-                "vision": false,
-                "file_upload": false,
-                "web_search": false,
-                "image_generation": false,
-                "code_interpreter": false,
-                "terminal": false,
-                "citations": true,
-                "status_updates": true,
-                "builtin_tools": true
-            },
-            "skillIds": [
-                "core-principles",
-                "content-management",
-                "governance-ops"
-            ],
-            "toolIds": [
-                "server:mcp:eridu_mcp"
-            ],
-            "builtinTools": {
-                "code_interpreter": false,
-                "image_generation": false
-            }
-        },
-        "access_grants": [
-            {
-                "id": "fbbf75f5-645f-4e19-a6ea-98846720296f",
-                "resource_type": "model",
-                "resource_id": "scheduling-assistant",
-                "principal_type": "group",
-                "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
-                "permission": "read",
-                "created_at": 1783441942
-            },
-            {
-                "id": "85686e50-a882-4172-8495-f0d86172d405",
-                "resource_type": "model",
-                "resource_id": "scheduling-assistant",
-                "principal_type": "group",
-                "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
-                "permission": "read",
-                "created_at": 1783441942
-            },
-            {
-                "id": "9a1fe961-6bf1-4160-b127-d8b0218604e8",
-                "resource_type": "model",
-                "resource_id": "scheduling-assistant",
-                "principal_type": "group",
-                "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
-                "permission": "read",
-                "created_at": 1783441942
-            },
-            {
-                "id": "2a8ceb6d-bf77-40e4-8366-c3ce5930cf57",
-                "resource_type": "model",
-                "resource_id": "scheduling-assistant",
-                "principal_type": "group",
-                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
-                "permission": "read",
-                "created_at": 1783441942
-            },
-            {
-                "id": "aa57247e-8153-4170-8c44-4302f9fc9bc2",
-                "resource_type": "model",
-                "resource_id": "scheduling-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1783441942
-            },
-            {
-                "id": "70d5ed69-595a-4287-a547-8592edc7aa51",
-                "resource_type": "model",
-                "resource_id": "scheduling-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "read",
-                "created_at": 1783441942
-            }
-        ],
-        "is_active": true,
-        "updated_at": 1783441942,
-        "created_at": 1783441942
-    },
-    {
-        "id": "creator-service-assistant",
-        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-        "base_model_id": "MiniMax-M3",
-        "name": "Erisa - Creator Service Assistant",
-        "params": {},
-        "meta": {
-            "profile_image_url": null,
-            "description": "Assistant for the Erisa Creator Service team",
-            "capabilities": {
-                "file_context": true,
-                "vision": false,
-                "file_upload": false,
-                "web_search": false,
-                "image_generation": false,
-                "code_interpreter": false,
-                "terminal": false,
-                "citations": true,
-                "status_updates": true,
-                "builtin_tools": true
-            },
-            "skillIds": [
-                "core-principles",
-                "creator-management",
-                "governance-ops"
-            ],
-            "toolIds": [
-                "server:mcp:eridu_mcp"
-            ],
-            "builtinTools": {
-                "code_interpreter": false,
-                "image_generation": false
-            }
-        },
-        "access_grants": [
-            {
-                "id": "e61f74a7-e084-47e4-95ea-af007d25ae46",
-                "resource_type": "model",
-                "resource_id": "creator-service-assistant",
-                "principal_type": "group",
-                "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
-                "permission": "read",
-                "created_at": 1783441945
-            },
-            {
-                "id": "f7e7ee5f-1903-4752-813e-30e3697ca301",
-                "resource_type": "model",
-                "resource_id": "creator-service-assistant",
-                "principal_type": "group",
-                "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
-                "permission": "read",
-                "created_at": 1783441945
-            },
-            {
-                "id": "9a8da208-c353-44f3-8167-90c573a3702e",
-                "resource_type": "model",
-                "resource_id": "creator-service-assistant",
-                "principal_type": "group",
-                "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
-                "permission": "read",
-                "created_at": 1783441945
-            },
-            {
-                "id": "e46ef369-7e9a-43bf-8b5b-67288e880463",
-                "resource_type": "model",
-                "resource_id": "creator-service-assistant",
-                "principal_type": "group",
-                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
-                "permission": "read",
-                "created_at": 1783441945
-            },
-            {
-                "id": "4186506d-9e25-48fe-8c53-7e98228a60ec",
-                "resource_type": "model",
-                "resource_id": "creator-service-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1783441945
-            },
-            {
-                "id": "27add75e-58d9-4a64-bd43-1511d65c15d7",
-                "resource_type": "model",
-                "resource_id": "creator-service-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "read",
-                "created_at": 1783441945
-            }
-        ],
-        "is_active": true,
-        "updated_at": 1783441945,
-        "created_at": 1783441944
-    },
-    {
-        "id": "commerce-sales-assistant",
-        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-        "base_model_id": "MiniMax-M3",
-        "name": "Commerce - Sales Assistant",
-        "params": {},
-        "meta": {
-            "profile_image_url": null,
-            "description": "Assistant for the Commerce Sales team",
-            "capabilities": {
-                "file_context": true,
-                "vision": false,
-                "file_upload": false,
-                "web_search": false,
-                "image_generation": false,
-                "code_interpreter": false,
-                "terminal": false,
-                "citations": true,
-                "status_updates": true,
-                "builtin_tools": true
-            },
-            "skillIds": [
-                "core-principles",
                 "governance-ops",
-                "commerce",
-                "sales"
+                "eu-essentials"
             ],
             "toolIds": [
                 "server:mcp:eridu_mcp"
@@ -616,63 +359,63 @@
         },
         "access_grants": [
             {
-                "id": "15d4a5a0-054d-42d5-ae94-2c7cbdf690d1",
+                "id": "221fb13f-f67e-4d46-b8bb-6a4e3efaa926",
                 "resource_type": "model",
-                "resource_id": "commerce-sales-assistant",
+                "resource_id": "performance-assistant",
                 "principal_type": "group",
-                "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+                "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
                 "permission": "read",
-                "created_at": 1783442036
+                "created_at": 1784043077
             },
             {
-                "id": "706ecae3-10d0-41f9-a5db-22747cbf1571",
+                "id": "4dec6c3f-39e5-40bf-9179-8ab90caa5d76",
                 "resource_type": "model",
-                "resource_id": "commerce-sales-assistant",
+                "resource_id": "performance-assistant",
                 "principal_type": "group",
-                "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+                "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
                 "permission": "read",
-                "created_at": 1783442036
+                "created_at": 1784043077
             },
             {
-                "id": "d9c7d56a-c179-4b73-a357-094a38f904ca",
+                "id": "32c5ff86-9201-4f30-8391-f8a969df1d3d",
                 "resource_type": "model",
-                "resource_id": "commerce-sales-assistant",
+                "resource_id": "performance-assistant",
                 "principal_type": "group",
-                "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+                "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
                 "permission": "read",
-                "created_at": 1783442036
+                "created_at": 1784043077
             },
             {
-                "id": "230327d0-2126-4387-a280-c37a7c974c77",
+                "id": "6d5bf818-2d63-4681-9af7-093302fbe487",
                 "resource_type": "model",
-                "resource_id": "commerce-sales-assistant",
+                "resource_id": "performance-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1783442036
+                "created_at": 1784043077
             },
             {
-                "id": "b9a2bce2-bc28-4190-9559-9775bc616533",
+                "id": "e9573e00-5766-4cb4-a048-be6c97ceee6c",
                 "resource_type": "model",
-                "resource_id": "commerce-sales-assistant",
+                "resource_id": "performance-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "write",
-                "created_at": 1783442036
+                "created_at": 1784043077
             },
             {
-                "id": "d0c25fd6-e186-44dd-a18d-b60b99781e47",
+                "id": "f54aa3b3-df93-494d-812f-b42b12ec3424",
                 "resource_type": "model",
-                "resource_id": "commerce-sales-assistant",
+                "resource_id": "performance-assistant",
                 "principal_type": "group",
                 "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
                 "permission": "read",
-                "created_at": 1783442036
+                "created_at": 1784043077
             }
         ],
         "is_active": true,
-        "updated_at": 1783442036,
-        "created_at": 1783442036
+        "updated_at": 1784043077,
+        "created_at": 1783441930
     },
     {
         "id": "commerce-assistant",
@@ -700,7 +443,12 @@
                 "commerce",
                 "governance-ops",
                 "affiliate-management",
-                "loreal-brand-case"
+                "loreal-brand-case",
+                "eu-essentials",
+                "creator-management",
+                "affiliate-management-",
+                "adp-analysis",
+                "content-management"
             ],
             "toolIds": [
                 "server:mcp:eridu_mcp"
@@ -712,77 +460,174 @@
         },
         "access_grants": [
             {
-                "id": "bf65a05e-913c-4243-a9f7-1276a46cd19d",
+                "id": "65feb30a-442b-4ee0-8d70-c5ac86b27c2c",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
                 "permission": "read",
-                "created_at": 1783506242
+                "created_at": 1784043077
             },
             {
-                "id": "7f81557b-0d9f-42a3-9c85-ac414243db45",
+                "id": "cac8b657-5f10-46e2-85de-e0dd6f293262",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
                 "permission": "read",
-                "created_at": 1783506242
+                "created_at": 1784043077
             },
             {
-                "id": "57e0aa3c-8b4a-4ce5-8d84-033828276906",
+                "id": "90310e4e-d364-40b3-b7cd-34f627cd135d",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
                 "permission": "read",
-                "created_at": 1783506242
+                "created_at": 1784043077
             },
             {
-                "id": "07f25cb1-4f6f-4cdf-bf00-309a5307e9a6",
+                "id": "1233b757-134f-4933-85b9-37c3e1f133e4",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
                 "permission": "read",
-                "created_at": 1783506242
+                "created_at": 1784043077
             },
             {
-                "id": "6c3ad749-c473-4bb4-9d06-a2cfb9ca78e3",
+                "id": "5dbdab6f-4a03-4c37-a6fa-a033bc34412a",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "write",
-                "created_at": 1783506242
+                "created_at": 1784043077
             },
             {
-                "id": "61f1ec97-a861-4cf2-82b7-54bcc72b362a",
+                "id": "fb4aa252-4db6-4a7d-bb9a-df1efbb74c54",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1783506242
+                "created_at": 1784043077
             }
         ],
         "is_active": true,
-        "updated_at": 1783506242,
+        "updated_at": 1784043077,
         "created_at": 1783441939
     },
     {
-        "id": "erisa-adp-assistant",
+        "id": "scheduling-assistant",
         "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
         "base_model_id": "MiniMax-M3",
-        "name": "Erisa - ADP Assistant",
+        "name": "Erify - Scheduling Assistant",
         "params": {},
         "meta": {
             "profile_image_url": null,
-            "description": "Assistant for the Erisa ADP team",
+            "description": "Assistant for the Erify Scheduling team",
             "capabilities": {
                 "file_context": true,
                 "vision": false,
-                "file_upload": true,
+                "file_upload": false,
+                "web_search": false,
+                "image_generation": false,
+                "code_interpreter": false,
+                "terminal": false,
+                "citations": true,
+                "status_updates": true,
+                "builtin_tools": true
+            },
+            "skillIds": [
+                "core-principles",
+                "content-management",
+                "governance-ops",
+                "eu-essentials"
+            ],
+            "toolIds": [
+                "server:mcp:eridu_mcp"
+            ],
+            "builtinTools": {
+                "code_interpreter": false,
+                "image_generation": false
+            }
+        },
+        "access_grants": [
+            {
+                "id": "39eddb09-db9d-4927-946d-b4dc50ca8d26",
+                "resource_type": "model",
+                "resource_id": "scheduling-assistant",
+                "principal_type": "group",
+                "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "f090c216-70c0-4800-8fdd-b8cdbd80d216",
+                "resource_type": "model",
+                "resource_id": "scheduling-assistant",
+                "principal_type": "group",
+                "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "118b9065-ec05-42bc-8fbf-4a13c837cbac",
+                "resource_type": "model",
+                "resource_id": "scheduling-assistant",
+                "principal_type": "group",
+                "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "9c6d660c-75c8-4fef-9095-0ecee34de7dd",
+                "resource_type": "model",
+                "resource_id": "scheduling-assistant",
+                "principal_type": "group",
+                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "1896f23e-9b10-4769-9df3-fde151887e94",
+                "resource_type": "model",
+                "resource_id": "scheduling-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1784043077
+            },
+            {
+                "id": "3ea3a2ce-b9b0-454c-b491-53f68009898f",
+                "resource_type": "model",
+                "resource_id": "scheduling-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "read",
+                "created_at": 1784043077
+            }
+        ],
+        "is_active": true,
+        "updated_at": 1784043077,
+        "created_at": 1783441942
+    },
+    {
+        "id": "creator-service-assistant",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "base_model_id": "MiniMax-M3",
+        "name": "Erisa - Creator Service Assistant",
+        "params": {
+            "system": "\n\nTone: direct, pragmatic, creator-retention and GMV focused.\""
+        },
+        "meta": {
+            "profile_image_url": null,
+            "description": "Assistant for the Erisa Creator Service team",
+            "capabilities": {
+                "file_context": true,
+                "vision": false,
+                "file_upload": false,
                 "web_search": false,
                 "image_generation": false,
                 "code_interpreter": false,
@@ -794,9 +639,9 @@
             "skillIds": [
                 "core-principles",
                 "creator-management",
-                "affiliate-management-",
                 "governance-ops",
-                "adp-analysis"
+                "eu-essentials",
+                "affiliate-management-"
             ],
             "toolIds": [
                 "server:mcp:eridu_mcp"
@@ -808,70 +653,153 @@
         },
         "access_grants": [
             {
-                "id": "5dd3ff89-c6a4-4325-b97d-43f7c393dc0f",
+                "id": "1b42db5a-c1bd-4361-803d-bde754dda187",
                 "resource_type": "model",
-                "resource_id": "erisa-adp-assistant",
+                "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
                 "permission": "read",
-                "created_at": 1783863912
+                "created_at": 1784043077
             },
             {
-                "id": "ba055c06-1fa2-4d86-baab-6bda77fb4ddd",
+                "id": "c76298a5-e480-48e5-8df4-69261b4cf3dc",
                 "resource_type": "model",
-                "resource_id": "erisa-adp-assistant",
+                "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
                 "permission": "read",
-                "created_at": 1783863912
+                "created_at": 1784043077
             },
             {
-                "id": "5dbf02b3-c75d-47ed-a056-0d6cedb85552",
+                "id": "ad6c676d-2d9d-4707-b1a5-3efd10c837a7",
                 "resource_type": "model",
-                "resource_id": "erisa-adp-assistant",
+                "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
                 "permission": "read",
-                "created_at": 1783863912
+                "created_at": 1784043077
             },
             {
-                "id": "e9049917-7b4e-4c3f-baa3-be4b3364d5cc",
+                "id": "1e130da2-2010-4a29-be9e-3a5277b9ee93",
                 "resource_type": "model",
-                "resource_id": "erisa-adp-assistant",
+                "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
                 "permission": "read",
-                "created_at": 1783863912
+                "created_at": 1784043077
             },
             {
-                "id": "82fe59f4-c7b8-4352-a0ed-cccc839d578e",
+                "id": "077b82d4-f44d-4e5d-ad30-84ed217fdd05",
                 "resource_type": "model",
-                "resource_id": "erisa-adp-assistant",
+                "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "write",
-                "created_at": 1783863912
+                "created_at": 1784043077
             },
             {
-                "id": "4f263982-f584-46ec-bd7f-6455c5a76a7d",
+                "id": "9bf28f33-be9f-4c2a-9dff-a8ba06e8fe44",
                 "resource_type": "model",
-                "resource_id": "erisa-adp-assistant",
+                "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1783863912
+                "created_at": 1784043077
             }
         ],
         "is_active": true,
-        "updated_at": 1783863912,
-        "created_at": 1783441943
+        "updated_at": 1784043077,
+        "created_at": 1783441944
+    },
+    {
+        "id": "eridu-hr-assistant",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "base_model_id": "MiniMax-M3",
+        "name": "Eridu - HR Assistant",
+        "params": {},
+        "meta": {
+            "profile_image_url": null,
+            "description": "Assistant for the Eridu HR team",
+            "capabilities": {
+                "file_context": true,
+                "vision": false,
+                "file_upload": false,
+                "web_search": false,
+                "image_generation": false,
+                "code_interpreter": false,
+                "terminal": false,
+                "citations": true,
+                "status_updates": true,
+                "builtin_tools": true
+            },
+            "skillIds": [
+                "core-principles",
+                "org-chart",
+                "talent-development-framework",
+                "governance-ops",
+                "eu-essentials",
+                "communication-protocol",
+                "hr-ops",
+                "legal-process"
+            ],
+            "toolIds": [
+                "server:mcp:eridu_mcp"
+            ],
+            "builtinTools": {
+                "code_interpreter": false,
+                "image_generation": false
+            }
+        },
+        "access_grants": [
+            {
+                "id": "cc412d28-3572-4443-be9e-aff819124df6",
+                "resource_type": "model",
+                "resource_id": "eridu-hr-assistant",
+                "principal_type": "group",
+                "principal_id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "16b151b7-a517-43f8-a029-abc1110ddb29",
+                "resource_type": "model",
+                "resource_id": "eridu-hr-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "d3652c65-649b-457a-b469-22810513ca32",
+                "resource_type": "model",
+                "resource_id": "eridu-hr-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1784043077
+            },
+            {
+                "id": "e0f33a38-3a02-4606-8481-64682965f7c5",
+                "resource_type": "model",
+                "resource_id": "eridu-hr-assistant",
+                "principal_type": "group",
+                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+                "permission": "read",
+                "created_at": 1784043077
+            }
+        ],
+        "is_active": true,
+        "updated_at": 1784043077,
+        "created_at": 1783441940
     },
     {
         "id": "eridu-general",
         "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
         "base_model_id": "MiniMax-M3",
         "name": "Eridu General",
-        "params": {},
+        "params": {
+            "system": "\"You are ERIQ, ERIDU's company AI, in general governance mode \u2014 available to everyone at ERIDU.\n\nYour scope: company identity, org structure and roles, governance rules, communication and work-alignment protocols, decision authority and escalation, financial guardrail principles, company metrics, and talent development (BiggieG framework). Answer from your mapped skills only \u2014 EU essentials is your governance base; org-chart, metrics framework, financial guardrails, communication protocol, and BiggieG give the detail.\n\nRules:\n- Never invent policies, numbers, or targets. If your skills don't cover it, say so and name the owner per the org chart.\n- Never quote or estimate confidential data (cash position, costs, salaries, rates, deal values) \u2014 even if asked.\n- For domain-specific operations (sales, campaigns, livestream, finance processing, HR cases), point the user to the relevant specialist agent or their team lead.\n- Enforce the work alignment protocol: flag requests missing deadline, single owner, deliverable, or scope limits.\n- When in doubt, apply the escalation framework: act / notify / propose / escalate.\n\nTone: direct, pragmatic, decision-oriented. Default English; Thai when asked.\""
+        },
         "meta": {
             "profile_image_url": "/static/favicon.png",
             "description": null,
@@ -888,21 +816,29 @@
                 "builtin_tools": true
             },
             "suggestion_prompts": null,
-            "tags": []
+            "tags": [],
+            "skillIds": [
+                "eu-essentials",
+                "0002",
+                "communication-protocol",
+                "talent-development-framework",
+                "org-chart",
+                "financial-guardrails"
+            ]
         },
         "access_grants": [
             {
-                "id": "a3171635-5777-4246-94b1-f5fdcd878ddd",
+                "id": "262de21b-3c64-421e-b4dc-2eda80ad0ea4",
                 "resource_type": "model",
                 "resource_id": "eridu-general",
                 "principal_type": "user",
                 "principal_id": "*",
                 "permission": "read",
-                "created_at": 1783664407
+                "created_at": 1784042972
             }
         ],
         "is_active": true,
-        "updated_at": 1783664407,
+        "updated_at": 1784042972,
         "created_at": 1783664407
     },
     {
@@ -1170,6 +1106,102 @@
         "is_active": true,
         "updated_at": 1783935262,
         "created_at": 1783935262
+    },
+    {
+        "id": "commerce-sales-assistant",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "base_model_id": "MiniMax-M3",
+        "name": "Commerce - Sales Assistant",
+        "params": {},
+        "meta": {
+            "profile_image_url": null,
+            "description": "Assistant for the Commerce Sales team",
+            "capabilities": {
+                "file_context": true,
+                "vision": false,
+                "file_upload": false,
+                "web_search": false,
+                "image_generation": false,
+                "code_interpreter": false,
+                "terminal": false,
+                "citations": true,
+                "status_updates": true,
+                "builtin_tools": true
+            },
+            "skillIds": [
+                "core-principles",
+                "governance-ops",
+                "commerce",
+                "sales",
+                "eu-essentials",
+                "sales-training"
+            ],
+            "toolIds": [
+                "server:mcp:eridu_mcp"
+            ],
+            "builtinTools": {
+                "code_interpreter": false,
+                "image_generation": false
+            }
+        },
+        "access_grants": [
+            {
+                "id": "2f35a423-4b5d-4422-9e39-df32c26b0f85",
+                "resource_type": "model",
+                "resource_id": "commerce-sales-assistant",
+                "principal_type": "group",
+                "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "fa73378f-9dce-4d6a-8c7e-e3d572745db3",
+                "resource_type": "model",
+                "resource_id": "commerce-sales-assistant",
+                "principal_type": "group",
+                "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "cf579df8-284e-45c4-ab95-909329e7b00f",
+                "resource_type": "model",
+                "resource_id": "commerce-sales-assistant",
+                "principal_type": "group",
+                "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "d1a78d23-08e9-4b7b-8c5c-2e1ef0e465bd",
+                "resource_type": "model",
+                "resource_id": "commerce-sales-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "read",
+                "created_at": 1784043077
+            },
+            {
+                "id": "8340d523-7fec-41fb-989c-5267054b7fa2",
+                "resource_type": "model",
+                "resource_id": "commerce-sales-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1784043077
+            },
+            {
+                "id": "8e4df8f1-0e4e-443b-a4a2-c26b0a58f4b5",
+                "resource_type": "model",
+                "resource_id": "commerce-sales-assistant",
+                "principal_type": "group",
+                "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+                "permission": "read",
+                "created_at": 1784043077
+            }
+        ],
+        "is_active": true,
+        "updated_at": 1784043077,
+        "created_at": 1783442036
     }
 ]
-
