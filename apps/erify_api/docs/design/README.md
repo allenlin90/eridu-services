@@ -10,6 +10,7 @@ Active design documents for planned and in-progress features. Once a feature shi
 4. [Ad-hoc Task Ticketing](./AD_HOC_TASK_TICKETING.md) — Planned template-less task creation for pre-production tickets
 5. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
 6. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — Deferred Phase 5 (revisit for Client Portal)
+7. [Show-Level Issue Ownership](./SHOW_ISSUE_OWNERSHIP_DESIGN.md) — Phase 5 item 8 design locked for implementation
 
 ## Note
 

@@ -97,6 +97,12 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 8 and 16.
 
+### Show issue ownership contract (Phase 5 item 8)
+
+Show-level issues are dedicated advisory operational records anchored to `Show`; they are not tasks, audits, or state gates. Manual issues and extraction-detected attendance/platform anomalies share the same ownership and resolution workflow. Automated reconciliation joins the existing per-fact transaction so the source fact, extraction audit, and required issue commit or roll back together.
+
+Use explicit synchronous orchestration for this required single-consumer handoff. Do not introduce a generic event bus, NestJS CQRS, or a no-op notification seam. Promote to a durable outbox/event publisher when item 13 adds notifications as a second independently retryable consumer. The locked technical contract is [SHOW_ISSUE_OWNERSHIP_DESIGN.md](../../../apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md).
+
 ### 3. Post-Production (live → completed)
 
 **Closure records**:
@@ -197,6 +203,7 @@ Do not duplicate guidance from these skills. Reference them for their owned doma
 | Studio controller | `apps/erify_api/src/studios/studio-show/studio-show.controller.ts` |
 | Admin controller | `apps/erify_api/src/admin/shows/admin-show.controller.ts` |
 | Fact extraction | `apps/erify_api/src/orchestration/fact-extraction/` |
+| Show issue design | `apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md` |
 | Shared types | `packages/api-types/src/shows/` |
 
 ### Frontend
