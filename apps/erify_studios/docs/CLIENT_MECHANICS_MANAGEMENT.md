@@ -80,13 +80,13 @@ Additive, validated in `@eridu/api-types/task-management`, riding the existing v
   "id": "fld_...",
   "key": "mechanic_...",
   "type": "checkbox",
-  "label": "Product mechanic",                 // resolved (denormalized) at save
+  "label": "Product mechanic", // resolved (denormalized) at save
   "description": "Resolved instruction text shown to moderators",
   "group": "l1",
   "mechanic_ref": {
     "client_id": "client_...",
     "mechanic_id": "cmech_...",
-    "content_revision": 7                       // frozen for staleness comparison (S1)
+    "content_revision": 7 // frozen for staleness comparison (S1)
   }
 }
 ```

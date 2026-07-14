@@ -17,9 +17,9 @@ Organized by domain: `src/shows/`, `src/users/`, `src/task-management/`, `src/pa
 
 ```typescript
 // ✅ Correct
-import { TaskTemplate } from '@eridu/api-types/task-management';
 // ❌ Avoid barrel root
 import { TaskTemplate } from '@eridu/api-types';
+import { TaskTemplate } from '@eridu/api-types/task-management';
 ```
 
 ## Task Template Schema Engine Helpers

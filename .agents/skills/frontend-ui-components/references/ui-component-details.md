@@ -164,9 +164,13 @@ export function MyForm({ show, studioId }) {
 const ClientField = memo(({ control, show, studioId }: FieldProps) => {
   const { options, isLoading, setSearch } = useClientOptions(show, studioId);
   return (
-    <FormField control={control} name="client_id" render={({ field }) => (
-      <AsyncCombobox value={field.value} onChange={field.onChange} onSearch={setSearch} options={options} isLoading={isLoading} />
-    )} />
+    <FormField
+      control={control}
+      name="client_id"
+      render={({ field }) => (
+        <AsyncCombobox value={field.value} onChange={field.onChange} onSearch={setSearch} options={options} isLoading={isLoading} />
+      )}
+    />
   );
 });
 ```

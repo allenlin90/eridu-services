@@ -132,12 +132,11 @@ export class TaskTemplateService extends BaseModelService {
 **File**: [task-template.schema.ts](../../../../apps/erify_api/src/models/task-template/schemas/task-template.schema.ts)
 
 ```typescript
+import type { Prisma } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'nestjs-zod/z';
 
 import { TemplateSchemaValidator } from '@eridu/api-types/task-management';
-
-import type { Prisma } from '@prisma/client';
 
 // Response DTO
 export const taskTemplateDto = z.object({
@@ -209,8 +208,9 @@ export class ListTaskTemplatesQueryDto extends createZodDto(
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
-import { ShowService } from '@/models/show/show.service';
+
 import { AssignmentService } from '@/models/assignment/assignment.service';
+import { ShowService } from '@/models/show/show.service';
 
 @Injectable()
 export class ShowOrchestrationService {
@@ -232,7 +232,7 @@ export class ShowOrchestrationService {
     const schedule = await this.scheduleService.getById(scheduleId);
     await this.showService.deleteBySchedule(scheduleId);
     const shows = await this.showService.createMany(
-      schedule.shows.map(s => ({ ...s, scheduleId })),
+      schedule.shows.map((s) => ({ ...s, scheduleId })),
     );
     await this.scheduleService.updateStatus(scheduleId, 'published');
     return shows;
@@ -309,7 +309,7 @@ async createManyUsers(users: CreateUserDto[]) {
     ...u,
     uid: this.generateUid()
   }));
-  
+
   // Single DB Call
   return this.userRepository.createMany(data);
 }

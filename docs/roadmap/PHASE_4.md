@@ -296,7 +296,6 @@ Goal: convert each single-entity detail/edit dialog into a `/studios/:studioId/<
 
 **Fix** — Bucket by an explicit, timezone-aware operational-day key instead of a raw UTC `.slice(0, 10)`. The backend stays timezone-agnostic for validation, but day-grouping must use the same operational-day definition the frontend selected (pass the studio/operational timezone or the precomputed day boundaries through to the aggregation), not the server's incidental UTC calendar. `slice(0, 10)` on an ISO string is **not** a date-bucketing primitive — it silently assumes UTC. Guard rail captured in the [`operations-review-surface` skill](../../.agents/skills/operations-review-surface/SKILL.md#operational-day-bucketing-never-slice-utc-iso) and project memory.
 
-
 ### PR 22 · Performance dashboard enhancements (22.1-22.3)
 
 **Context** — Enhancing the `/performance` dashboard and show detail pages. This workstream delivers loop-level progression trend graphs for show details, multi-column sorting for the show performance breakdown table, and a per-show-by-client trend graph mode.
@@ -313,13 +312,11 @@ Goal: convert each single-entity detail/edit dialog into a `/studios/:studioId/<
 
 **Brief** — Enable sorting records by GMV, Views, CTR, and CTO simultaneously. Sync sorting state with the URL `sort` query parameter. Derived-metric sorts run in memory on the backend (nulls consistently sorted to the end), loading the full matched set; the default `start_time` sort stays on the database path (DB-ordered and paginated) to avoid loading every row when no metric sort is requested. `start_time desc` is always appended as the final tie-breaker. Render custom `SortableHeader` headers on the frontend with priority and direction badges.
 
-
 #### PR 22.3 · Per-show performance graph by client
 
 **Brief** — Today `/performance`'s trend graph plots accumulated / sum GMV or views over the operational-day timeline (PR 21.6, timezone-bucketed by PR 21.8). Add a new **per-show** chart mode whose x-axis is the shows of a selected client across the chosen range, ordered by `startTime`, instead of day buckets. Each x position is one show; series plot that show's GMV and view count plus its **peak CTR and CTO** (the max across the show's moderation loops / active platforms — reuse the loop-metric source from PR 22.1 rather than the last-value `ShowPlatform.ctr` / `cto` columns). A client selector supports **multiple clients**: each selected client contributes its own series so several clients' shows compare on one graph. `Show.clientId` is already a required relation indexed on `(client_id, start_time, deleted_at)`, so the per-client / per-range query needs no migration and has **no dependency on the PR 20 mechanic / `ACCOUNT_MANAGER` work**. Read-only analytics over existing `ShowPlatform` performance metrics; it reuses the dashboard's studio scoping, range, and performance-record-presence (21.11) filters.
 
 **Shipped** ([#151](https://github.com/allenlin90/eridu-services/pull/151)) — Canonical record: [`show-performance-analytics.md`](../features/show-performance-analytics.md). Decisions: peak CTR/CTO = **true peak across loops × platforms** (reuse 22.1 parsing, batched per-show to avoid N+1, shared loop-parser); **dedicated** `GET /performance/shows-series` endpoint (all shows in range, no pagination); rendered as an x-axis **mode toggle on the existing trend-graph card**; no-client default shows all shows in range; **line** chart. Multi-client overlay deferred to a future view.
-
 
 ## Out of scope (post-Phase-4)
 

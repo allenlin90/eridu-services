@@ -60,16 +60,14 @@ class OrderNotificationService {
 ```typescript
 // ❌ BAD — adding a new export format requires editing this function
 function exportReport(format: string, data: Report) {
-  if (format === 'pdf') { /* ... */ }
-  else if (format === 'csv') { /* ... */ }
-  else if (format === 'xlsx') { /* ... */ }
+  if (format === 'pdf') { /* ... */ } else if (format === 'csv') { /* ... */ } else if (format === 'xlsx') { /* ... */ }
 }
 
 // ✅ GOOD — new formats added by implementing the interface
-interface ReportExporter {
+type ReportExporter = {
   readonly format: string;
-  export(data: Report): Buffer;
-}
+  export: (data: Report) => Buffer;
+};
 
 @Injectable()
 class PdfExporter implements ReportExporter {
@@ -91,8 +89,9 @@ class ReportExporterRegistry {
   ) {}
 
   getExporter(format: string): ReportExporter {
-    const exporter = this.exporters.find(e => e.format === format);
-    if (!exporter) throw new BadRequestException(`Unsupported format: ${format}`);
+    const exporter = this.exporters.find((e) => e.format === format);
+    if (!exporter)
+      throw new BadRequestException(`Unsupported format: ${format}`);
     return exporter;
   }
 }
@@ -126,7 +125,8 @@ class StrictUserRepo extends BaseRepository<User> {
   // Breaks LSP: callers expect T | null, but this throws
   async findByUid(uid: string): Promise<User> {
     const user = await super.findByUid(uid);
-    if (!user) throw new NotFoundException();
+    if (!user)
+      throw new NotFoundException();
     return user;
   }
 }
@@ -135,7 +135,8 @@ class StrictUserRepo extends BaseRepository<User> {
 class UserRepo extends BaseRepository<User> {
   async findByUidOrFail(uid: string): Promise<User> {
     const user = await this.findByUid(uid);
-    if (!user) throw new NotFoundException();
+    if (!user)
+      throw new NotFoundException();
     return user;
   }
 }
@@ -161,26 +162,26 @@ class UserRepo extends BaseRepository<User> {
 
 ```typescript
 // ❌ BAD — one fat interface forces all consumers to see everything
-interface UserService {
-  findByUid(uid: string): Promise<User | null>;
-  create(dto: CreateUserDto): Promise<User>;
-  update(uid: string, dto: UpdateUserDto): Promise<User>;
-  delete(uid: string): Promise<void>;
-  sendWelcomeEmail(uid: string): Promise<void>;
-  generateReport(uid: string): Promise<Buffer>;
-}
+type UserService = {
+  findByUid: (uid: string) => Promise<User | null>;
+  create: (dto: CreateUserDto) => Promise<User>;
+  update: (uid: string, dto: UpdateUserDto) => Promise<User>;
+  delete: (uid: string) => Promise<void>;
+  sendWelcomeEmail: (uid: string) => Promise<void>;
+  generateReport: (uid: string) => Promise<Buffer>;
+};
 
 // ✅ GOOD — segregated by consumer need
-interface UserReader {
-  findByUid(uid: string): Promise<User | null>;
-  findMany(filter: UserFilter): Promise<User[]>;
-}
+type UserReader = {
+  findByUid: (uid: string) => Promise<User | null>;
+  findMany: (filter: UserFilter) => Promise<User[]>;
+};
 
-interface UserWriter {
-  create(dto: CreateUserDto): Promise<User>;
-  update(uid: string, dto: UpdateUserDto): Promise<User>;
-  delete(uid: string): Promise<void>;
-}
+type UserWriter = {
+  create: (dto: CreateUserDto) => Promise<User>;
+  update: (uid: string, dto: UpdateUserDto) => Promise<User>;
+  delete: (uid: string) => Promise<void>;
+};
 ```
 
 ### ISP Decision Guide

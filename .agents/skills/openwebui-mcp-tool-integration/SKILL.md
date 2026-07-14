@@ -45,7 +45,7 @@ Connection object shape:
     "enable": true,
     "function_name_filter_list": "erify_get_show,erify_query_shows",
     "access_grants": [
-      {"principal_type": "group", "principal_id": "<group-uuid>", "permission": "read"}
+      { "principal_type": "group", "principal_id": "<group-uuid>", "permission": "read" }
     ]
   },
   "info": {

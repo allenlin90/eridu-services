@@ -309,8 +309,9 @@ Example:
 ```tsx
 // src/routes/system/studios/index.tsx
 import { createFileRoute } from '@tanstack/react-router';
-import { StudiosPage } from '@/pages/system/studios-page';
+
 import { useIsSystemAdmin } from '@/lib/hooks/use-is-system-admin';
+import { StudiosPage } from '@/pages/system/studios-page';
 
 export const Route = createFileRoute('/system/studios')({
   component: StudiosPageRoute,
@@ -318,9 +319,10 @@ export const Route = createFileRoute('/system/studios')({
 
 function StudiosPageRoute() {
   const isAdmin = useIsSystemAdmin();
-  
-  if (!isAdmin) return <AdminAccessDenied />;
-  
+
+  if (!isAdmin)
+    return <AdminAccessDenied />;
+
   return <StudiosPage />;
 }
 ```
@@ -513,8 +515,9 @@ This app uses [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paragl
 #### Basic Usage
 
 ```tsx
-import * as m from '@/i18n';
 import * as shared from '@eridu/i18n';
+
+import * as m from '@/i18n';
 
 // Use app-specific translations
 const adminTitle = m.admin_title(); // "Administration"
@@ -533,7 +536,7 @@ function MyComponent() {
 
   return (
     <select value={locale} onChange={(e) => setLocale(e.target.value)}>
-      {availableLocales.map(loc => (
+      {availableLocales.map((loc) => (
         <option key={loc} value={loc}>{loc}</option>
       ))}
     </select>
@@ -631,5 +634,5 @@ See `package.json` for exact versions of:
 
 ---
 
-**Last Updated**: March 2026  
+**Last Updated**: March 2026
 **Maintainers**: Eridu Services Team

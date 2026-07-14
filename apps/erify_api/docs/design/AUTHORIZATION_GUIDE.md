@@ -103,18 +103,19 @@ export class AdminGuard implements CanActivate {
     const user = await this.userService.getUserByExtId(request.user.ext_id);
 
     // 1. System admin bypasses all checks
-    if (user.isSystemAdmin) return true;
+    if (user.isSystemAdmin)
+      return true;
 
     // 2. Expand roles to permissions
     const userRoles = (user.roles as string[]) || [];
-    const rolePermissions = userRoles.flatMap(role => this.ROLE_PERMISSIONS[role] || []);
-    
+    const rolePermissions = userRoles.flatMap((role) => this.ROLE_PERMISSIONS[role] || []);
+
     // 3. Combine with custom permissions
     const customPermissions = (user.permissions as string[]) || [];
     const effectivePermissions = [...new Set([...rolePermissions, ...customPermissions])];
 
     // 4. Check if user has ALL required permissions
-    return requiredPermissions.every(req => effectivePermissions.includes(req));
+    return requiredPermissions.every((req) => effectivePermissions.includes(req));
   }
 }
 ```
@@ -165,13 +166,13 @@ The `/me` endpoint exposes effective permissions to the frontend:
 @Get()
 async getMe(@CurrentUser() user: AuthenticatedUser) {
   const dbUser = await this.userService.getUserByExtId(user.ext_id);
-  
+
   // Expand roles to effective permissions
   const userRoles = (dbUser?.roles as string[]) || [];
   const rolePermissions = userRoles.flatMap(role => ROLE_PERMISSIONS[role] || []);
   const customPermissions = (dbUser?.permissions as string[]) || [];
   const effectivePermissions = [...new Set([...rolePermissions, ...customPermissions])];
-  
+
   return {
     ...user,
     isSystemAdmin: dbUser?.isSystemAdmin ?? false,
@@ -212,7 +213,7 @@ await prisma.user.update({
 // Add custom permission on top of role
 await prisma.user.update({
   where: { id: userId },
-  data: { 
+  data: {
     roles: ['analyst'],
     permissions: ['reports:export'], // Extra permission
   },
@@ -242,27 +243,27 @@ CREATE INDEX idx_users_permissions ON users USING GIN (permissions);
 
 ### 1. Use Roles for Onboarding
 
-✅ **Good**: Assign `roles: ["content_manager"]` (1 action)  
+✅ **Good**: Assign `roles: ["content_manager"]` (1 action)
 ❌ **Bad**: Assign 50 individual permissions
 
 ### 2. Custom Permissions for Edge Cases
 
-✅ **Good**: `roles: ["analyst"]` + `permissions: ["special:feature"]`  
+✅ **Good**: `roles: ["analyst"]` + `permissions: ["special:feature"]`
 ❌ **Bad**: Create new role for every edge case
 
 ### 3. Granular Permission Strings
 
-✅ **Good**: `users:read`, `users:write`, `shows:read`  
+✅ **Good**: `users:read`, `users:write`, `shows:read`
 ❌ **Bad**: `admin:read`, `admin:write` (too coarse)
 
 ### 4. System Admin for Full Access
 
-✅ **Good**: `isSystemAdmin: true` (bypasses all checks)  
+✅ **Good**: `isSystemAdmin: true` (bypasses all checks)
 ❌ **Bad**: `roles: ["god_mode"]` (unnecessary abstraction)
 
 ### 5. Frontend Permission Checks
 
-✅ **Good**: Use same permission strings as backend  
+✅ **Good**: Use same permission strings as backend
 ❌ **Bad**: Duplicate permission logic in frontend
 
 ## Future Enhancements
@@ -282,7 +283,7 @@ export class PermissionCacheService {
     if (cached && Date.now() - cached.timestamp < this.TTL) {
       return cached;
     }
-    
+
     const permissions = await this.resolvePermissions(userId);
     this.cache.set(userId, { ...permissions, timestamp: Date.now() });
     return permissions;

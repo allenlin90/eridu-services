@@ -276,6 +276,7 @@ Example:
 ```tsx
 // src/routes/shows/$showId.tsx
 import { createFileRoute } from '@tanstack/react-router';
+
 import { ShowDetailPage } from '@/pages/shows/show-detail-page';
 
 export const Route = createFileRoute('/shows/$showId')({
@@ -296,8 +297,10 @@ import { useShow } from '@/features/shows/hooks/use-show';
 export function ShowDetailPage({ showId }: { showId: string }) {
   const { data: show, isLoading } = useShow(showId);
 
-  if (isLoading) return <LoadingPage />;
-  if (!show) return <NotFound />;
+  if (isLoading)
+    return <LoadingPage />;
+  if (!show)
+    return <NotFound />;
 
   return <ShowDetailView show={show} />;
 }
@@ -506,8 +509,9 @@ This app uses [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paragl
 #### Basic Usage
 
 ```tsx
-import * as m from '@/i18n';
 import * as shared from '@eridu/i18n';
+
+import * as m from '@/i18n';
 
 // Use app-specific translations
 const appName = m.app_name(); // "Eridu Creators"
@@ -526,7 +530,7 @@ function MyComponent() {
 
   return (
     <select value={locale} onChange={(e) => setLocale(e.target.value)}>
-      {availableLocales.map(loc => (
+      {availableLocales.map((loc) => (
         <option key={loc} value={loc}>{loc}</option>
       ))}
     </select>
@@ -745,7 +749,7 @@ sequenceDiagram
     App->>SessionProvider: checkSession() (one-time)
     SessionProvider->>SDK: getSession()
     SDK->>Auth: Check session (HTTP)
-    
+
     alt No valid session
         Auth-->>SDK: No session
         SDK-->>App: session = null

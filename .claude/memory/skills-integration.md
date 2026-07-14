@@ -176,6 +176,11 @@ async findPaginated(params: {
 **Pattern**:
 ```typescript
 // In @eridu/api-types/tasks/schemas.ts
+// Backend usage
+// Frontend usage
+import type { TaskApiResponse } from '@eridu/api-types/tasks';
+import { taskApiResponseSchema } from '@eridu/api-types/tasks';
+
 export const taskApiResponseSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -183,14 +188,8 @@ export const taskApiResponseSchema = z.object({
 });
 
 export type TaskApiResponse = z.infer<typeof taskApiResponseSchema>;
-
-// Backend usage
-import { taskApiResponseSchema } from '@eridu/api-types/tasks';
 // Transform and validate
 return taskApiResponseSchema.parse(transformedTask);
-
-// Frontend usage
-import { type TaskApiResponse } from '@eridu/api-types/tasks';
 const tasks: TaskApiResponse[] = await fetchTasks();
 ```
 

@@ -82,6 +82,7 @@ export function CreateTemplateForm({ studioId }: { studioId: string }) {
 
 ```typescript
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { updateTaskTemplate } from '../api/task-templates.api';
 
 export function useUpdateTaskTemplate(studioId: string) {

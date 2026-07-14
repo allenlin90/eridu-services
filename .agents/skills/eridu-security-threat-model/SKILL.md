@@ -35,7 +35,6 @@ Deliver an actionable AppSec-grade threat model that is specific to the reposito
 - Describe realistic attacker capabilities based on exposure and intended usage.
 - Explicitly note non-capabilities to avoid inflated severity.
 
-
 ### 4) Enumerate threats as abuse paths
 - Prefer attacker goals that map to assets and boundaries (exfiltration, privilege escalation, integrity compromise, denial of service).
 - Classify each threat and tie it to impacted assets.
@@ -66,7 +65,6 @@ Deliver an actionable AppSec-grade threat model that is specific to the reposito
 - Confirm assumptions and open questions are explicit.
 - Confirm that the format of the report matches closely the required output format defined in prompt template: `references/prompt-template.md`
 - Write the final Markdown to a file named `<repo-or-dir-name>-threat-model.md` (use the basename of the repo root, or the in-scope directory if you were asked to model a subpath).
-
 
 ## Risk prioritization guidance (illustrative, not exhaustive)
 - High: pre-auth RCE, auth bypass, cross-tenant access, sensitive data exfiltration, key or token theft, model or config integrity compromise, sandbox escape.

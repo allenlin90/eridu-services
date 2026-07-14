@@ -25,7 +25,7 @@ try {
     `Failed to process show ${showUid}`,
     error instanceof Error ? error.stack : String(error),
   );
-  throw error;  // Re-throw — do not swallow
+  throw error; // Re-throw — do not swallow
 }
 ```
 
@@ -63,7 +63,7 @@ export class TaskGenerationProcessor {
       this.logger.log(`[Job:${job.id}] Completed show=${showUid} tasks_created=${result.count}`);
     } catch (error) {
       this.logger.error(`[Job:${job.id}] Failed show=${showUid}`, error instanceof Error ? error.stack : String(error));
-      throw error;  // Let BullMQ handle retry
+      throw error; // Let BullMQ handle retry
     }
   }
 }

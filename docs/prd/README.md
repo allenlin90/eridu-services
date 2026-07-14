@@ -47,7 +47,6 @@ Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) has no PRDs of its own yet — p
 - Future P&L revenue workflow is sketched in [`future/pnl-revenue-workflow.md`](./future/pnl-revenue-workflow.md); redraft when revenue planning restarts.
 - Member actuals attestation is retained at [`future/member-actuals-attestation.md`](./future/member-actuals-attestation.md); revisit when an authoritative hardware actuals source is operationally available.
 
-
 ### Phase 6 Candidates (PRDs created, implementation deferred)
 
 | PRD                                                   | Workstream                                                                  | Track | Status              |

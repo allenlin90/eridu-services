@@ -40,9 +40,9 @@ Stored on `Studio.metadata.shared_fields[]`. The studio's controlled vocabulary 
 ```jsonc
 {
   "shared_fields": [
-    { "key": "gmv",        "type": "number", "category": "metric",   "label": "GMV",       "is_active": true },
-    { "key": "orders",     "type": "number", "category": "metric",   "label": "Orders",    "is_active": true },
-    { "key": "proof_link", "type": "url",    "category": "evidence", "label": "Proof URL", "is_active": true }
+    { "key": "gmv", "type": "number", "category": "metric", "label": "GMV", "is_active": true },
+    { "key": "orders", "type": "number", "category": "metric", "label": "Orders", "is_active": true },
+    { "key": "proof_link", "type": "url", "category": "evidence", "label": "Proof URL", "is_active": true }
   ]
 }
 ```
@@ -60,7 +60,7 @@ Stored on `Studio.metadata.shared_fields[]`. The studio's controlled vocabulary 
   "task_type": "ACTIVE",
   "metadata": {
     "loops": [
-      { "id": "l1", "name": "Welcome",    "durationMin": 15 },
+      { "id": "l1", "name": "Welcome", "durationMin": 15 },
       { "id": "l2", "name": "Flash Sale", "durationMin": 15 }
     ]
   },
@@ -69,8 +69,8 @@ Stored on `Studio.metadata.shared_fields[]`. The studio's controlled vocabulary 
   "content_key_strategy": "field_id",
   "report_projection_strategy": "descriptor",
   "items": [
-    { "id": "fld_gmvl100001", "key": "gmv",    "type": "number",   "group": "l1", "shared_field_key": "gmv", "required": true },
-    { "id": "fld_gmvl200001", "key": "gmv",    "type": "number",   "group": "l2", "shared_field_key": "gmv", "required": true },
+    { "id": "fld_gmvl100001", "key": "gmv", "type": "number", "group": "l1", "shared_field_key": "gmv", "required": true },
+    { "id": "fld_gmvl200001", "key": "gmv", "type": "number", "group": "l2", "shared_field_key": "gmv", "required": true },
     { "id": "fld_actualst01", "key": "actual_start", "type": "datetime", "group": "l1", "system_fact_key": "show_actual_start_time", "required": true },
     { "id": "fld_pin1000001", "key": "l1_pin", "type": "checkbox", "group": "l1", "label": "Pin welcome comment" }
   ]
@@ -207,7 +207,7 @@ A **mechanic** is a client-owned reusable moderation instruction (`ClientMechani
 {
   "client_id": "client_abc123",
   "mechanic_id": "cmech_def456",
-  "content_revision": 5   // frozen at check/upgrade time, never live-resolved
+  "content_revision": 5 // frozen at check/upgrade time, never live-resolved
 }
 ```
 

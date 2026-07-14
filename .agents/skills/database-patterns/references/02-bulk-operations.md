@@ -5,7 +5,7 @@
 ```typescript
 // ✅ CORRECT: Single query, no loop
 await prisma.show.createMany({
-  data: shows.map(s => ({ ...s, uid: generateUid() })),
+  data: shows.map((s) => ({ ...s, uid: generateUid() })),
   skipDuplicates: true, // Optional resilience
 });
 

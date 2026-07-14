@@ -91,12 +91,12 @@ UID prefix: `ssf_`, lowercase nanoid suffix consistent with existing project con
 {
   "kind": "LEGACY_REFERENCE",
   "key": "__legacy__",
-  "type": "text",          // sentinel, never read
+  "type": "text", // sentinel, never read
   "label": "Pre-v2 registry snapshot",
   "is_active": false,
   "legacy_entries": [
     { "key": "gmv_l1", "type": "number", "category": "metric", "label": "GMV (Loop 1)", "is_active": true },
-    { "key": "gmv_l2", "type": "number", "category": "metric", "label": "GMV (Loop 2)", "is_active": true },
+    { "key": "gmv_l2", "type": "number", "category": "metric", "label": "GMV (Loop 2)", "is_active": true }
     /* … 94 more, taken verbatim from Studio.metadata.shared_fields[] at migration time … */
   ]
 }

@@ -45,7 +45,7 @@ You can mix Railway secrets or outputs of database services in the YAML by letti
 
 ```yaml
 database:
-  url: "${{Postgres.DATABASE_URL}}"
+  url: '${{Postgres.DATABASE_URL}}'
   pool: 10
 ```
 

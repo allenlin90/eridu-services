@@ -91,7 +91,7 @@ sidebar: [
   { label: 'Scheduling & Shows', autogenerate: { directory: 'scheduling' } },
   { label: 'Assets & Uploads', autogenerate: { directory: 'assets' } },
   { label: 'Reference', autogenerate: { directory: 'reference' } },
-]
+];
 ```
 
 ## Applied Mapping
@@ -114,4 +114,3 @@ Local skills should enforce this IA:
 - `user-facing-docs` should default to function-first folders in `eridu_docs`
 - Starlight guidance should reject genre-first top-level buckets for this app
 - docs-surface reorganization work should use the dedicated `eridu-docs-information-architecture` skill
-

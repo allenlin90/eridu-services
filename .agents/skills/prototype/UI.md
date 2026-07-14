@@ -65,7 +65,7 @@ return (
     {variant === 'A' && <VariantA {...data} />}
     {variant === 'B' && <VariantB {...data} />}
     {variant === 'C' && <VariantC {...data} />}
-    <PrototypeSwitcher variants={['A','B','C']} current={variant} />
+    <PrototypeSwitcher variants={['A', 'B', 'C']} current={variant} />
   </>
 );
 ```

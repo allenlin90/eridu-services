@@ -17,6 +17,12 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^20.0.0
         version: 20.0.0
+      '@eridu/eslint-config':
+        specifier: workspace:*
+        version: link:packages/eslint-config
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.1(jiti@2.6.1)
       husky:
         specifier: ^9.1.7
         version: 9.1.7

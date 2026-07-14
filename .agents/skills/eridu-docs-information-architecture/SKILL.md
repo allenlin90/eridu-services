@@ -58,7 +58,7 @@ sidebar: [
   { label: 'Scheduling & Shows', autogenerate: { directory: 'scheduling' } },
   { label: 'Assets & Uploads', autogenerate: { directory: 'assets' } },
   { label: 'Reference', autogenerate: { directory: 'reference' } },
-]
+];
 ```
 
 ## Workflow

@@ -122,9 +122,9 @@ Query key families:
 
 ```ts
 ['compensation-line-items', 'system', filters]
-['compensation-line-items', 'studio', studioUid, targetType, targetUid]
-['compensation-line-item', lineItemUid]
-['show-creators', 'compensation-summary', studioUid, showUid]
+  ['compensation-line-items', 'studio', studioUid, targetType, targetUid]
+  ['compensation-line-item', lineItemUid]
+  ['show-creators', 'compensation-summary', studioUid, showUid];
 ```
 
 Mutation invalidation:

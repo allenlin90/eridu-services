@@ -39,14 +39,14 @@ Cursor pagination is documented here for reference but is **not currently used**
 ```typescript
 // Schema (api-types) — cursor replaces page
 export const cursorPaginationSchema = z.object({
-  cursor: z.string().optional(),  // last seen uid
+  cursor: z.string().optional(), // last seen uid
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
 // Repository
 const items = await prisma.model.findMany({
   where,
-  take: limit + 1,  // fetch one extra to determine hasMore
+  take: limit + 1, // fetch one extra to determine hasMore
   ...(cursor && { cursor: { uid: cursor }, skip: 1 }),
   orderBy: { createdAt: 'desc' },
 });
@@ -87,8 +87,8 @@ Never skip the `max()` validator on `limit`:
 
 ```typescript
 // Without max — client can request limit=10000, causing full table scan
-limit: z.coerce.number().int().min(1).default(20)  // ❌
+limit: z.coerce.number().int().min(1).default(20); // ❌
 
 // With max — hard cap regardless of client input
-limit: z.coerce.number().int().min(1).max(100).default(20)  // ✅
+limit: z.coerce.number().int().min(1).max(100).default(20); // ✅
 ```

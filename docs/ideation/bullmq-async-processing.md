@@ -73,7 +73,7 @@ If the primary concern is large JSON response size (not generation time), consid
 
 ### Schedule Publishing as a Secondary Candidate
 
-The Google Sheets schedule publish operation (`POST /google-sheets/schedules/:id/publish`) is another strong candidate for BullMQ async processing. 
+The Google Sheets schedule publish operation (`POST /google-sheets/schedules/:id/publish`) is another strong candidate for BullMQ async processing.
 
 #### Considerations:
 - **Payload & DB Workload**: The publishing flow executes a heavy diff+upsert across hundreds of shows, platform mappings, creator mappings, active task checks, and audit logging.

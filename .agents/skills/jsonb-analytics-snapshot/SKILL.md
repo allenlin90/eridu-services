@@ -16,7 +16,7 @@ When the need is analytical, decide whether this JSONB snapshot pattern, normali
 
 ## The Core Concept
 
-When building dashboards or analytics views, data is often grouped by multiple dimensions (e.g., status, type, template, date). 
+When building dashboards or analytics views, data is often grouped by multiple dimensions (e.g., status, type, template, date).
 If history is **immutable** (i.e. "what happened has happened"), recalculating these aggregations on every page load using `GROUP BY` and multiple `JOIN`s is inefficient.
 
 The JSONB Analytics Snapshot Pattern solves this by calculating the aggregations once for a specific time period (e.g., Daily, Weekly) and storing the complete structured result in a single `JSONB` column.
@@ -39,21 +39,21 @@ To implement this pattern, create a snapshot table scoped to the entity and the 
 model TaskAnalyticsSnapshot {
   id              BigInt   @id @default(autoincrement())
   uid             String   @unique
-  
+
   // 1. Scoping (Who does this belong to?)
   studioId        BigInt   @map("studio_id")
   studio          Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
   userId          BigInt?  @map("user_id") // Optional: if scoped to a specific user
   user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   // 2. Time Bounding (What period does this cover?)
-  periodStart     DateTime @map("period_start") 
-  periodEnd       DateTime @map("period_end")   
+  periodStart     DateTime @map("period_start")
+  periodEnd       DateTime @map("period_end")
   periodType      String   @map("period_type")  // e.g. 'DAILY', 'WEEKLY', 'MONTHLY', 'ALL_TIME'
-  
+
   // 3. The Payload
   metrics         Json     @map("metrics")
-  
+
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([studioId, periodType, periodStart])

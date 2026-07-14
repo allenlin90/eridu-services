@@ -162,13 +162,13 @@ Verify presence of required fields on new models:
 
 ```typescript
 // ✅ Correct path aliases
-import { X } from '@/lib/utils';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { Button } from '@eridu/ui';
 import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
-
+import { Button } from '@eridu/ui';
 // ❌ Never import from src/ in packages
-import { X } from '@eridu/ui/src/components/Button';  // WRONG
+import { X } from '@eridu/ui/src/components/Button'; // WRONG
+
+import { X } from '@/lib/utils';
 ```
 
 ---

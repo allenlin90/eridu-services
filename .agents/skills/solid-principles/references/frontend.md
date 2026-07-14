@@ -24,15 +24,15 @@ function UserList() {
 
   useEffect(() => {
     fetch(`/api/users?search=${search}&sort=${sort}`)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then(setUsers);
   }, [search, sort]);
 
   return (
     <div>
-      <input value={search} onChange={e => setSearch(e.target.value)} />
-      <select value={sort} onChange={e => setSort(e.target.value)}>...</select>
-      <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>
+      <input value={search} onChange={(e) => setSearch(e.target.value)} />
+      <select value={sort} onChange={(e) => setSort(e.target.value)}>...</select>
+      <ul>{users.map((u) => <li key={u.id}>{u.name}</li>)}</ul>
     </div>
   );
 }
@@ -83,9 +83,12 @@ function UserListPage() {
 ```tsx
 // ❌ BAD — every new layout variant requires editing the component internals
 function Card({ variant }: { variant: 'basic' | 'featured' | 'compact' }) {
-  if (variant === 'basic') return <div className="card">...</div>;
-  if (variant === 'featured') return <div className="card card-featured">...</div>;
-  if (variant === 'compact') return <div className="card card-compact">...</div>;
+  if (variant === 'basic')
+    return <div className="card">...</div>;
+  if (variant === 'featured')
+    return <div className="card card-featured">...</div>;
+  if (variant === 'compact')
+    return <div className="card card-compact">...</div>;
 }
 
 // ✅ GOOD — extend via composition, base component doesn't change
@@ -178,19 +181,19 @@ function useShowList() { return { data: [], isLoading: true, error: null }; }
 
 ```tsx
 // ❌ BAD — component receives the entire User object but only uses two fields
-interface UserAvatarProps {
+type UserAvatarProps = {
   user: User; // User has 20+ fields, but only avatarUrl and name are used
-}
+};
 
 function UserAvatar({ user }: UserAvatarProps) {
   return <img src={user.avatarUrl} alt={user.name} />;
 }
 
 // ✅ GOOD — minimal, focused interface
-interface UserAvatarProps {
+type UserAvatarProps = {
   avatarUrl: string;
   name: string;
-}
+};
 
 function UserAvatar({ avatarUrl, name }: UserAvatarProps) {
   return <img src={avatarUrl} alt={name} />;
@@ -200,7 +203,10 @@ function UserAvatar({ avatarUrl, name }: UserAvatarProps) {
 ```tsx
 // ❌ BAD — one context holds everything, causing unnecessary re-renders
 const AppContext = createContext<{
-  user: User; theme: Theme; notifications: Notification[]; locale: string;
+  user: User;
+  theme: Theme;
+  notifications: Notification[];
+  locale: string;
 }>(/* ... */);
 
 // ✅ GOOD — segregated contexts
@@ -235,15 +241,15 @@ In React, "abstractions" are: typed hooks, context interfaces, and API layer dec
 function UserList() {
   const [users, setUsers] = useState([]);
   useEffect(() => {
-    axios.get('/api/users').then(r => setUsers(r.data));
+    axios.get('/api/users').then((r) => setUsers(r.data));
   }, []);
-  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;
+  return <ul>{users.map((u) => <li key={u.id}>{u.name}</li>)}</ul>;
 }
 
 // ✅ GOOD — depends on an abstraction (typed query hook)
 function UserList() {
   const { data: users } = useUsers();
-  return <ul>{users?.map(u => <UserListItem key={u.id} user={u} />) ?? null}</ul>;
+  return <ul>{users?.map((u) => <UserListItem key={u.id} user={u} />) ?? null}</ul>;
 }
 ```
 
@@ -313,7 +319,7 @@ This violated SRP (two domain operations, two reasons to change) and OCP (adding
   onDefaultRateTypeChange={setDefaultRateType}
   onDefaultCommissionRateChange={setDefaultCommissionRate}
   disabled={mutation.isPending}
-/>
+/>;
 ```
 
 **ISP** — each dialog receives only `{ studioId, open, onOpenChange }`. The roster table renders both independently with their own open state — no shared mode prop or combined handler.

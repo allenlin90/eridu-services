@@ -185,7 +185,7 @@ async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: stri
 ```typescript
 @Module({
   imports: [
-    PrismaModule,     // Required by Processor for advisory lock
+    PrismaModule, // Required by Processor for advisory lock
     UtilityModule,
     TaskModule,
     TaskTargetModule,
@@ -195,7 +195,7 @@ async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: stri
     StudioModule,
   ],
   providers: [TaskOrchestrationService, TaskGenerationProcessor],
-  exports: [TaskOrchestrationService],  // Export Orchestration, NOT Processor
+  exports: [TaskOrchestrationService], // Export Orchestration, NOT Processor
 })
 export class TaskOrchestrationModule {}
 ```

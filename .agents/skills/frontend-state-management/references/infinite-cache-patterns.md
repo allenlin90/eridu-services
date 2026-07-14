@@ -24,7 +24,8 @@ export function upsertItemInPages<T extends { uid: string }>(
   let inserted = false;
   const pages = infiniteData.pages.map((page) => {
     const idx = page.data.findIndex((i) => i.uid === item.uid);
-    if (idx === -1) return page;
+    if (idx === -1)
+      return page;
     inserted = true;
     return { ...page, data: page.data.map((i) => (i.uid === item.uid ? item : i)) };
   });
@@ -70,12 +71,14 @@ export function compactToFirstPage<T>(
 ## 2. Feature Hook (Compaction on Unmount)
 
 ```typescript
+import { type InfiniteData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
-import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+
+import type { PaginatedResponse, TaskTemplateDto } from '@eridu/api-types';
 import { useTableUrlState } from '@eridu/ui';
+
 import { getTaskTemplates, taskTemplateQueryKeys } from '../api/task-templates.api';
 import { compactToFirstPage } from '../lib/cache-helpers';
-import type { TaskTemplateDto, PaginatedResponse } from '@eridu/api-types';
 
 export function useTaskTemplates({ studioId }: { studioId: string }) {
   const queryClient = useQueryClient();
@@ -85,8 +88,8 @@ export function useTaskTemplates({ studioId }: { studioId: string }) {
     searchColumnId: 'name',
   });
 
-  const searchQuery =
-    (tableState.columnFilters.find((f) => f.id === 'name')?.value as string) || '';
+  const searchQuery
+    = (tableState.columnFilters.find((f) => f.id === 'name')?.value as string) || '';
 
   // Memoize so it's stable for the useEffect dependency array
   const listQueryKey = useMemo(
@@ -137,10 +140,12 @@ export function useTaskTemplates({ studioId }: { studioId: string }) {
 ## 3. Mutations with Targeted Active/Inactive Updates
 
 ```typescript
-import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { taskTemplateQueryKeys, updateTaskTemplate, deleteTaskTemplate } from '../api/task-templates.api';
-import { upsertItemInPages, removeItemFromPages } from '../lib/cache-helpers';
-import type { TaskTemplateDto, PaginatedResponse, UpdateTaskTemplateDto } from '@eridu/api-types';
+import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import type { PaginatedResponse, TaskTemplateDto, UpdateTaskTemplateDto } from '@eridu/api-types';
+
+import { deleteTaskTemplate, taskTemplateQueryKeys, updateTaskTemplate } from '../api/task-templates.api';
+import { removeItemFromPages, upsertItemInPages } from '../lib/cache-helpers';
 
 type Page = PaginatedResponse<TaskTemplateDto>;
 

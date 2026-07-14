@@ -70,13 +70,14 @@ export const CONFIG: Env = envSchema.parse({
 ```ts
 // Bad: no validation, undefined runtime checks scattered everywhere
 const dbUrl = process.env.DATABASE_URL;
-if (!dbUrl) throw new Error("Oops");
+if (!dbUrl)
+  throw new Error('Oops');
 ```
 
 ❌ **Assuming Types**
 ```ts
 // Bad: "process.env.PORT || 3000" returns a string unless explicitly cast
-const port = process.env.PORT || 3000; 
+const port = process.env.PORT || 3000;
 ```
 
 ❌ **Weak Defaults for Security**

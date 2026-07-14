@@ -84,7 +84,8 @@ When an orchestrator writes to a row that lives under a scope parent (e.g. `Show
 try {
   row = await this.svc.getByUid(uid);
 } catch (err) {
-  if (err instanceof NotFoundException) return { kind: 'noop', reason: 'target_stale' };
+  if (err instanceof NotFoundException)
+    return { kind: 'noop', reason: 'target_stale' };
   throw err;
 }
 ```
@@ -99,7 +100,8 @@ Any enum / registry / discriminator lookup off persisted data MUST guard for `un
 
 ```ts
 const definition = SYSTEM_FACT_KEY_DEFINITIONS[key];
-if (!definition) continue;  // unknown key — skip silently
+if (!definition)
+  continue; // unknown key — skip silently
 ```
 
 Codex P1 on PR #103 caught a single unguarded `.target` deref that aborted an entire orchestration run with `TypeError` on a mixed-version sibling task.

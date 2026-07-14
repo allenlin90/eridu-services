@@ -30,7 +30,7 @@ This document unifies three previously scattered ideation tracks:
       return moderationPattern.test(task.description ?? '') || moderationPattern.test(task.template?.name ?? '');
     }
     ```
-*   **The Problem:** 
+*   **The Problem:**
     1.  **Brittle text-matching:** The regex `/moderation/i` fails on `"Moderator Workflow"` templates because the word `"Moderator"` does not contain the substring `"moderation"`. This triggers false alarms in the **Missing required coverage** dashboard card.
     2.  **Localization & renaming risks:** Relying on free-form names or descriptions means renaming a template or localizing it to other languages (e.g. Thai, Chinese) will break readiness gating entirely, as they won't match English keywords.
 
@@ -87,11 +87,11 @@ model Studio {
 
 ### 2. Structured Settings Object Shape
 ```typescript
-interface StudioSettings {
+type StudioSettings = {
   planning: {
     // Canonical timezone for date presets and boundary calculations
     timezone: string; // e.g. "Asia/Bangkok" (default: "UTC")
-    
+
     // Configurable day cutoff hour (local to studio timezone)
     operationalDayStartHour: number; // default: 6
 
@@ -106,15 +106,15 @@ interface StudioSettings {
         // Required task types that must be present and assigned (e.g., SETUP, CLOSURE)
         requiredTaskTypes: ('SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN')[];
         // If true, requires at least one active, loop-based (moderation) task assigned to the show
-        requireActiveLoopTask: boolean; 
-      }
+        requireActiveLoopTask: boolean;
+      };
     };
-    
+
     // Configurable matching criteria to identify moderation tasks
     moderationTaskPatterns: {
       regex: string; // default: "moderation|moderator"
       caseInsensitive: boolean; // default: true
-      
+
       // Structural heuristics (prioritized over brittle name checking)
       checkLoops: boolean; // default: true (loop-based templates are moderation-first)
       checkPlatformViolationBinding: boolean; // default: true (contains fields bound to platform violations)
@@ -126,7 +126,7 @@ interface StudioSettings {
     // ISO-4217 currency for monetary display (GMV, compensation totals, etc.)
     currency: string; // e.g. "THB" (default: "THB")
   };
-}
+};
 ```
 
 ### 3. Refactored Gating & Normalization (`ShiftAlignmentService`)
@@ -143,8 +143,8 @@ const cutoffHour = settings.planning.operationalDayStartHour;
 // This allows the studio setting to explicitly dictate what assignments a bau/premium show
 // needs in order to be counted as fully complete and ready.
 const standardName = show.standardName.toLowerCase();
-const standardConfig = settings.readiness.showStandardRequirements[standardName] 
-  || settings.readiness.showStandardRequirements['default']
+const standardConfig = settings.readiness.showStandardRequirements[standardName]
+  || settings.readiness.showStandardRequirements.default
   || { requiredTaskTypes: ['SETUP', 'CLOSURE'], requireActiveLoopTask: false };
 
 const requiredTaskTypes = standardConfig.requiredTaskTypes;
@@ -152,13 +152,14 @@ const requiresModeration = standardConfig.requireActiveLoopTask;
 
 // 3. Match moderation tasks dynamically and structurally
 const moderationPattern = new RegExp(
-  settings.readiness.moderationTaskPatterns.regex, 
+  settings.readiness.moderationTaskPatterns.regex,
   settings.readiness.moderationTaskPatterns.caseInsensitive ? 'i' : ''
 );
 
-const hasModerationTask = tasks.some(task => {
+const hasModerationTask = tasks.some((task) => {
   const schema = task.template?.currentSchema as any;
-  if (!schema) return false;
+  if (!schema)
+    return false;
 
   // 3a. Structural Heuristic: Check if template has loops defined in metadata
   if (settings.readiness.moderationTaskPatterns.checkLoops && schema.metadata?.loops?.length > 0) {
@@ -169,13 +170,14 @@ const hasModerationTask = tasks.some(task => {
   if (settings.readiness.moderationTaskPatterns.checkPlatformViolationBinding) {
     const items = schema.items || [];
     const hasViolationBinding = items.some((item: any) => item.system_fact_key === 'show_platform_violation');
-    if (hasViolationBinding) return true;
+    if (hasViolationBinding)
+      return true;
   }
 
   // 3c. Text Fallback: Name / Description regex match
   return (
-    moderationPattern.test(task.description ?? '') || 
-    moderationPattern.test(task.template?.name ?? '')
+    moderationPattern.test(task.description ?? '')
+    || moderationPattern.test(task.template?.name ?? '')
   );
 });
 ```
@@ -185,7 +187,7 @@ const hasModerationTask = tasks.some(task => {
 ## Impacted Surfaces
 
 *   **Prisma Schema:** `Studio` table receives a new `settings Json` column with a migration.
-*   **Backend Orchestration:** 
+*   **Backend Orchestration:**
     *   `ShiftAlignmentService` refactored to consume `StudioSettings`.
     *   `task-report-scope.service.ts` refactored to normalize boundaries using studio timezone.
 *   **Frontend Routing & UI Pages:**

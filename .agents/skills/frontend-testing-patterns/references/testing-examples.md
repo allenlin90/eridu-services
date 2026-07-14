@@ -226,7 +226,8 @@ describe('useTaskTemplates', () => {
 
 ```typescript
 import { renderHook } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { useInfiniteScroll } from './use-infinite-scroll';
 
 describe('useInfiniteScroll', () => {
@@ -311,7 +312,7 @@ describe('useInfiniteScroll', () => {
 ```typescript
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { beforeAll, afterEach, afterAll } from 'vitest';
+import { afterAll, afterEach, beforeAll } from 'vitest';
 
 // Define handlers
 export const handlers = [

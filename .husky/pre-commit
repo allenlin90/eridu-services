@@ -6,5 +6,8 @@ export NVM_DIR="$HOME/.nvm"
 # Run eslint
 pnpm lint
 
+# Run markdown format check
+pnpm lint:markdown
+
 # Run sherif to check dependency versions
 pnpm sherif

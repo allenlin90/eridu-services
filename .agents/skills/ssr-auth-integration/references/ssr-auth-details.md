@@ -72,9 +72,10 @@ Browser → /auth/logout?returnTo=/page
 
 ```typescript
 import { cookies } from 'next/headers';
-import { refreshSessionToken, normalizeReturnTo } from '@eridu/auth-sdk/server/ssr';
+
 import { JwksService } from '@eridu/auth-sdk/server/jwks/jwks-service';
 import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
+import { normalizeReturnTo, refreshSessionToken } from '@eridu/auth-sdk/server/ssr';
 
 const jwksService = new JwksService({ authServiceUrl: process.env.AUTH_URL! });
 export const jwtVerifier = new JwtVerifier({ jwksService, issuer: process.env.AUTH_URL! });
