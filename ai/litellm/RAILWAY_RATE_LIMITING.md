@@ -86,7 +86,7 @@ x-litellm-end-user-id: user@example.com
 The OpenAI-compatible request body field also works:
 
 ```json
-{ "user": "user@example.com" }
+{"user": "user@example.com"}
 ```
 
 If Open WebUI sends a different custom header, uncomment `general_settings.user_header_mappings` in the YAML and map that header to the `customer` role.

@@ -43,19 +43,18 @@ export class AdminGuard implements CanActivate {
     const user = await this.userService.getUserByExtId(request.user.ext_id);
 
     // 1. System admin bypasses all checks
-    if (user.isSystemAdmin)
-      return true;
+    if (user.isSystemAdmin) return true;
 
     // 2. Expand roles to permissions
     const userRoles = (user.roles as string[]) || [];
-    const rolePermissions = userRoles.flatMap((role) => this.ROLE_PERMISSIONS[role] || []);
+    const rolePermissions = userRoles.flatMap(role => this.ROLE_PERMISSIONS[role] || []);
 
     // 3. Combine with custom permissions
     const customPermissions = (user.permissions as string[]) || [];
     const effectivePermissions = [...new Set([...rolePermissions, ...customPermissions])];
 
     // 4. Check required permissions
-    return requiredPermissions.every((req) => effectivePermissions.includes(req));
+    return requiredPermissions.every(req => effectivePermissions.includes(req));
   }
 }
 ```

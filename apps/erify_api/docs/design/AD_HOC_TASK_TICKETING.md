@@ -29,7 +29,7 @@ Relax the strictness around template associations and define the contract for cr
 - **Modify `task.schema.ts`:**
   - Update the base `taskSchema` to make `snapshotId` nullable:
     ```typescript
-    snapshotId: z.bigint().nullable();
+    snapshotId: z.bigint().nullable()
     ```
   - Extend the API types to introduce a `createAdhocTaskRequestSchema`:
     ```typescript

@@ -5,9 +5,8 @@ Detailed code examples for backend and frontend auth patterns.
 ## Backend: Token Validation
 
 ```typescript
-import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
-
 import { JwtAuthGuard } from '@/lib/auth/jwt-auth.guard';
+import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 @Controller('me/profile')
 @UseGuards(JwtAuthGuard)
@@ -22,9 +21,8 @@ export class ProfileController {
 ## Backend: Studio-Scoped Authorization
 
 ```typescript
-import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 @Controller('studios/:studioId/tasks')
 @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MEMBER])

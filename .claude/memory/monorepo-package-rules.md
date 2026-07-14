@@ -96,10 +96,10 @@ packages/package-name/
 export default defineConfig(() => ({
   resolve: {
     preserveSymlinks: false, // Required for pnpm workspaces
-    alias: { '@': path.resolve(__dirname, './src') },
+    alias: { "@": path.resolve(__dirname, "./src") },
   },
   optimizeDeps: {
-    include: ['@eridu/auth-service/**', '@eridu/ui/**'],
+    include: ["@eridu/auth-service/**", "@eridu/ui/**"],
   },
 }));
 ```
@@ -110,7 +110,7 @@ export default defineConfig(() => ({
 {
   "tasks": {
     "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
-    "dev": { "dependsOn": ["^build"], "cache": false, "persistent": true }
+    "dev":   { "dependsOn": ["^build"], "cache": false, "persistent": true }
   }
 }
 ```
@@ -130,9 +130,9 @@ export default defineConfig(() => ({
 
 ```typescript
 // ✅ CORRECT: Import through package name
-import { useSession } from '@eridu/auth-service/hooks/use-session';
-import { Button } from '@eridu/ui/components/button';
+import { useSession } from "@eridu/auth-service/hooks/use-session";
+import { Button } from "@eridu/ui/components/button";
 
 // ❌ WRONG: Direct path to source
-import { useSession } from '../../packages/auth-service/src/hooks/use-session';
+import { useSession } from "../../packages/auth-service/src/hooks/use-session";
 ```

@@ -87,7 +87,7 @@ model Studio {
 
 ### 2. Structured Settings Object Shape
 ```typescript
-type StudioSettings = {
+interface StudioSettings {
   planning: {
     // Canonical timezone for date presets and boundary calculations
     timezone: string; // e.g. "Asia/Bangkok" (default: "UTC")
@@ -107,7 +107,7 @@ type StudioSettings = {
         requiredTaskTypes: ('SETUP' | 'ACTIVE' | 'CLOSURE' | 'ADMIN')[];
         // If true, requires at least one active, loop-based (moderation) task assigned to the show
         requireActiveLoopTask: boolean;
-      };
+      }
     };
 
     // Configurable matching criteria to identify moderation tasks
@@ -126,7 +126,7 @@ type StudioSettings = {
     // ISO-4217 currency for monetary display (GMV, compensation totals, etc.)
     currency: string; // e.g. "THB" (default: "THB")
   };
-};
+}
 ```
 
 ### 3. Refactored Gating & Normalization (`ShiftAlignmentService`)
@@ -144,7 +144,7 @@ const cutoffHour = settings.planning.operationalDayStartHour;
 // needs in order to be counted as fully complete and ready.
 const standardName = show.standardName.toLowerCase();
 const standardConfig = settings.readiness.showStandardRequirements[standardName]
-  || settings.readiness.showStandardRequirements.default
+  || settings.readiness.showStandardRequirements['default']
   || { requiredTaskTypes: ['SETUP', 'CLOSURE'], requireActiveLoopTask: false };
 
 const requiredTaskTypes = standardConfig.requiredTaskTypes;
@@ -156,10 +156,9 @@ const moderationPattern = new RegExp(
   settings.readiness.moderationTaskPatterns.caseInsensitive ? 'i' : ''
 );
 
-const hasModerationTask = tasks.some((task) => {
+const hasModerationTask = tasks.some(task => {
   const schema = task.template?.currentSchema as any;
-  if (!schema)
-    return false;
+  if (!schema) return false;
 
   // 3a. Structural Heuristic: Check if template has loops defined in metadata
   if (settings.readiness.moderationTaskPatterns.checkLoops && schema.metadata?.loops?.length > 0) {
@@ -170,14 +169,13 @@ const hasModerationTask = tasks.some((task) => {
   if (settings.readiness.moderationTaskPatterns.checkPlatformViolationBinding) {
     const items = schema.items || [];
     const hasViolationBinding = items.some((item: any) => item.system_fact_key === 'show_platform_violation');
-    if (hasViolationBinding)
-      return true;
+    if (hasViolationBinding) return true;
   }
 
   // 3c. Text Fallback: Name / Description regex match
   return (
-    moderationPattern.test(task.description ?? '')
-    || moderationPattern.test(task.template?.name ?? '')
+    moderationPattern.test(task.description ?? '') ||
+    moderationPattern.test(task.template?.name ?? '')
   );
 });
 ```

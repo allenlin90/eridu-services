@@ -20,10 +20,9 @@
 **File**: `schemas/{domain}.schema.ts`
 
 ```typescript
-import type { Prisma } from '@prisma/client';
-import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
-
+import { createZodDto } from 'nestjs-zod';
+import type { Prisma } from '@prisma/client';
 import { apiResponseSchema } from '@eridu/api-types/{domain}';
 
 // ============================================================================
@@ -123,12 +122,10 @@ export const domainWithRelationsDto = domainInternalSchema
   .transform((obj) => ({
     id: obj.uid,
     name: obj.name,
-    related_entity: obj.relatedEntity
-      ? {
-          id: obj.relatedEntity.uid,
-          name: obj.relatedEntity.name,
-        }
-      : null,
+    related_entity: obj.relatedEntity ? {
+      id: obj.relatedEntity.uid,
+      name: obj.relatedEntity.name,
+    } : null,
     created_at: obj.createdAt.toISOString(),
     updated_at: obj.updatedAt.toISOString(),
   }))
@@ -141,17 +138,16 @@ export const domainWithRelationsDto = domainInternalSchema
 
 ```typescript
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Domain } from '@prisma/client'; // ONLY the entity type
-
+import { Domain } from '@prisma/client';  // ONLY the entity type
+import { DomainRepository } from './{domain}.repository';
 import {
   CreateDomainDto,
-  CreateDomainPayload,
-  DomainFilters,
-  ListDomainsQueryDto,
   UpdateDomainDto,
+  ListDomainsQueryDto,
+  CreateDomainPayload,
   UpdateDomainPayload,
+  DomainFilters,
 } from './schemas/{domain}.schema';
-import { DomainRepository } from './{domain}.repository';
 
 @Injectable()
 export class DomainService extends BaseModelService {
@@ -343,20 +339,18 @@ export class DomainRepository extends BaseRepository<...> {
 **File**: `{domain}.controller.ts`
 
 ```typescript
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-
-import {
-  CreateDomainDto,
-  domainDto,
-  domainWithRelationsDto,
-  ListDomainsQueryDto,
-  UpdateDomainDto,
-} from './schemas/{domain}.schema';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DomainService } from './{domain}.service';
-
 import { CurrentUser } from '@/lib/auth/current-user.decorator';
 import { AuthenticatedUser } from '@/lib/auth/types';
+import {
+  CreateDomainDto,
+  UpdateDomainDto,
+  ListDomainsQueryDto,
+  domainDto,
+  domainWithRelationsDto,
+} from './schemas/{domain}.schema';
 
 @Controller('domains')
 @ApiTags('domains')

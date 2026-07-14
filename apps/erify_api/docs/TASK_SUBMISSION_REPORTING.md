@@ -254,18 +254,20 @@ const reservedSystemColumnKeys = new Set([
 ]);
 
 const sharedFieldSchema = z.object({
-  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/).refine((key) => !reservedSystemColumnKeys.has(key), {
-    message: 'Shared field key cannot use reserved report system column keys',
-  }), // snake_case, immutable, non-colliding
-  type: FieldTypeEnum, // immutable
-  category: sharedFieldCategoryEnum, // immutable
-  label: z.string().min(1).max(200), // editable (display only)
-  description: z.string().max(500).optional(), // editable
-  is_active: z.boolean().default(true), // can deactivate, never delete
+  key: z.string().min(1).max(50).regex(/^[a-z][a-z0-9_]*$/)
+    .refine((key) => !reservedSystemColumnKeys.has(key), {
+      message: 'Shared field key cannot use reserved report system column keys',
+    }),                                                        // snake_case, immutable, non-colliding
+  type: FieldTypeEnum,                                          // immutable
+  category: sharedFieldCategoryEnum,                            // immutable
+  label: z.string().min(1).max(200),                            // editable (display only)
+  description: z.string().max(500).optional(),                  // editable
+  is_active: z.boolean().default(true),                         // can deactivate, never delete
 });
 
 const sharedFieldsListSchema = z.array(sharedFieldSchema)
-  .refine((items) => new Set(items.map((i) => i.key)).size === items.length, { message: 'Shared field keys must be unique' });
+  .refine(items => new Set(items.map(i => i.key)).size === items.length,
+    { message: 'Shared field keys must be unique' });
 ```
 
 Runtime behavior for malformed stored config: if `Studio.metadata.shared_fields` exists but does not match this schema, settings endpoints fail fast with an error (no silent fallback to `[]`). Missing `shared_fields` defaults to an empty list.

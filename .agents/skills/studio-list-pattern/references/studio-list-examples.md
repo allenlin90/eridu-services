@@ -7,11 +7,9 @@ This file contains detailed code examples extracted from the main SKILL.md to ke
 ```typescript
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-
-import type { TaskTemplateDto } from '@eridu/api-types';
 import { useTableUrlState, type UseTableUrlStateReturn } from '@eridu/ui';
-
 import { getTaskTemplates } from '../api/task-templates.api';
+import type { TaskTemplateDto } from '@eridu/api-types';
 
 type UseTaskTemplatesProps = {
   studioId: string;
@@ -22,7 +20,7 @@ type UseTaskTemplatesReturn = {
   items: TaskTemplateDto[];
   total: number;
   isLoading: boolean;
-  isFetching: boolean; // ✅ IMPORTANT: Include for refresh button state
+  isFetching: boolean;  // ✅ IMPORTANT: Include for refresh button state
   isError: boolean;
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
@@ -90,13 +88,11 @@ export function useTaskTemplates({ studioId }: UseTaskTemplatesProps): UseTaskTe
 
 ```tsx
 import { createFileRoute } from '@tanstack/react-router';
-
-import { EmptyState, LoadingSpinner, ResponsiveCardGrid } from '@eridu/ui';
-
 import { TaskTemplateCard } from '@/features/task-templates/components/task-template-card';
 import { TaskTemplateToolbar } from '@/features/task-templates/components/task-template-toolbar';
 import { useTaskTemplates } from '@/features/task-templates/hooks/use-task-templates';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
+import { ResponsiveCardGrid, LoadingSpinner, EmptyState } from '@eridu/ui';
 
 export const Route = createFileRoute('/_authenticated/studios/$studioId/task-templates/')({
   component: TaskTemplatesPage,
@@ -162,15 +158,7 @@ function TaskTemplatesPage() {
         ) : (
           <>
             <div className="mb-4 text-sm text-muted-foreground">
-              Showing
-              {' '}
-              {items.length}
-              {' '}
-              of
-              {' '}
-              {total}
-              {' '}
-              templates
+              Showing {items.length} of {total} templates
             </div>
             <ResponsiveCardGrid>
               {items.map((template) => (
@@ -198,9 +186,8 @@ function TaskTemplatesPage() {
 
 ```tsx
 import { useNavigate } from '@tanstack/react-router';
-import { MoreVertical, Plus, RotateCw, Search } from 'lucide-react';
+import { MoreVertical, RotateCw, Search, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
 import {
   Button,
   DropdownMenu,
@@ -386,9 +373,8 @@ export function useInfiniteScroll<T extends HTMLElement = HTMLDivElement>({
 ```tsx
 import { Link } from '@tanstack/react-router';
 import { Calendar, User } from 'lucide-react';
-
-import type { TaskTemplateDto } from '@eridu/api-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@eridu/ui';
+import type { TaskTemplateDto } from '@eridu/api-types';
 
 type TaskTemplateCardProps = {
   template: TaskTemplateDto;
@@ -435,8 +421,7 @@ export function TaskTemplateCard({ template }: TaskTemplateCardProps) {
 ## ResponsiveCardGrid Component
 
 ```tsx
-import type { ReactNode } from 'react';
-
+import { type ReactNode } from 'react';
 import { cn } from '@eridu/ui';
 
 type ResponsiveCardGridProps = {
@@ -477,13 +462,11 @@ This example extends the basic feature hook to include:
 - A `handleRefresh` that pre-compacts before calling `refetch`
 
 ```typescript
-import { type InfiniteData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
-
-import type { PaginatedResponse, TaskTemplateDto } from '@eridu/api-types';
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { useTableUrlState, type UseTableUrlStateReturn } from '@eridu/ui';
-
 import { getTaskTemplates, taskTemplateQueryKeys } from '../api/task-templates.api';
+import type { TaskTemplateDto, PaginatedResponse } from '@eridu/api-types';
 
 type Page = PaginatedResponse<TaskTemplateDto>;
 
@@ -501,7 +484,7 @@ type UseTaskTemplatesReturn = {
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   fetchNextPage: () => void;
-  onRefresh: () => void; // ← pre-compacts, then refetches
+  onRefresh: () => void;  // ← pre-compacts, then refetches
 };
 
 export function useTaskTemplates({ studioId }: { studioId: string }): UseTaskTemplatesReturn {
@@ -513,8 +496,8 @@ export function useTaskTemplates({ studioId }: { studioId: string }): UseTaskTem
     defaultSorting: [{ id: 'updatedAt', desc: true }],
   });
 
-  const searchQuery
-    = (tableState.columnFilters.find((f) => f.id === 'name')?.value as string) || '';
+  const searchQuery =
+    (tableState.columnFilters.find((f) => f.id === 'name')?.value as string) || '';
 
   // Memoize — stable reference for useEffect dependency array
   const listQueryKey = useMemo(

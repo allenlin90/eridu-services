@@ -24,7 +24,7 @@ const counts = await prisma.task.groupBy({
 });
 
 // Map result to lookup
-const countMap = new Map(counts.map((row) => [row.templateId, row._count._all]));
+const countMap = new Map(counts.map(row => [row.templateId, row._count._all]));
 ```
 
 Limitation: `groupBy` cannot cross JOIN boundaries (e.g. count DISTINCT on a related table's column).
@@ -53,7 +53,7 @@ const rows = await prisma.$queryRaw<Array<{ template_id: bigint; show_count: big
   `,
 );
 
-const showCountMap = new Map(rows.map((row) => [row.template_id, Number(row.show_count)]));
+const showCountMap = new Map(rows.map(row => [row.template_id, Number(row.show_count)]));
 ```
 
 **Rules for `$queryRaw`**:

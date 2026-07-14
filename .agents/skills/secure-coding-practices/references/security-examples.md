@@ -30,7 +30,7 @@ const rows = await prisma.$queryRaw<Row[]>(
 );
 
 // ✅ Safe IN clause
-Prisma.sql`WHERE id IN (${Prisma.join(ids)})`;
+Prisma.sql`WHERE id IN (${Prisma.join(ids)})`
 ```
 
 ## Authorization — Studio Scoping
@@ -38,7 +38,7 @@ Prisma.sql`WHERE id IN (${Prisma.join(ids)})`;
 // ✅ Studio UID included in every query
 const template = await this.repository.findOne({
   uid: templateUid,
-  studio: { uid: studioUid }, // ← Prevents cross-studio access
+  studio: { uid: studioUid },  // ← Prevents cross-studio access
 });
 
 // ❌ Only UID checked — another studio's template could match

@@ -37,8 +37,7 @@ while (true) {
     take: BATCH_SIZE,
   });
 
-  if (batch.length === 0)
-    break;
+  if (batch.length === 0) break;
 
   for (const task of batch) {
     // merge into row map (same logic as current buildRows)

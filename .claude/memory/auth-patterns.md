@@ -109,16 +109,16 @@ getShows(@StudioParam() studioUid: string) {
 ## JWT Payload Structure
 
 ```typescript
-type JwtPayload = {
-  id: string; // Better Auth user ID
+interface JwtPayload {
+  id: string;          // Better Auth user ID
   name: string;
   email: string;
   image: string | null;
   organization_ids: string[];
   team_ids: string[];
-  iat: number; // Issued at
-  exp: number; // Expiration (15min)
-};
+  iat: number;         // Issued at
+  exp: number;         // Expiration (15min)
+}
 ```
 
 ## AuthenticatedUser (Request Context)
@@ -126,15 +126,15 @@ type JwtPayload = {
 After JWT validation, user is attached to request:
 
 ```typescript
-type AuthenticatedUser = {
-  id: bigint; // Internal DB ID
-  extId: string; // Better Auth user ID (from JWT payload.id)
-  uid: string; // Public UID (user_abc123)
+interface AuthenticatedUser {
+  id: bigint;          // Internal DB ID
+  extId: string;       // Better Auth user ID (from JWT payload.id)
+  uid: string;         // Public UID (user_abc123)
   email: string;
   username: string | null;
   role: string;
   isAdmin: boolean;
-};
+}
 ```
 
 ## StudioMembership (Request Context)
@@ -142,15 +142,15 @@ type AuthenticatedUser = {
 When `@StudioProtected()` is used, membership is attached:
 
 ```typescript
-type StudioMembership = {
+interface StudioMembership {
   id: bigint;
   uid: string;
-  role: string; // 'admin' | 'manager' | 'talent_manager' | 'designer' | 'moderation_manager' | 'member'
+  role: string;        // 'admin' | 'manager' | 'talent_manager' | 'designer' | 'moderation_manager' | 'member'
   userId: bigint;
   studioId: bigint;
   user: User;
   studio: Studio;
-};
+}
 ```
 
 ### Phase 4 Role/Route Notes (current)

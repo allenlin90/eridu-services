@@ -50,9 +50,8 @@ SSR consumers then do:
 import { ServerAuthClient } from '@eridu/auth-sdk/server/auth-client';
 const authClient = new ServerAuthClient(CONFIG.authUrl);
 
-export function refreshToken(cookieHeader: string) {
-  return authClient.getToken(cookieHeader).then((token) => token ? jwtVerifier.verify(token) : null);
-}
+export const refreshToken = (cookieHeader: string) =>
+  authClient.getToken(cookieHeader).then(token => token ? jwtVerifier.verify(token) : null);
 ```
 
 ## Why It Was Deferred

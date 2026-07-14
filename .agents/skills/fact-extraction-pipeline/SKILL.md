@@ -73,8 +73,8 @@ The extractor / paired processor MUST then `catch (err) { if (err instanceof Not
 
 ```ts
 type CollisionTracker = {
-  showScope: Set<SystemFactKey>; // show scope: one canonical target
-  perTarget: Set<string>; // `${factKey}|${targetUid}`
+  showScope: Set<SystemFactKey>;          // show scope: one canonical target
+  perTarget: Set<string>;                  // `${factKey}|${targetUid}`
 };
 ```
 
@@ -122,8 +122,7 @@ Every enum / registry lookup off persisted data MUST guard for `undefined`:
 
 ```ts
 const definition = SYSTEM_FACT_KEY_DEFINITIONS[key];
-if (!definition)
-  continue; // unknown key — silently skip
+if (!definition) continue;   // unknown key — silently skip
 ```
 
 Sites that need this: `collectBoundFacts`, `findCollidingFacts`, any `metadata.actuals_source[factKey]` discriminator, any audit-action enum access off persisted JSON. (Codex P1 #9: a single unguarded `.target` deref aborted the entire `extractFromTask` run with `TypeError` on a mixed-version sibling.)

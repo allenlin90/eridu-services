@@ -59,28 +59,28 @@ We have a codebase located at {repo_directory/path}, currently on branch {branch
 Please produce a security-oriented summary of the repository (or the specified sub-path) with the goal of helping a follow-on security engineer quickly understand the system well enough to build an initial threat model and investigate potential security hypotheses.
 
 Objectives
-1.  Project overview
-    •   Identify the primary programming languages, frameworks, and build system.
-    •   Summarize the project’s core purpose and high-level architecture.
-    •   Describe major components, services, or modules and how they interact.
-2.  Security posture and entry points
-    •   Identify likely user entry points and trust boundaries.
-    •   Describe existing security layers (e.g., authentication, authorization, validation, sandboxing, isolation, privilege boundaries).
-    •   Call out security-critical components and assumptions that must hold for the system to remain secure.
+1.    Project overview
+    •    Identify the primary programming languages, frameworks, and build system.
+    •    Summarize the project’s core purpose and high-level architecture.
+    •    Describe major components, services, or modules and how they interact.
+2.    Security posture and entry points
+    •    Identify likely user entry points and trust boundaries.
+    •    Describe existing security layers (e.g., authentication, authorization, validation, sandboxing, isolation, privilege boundaries).
+    •    Call out security-critical components and assumptions that must hold for the system to remain secure.
 
 Guidance for Security Analysis
 
 Structure the summary so an application security engineer can quickly answer questions such as:
-    •   Where does user input originate?
-    •   How is untrusted data parsed, validated, and handled?
-    •   What security assumptions should not be violated?
-    •   Where are the most likely choke points for security bugs?
+    •    Where does user input originate?
+    •    How is untrusted data parsed, validated, and handled?
+    •    What security assumptions should not be violated?
+    •    Where are the most likely choke points for security bugs?
 
 Adapt the analysis to the project type. For example:
-    •   Web applications: where requests enter, how user data is parsed, routed, authenticated, and stored.
-    •   Command-line tools: supported inputs (arguments, files, environment variables, stdin) and how they are processed.
-    •   Network daemons: exposed ports, supported protocols, message formats, and request handling paths.
-    •   Operating system or low-level components: common vulnerability classes (e.g., memory corruption, logic flaws) that could lead to LPE or RCE.
+    •    Web applications: where requests enter, how user data is parsed, routed, authenticated, and stored.
+    •    Command-line tools: supported inputs (arguments, files, environment variables, stdin) and how they are processed.
+    •    Network daemons: exposed ports, supported protocols, message formats, and request handling paths.
+    •    Operating system or low-level components: common vulnerability classes (e.g., memory corruption, logic flaws) that could lead to LPE or RCE.
 
 Be thorough but pragmatic: the goal is to help a security engineer quickly determine whether a discovered bug is security-relevant and where deeper investigation should focus.
 
@@ -207,10 +207,10 @@ Produce valid Markdown with these sections in this order:
 ### Primary components
 ### Data flows and trust boundaries
 Represent the system as a sequence of arrow-style bullets (e.g., Internet → API Server, User Input -> Application Logic, etc). For each boundary, document:
-    •   the primary data types crossing the boundary,
-    •   the communication channel or protocol,
-    •   the security guarantees (e.g., authentication, origin checks, encryption, rate limiting), and
-    •   any input validation, normalization, or schema enforcement performed.
+    •    the primary data types crossing the boundary,
+    •    the communication channel or protocol,
+    •    the security guarantees (e.g., authentication, origin checks, encryption, rate limiting), and
+    •    any input validation, normalization, or schema enforcement performed.
 
 #### Diagram
 - Include a single, compact Mermaid diagram (`flowchart TD` or `flowchart LR`) showing primary components and trust boundaries (e.g., separate trust zones via subgraphs). Keep it compact, use only `-->`, avoid `title`/`style`, keep node labels short (no paths/URLs), and keep edge labels to plain words only (avoid `{}`, `[]`, `()`, or quotes).

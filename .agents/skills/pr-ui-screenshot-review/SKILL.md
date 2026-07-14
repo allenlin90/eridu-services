@@ -19,9 +19,8 @@ Run `git diff --name-only origin/master...HEAD` (or the PR's actual base). Only 
    // browser_evaluate, before browser_take_screenshot
    () => {
      const el = document.querySelector('<selector for the secret display>');
-     if (el)
-       el.textContent = 'REDACTED-FOR-SCREENSHOT';
-   };
+     if (el) el.textContent = 'REDACTED-FOR-SCREENSHOT';
+   }
    ```
    Do this even for "harmless local dev" secrets — a screenshot is a flat image; there is no cropping/blurring tool available by default, and once a real-looking secret string leaves the machine (any destination, including a "private" one) it cannot be un-shared. Treat this as mandatory, not a judgment call.
 3. **Capture** with `browser_take_screenshot` (viewport, not always `fullPage` — scroll the relevant section into view first for a clean crop). Save to the session scratchpad directory, never into the repo tree.

@@ -54,8 +54,8 @@ Use refined at API boundaries, base object for form-specific derivations.
 ### Standard DTO Transform
 ```typescript
 export const taskDto = taskSchema.transform((obj) => ({
-  id: obj.uid, // uid → id
-  created_at: obj.createdAt.toISOString(), // Date → ISO string
+  id: obj.uid,                              // uid → id
+  created_at: obj.createdAt.toISOString(),   // Date → ISO string
 }));
 ```
 

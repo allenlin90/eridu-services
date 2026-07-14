@@ -8,9 +8,8 @@ This file contains detailed code examples for all controller types. Refer to the
 
 ```typescript
 import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
-
 import { BaseAdminController } from '@/admin/base-admin.controller';
-import { AdminPaginatedResponse, AdminResponse } from '@/admin/decorators/admin-response.decorator';
+import { AdminResponse, AdminPaginatedResponse } from '@/admin/decorators/admin-response.decorator';
 import { PaginationQueryDto } from '@/lib/pagination/pagination.schema';
 import { UidValidationPipe } from '@/lib/pipes/uid-validation.pipe';
 
@@ -191,10 +190,8 @@ export class StudioTaskTemplateController extends BaseStudioController {
 ## User (Me) Controller Example
 
 ```typescript
-import { Body, Controller, Get, Post } from '@nestjs/common';
-
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
-
 import { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 
@@ -227,7 +224,6 @@ export class ProfileController {
 
 ```typescript
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-
 import { BaseBackdoorController } from '@/backdoor/base-backdoor.controller';
 import { ZodResponse } from '@/lib/decorators/zod-response.decorator';
 
@@ -251,14 +247,13 @@ export class BackdoorUserController extends BaseBackdoorController {
 
 ```typescript
 import { Controller, Get, Query } from '@nestjs/common';
-import { ZodSerializerDto } from 'nestjs-zod';
-
 import { BaseGoogleSheetsController } from '../base-google-sheets.controller';
-
 import { ApiZodResponse } from '@/lib/openapi/decorators';
+import { ZodSerializerDto } from 'nestjs-zod';
 
 @Controller('google-sheets/schedules')
 export class GoogleSheetsScheduleController extends BaseGoogleSheetsController {
+
   // Note: Google Sheets often uses explicit @ApiZodResponse + @ZodSerializerDto
   // instead of a wrapper if specific description tuning is needed.
   @Get()

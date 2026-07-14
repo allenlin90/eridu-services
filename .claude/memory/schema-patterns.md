@@ -16,11 +16,11 @@
 ```typescript
 // @eridu/api-types/memberships/schemas.ts
 export const membershipApiResponseSchema = z.object({
-  id: z.string(), // UID: membership_abc123
-  user_id: z.string(), // UID: user_xyz789
-  studio_id: z.string(), // UID: studio_def456
+  id: z.string(),                    // UID: membership_abc123
+  user_id: z.string(),               // UID: user_xyz789
+  studio_id: z.string(),             // UID: studio_def456
   role: z.enum(['admin', 'manager', 'member']),
-  created_at: z.string(), // ISO: "2025-01-15T10:30:00Z"
+  created_at: z.string(),            // ISO: "2025-01-15T10:30:00Z"
   updated_at: z.string(),
 });
 
@@ -338,16 +338,15 @@ export const paginationMetaSchema = z.object({
   total_pages: z.number(),
 });
 
-export function paginatedResponseSchema<T extends z.ZodType>(itemSchema: T) {
-  return z.object({
+export const paginatedResponseSchema = <T extends z.ZodType>(itemSchema: T) =>
+  z.object({
     data: z.array(itemSchema),
     meta: paginationMetaSchema,
   });
-}
 
 // Usage
-export const paginatedMembershipsResponseSchema
-  = paginatedResponseSchema(membershipApiResponseSchema);
+export const paginatedMembershipsResponseSchema =
+  paginatedResponseSchema(membershipApiResponseSchema);
 
 // Service layer
 export function createPaginatedResponse<T>(
@@ -396,6 +395,7 @@ Code in `erify_api` (and frontends) **must always** import from the subpath expo
 ```typescript
 // ❌ WRONG — barrel root import
 import { FILE_UPLOAD_USE_CASE } from '@eridu/api-types';
+
 // ✅ CORRECT — subpath export
 import { FILE_UPLOAD_USE_CASE } from '@eridu/api-types/uploads';
 ```

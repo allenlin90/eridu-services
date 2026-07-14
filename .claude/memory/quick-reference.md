@@ -20,9 +20,9 @@ touch apps/erify_api/src/models/widget/{
 
 ### Template: widget.schema.ts
 ```typescript
-import type { Prisma } from '@prisma/client';
-import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
+import type { Prisma } from '@prisma/client';
 
 // Payload types
 export type CreateWidgetPayload = Omit<Prisma.WidgetCreateInput, 'uid'> & { uid?: string };
@@ -41,10 +41,9 @@ export class UpdateWidgetDto extends createZodDto(createWidgetSchema.partial()) 
 ### Template: widget.service.ts
 ```typescript
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Widget } from '@prisma/client'; // ONLY entity type!
-
-import { CreateWidgetDto, CreateWidgetPayload, UpdateWidgetPayload } from './schemas';
+import { Widget } from '@prisma/client';  // ONLY entity type!
 import { WidgetRepository } from './widget.repository';
+import { CreateWidgetPayload, UpdateWidgetPayload, CreateWidgetDto } from './schemas';
 
 @Injectable()
 export class WidgetService extends BaseModelService {
@@ -109,11 +108,9 @@ touch apps/erify_studios/src/features/widgets/{
 
 ### Template: api/widgets.ts
 ```typescript
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-import { widgetApiResponseSchema } from '@eridu/api-types/widgets';
-
 import { apiClient } from '@/lib/api/client';
+import { widgetApiResponseSchema } from '@eridu/api-types/widgets';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const widgetKeys = {
   all: ['widgets'] as const,
@@ -126,7 +123,7 @@ export function useWidgets(studioId: string) {
     queryKey: [...widgetKeys.lists(), studioId],
     queryFn: async () => {
       const { data } = await apiClient.get(`/studios/${studioId}/widgets`);
-      return data.data.map((item) => widgetApiResponseSchema.parse(item));
+      return data.data.map(item => widgetApiResponseSchema.parse(item));
     },
   });
 }
@@ -160,7 +157,7 @@ Use icon-only refresh controls for manual refetch actions in toolbars/headers.
   aria-label="Refresh data"
 >
   <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-</Button>;
+</Button>
 ```
 
 Use text labels only for dropdown menu items where needed for mobile action menus.
@@ -172,7 +169,7 @@ Use text labels only for dropdown menu items where needed for mobile action menu
 Mobile-reachable Dialogs become vaul Drawers below `md` (768px) to avoid viewport overflow.
 
 ```tsx
-import { Dialog, DialogContent, Drawer, DrawerContent, useIsMobile } from '@eridu/ui';
+import { useIsMobile, Drawer, DrawerContent, Dialog, DialogContent } from '@eridu/ui';
 
 const isMobile = useIsMobile();
 
@@ -479,12 +476,12 @@ describe('WidgetList', () => {
 ```typescript
 // apps/erify_api/src/app.module.ts
 providers: [
-  { provide: APP_GUARD, useClass: ThrottlerGuard }, // 1
-  { provide: APP_GUARD, useClass: JwtAuthGuard }, // 2
-  { provide: APP_GUARD, useClass: BackdoorApiKeyGuard }, // 3
-  { provide: APP_GUARD, useClass: AdminGuard }, // 4
-  { provide: APP_GUARD, useClass: StudioGuard }, // 5
-];
+  { provide: APP_GUARD, useClass: ThrottlerGuard },      // 1
+  { provide: APP_GUARD, useClass: JwtAuthGuard },         // 2
+  { provide: APP_GUARD, useClass: BackdoorApiKeyGuard },  // 3
+  { provide: APP_GUARD, useClass: AdminGuard },           // 4
+  { provide: APP_GUARD, useClass: StudioGuard },          // 5
+]
 ```
 
 ### Check JWT Token
@@ -643,10 +640,10 @@ async findByName(search: string) {
 ### ❌ Exposing Internal IDs
 ```typescript
 // WRONG
-return { id: widget.id }; // BigInt!
+return { id: widget.id }  // BigInt!
 
 // CORRECT
-return { id: widget.uid }; // String UID
+return { id: widget.uid }  // String UID
 ```
 
 ### ❌ Direct DTO in Service

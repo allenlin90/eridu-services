@@ -134,12 +134,12 @@ Guard order: Throttler → JwtAuth → Admin → Studio (role-based)
 
 ```typescript
 // Path aliases
+import { X } from '@/lib/utils';
+
 // Subpath exports
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
-import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 import { Button } from '@eridu/ui';
-
-import { X } from '@/lib/utils';
+import { JwtVerifier } from '@eridu/auth-sdk/server/jwt/jwt-verifier';
 ```
 
 ## Mandatory Post-Implementation Verification

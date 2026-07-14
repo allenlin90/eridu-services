@@ -125,7 +125,7 @@ const { client, redirectToLogin } = createAuthClient({
 
 // Redirect to SSO provider
 await client.signIn.social({
-  provider: 'google', // or 'line'
+  provider: 'google',            // or 'line'
   callbackURL: window.location.origin,
 });
 ```

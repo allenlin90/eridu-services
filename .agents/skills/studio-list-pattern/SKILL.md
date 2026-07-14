@@ -52,7 +52,7 @@ Feature hooks own all query state. UI components receive callbacks, not query in
 // Hook exposes callbacks
 return { items, isLoading, isFetching, refetch };
 // Toolbar receives callbacks
-<FeatureToolbar onRefresh={refetch} isRefreshing={isFetching} />;
+<FeatureToolbar onRefresh={refetch} isRefreshing={isFetching} />
 ```
 
 ## Cache Management

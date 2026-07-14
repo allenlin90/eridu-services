@@ -69,22 +69,21 @@ apiClient.interceptors.response.use(
 ## Complete Error Boundary Component
 
 ```tsx
+import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Component, type ErrorInfo, type ReactNode } from 'react';
-
 import { Button } from '@eridu/ui';
 
-type Props = {
+interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
-};
+}
 
-type State = {
+interface State {
   hasError: boolean;
   error?: Error;
   errorInfo?: ErrorInfo;
-};
+}
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -159,7 +158,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ```tsx
 import { createRootRoute, Outlet } from '@tanstack/react-router';
-
 import { ErrorBoundary } from '@/components/error-boundary';
 
 export const Route = createRootRoute({
@@ -179,8 +177,8 @@ export const Route = createRootRoute({
 
 ```typescript
 import { QueryClient } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import { AxiosError } from 'axios';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -267,7 +265,6 @@ export function TaskTemplatesList({ studioId }: { studioId: string }) {
 ```typescript
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
 import { updateTaskTemplate } from '../api/task-templates.api';
 
 export function useUpdateTaskTemplate(studioId: string) {

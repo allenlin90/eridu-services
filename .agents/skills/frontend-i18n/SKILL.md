@@ -25,13 +25,13 @@ Internationalization using Paraglide JS and the shared `@eridu/i18n` package.
 
 ```tsx
 // App-specific (bracket notation for nested dot keys)
-// Shared terms (Save, Cancel, etc.)
-import * as sharedM from '@eridu/i18n';
-
 import * as m from '@/paraglide/messages';
 const title = m['dashboard.title']();
 const welcome = m['dashboard.welcomeUser']({ name: userName });
-<Button>{sharedM['common.save']()}</Button>;
+
+// Shared terms (Save, Cancel, etc.)
+import * as sharedM from '@eridu/i18n';
+<Button>{sharedM['common.save']()}</Button>
 ```
 
 ## Shared UI Abstraction (`@eridu/ui`)

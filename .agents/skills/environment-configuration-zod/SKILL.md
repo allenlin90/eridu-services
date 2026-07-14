@@ -70,8 +70,7 @@ export const CONFIG: Env = envSchema.parse({
 ```ts
 // Bad: no validation, undefined runtime checks scattered everywhere
 const dbUrl = process.env.DATABASE_URL;
-if (!dbUrl)
-  throw new Error('Oops');
+if (!dbUrl) throw new Error("Oops");
 ```
 
 ❌ **Assuming Types**

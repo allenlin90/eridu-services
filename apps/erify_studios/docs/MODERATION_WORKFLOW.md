@@ -29,7 +29,7 @@ A "loop-based moderation task" covers an entire livestream show as a single `Tas
   "metadata": {
     "loops": [
       { "id": "l1", "name": "Welcome & Intro", "durationMin": 15 },
-      { "id": "l2", "name": "Flash Sale Push", "durationMin": 15 }
+      { "id": "l2", "name": "Flash Sale Push",  "durationMin": 15 }
     ]
   },
   "items": [
@@ -114,7 +114,7 @@ The backend (`erify_api`) validates only:
 ### Mode Detection (Builder)
 `isModerationMode` is **derived, never stored**:
 ```typescript
-template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0;
+template.items.some((item) => !!item.group) || (template.metadata?.loops?.length ?? 0) > 0
 ```
 Switching to standard mode strips all `group` props and removes `metadata.loops`.
 

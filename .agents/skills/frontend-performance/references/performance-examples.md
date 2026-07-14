@@ -172,8 +172,8 @@ export const TaskCard = memo(
   (prevProps, nextProps) => {
     // Only re-render if task.id or task.updatedAt changed
     return (
-      prevProps.task.id === nextProps.task.id
-      && prevProps.task.updatedAt === nextProps.task.updatedAt
+      prevProps.task.id === nextProps.task.id &&
+      prevProps.task.updatedAt === nextProps.task.updatedAt
     );
   }
 );
@@ -300,7 +300,7 @@ export function TaskAttachment({ url, alt }: { url: string; alt: string }) {
     <img
       src={url}
       alt={alt}
-      loading="lazy" // ✅ Native lazy loading
+      loading="lazy"  // ✅ Native lazy loading
       className="w-full h-auto"
     />
   );
@@ -425,7 +425,7 @@ export default defineConfig({
 ## Web Vitals Monitoring
 
 ```typescript
-import { onCLS, onFCP, onFID, onLCP, onTTFB } from 'web-vitals';
+import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals';
 
 function sendToAnalytics(metric: any) {
   // Send to your analytics service
@@ -433,10 +433,10 @@ function sendToAnalytics(metric: any) {
 }
 
 // Monitor Core Web Vitals
-onCLS(sendToAnalytics); // Cumulative Layout Shift
-onFID(sendToAnalytics); // First Input Delay
-onFCP(sendToAnalytics); // First Contentful Paint
-onLCP(sendToAnalytics); // Largest Contentful Paint
+onCLS(sendToAnalytics);  // Cumulative Layout Shift
+onFID(sendToAnalytics);  // First Input Delay
+onFCP(sendToAnalytics);  // First Contentful Paint
+onLCP(sendToAnalytics);  // Largest Contentful Paint
 onTTFB(sendToAnalytics); // Time to First Byte
 ```
 

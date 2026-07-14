@@ -254,14 +254,13 @@ export async function apiRequest<T>(config: AxiosRequestConfig): Promise<T> {
 ### Task Templates API
 
 ```typescript
-import type {
-  CreateTaskTemplateDto,
-  PaginatedResponse,
-  TaskTemplateDto,
-  UpdateTaskTemplateDto,
-} from '@eridu/api-types';
-
 import { apiClient } from '@/lib/api/client';
+import type {
+  TaskTemplateDto,
+  CreateTaskTemplateDto,
+  UpdateTaskTemplateDto,
+  PaginatedResponse,
+} from '@eridu/api-types';
 
 // Query Keys Factory
 export const taskTemplateKeys = {
@@ -327,9 +326,8 @@ export async function deleteTaskTemplate(studioId: string, templateId: string) {
 ### Users API
 
 ```typescript
-import type { UpdateUserDto, UserDto } from '@eridu/api-types';
-
 import { apiClient } from '@/lib/api/client';
+import type { UserDto, UpdateUserDto } from '@eridu/api-types';
 
 export const userKeys = {
   all: ['users'] as const,
@@ -360,19 +358,17 @@ export async function getUser(userId: string) {
 ### Query Hooks
 
 ```typescript
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-
-import type { CreateTaskTemplateDto, UpdateTaskTemplateDto } from '@eridu/api-types';
-
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  createTaskTemplate,
-  deleteTaskTemplate,
-  getTaskTemplate,
   getTaskTemplates,
-  taskTemplateKeys,
+  getTaskTemplate,
+  createTaskTemplate,
   updateTaskTemplate,
+  deleteTaskTemplate,
+  taskTemplateKeys,
 } from '../api/task-templates.api';
+import type { CreateTaskTemplateDto, UpdateTaskTemplateDto } from '@eridu/api-types';
+import { toast } from 'sonner';
 
 // List query
 export function useTaskTemplates(studioId: string, filters: { name?: string }) {
@@ -475,7 +471,6 @@ export function useDeleteTaskTemplate(studioId: string) {
 
 ```typescript
 import { useInfiniteQuery } from '@tanstack/react-query';
-
 import { getTaskTemplates, taskTemplateKeys } from '../api/task-templates.api';
 
 export function useInfiniteTaskTemplates(
@@ -501,9 +496,8 @@ export function useInfiniteTaskTemplates(
 ## File Upload API
 
 ```typescript
-import type { FileUploadDto } from '@eridu/api-types';
-
 import { apiClient } from '@/lib/api/client';
+import type { FileUploadDto } from '@eridu/api-types';
 
 export async function uploadFile(
   file: File,
@@ -553,7 +547,6 @@ export function useFileUpload() {
 
 ```typescript
 import { useQuery } from '@tanstack/react-query';
-
 import { getTaskStatus } from '../api/tasks.api';
 
 export function useTaskStatus(taskId: string) {
@@ -578,9 +571,8 @@ export function useTaskStatus(taskId: string) {
 
 ```typescript
 import { useQuery } from '@tanstack/react-query';
-
-import { getStudioMembers } from '../api/members.api';
 import { getStudio } from '../api/studios.api';
+import { getStudioMembers } from '../api/members.api';
 
 export function useStudioWithMembers(studioId: string) {
   // First query: Get studio
@@ -593,7 +585,7 @@ export function useStudioWithMembers(studioId: string) {
   const membersQuery = useQuery({
     queryKey: ['studio-members', studioId],
     queryFn: () => getStudioMembers(studioId),
-    enabled: !!studioQuery.data, // Only run when studio is loaded
+    enabled: !!studioQuery.data,  // Only run when studio is loaded
   });
 
   return {
@@ -611,7 +603,6 @@ export function useStudioWithMembers(studioId: string) {
 
 ```typescript
 import { useQueries } from '@tanstack/react-query';
-
 import { getTaskTemplate } from '../api/task-templates.api';
 
 export function useMultipleTaskTemplates(
@@ -642,9 +633,8 @@ Use this pattern for all API fetchers that are called from TanStack Query hooks.
 ### Fetcher with Optional Signal
 
 ```typescript
-import type { PaginatedResponse, TaskTemplateDto } from '@eridu/api-types';
-
 import { apiClient } from '@/lib/api/client';
+import type { PaginatedResponse, TaskTemplateDto } from '@eridu/api-types';
 
 // Accept signal as an optional second-level options object
 export async function getTaskTemplates(
@@ -664,7 +654,6 @@ export async function getTaskTemplates(
 
 ```typescript
 import { useInfiniteQuery, useMemo } from '@tanstack/react-query';
-
 import { getTaskTemplates, taskTemplateKeys } from '../api/task-templates.api';
 
 export function useInfiniteTaskTemplates(studioId: string, search: string) {
