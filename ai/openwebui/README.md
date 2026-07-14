@@ -30,6 +30,7 @@ Open WebUI skills in this directory should not compete with that system. They sh
 Relevant existing sources include:
 
 - `.claude/memory/skills-integration.md`
+- `.agents/skills/openwebui-extensibility-design/SKILL.md` — which mechanism (Function, Tool, Tool Server, or legacy Pipeline) a new capability should use, and where its source lives
 - `.agents/skills/operations-review-surface/SKILL.md`
 - `.agents/skills/show-production-lifecycle/SKILL.md`
 - `.agents/skills/table-view-pattern/SKILL.md`

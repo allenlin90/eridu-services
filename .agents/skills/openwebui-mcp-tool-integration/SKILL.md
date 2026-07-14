@@ -109,8 +109,9 @@ underlying MCP URL:
   re-verify the connection — Open WebUI caches the discovered spec.
 - Out of scope: Open WebUI's separate "Pipelines" plugin framework (custom filter/pipe/action
   functions run as a companion service) is a different extensibility mechanism from Tool Servers.
-  Consult the official Open WebUI docs directly if a task specifically needs Pipelines rather than
-  an MCP/OpenAPI tool server — this skill doesn't cover it.
+  If a task needs a mechanism other than an MCP/OpenAPI tool server — a Function, a Tool, or
+  (rarely) Pipelines — use [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md)
+  to choose it; this skill only covers Tool Server connections.
 
 ## Quality gate
 
@@ -124,6 +125,7 @@ underlying MCP URL:
 
 ## Related Skills
 
+- [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) — decides whether a capability should be a Tool Server at all, vs. a Function or Tool
 - [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — auth and call mechanics this skill builds on
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — grant groups access to the tools this server exposes
 - [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) — MCP decision path and governance
