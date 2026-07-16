@@ -1,158 +1,143 @@
-import os
 import json
+import os
+import sys
 import urllib.request
 from urllib.error import HTTPError
 
-# Load environment variables
-env = {}
-env_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(env_path):
-    with open(env_path) as f:
-        for line in f:
-            if '=' in line:
-                k, v = line.strip().split('=', 1)
-                env[k.strip()] = v.strip()
+BASE_DIR = os.path.dirname(__file__)
+SYNCED_DIR = os.path.join(BASE_DIR, "synced")
+KNOWLEDGE_ID = "0f0de3c0-7168-4871-ab99-7ed95af8f953"
+FUNCTION_ID = "company_wiki_sync"
 
-api_key = env.get('OPEN_WEBUI_API_KEY')
-host = env.get('OPEN_WEBUI_HOST')
 
-if not api_key or not host:
-    print("Error: OPEN_WEBUI_API_KEY or OPEN_WEBUI_HOST not found in .env")
-    exit(1)
+class PullConfigError(RuntimeError):
+    pass
 
-headers = {
-    'Authorization': f'Bearer {api_key}',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-}
 
-def api_get(path):
-    url = f"{host}{path}"
-    req = urllib.request.Request(url, headers=headers)
+def load_env():
+    env = dict(os.environ)
+    env_path = os.path.join(BASE_DIR, ".env")
+    if os.path.exists(env_path):
+        with open(env_path, encoding="utf-8") as file:
+            for line in file:
+                if "=" in line:
+                    key, value = line.strip().split("=", 1)
+                    env[key.strip()] = value.strip()
+    return env
+
+
+def api_get(host, headers, path):
+    request = urllib.request.Request(f"{host}{path}", headers=headers)
     try:
-        with urllib.request.urlopen(req) as res:
-            return json.loads(res.read().decode())
-    except HTTPError as e:
-        print(f"HTTP Error on GET {path}: {e.code} - {e.reason}")
-        return None
-    except Exception as e:
-        print(f"Error on GET {path}: {e}")
-        return None
+        with urllib.request.urlopen(request) as response:
+            return json.loads(response.read().decode())
+    except HTTPError as error:
+        raise PullConfigError(
+            f"GET {path} failed: HTTP {error.code} {error.reason}"
+        ) from error
+    except Exception as error:
+        raise PullConfigError(f"GET {path} failed: {error}") from error
 
-# Destination directory
-synced_dir = os.path.join(os.path.dirname(__file__), 'synced')
-os.makedirs(synced_dir, exist_ok=True)
 
-# 1. Pull Models
-print("Pulling models...")
-models = api_get('/api/v1/models/export')
-if models:
-    # Sort models by ID for deterministic output
-    models = sorted(models, key=lambda m: m['id'])
-    with open(os.path.join(synced_dir, 'models.json'), 'w') as f:
-        json.dump(models, f, indent=4)
-    print("Saved models.json")
+def write_json(filename, data, indent=4):
+    with open(os.path.join(SYNCED_DIR, filename), "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=indent)
+        file.write("\n")
 
-# 2. Pull Groups
-print("Pulling groups...")
-groups = api_get('/api/v1/groups/')
-if groups:
-    # Sort groups by ID for deterministic output
-    groups = sorted(groups, key=lambda g: g['id'])
-    with open(os.path.join(synced_dir, 'groups.json'), 'w') as f:
-        json.dump(groups, f, indent=4)
-    print("Saved groups.json")
 
-# 3. Pull Tool Servers
-print("Pulling tool servers...")
-tool_servers = api_get('/api/v1/configs/tool_servers')
-if tool_servers:
-    with open(os.path.join(synced_dir, 'tool-servers.json'), 'w') as f:
-        json.dump(tool_servers, f, indent=4)
-    print("Saved tool-servers.json")
+def main():
+    env = load_env()
+    api_key = env.get("OPEN_WEBUI_API_KEY")
+    host = env.get("OPEN_WEBUI_HOST")
+    if not api_key or not host:
+        raise PullConfigError(
+            "OPEN_WEBUI_API_KEY or OPEN_WEBUI_HOST not found in the environment or .env"
+        )
 
-# 4. Pull Default Permissions
-print("Pulling default permissions...")
-default_perms = api_get('/api/v1/users/default/permissions')
-if default_perms:
-    with open(os.path.join(synced_dir, 'default-permissions.json'), 'w') as f:
-        json.dump(default_perms, f, indent=4)
-    print("Saved default-permissions.json")
-
-# 5. Pull Knowledge Collection
-print("Pulling knowledge collection...")
-knowledge_id = "0f0de3c0-7168-4871-ab99-7ed95af8f953"
-knowledge = api_get(f'/api/v1/knowledge/{knowledge_id}')
-if knowledge:
-    with open(os.path.join(synced_dir, 'knowledge.json'), 'w') as f:
-        json.dump(knowledge, f, indent=4)
-    print("Saved knowledge.json")
-
-# 6. Pull Knowledge Collection Files
-print("Pulling knowledge files...")
-knowledge_files = api_get(f'/api/v1/knowledge/{knowledge_id}/files')
-if knowledge_files:
-    # Sort files by ID for deterministic output
-    if 'items' in knowledge_files:
-        knowledge_files['items'] = sorted(knowledge_files['items'], key=lambda f: f.get('id', ''))
-    with open(os.path.join(synced_dir, 'knowledge-files.json'), 'w') as f:
-        json.dump(knowledge_files, f, indent=4)
-    print("Saved knowledge-files.json")
-
-# 7. Pull Function and Valves
-print("Pulling function and valves...")
-func_id = "company_wiki_sync"
-func = api_get(f'/api/v1/functions/id/{func_id}')
-valves = api_get(f'/api/v1/functions/id/{func_id}/valves')
-if func:
-    # Build synced functions.json with redacted valves API key
-    func_data = {
-        "id": func.get("id"),
-        "name": func.get("name"),
-        "type": func.get("type"),
-        "is_active": func.get("is_active"),
-        "is_global": func.get("is_global"),
-        "meta": func.get("meta"),
-        "valves": valves or {},
-        "note": "content omitted here -- canonical source is ai/openwebui/functions/sync-pipe.py, applied via POST /api/v1/functions/id/{id}/update per that file's deploy instructions."
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "User-Agent": "eridu-services-openwebui-config-pull/1.0",
     }
-    if "api_key" in func_data["valves"]:
-        func_data["valves"]["api_key"] = "<redacted, see ai/openwebui/.env>"
-    
-    with open(os.path.join(synced_dir, 'functions.json'), 'w') as f:
-        json.dump(func_data, f, indent=2)
-    print("Saved functions.json")
 
-# 8. Pull Skills
-print("Pulling skills...")
-skills = api_get('/api/v1/skills/export')
-if skills:
-    skills_dir = os.path.join(synced_dir, 'skills')
+    endpoints = {
+        "models": "/api/v1/models/export",
+        "groups": "/api/v1/groups/",
+        "tool_servers": "/api/v1/configs/tool_servers",
+        "default_permissions": "/api/v1/users/default/permissions",
+        "knowledge": f"/api/v1/knowledge/{KNOWLEDGE_ID}",
+        "knowledge_files": f"/api/v1/knowledge/{KNOWLEDGE_ID}/files",
+        "function": f"/api/v1/functions/id/{FUNCTION_ID}",
+        "valves": f"/api/v1/functions/id/{FUNCTION_ID}/valves",
+        "skills": "/api/v1/skills/export",
+    }
+
+    pulled = {}
+    for name, path in endpoints.items():
+        print(f"Pulling {name.replace('_', ' ')}...")
+        pulled[name] = api_get(host, headers, path)
+
+    for name in ("models", "groups", "skills"):
+        if not isinstance(pulled[name], list) or not pulled[name]:
+            raise PullConfigError(f"{name.replace('_', ' ')} export was empty")
+
+    models = sorted(pulled["models"], key=lambda model: model["id"])
+    groups = sorted(pulled["groups"], key=lambda group: group["id"])
+    knowledge_files = pulled["knowledge_files"]
+    if "items" in knowledge_files:
+        knowledge_files["items"] = sorted(
+            knowledge_files["items"], key=lambda file: file.get("id", "")
+        )
+
+    function_data = {
+        "id": pulled["function"].get("id"),
+        "name": pulled["function"].get("name"),
+        "type": pulled["function"].get("type"),
+        "is_active": pulled["function"].get("is_active"),
+        "is_global": pulled["function"].get("is_global"),
+        "meta": pulled["function"].get("meta"),
+        "valves": pulled["valves"],
+        "note": "content omitted here -- canonical source is ai/openwebui/functions/sync-pipe.py, applied via POST /api/v1/functions/id/{id}/update per that file's deploy instructions.",
+    }
+    if "api_key" in function_data["valves"]:
+        function_data["valves"]["api_key"] = "<redacted, see ai/openwebui/.env>"
+
+    os.makedirs(SYNCED_DIR, exist_ok=True)
+    write_json("models.json", models)
+    write_json("groups.json", groups)
+    write_json("tool-servers.json", pulled["tool_servers"])
+    write_json("default-permissions.json", pulled["default_permissions"])
+    write_json("knowledge.json", pulled["knowledge"])
+    write_json("knowledge-files.json", knowledge_files)
+    write_json("functions.json", function_data, indent=2)
+
+    skills_dir = os.path.join(SYNCED_DIR, "skills")
     os.makedirs(skills_dir, exist_ok=True)
-    
-    # Track skill files we write so we can clean up any deleted skills
     written_files = set()
-    
+    skills = pulled["skills"]
     for skill in skills:
-        skill_id = skill.get('id')
-        if skill_id == 'citation-escalation-contract':
-            # Tracked separately, not duplicated in synced/skills/
+        skill_id = skill.get("id")
+        if skill_id == "citation-escalation-contract":
             continue
-            
-        content = skill.get('content', '')
-        # Write content verbatim
+        content = skill.get("content", "")
         filename = f"{skill_id}.md"
         filepath = os.path.join(skills_dir, filename)
-        with open(filepath, 'w') as f:
-            f.write(content)
+        with open(filepath, "w", encoding="utf-8") as file:
+            file.write(content)
         written_files.add(filename)
-        
-    # Clean up any MD files in synced/skills/ that are no longer present in export
+
     for filename in os.listdir(skills_dir):
-        if filename.endswith('.md') and filename not in written_files:
-            # Check if it is citation-escalation-contract (which we skip writing)
-            if filename == 'citation-escalation-contract.md':
+        if filename.endswith(".md") and filename not in written_files:
+            if filename == "citation-escalation-contract.md":
                 continue
             os.remove(os.path.join(skills_dir, filename))
             print(f"Removed stale skill file: {filename}")
-            
+
     print(f"Saved {len(written_files)} skill files to synced/skills/")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except PullConfigError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)
