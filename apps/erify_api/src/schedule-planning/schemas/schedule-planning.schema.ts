@@ -117,6 +117,20 @@ export const validationResultSchema = z.object({
       showTempId: z.string().optional(),
     }),
   ),
+  /**
+   * Non-blocking informational findings — never flip `isValid`. Whatever
+   * process reviews the /validate response before triggering /publish sees
+   * these the same way it sees errors, without being blocked by them.
+   */
+  info: z
+    .array(
+      z.object({
+        type: z.enum(['terminal_show_creator_backfill_eligible']),
+        message: z.string(),
+        count: z.number().int().nonnegative(),
+      }),
+    )
+    .optional(),
 });
 
 // DTOs

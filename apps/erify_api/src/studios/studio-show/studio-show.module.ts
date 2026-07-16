@@ -6,6 +6,7 @@ import { StudioShowManagementService } from './studio-show-management.service';
 import { AuditModule } from '@/models/audit/audit.module';
 import { ClientMechanicModule } from '@/models/client-mechanic/client-mechanic.module';
 import { PlatformModule } from '@/models/platform/platform.module';
+import { PublishRunModule } from '@/models/publish-run/publish-run.module';
 import { ScheduleModule } from '@/models/schedule/schedule.module';
 import { ScheduleConflictModule } from '@/models/schedule-conflict/schedule-conflict.module';
 import { ShowModule } from '@/models/show/show.module';
@@ -32,6 +33,7 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     ScheduleModule,
     ScheduleConflictModule,
     PlatformModule,
+    PublishRunModule,
     ShowPlatformModule,
     ClientMechanicModule,
     UserModule,

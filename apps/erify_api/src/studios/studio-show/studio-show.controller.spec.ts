@@ -50,6 +50,8 @@ describe('studioShowController', () => {
     resolveShowCancellation: jest.fn(),
     getCancellationStatus: jest.fn(),
     listSchedulePublishImpacts: jest.fn(),
+    getSchedulePublishImpactSummary: jest.fn(),
+    listPublishRuns: jest.fn(),
     listShowAudits: jest.fn(),
     resolveScheduleConflict: jest.fn(),
   };
@@ -382,6 +384,66 @@ describe('studioShowController', () => {
 
     it('restricts schedule publish impacts to ADMIN and MANAGER', () => {
       const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.schedulePublishImpacts);
+      expect(roles).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+      ]);
+    });
+  });
+
+  describe('schedulePublishImpactSummary', () => {
+    it('returns the manager KPI summary for the same filter set', async () => {
+      const summary = {
+        total: 6,
+        confirmed_future_updated: 3,
+        confirmed_future_pending_resolution: 1,
+        stale_conflict_pending: 2,
+        past_show_creator_backfilled: 0,
+      };
+      studioShowManagementServiceMock.getSchedulePublishImpactSummary.mockResolvedValue(summary);
+
+      const query = { impact_kind: 'confirmed_future_updated' };
+      const result = await controller.schedulePublishImpactSummary('std_123', query as any);
+
+      expect(studioShowManagementServiceMock.getSchedulePublishImpactSummary).toHaveBeenCalledWith('std_123', query);
+      expect(result).toEqual(summary);
+    });
+
+    it('restricts the summary to ADMIN and MANAGER', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.schedulePublishImpactSummary);
+      expect(roles).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+      ]);
+    });
+  });
+
+  describe('publishRuns', () => {
+    it('returns the lean paginated run list', async () => {
+      const expected = {
+        items: [
+          {
+            id: 'prun_abc',
+            source: 'google_sheets_sync',
+            schedule_id: 'schedule_123',
+            triggered_by: { id: 'user_123', name: 'Planner' },
+            summary: { shows_created: 2 },
+            created_at: '2026-07-15T08:00:00.000Z',
+          },
+        ],
+        total: 1,
+      };
+      studioShowManagementServiceMock.listPublishRuns.mockResolvedValue(expected);
+
+      const result = await controller.publishRuns('std_123', { page: 1, limit: 25 } as any);
+
+      expect(studioShowManagementServiceMock.listPublishRuns).toHaveBeenCalledWith('std_123', { page: 1, limit: 25 });
+      expect(result.data).toEqual(expected.items);
+      expect(result.meta.total).toBe(1);
+    });
+
+    it('restricts publish runs to ADMIN and MANAGER', () => {
+      const roles = Reflect.getMetadata(STUDIO_ROLES_KEY, StudioShowController.prototype.publishRuns);
       expect(roles).toEqual([
         STUDIO_ROLE.ADMIN,
         STUDIO_ROLE.MANAGER,

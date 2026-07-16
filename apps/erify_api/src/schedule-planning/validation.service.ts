@@ -133,10 +133,79 @@ export class ValidationService {
     const conflictErrors = this.checkInternalConflicts(shows);
     errors.push(...conflictErrors);
 
+    // Non-blocking: report how many terminal shows in this payload would get
+    // a creator-mapping backfill on publish (see PublishingService's
+    // terminal-show backfill step). Informational only — never flips isValid.
+    const backfillEligibleCount = await this.countBackfillEligibleTerminalShows(shows, uidMaps, prismaClient);
+
     return {
       isValid: errors.length === 0,
       errors,
+      ...(backfillEligibleCount > 0
+        ? {
+            info: [
+              {
+                type: 'terminal_show_creator_backfill_eligible' as const,
+                message: `${backfillEligibleCount} past/terminal show(s) with no creator mapping will have creator mappings backfilled from this payload on publish`,
+                count: backfillEligibleCount,
+              },
+            ],
+          }
+        : {}),
     };
+  }
+
+  /**
+   * Mirrors the publish-time eligibility of the terminal-show creator-mapping
+   * backfill: an incoming row with `creators`, matching an existing show by
+   * `(client_id, external_id)` whose status is preserved during updates
+   * (LIVE/COMPLETED), where the show has zero `ShowCreator` rows —
+   * soft-deleted included, matching the fill-gap-only publish rule.
+   */
+  private async countBackfillEligibleTerminalShows(
+    shows: ShowPlanItem[],
+    uidMaps: ValidationUidMaps,
+    prismaClient: SchedulePlanningPrismaClient,
+  ): Promise<number> {
+    const candidates = shows.filter((show) => (show.creators?.length ?? 0) > 0 && show.externalId);
+    if (candidates.length === 0) {
+      return 0;
+    }
+
+    const clientIds = Array.from(new Set(
+      candidates
+        .map((show) => uidMaps.clients.get(show.clientId))
+        .filter((id): id is bigint => id !== undefined),
+    ));
+    if (clientIds.length === 0) {
+      return 0;
+    }
+
+    const matchingShows = await prismaClient.show.findMany({
+      where: {
+        clientId: { in: clientIds },
+        externalId: { in: candidates.map((show) => show.externalId) },
+        deletedAt: null,
+        showStatus: { systemKey: { in: ['LIVE', 'COMPLETED'] } },
+      },
+      select: {
+        id: true,
+        clientId: true,
+        externalId: true,
+        _count: { select: { showCreators: true } },
+      },
+    });
+
+    const zeroMappingByKey = new Set(
+      matchingShows
+        .filter((show) => show._count.showCreators === 0)
+        .map((show) => `${show.clientId.toString()}:${show.externalId}`),
+    );
+
+    return candidates.filter((show) => {
+      const clientId = uidMaps.clients.get(show.clientId);
+      return clientId !== undefined && zeroMappingByKey.has(`${clientId.toString()}:${show.externalId}`);
+    }).length;
   }
 
   private async validateExternalIdRules(

@@ -28,6 +28,7 @@ model User {
   createdTaskReportDefinitions TaskReportDefinition[] @relation("TaskReportDefinitionCreatedBy")
   createdCompensationLineItems CompensationLineItem[] @relation("CompensationLineItemCreatedBy")
   audits                       Audit[]
+  publishRuns                  PublishRun[]           @relation("PublishRunTrigger")
   createdAt                    DateTime               @default(now()) @map("created_at")
   updatedAt                    DateTime               @updatedAt @map("updated_at")
   deletedAt                    DateTime?              @map("deleted_at")
@@ -299,6 +300,7 @@ model Studio {
   taskTargets           TaskTarget[]
   studioShifts          StudioShift[]
   compensationLineItems CompensationLineItem[]
+  publishRuns           PublishRun[]
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
   deletedAt             DateTime?              @map("deleted_at")
@@ -574,6 +576,7 @@ model Schedule {
   publishedByUser User?              @relation("SchedulePublisher", fields: [publishedBy], references: [id], onDelete: SetNull)
   shows           Show[] // Shows created from this schedule
   snapshots       ScheduleSnapshot[] // Version history
+  publishRuns     PublishRun[]
   createdAt       DateTime           @default(now()) @map("created_at")
   updatedAt       DateTime           @updatedAt @map("updated_at")
   deletedAt       DateTime?          @map("deleted_at")
@@ -601,6 +604,34 @@ model Schedule {
   @@index([status, startDate, endDate, deletedAt]) // Status-filtered monthly overview
   @@index([publishedAt, deletedAt]) // Published date queries
   @@map("schedules")
+}
+
+// One row per schedule publish invocation. Append-only (no soft delete):
+// like Audit, this is an audit-grade record — impact Audit rows reference it
+// via Audit.publishRunId so a publish is a first-class, filterable batch unit.
+model PublishRun {
+  id            BigInt   @id @default(autoincrement())
+  uid           String   @unique
+  // Open, extensible trigger source: "google_sheets_sync" | "studio_native_snapshot".
+  // String (not a Prisma enum) so adding a future trigger type is not a migration,
+  // mirroring Schedule.status / Audit.action.
+  source        String
+  // Mirrors PublishScheduleSummary counts captured at the end of the publish call.
+  summary       Json     @default("{}")
+  scheduleId    BigInt   @map("schedule_id")
+  schedule      Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  // Nullable to mirror Schedule.studioId — a schedule without a studio can still publish.
+  studioId      BigInt?  @map("studio_id")
+  studio        Studio?  @relation(fields: [studioId], references: [id], onDelete: SetNull)
+  triggeredById BigInt?  @map("triggered_by_id")
+  triggeredBy   User?    @relation("PublishRunTrigger", fields: [triggeredById], references: [id], onDelete: SetNull)
+  audits        Audit[]
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([studioId, createdAt])
+  @@index([scheduleId])
+  @@index([triggeredById])
+  @@map("publish_runs")
 }
 
 // Immutable snapshot for version history
@@ -866,12 +897,17 @@ model Audit {
   reason    String?       @map("reason")
   // Stores old/new values, ingestion_source, task_uid, task_field_id, etc.
   metadata  Json          @default("{}")
+  // Set on schedule_publish_impact rows written during a publish call; null for
+  // all other audits and for impact rows that predate PublishRun (no backfill).
+  publishRunId BigInt?     @map("publish_run_id")
+  publishRun   PublishRun? @relation(fields: [publishRunId], references: [id], onDelete: SetNull)
   targets   AuditTarget[]
   createdAt DateTime      @default(now()) @map("created_at")
 
   @@index([action])
   @@index([actorId])
   @@index([createdAt])
+  @@index([publishRunId])
   @@map("audits")
 }
 

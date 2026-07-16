@@ -142,6 +142,7 @@ export const schedulePublishImpactKindSchema = z.enum([
   'confirmed_future_updated',
   'confirmed_future_pending_resolution',
   'stale_conflict',
+  'past_show_creator_backfilled',
 ]);
 
 export const scheduleConflictTypeSchema = z.enum(['update_held_back', 'removal_held_back']);
@@ -231,6 +232,45 @@ export const schedulePublishImpactRowSchema = z.object({
     client_id: z.string().nullable(),
     client_name: z.string().nullable(),
   }),
+  created_at: z.iso.datetime(),
+});
+
+/**
+ * Aggregate counts for the schedule-publish-impacts KPI cards. Computed
+ * server-side over the same filtered query as the paginated rows, so the
+ * cards reflect the full result set instead of the current page.
+ * `stale_conflict_pending` counts currently-pending conflicts (the only
+ * stale rows the review queue serves).
+ */
+export const schedulePublishImpactSummarySchema = z.object({
+  total: z.number().int().nonnegative(),
+  confirmed_future_updated: z.number().int().nonnegative(),
+  confirmed_future_pending_resolution: z.number().int().nonnegative(),
+  stale_conflict_pending: z.number().int().nonnegative(),
+  past_show_creator_backfilled: z.number().int().nonnegative(),
+});
+
+/**
+ * One persisted schedule publish invocation (`PublishRun`). Lean list row —
+ * impact rows are fetched separately by filtering the impacts list with
+ * `publish_run_id`, never nested here.
+ */
+export const publishRunSourceSchema = z.enum([
+  'google_sheets_sync',
+  'studio_native_snapshot',
+]);
+
+export const publishRunRowSchema = z.object({
+  id: z.string(),
+  source: publishRunSourceSchema,
+  schedule_id: z.string().nullable(),
+  triggered_by: z
+    .object({
+      id: z.string(),
+      name: z.string().nullable(),
+    })
+    .nullable(),
+  summary: z.record(z.string(), z.number()).default({}),
   created_at: z.iso.datetime(),
 });
 

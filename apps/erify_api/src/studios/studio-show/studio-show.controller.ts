@@ -16,7 +16,11 @@ import { z } from 'zod';
 import { auditApiResponseSchema } from '@eridu/api-types/audits';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
+  publishRunRowSchema,
+  scheduleConflictResolutionStatusSchema,
+  schedulePublishImpactKindSchema,
   schedulePublishImpactRowSchema,
+  schedulePublishImpactSummarySchema,
   showRunReviewCreatorExceptionSchema,
   showRunReviewIncompleteTaskSchema,
   showRunReviewShowsRangeRowSchema,
@@ -200,6 +204,15 @@ const schedulePublishImpactQuerySchema = z
     limit: z.coerce.number().int().min(1).max(100).optional().default(25),
     start_date_from: isoDateTimeSchema.optional(),
     start_date_to: isoDateTimeSchema.optional(),
+    changed_from: isoDateTimeSchema.optional(),
+    changed_to: isoDateTimeSchema.optional(),
+    impact_kind: z
+      .union([schedulePublishImpactKindSchema, z.array(schedulePublishImpactKindSchema)])
+      .optional(),
+    resolution_status: z
+      .union([scheduleConflictResolutionStatusSchema, z.array(scheduleConflictResolutionStatusSchema)])
+      .optional(),
+    publish_run_id: z.string().startsWith('prun_').optional(),
   })
   .refine(
     (data) => {
@@ -212,9 +225,28 @@ const schedulePublishImpactQuerySchema = z
       message: 'start_date_to must be after or equal to start_date_from',
       path: ['start_date_to'],
     },
+  )
+  .refine(
+    (data) => {
+      if (!data.changed_from || !data.changed_to) {
+        return true;
+      }
+      return new Date(data.changed_to) >= new Date(data.changed_from);
+    },
+    {
+      message: 'changed_to must be after or equal to changed_from',
+      path: ['changed_to'],
+    },
   );
 
 export class SchedulePublishImpactQueryDto extends createZodDto(schedulePublishImpactQuerySchema) {}
+
+const publishRunsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(25),
+});
+
+export class PublishRunsQueryDto extends createZodDto(publishRunsQuerySchema) {}
 
 // `cancellationStatusResponseSchema` is snake_case with ISO date-time strings;
 // `ShowCancellationGateService.getCancellationStatus` returns camelCase with
@@ -342,6 +374,29 @@ export class StudioShowController extends BaseStudioController {
     @Query() query: SchedulePublishImpactQueryDto,
   ) {
     const { items, total } = await this.studioShowManagementService.listSchedulePublishImpacts(studioId, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @Get('schedule-publish-impacts/summary')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  @ZodResponse(schedulePublishImpactSummarySchema)
+  async schedulePublishImpactSummary(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: SchedulePublishImpactQueryDto,
+  ) {
+    return this.studioShowManagementService.getSchedulePublishImpactSummary(studioId, query);
+  }
+
+  @Get('publish-runs')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  @ZodPaginatedResponse(publishRunRowSchema)
+  async publishRuns(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PublishRunsQueryDto,
+  ) {
+    const { items, total } = await this.studioShowManagementService.listPublishRuns(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 

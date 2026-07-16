@@ -13,6 +13,7 @@ import { PublishingRelationSyncService } from './publishing-relation-sync.servic
 import { ValidationService } from './validation.service';
 
 import { AuditService } from '@/models/audit/audit.service';
+import { PublishRunService } from '@/models/publish-run/publish-run.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import { ScheduleSnapshotService } from '@/models/schedule-snapshot/schedule-snapshot.service';
@@ -28,7 +29,7 @@ import { UtilityService } from '@/utility/utility.service';
 let mockTransactionClient: {
   $executeRaw: jest.Mock;
   show: { createMany: jest.Mock; findMany: jest.Mock; update: jest.Mock };
-  showCreator: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
+  showCreator: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock; count: jest.Mock };
   showPlatform: { findMany: jest.Mock; create: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
   taskTarget: { findFirst: jest.Mock; findMany: jest.Mock; updateMany: jest.Mock };
   task: { updateMany: jest.Mock };
@@ -69,6 +70,7 @@ describe('publishingService', () => {
   let auditService: jest.Mocked<AuditService>;
   let scheduleConflictService: jest.Mocked<ScheduleConflictService>;
   let taskTargetService: jest.Mocked<TaskTargetService>;
+  let publishRunService: jest.Mocked<PublishRunService>;
   let getScheduleByIdMock: jest.Mock;
   let validateScheduleMock: jest.Mock;
   let createScheduleSnapshotMock: jest.Mock;
@@ -193,6 +195,7 @@ describe('publishingService', () => {
         create: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn(),
+        count: jest.fn(),
       },
       showPlatform: {
         findMany: jest.fn(),
@@ -322,6 +325,13 @@ describe('publishingService', () => {
             countActiveByShowId: jest.fn().mockResolvedValue(0),
           },
         },
+        {
+          provide: PublishRunService,
+          useValue: {
+            createPublishRun: jest.fn().mockResolvedValue({ id: BigInt(555), uid: 'prun_test123' }),
+            updatePublishRunSummary: jest.fn().mockResolvedValue({}),
+          },
+        },
       ],
     }).compile();
 
@@ -336,6 +346,7 @@ describe('publishingService', () => {
     auditService = module.get(AuditService);
     scheduleConflictService = module.get(ScheduleConflictService);
     taskTargetService = module.get(TaskTargetService);
+    publishRunService = module.get(PublishRunService);
 
     // Store mock functions to avoid unbound-method issues
     getScheduleByIdMock = scheduleService.getScheduleById as jest.Mock;
@@ -1122,6 +1133,195 @@ describe('publishingService', () => {
       expect(result.publishSummary.shows_pending_resolution).toBe(1);
       expect(result.publishSummary.confirmed_shows_pending_resolution).toBe(1);
       expect(result.publishSummary.publish_impacts_recorded).toBe(1);
+    });
+
+    describe('publish run tracking', () => {
+      it('creates exactly one PublishRun per publish call and writes the final summary back', async () => {
+        const result = await service.publish(scheduleUid, version, userId);
+
+        expect(publishRunService.createPublishRun).toHaveBeenCalledTimes(1);
+        expect(publishRunService.createPublishRun).toHaveBeenCalledWith({
+          scheduleId: mockSchedule.id,
+          studioId: null,
+          triggeredById: userId,
+          source: 'google_sheets_sync',
+        });
+        expect(publishRunService.updatePublishRunSummary).toHaveBeenCalledTimes(1);
+        expect(publishRunService.updatePublishRunSummary).toHaveBeenCalledWith(
+          BigInt(555),
+          expect.objectContaining({
+            shows_created: 2,
+            shows_cancelled: 0,
+          }),
+        );
+        expect(result.publishSummary.shows_created).toBe(2);
+      });
+
+      it('stamps the run id on schedule_publish_impact audit rows', async () => {
+        const confirmedShow = {
+          id: BigInt(101),
+          uid: 'show_confirmed_missing',
+          externalId: 'show_missing',
+          clientId: BigInt(1),
+          scheduleId: mockSchedule.id,
+          studioId: null,
+          studioRoomId: BigInt(1),
+          showTypeId: BigInt(1),
+          showStatusId: BigInt(1),
+          showStandardId: BigInt(1),
+          name: 'Missing Confirmed Show',
+          startTime: new Date('2024-01-03T10:00:00Z'),
+          endTime: new Date('2024-01-03T12:00:00Z'),
+          metadata: {},
+          deletedAt: null,
+          showStatus: {
+            systemKey: 'CONFIRMED',
+          },
+        };
+
+        getScheduleByIdMock.mockResolvedValue({
+          ...mockSchedule,
+          planDocument: {
+            ...mockPlanDocument,
+            shows: [],
+          },
+        });
+        mockTransactionClient.show.findMany
+          .mockReset()
+          .mockResolvedValueOnce([confirmedShow]);
+
+        await service.publish(scheduleUid, version, userId);
+
+        expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+          publishRunId: BigInt(555),
+          metadata: expect.objectContaining({
+            impact_kind: 'confirmed_future_pending_resolution',
+          }),
+        }));
+      });
+
+      it('passes the run id into schedule-conflict reconciliation', async () => {
+        const liveShow = {
+          id: BigInt(102),
+          uid: 'show_live_missing',
+          externalId: 'show_live',
+          clientId: BigInt(1),
+          scheduleId: mockSchedule.id,
+          studioId: null,
+          studioRoomId: BigInt(1),
+          showTypeId: BigInt(1),
+          showStatusId: BigInt(1),
+          showStandardId: BigInt(1),
+          name: 'Live Missing Show',
+          startTime: new Date('2024-01-03T10:00:00Z'),
+          endTime: new Date('2024-01-03T12:00:00Z'),
+          metadata: {},
+          deletedAt: null,
+          actualStartTime: null,
+          actualEndTime: null,
+          showStatus: {
+            systemKey: 'LIVE',
+          },
+        };
+
+        getScheduleByIdMock.mockResolvedValue({
+          ...mockSchedule,
+          planDocument: {
+            ...mockPlanDocument,
+            shows: [],
+          },
+        });
+        mockTransactionClient.show.findMany
+          .mockReset()
+          .mockResolvedValueOnce([liveShow]);
+
+        await service.publish(scheduleUid, version, userId);
+
+        expect(scheduleConflictService.reconcileShowConflict).toHaveBeenCalledWith(
+          expect.objectContaining({
+            showId: BigInt(102),
+            publishRunId: BigInt(555),
+          }),
+        );
+      });
+    });
+
+    describe('terminal-show creator-mapping backfill', () => {
+      const completedShow = {
+        id: BigInt(201),
+        uid: 'show_completed',
+        externalId: 'show_temp_1',
+        clientId: BigInt(1),
+        scheduleId: mockSchedule.id,
+        studioId: null,
+        studioRoomId: BigInt(1),
+        showTypeId: BigInt(1),
+        showStatusId: BigInt(1),
+        showStandardId: BigInt(1),
+        name: 'Completed Show',
+        startTime: new Date('2024-01-01T10:00:00Z'),
+        endTime: new Date('2024-01-01T12:00:00Z'),
+        metadata: { custom: 'data1' },
+        deletedAt: null,
+        actualStartTime: null,
+        actualEndTime: null,
+        showStatus: { systemKey: 'COMPLETED' },
+      };
+
+      beforeEach(() => {
+        // One payload row (with creators) matching an existing COMPLETED show:
+        // the routine update loop preserves it, making it a backfill candidate.
+        getScheduleByIdMock.mockResolvedValue({
+          ...mockSchedule,
+          planDocument: { ...mockPlanDocument, shows: [mockPlanDocument.shows[0]] },
+        });
+        mockTransactionClient.show.findMany
+          .mockReset()
+          .mockResolvedValueOnce([completedShow]) // current schedule shows
+          .mockResolvedValueOnce([completedShow]); // matching shows by external identity
+      });
+
+      it('backfills creator mappings for a terminal show with zero mappings and records the impact', async () => {
+        mockTransactionClient.showCreator.count.mockResolvedValue(0);
+
+        const result = await service.publish(scheduleUid, version, userId);
+
+        expect(mockTransactionClient.showCreator.count).toHaveBeenCalledWith({
+          where: { showId: BigInt(201) },
+        });
+        expect(mockTransactionClient.showCreator.create).toHaveBeenCalledTimes(1);
+        expect(mockTransactionClient.showCreator.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            showId: BigInt(201),
+            creatorId: BigInt(1),
+            note: 'Creator Note 1',
+          }),
+        });
+        expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+          publishRunId: BigInt(555),
+          metadata: expect.objectContaining({
+            impact_kind: 'past_show_creator_backfilled',
+            relation_changes: expect.objectContaining({ creator_links_added: 1 }),
+          }),
+          targets: [{ targetType: 'SHOW', targetId: BigInt(201) }],
+        }));
+        expect(result.publishSummary.creator_mappings_backfilled).toBe(1);
+        expect(result.publishSummary.shows_preserved).toBe(1);
+        expect(result.publishSummary.publish_impacts_recorded).toBe(1);
+      });
+
+      it('never touches a terminal show that already has creator mappings', async () => {
+        mockTransactionClient.showCreator.count.mockResolvedValue(2);
+
+        const result = await service.publish(scheduleUid, version, userId);
+
+        expect(mockTransactionClient.showCreator.create).not.toHaveBeenCalled();
+        expect(auditService.create).not.toHaveBeenCalledWith(expect.objectContaining({
+          metadata: expect.objectContaining({ impact_kind: 'past_show_creator_backfilled' }),
+        }));
+        expect(result.publishSummary.creator_mappings_backfilled).toBe(0);
+        expect(result.publishSummary.shows_preserved).toBe(1);
+      });
     });
 
     it('should preserve live shows that are missing from the payload', async () => {
