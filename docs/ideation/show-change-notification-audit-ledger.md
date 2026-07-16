@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from studio show management follow-up, April 2026
 > **Origin**: Studio show CRUD direction update, April 2026
-> **Related**: [collaboration-communication.md](./collaboration-communication.md), [pwa-push-notifications.md](./pwa-push-notifications.md), [studio-show-management.md](../features/studio-show-management.md), [PHASE_5.md item 8](../roadmap/PHASE_5.md#8-show-level-issue-ownership), [item 13](../roadmap/PHASE_5.md#13-issue-event-notifications), and [item 17](../roadmap/PHASE_5.md#17-state-transition-notifications) (show-level issue ownership plus issue-event and lifecycle notifications are concrete reuse cases for this module's event → notification boundary, alongside show CRUD)
+> **Related**: [collaboration-communication.md](./collaboration-communication.md), [pwa-push-notifications.md](./pwa-push-notifications.md), [studio-show-management.md](../features/studio-show-management.md), [PHASE_5.md item 9](../roadmap/PHASE_5.md#9-show-level-issue-ownership), [item 15](../roadmap/PHASE_5.md#15-issue-event-notifications), and [item 21](../roadmap/PHASE_5.md#21-state-transition-notifications) (show-level issue ownership plus issue-event and lifecycle notifications are concrete reuse cases for this module's event → notification boundary, alongside show CRUD)
 
 ## What
 

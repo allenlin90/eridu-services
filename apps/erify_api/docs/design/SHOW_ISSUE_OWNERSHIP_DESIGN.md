@@ -1,7 +1,7 @@
 # Show-Level Issue Ownership Design
 
 > **Status**: Design locked; implementation not started
-> **Roadmap**: [Phase 5 item 8](../../../../docs/roadmap/PHASE_5.md#8-show-level-issue-ownership)
+> **Roadmap**: [Phase 5 item 9](../../../../docs/roadmap/PHASE_5.md#9-show-level-issue-ownership)
 
 ## Purpose
 
@@ -26,12 +26,12 @@ The feature remains advisory. An unresolved issue does not block or cause a show
 
 | Excluded work | Forwarding workstream |
 | --- | --- |
-| Missing-performance issue creation | Phase 5 item 10 defines required metrics, review timing, and grace-period semantics before any issue is created. Item 8 only handles facts that positively report an anomaly. |
-| Notifications for issue changes | Phase 5 item 13 |
-| Show state transitions or transition blocking | Phase 5 items 14 and 15 |
-| Unified live-control dashboard | Phase 5 item 16 |
-| Comments, mentions, attachments, and watchers | Future collaboration work; evidence is plain text in item 8 |
-| Configurable escalation policies, timers, or background jobs | Promote with item 13 or a separate policy workstream when a real delivery/escalation consumer exists |
+| Missing-performance issue creation | Phase 5 item 12 defines required metrics, review timing, and grace-period semantics before any issue is created. Item 9 only handles facts that positively report an anomaly. |
+| Notifications for issue changes | Phase 5 item 15 |
+| Show state transitions or transition blocking | Phase 5 items 18 and 19 |
+| Unified live-control dashboard | Phase 5 item 20 |
+| Comments, mentions, attachments, and watchers | Future collaboration work; evidence is plain text in item 9 |
+| Configurable escalation policies, timers, or background jobs | Promote with item 15 or a separate policy workstream when a real delivery/escalation consumer exists |
 | General-purpose domain event engine or NestJS CQRS migration | Reconsider only when a second independent consumer needs durable delivery |
 
 ## Domain Contract
@@ -67,7 +67,7 @@ OPEN -> IN_PROGRESS -> RESOLVED
 | `title`, `evidence` | Required concise title and optional plain-text evidence. Automated reconciliation copies the current source reason into evidence. |
 | `ownerId`, `dueAt` | Nullable owner `User` foreign key and due date. Assignment validates an active membership in the issue's studio. |
 | `createdById` | Nullable `User` foreign key. Null denotes a system-created issue. |
-| `escalationLevel` | Non-negative integer, initially `0`; item 8 supports explicit manual escalation only. |
+| `escalationLevel` | Non-negative integer, initially `0`; item 9 supports explicit manual escalation only. |
 | `escalatedAt`, `escalatedById`, `escalationNote` | Latest escalation state. Full history remains in `Audit`. |
 | `resolvedAt`, `resolvedById`, `resolutionCode`, `resolutionNote` | Resolution record. Codes: `FIXED`, `SOURCE_CORRECTED`, `NO_LONGER_APPLICABLE`, `DUPLICATE`, `OTHER`. |
 | `showCreatorId` | Nullable typed source FK for attendance anomalies. |
@@ -174,7 +174,7 @@ Platform violation severity is currently an uppercase free-form string with `WAR
 
 `FactExtractionProcessor` applies the fact, writes its extraction audit, and invokes `ShowIssueReconciliationService.applySignals(...)` inside the same CLS transaction. The relevant extractors return the typed signals with the source UIDs they created, superseded, or updated.
 
-If issue reconciliation fails, the fact write and extraction audit roll back together and the extraction result reports an error through the existing task-submission behavior. A fact must not commit while its required automated issue is missing. Manager edits to an already-completed task already re-run extraction and provide the immediate correction path; a general extraction retry queue remains outside item 8.
+If issue reconciliation fails, the fact write and extraction audit roll back together and the extraction result reports an error through the existing task-submission behavior. A fact must not commit while its required automated issue is missing. Manager edits to an already-completed task already re-run extraction and provide the immediate correction path; a general extraction retry queue remains outside item 9.
 
 ## Module Boundary
 

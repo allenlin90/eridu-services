@@ -28,7 +28,7 @@ Schedule publish is currently the only place that moves a show into or out of `C
 
 Promote to a PRD/implementation when:
 
-1. The broader show lifecycle state machine (PHASE_5.md items 14/15) is being designed, and schedule publish's status transitions need to be reconciled with it anyway.
+1. The broader show lifecycle state machine (PHASE_5.md items 18/19) is being designed, and schedule publish's status transitions need to be reconciled with it anyway.
 2. A second `GateKind` is needed for an unrelated reason — at that point the `gateKind` fallback removal and the active-task-check unification become low-incremental-cost to include.
 3. A studio reports confusion from the audit-trail gap (e.g. "why is this show cancelled and who/what cancelled it" with no recorded answer) often enough to justify fixing it ahead of the full state machine.
 
