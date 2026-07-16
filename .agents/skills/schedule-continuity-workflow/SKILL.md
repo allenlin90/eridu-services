@@ -22,10 +22,11 @@ Schedule continuity across `erify_api`, `erify_studios`, and Google Sheets integ
 4. Removed shows without active tasks → `cancelled`
 5. Reappearing shows (matched by `(client_id, external_id)`) restored in place
 6. Publish matches only by `(client_id, external_id)`; `show.name` is display data, not identity fallback
-7. Past or done shows are preserved during publish, including creator/platform relations
+7. Past or done shows are preserved during publish, including creator/platform relations — with one carve-out: a LIVE/COMPLETED show whose incoming row carries `creators` and which has **zero** `ShowCreator` rows (soft-deleted included) gets its creator mappings backfilled (fill-gap only; existing mappings are never overridden — no settlement/freeze guard exists). Backfills record `past_show_creator_backfilled` impact audits; `/validate` reports the eligible count as a non-blocking `info` entry
 8. Future confirmed show changes and missing-row pending transitions write `schedule_publish_impact` Audit rows for manager review
+9. Every `publish()` call persists one `PublishRun` row (source, actor, summary counts) and stamps `Audit.publishRunId` onto all impact rows it writes, making a publish a first-class filterable batch unit
 
-**Current boundary**: diff+upsert, summary counters, and restore are shipped. Studio-scoped pending-resolution resolve endpoint/queue/CTA not fully shipped.
+**Current boundary**: diff+upsert, summary counters, restore, `PublishRun` tracking, impacts filters + server-side summary + publish-runs endpoints, and the terminal-show creator backfill are shipped (PR #310). Studio-scoped pending-resolution resolve endpoint/queue/CTA not fully shipped.
 
 ## Phase 4 Product Direction
 

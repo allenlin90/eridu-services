@@ -1,7 +1,7 @@
 # Schedule Publish Impacts — Filters, Batch Runs, and Accurate Summaries
 
 **Date**: 2026-07-13
-**Status**: Approved design, pending implementation plan
+**Status**: Implemented — PR [#310](https://github.com/allenlin90/eridu-services/pull/310)
 **Scope**: `apps/erify_studios` (`/studios/:studioId/schedule-publish-impacts`), `apps/erify_api` (`studio-show` domain, `Audit`/`AuditRepository`), `packages/api-types`
 
 ## Problem

@@ -132,10 +132,24 @@ Future confirmed shows remain mutable from Google Sheets before show time, but e
 - `event: schedule_publish_impact`
 - `schedule_uid`
 - `external_id`
-- `impact_kind`: `confirmed_future_updated` or `confirmed_future_pending_resolution`
+- `impact_kind`: `confirmed_future_updated`, `confirmed_future_pending_resolution`, or `past_show_creator_backfilled`
 - `changed_fields`
 
-Managers and admins read the queue through `GET /studios/:studioId/shows/schedule-publish-impacts`. The endpoint is studio-scoped and filters to upcoming shows by default. The backing `findSchedulePublishImpactsForStudio` repository method is intentionally purpose-built because it pages `AuditTarget` rows through upcoming studio-scoped shows while filtering Audit metadata by event.
+Managers and admins read the queue through `GET /studios/:studioId/shows/schedule-publish-impacts`. The endpoint is studio-scoped and filters to upcoming shows by default; the implicit upcoming-only window lifts whenever an explicit narrowing filter (`impact_kind`, `resolution_status`, `changed_from`/`changed_to`, or `publish_run_id`) is present so past-show rows stay reachable. `GET .../schedule-publish-impacts/summary` returns per-kind counts from the same repository where-builders as the list, so the review UI's KPI cards cannot drift from the rows. The backing `findSchedulePublishImpactsForStudio` repository method is intentionally purpose-built because it pages `AuditTarget` rows through studio-scoped shows while filtering Audit metadata by event.
+
+---
+
+## Publish Runs
+
+Every `publish()` call persists one `PublishRun` row inside the diff+upsert transaction — source (`google_sheets_sync` today; the column is an open string so studio-native triggers are a one-line addition), triggering user, and the final `PublishScheduleSummary` counts. Its id is stamped onto every `schedule_publish_impact` Audit row written during that call (including stale-conflict opened/resolved rows), making a publish a first-class, filterable batch unit instead of an implicit `Audit.createdAt` cluster. `GET /studios/:studioId/shows/publish-runs` serves the lean paginated run list; impact rows are fetched by filtering the impacts queue with `publish_run_id`, never nested in the run payload. `Audit.publishRunId` is nullable — impact rows that predate run tracking stay ungrouped by design.
+
+---
+
+## Terminal-Show Creator Backfill
+
+Routine relation sync skips terminal (LIVE/COMPLETED) shows, so a show that passed before creator mapping landed keeps zero `ShowCreator` rows even though the Sheet still carries its `creators` column. A bounded backfill step runs once per publish after the main diff+upsert: for each preserved terminal show whose incoming row specifies `creators` and whose current `ShowCreator` count is **zero** (soft-deleted rows included), it creates the mappings using the same create write as routine sync.
+
+Fill-gap only: `ShowCreator` rows can be targeted by `CompensationLineItem` and no settlement/freeze guard exists, so an existing (or resurrectable) mapping is never overridden from the Sheet. Each backfilled show records a `past_show_creator_backfilled` impact audit stamped with the publish run id and counts into the summary's `creator_mappings_backfilled`. `POST /schedules/:id/validate` reports the backfill-eligible count as a non-blocking `info` entry (never flips `isValid`), so review sees it before commit. `ShowPlatform` backfill is explicitly out of scope until the creator version proves safe in production.
 
 ---
 
