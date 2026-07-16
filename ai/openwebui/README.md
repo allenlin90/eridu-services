@@ -16,6 +16,7 @@ Open WebUI should be the user-facing AI workspace. It should provide a small set
 | `knowledge/` | Git-authored Markdown knowledge sources and generated manifests for Open WebUI knowledge collections. |
 | `functions/` | Canonical source for Open WebUI Functions (Pipes/Filters/Actions/Events), applied via the Admin API. Function source lives in Open WebUI's own database once deployed, not in Git — this is the reviewed copy. |
 | `synced/` | Git-tracked knowledge base of the **live** Open WebUI config (assistants, groups, tool-server connections, default permissions, and full skill content), pulled read-only via the API. Treat this as the current source of truth for the live setup — the example files above are illustrative templates and may drift from it. |
+| `pull_config.py` | Python script to fetch the current live config (models, groups, skills, tool-servers, etc.) from the Open WebUI instance using its REST API and overwrite the files in `synced/` for Git tracking. It fetches and validates all required responses before writing, then exits non-zero without changing snapshots if a required read fails. Run using `python3 ai/openwebui/pull_config.py`. |
 
 ## Existing repo skill hierarchy
 

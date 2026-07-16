@@ -1,70 +1,70 @@
 {
-  "TOOL_SERVER_CONNECTIONS": [
-    {
-      "url": "http://eridumcp.railway.internal:3000/mcp",
-      "path": "openapi.json",
-      "type": "mcp",
-      "auth_type": "none",
-      "headers": null,
-      "key": "",
-      "config": {
-        "enable": true,
-        "function_name_filter_list": "",
-        "access_grants": [
-          {
-            "principal_type": "group",
-            "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
-            "permission": "read"
-          },
-          {
-            "principal_type": "group",
-            "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-            "permission": "read"
-          }
-        ]
-      },
-      "info": {
-        "id": "eridu_mcp",
-        "name": "Eridu MCP",
-        "description": ""
-      },
-      "spec_type": "url",
-      "spec": ""
-    }
-  ]
+    "TOOL_SERVER_CONNECTIONS": [
+        {
+            "url": "http://eridumcp.railway.internal:3000/mcp",
+            "path": "openapi.json",
+            "type": "mcp",
+            "auth_type": "none",
+            "headers": null,
+            "key": "",
+            "config": {
+                "enable": true,
+                "function_name_filter_list": "",
+                "access_grants": [
+                    {
+                        "principal_type": "group",
+                        "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+                        "permission": "read"
+                    },
+                    {
+                        "principal_type": "group",
+                        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                        "permission": "read"
+                    }
+                ]
+            },
+            "info": {
+                "id": "eridu_mcp",
+                "name": "Eridu MCP",
+                "description": ""
+            },
+            "spec_type": "url",
+            "spec": ""
+        }
+    ]
 }

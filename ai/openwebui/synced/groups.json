@@ -1,1138 +1,1138 @@
 [
-  {
-    "id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Commerce - Manager",
-    "description": "Group for Commerce - Manager",
-    "data": {
-      "config": {
-        "share": "members"
-      }
+    {
+        "id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Erisa - Member",
+        "description": "Group for Erisa - Member",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439412,
+        "updated_at": 1783439412,
+        "member_count": 0
     },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
+    {
+        "id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Erify - Team-Lead",
+        "description": "Group for Erify - Team-Lead",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439411,
+        "updated_at": 1783511315,
+        "member_count": 2
     },
-    "created_at": 1783439409,
-    "updated_at": 1783442403,
-    "member_count": 2
-  },
-  {
-    "id": "8a37f184-4ac5-4226-9852-50b88029b181",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Erify - Member",
-    "description": "Group for Erify - Member",
-    "data": {
-      "config": {
-        "share": "members"
-      }
+    {
+        "id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "HR - Manager",
+        "description": "Group for HR - Manager",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439412,
+        "updated_at": 1783439412,
+        "member_count": 0
     },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
+    {
+        "id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Admins",
+        "description": "",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": true,
+                "knowledge": true,
+                "prompts": true,
+                "tools": true,
+                "skills": true,
+                "models_import": true,
+                "models_export": true,
+                "prompts_import": true,
+                "prompts_export": true,
+                "tools_import": true,
+                "tools_export": true,
+                "skills_import": true,
+                "skills_export": true
+            },
+            "sharing": {
+                "models": true,
+                "public_models": true,
+                "knowledge": true,
+                "public_knowledge": true,
+                "prompts": true,
+                "public_prompts": true,
+                "tools": true,
+                "public_tools": true,
+                "skills": true,
+                "public_skills": true,
+                "notes": true,
+                "public_notes": true,
+                "folders": true,
+                "public_chats": true,
+                "public_calendars": true
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "import": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": true
+            },
+            "features": {
+                "api_keys": true,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": true,
+                "web_search": true,
+                "image_generation": true,
+                "code_interpreter": true,
+                "memories": true,
+                "automations": true,
+                "calendar": true,
+                "webhooks": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783385666,
+        "updated_at": 1783385735,
+        "member_count": 2
     },
-    "created_at": 1783439411,
-    "updated_at": 1783442393,
-    "member_count": 0
-  },
-  {
-    "id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Commerce - Team-Lead",
-    "description": "Group for Commerce - Team-Lead",
-    "data": {
-      "config": {
-        "share": "members"
-      }
+    {
+        "id": "3728dd04-6c44-41d0-9836-49c70593af45",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Org - General",
+        "description": "Group for Org - General",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783417418,
+        "updated_at": 1783485286,
+        "member_count": 1
     },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
+    {
+        "id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Erify - Manager",
+        "description": "Group for Erify - Manager",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439410,
+        "updated_at": 1783439643,
+        "member_count": 1
     },
-    "created_at": 1783439409,
-    "updated_at": 1783439730,
-    "member_count": 0
-  },
-  {
-    "id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Erify - Team-Lead",
-    "description": "Group for Erify - Team-Lead",
-    "data": {
-      "config": {
-        "share": "members"
-      }
+    {
+        "id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Erisa - Team-Lead",
+        "description": "Group for Erisa - Team-Lead",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439412,
+        "updated_at": 1783439412,
+        "member_count": 0
     },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
+    {
+        "id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Commerce - Team-Lead",
+        "description": "Group for Commerce - Team-Lead",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439409,
+        "updated_at": 1783439730,
+        "member_count": 0
     },
-    "created_at": 1783439411,
-    "updated_at": 1783439659,
-    "member_count": 1
-  },
-  {
-    "id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Erify - Manager",
-    "description": "Group for Erify - Manager",
-    "data": {
-      "config": {
-        "share": "members"
-      }
+    {
+        "id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Commerce - Manager",
+        "description": "Group for Commerce - Manager",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439409,
+        "updated_at": 1783664187,
+        "member_count": 1
     },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
+    {
+        "id": "8a37f184-4ac5-4226-9852-50b88029b181",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Erify - Member",
+        "description": "Group for Erify - Member",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439411,
+        "updated_at": 1784021977,
+        "member_count": 1
     },
-    "created_at": 1783439410,
-    "updated_at": 1783439643,
-    "member_count": 1
-  },
-  {
-    "id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Finance - Manager",
-    "description": "Group for Finance - Manager",
-    "data": {
-      "config": {
-        "share": "members"
-      }
+    {
+        "id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Finance - Manager",
+        "description": "Group for Finance - Manager",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439413,
+        "updated_at": 1783439413,
+        "member_count": 0
     },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
+    {
+        "id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Erisa - Manager",
+        "description": "Group for Erisa - Manager",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439411,
+        "updated_at": 1783439411,
+        "member_count": 0
     },
-    "created_at": 1783439413,
-    "updated_at": 1783439413,
-    "member_count": 0
-  },
-  {
-    "id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "HR - Manager",
-    "description": "Group for HR - Manager",
-    "data": {
-      "config": {
-        "share": "members"
-      }
-    },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
-    },
-    "created_at": 1783439412,
-    "updated_at": 1783439412,
-    "member_count": 0
-  },
-  {
-    "id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Erisa - Team-Lead",
-    "description": "Group for Erisa - Team-Lead",
-    "data": {
-      "config": {
-        "share": "members"
-      }
-    },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
-    },
-    "created_at": 1783439412,
-    "updated_at": 1783439412,
-    "member_count": 0
-  },
-  {
-    "id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Erisa - Member",
-    "description": "Group for Erisa - Member",
-    "data": {
-      "config": {
-        "share": "members"
-      }
-    },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
-    },
-    "created_at": 1783439412,
-    "updated_at": 1783439412,
-    "member_count": 0
-  },
-  {
-    "id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Erisa - Manager",
-    "description": "Group for Erisa - Manager",
-    "data": {
-      "config": {
-        "share": "members"
-      }
-    },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
-    },
-    "created_at": 1783439411,
-    "updated_at": 1783439411,
-    "member_count": 0
-  },
-  {
-    "id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Commerce - Member",
-    "description": "Group for Commerce - Member",
-    "data": {
-      "config": {
-        "share": "members"
-      }
-    },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
-    },
-    "created_at": 1783439410,
-    "updated_at": 1783439410,
-    "member_count": 0
-  },
-  {
-    "id": "3728dd04-6c44-41d0-9836-49c70593af45",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Org - General",
-    "description": "Group for Org - General",
-    "data": {
-      "config": {
-        "share": "members"
-      }
-    },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": false,
-        "knowledge": true,
-        "prompts": false,
-        "tools": false,
-        "skills": false,
-        "models_import": false,
-        "models_export": false,
-        "prompts_import": false,
-        "prompts_export": false,
-        "tools_import": false,
-        "tools_export": false
-      },
-      "sharing": {
-        "models": false,
-        "public_models": false,
-        "knowledge": false,
-        "public_knowledge": false,
-        "prompts": false,
-        "public_prompts": false,
-        "tools": false,
-        "public_tools": false,
-        "skills": false,
-        "public_skills": false,
-        "notes": false,
-        "public_notes": false,
-        "public_chats": false,
-        "public_calendars": false
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": false
-      },
-      "features": {
-        "api_keys": false,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": false,
-        "web_search": true,
-        "image_generation": false,
-        "code_interpreter": false,
-        "memories": true,
-        "automations": false,
-        "calendar": true
-      },
-      "settings": {
-        "interface": true
-      }
-    },
-    "created_at": 1783417418,
-    "updated_at": 1783417418,
-    "member_count": 0
-  },
-  {
-    "id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-    "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-    "name": "Admins",
-    "description": "",
-    "data": {
-      "config": {
-        "share": "members"
-      }
-    },
-    "meta": null,
-    "permissions": {
-      "workspace": {
-        "models": true,
-        "knowledge": true,
-        "prompts": true,
-        "tools": true,
-        "skills": true,
-        "models_import": true,
-        "models_export": true,
-        "prompts_import": true,
-        "prompts_export": true,
-        "tools_import": true,
-        "tools_export": true,
-        "skills_import": true,
-        "skills_export": true
-      },
-      "sharing": {
-        "models": true,
-        "public_models": true,
-        "knowledge": true,
-        "public_knowledge": true,
-        "prompts": true,
-        "public_prompts": true,
-        "tools": true,
-        "public_tools": true,
-        "skills": true,
-        "public_skills": true,
-        "notes": true,
-        "public_notes": true,
-        "folders": true,
-        "public_chats": true,
-        "public_calendars": true
-      },
-      "access_grants": {
-        "allow_users": true
-      },
-      "chat": {
-        "controls": true,
-        "valves": true,
-        "system_prompt": true,
-        "params": true,
-        "file_upload": true,
-        "web_upload": true,
-        "delete": true,
-        "delete_message": true,
-        "continue_response": true,
-        "regenerate_response": true,
-        "rate_response": true,
-        "edit": true,
-        "share": true,
-        "export": true,
-        "import": true,
-        "stt": true,
-        "tts": true,
-        "call": true,
-        "multiple_models": true,
-        "temporary": true,
-        "temporary_enforced": true
-      },
-      "features": {
-        "api_keys": true,
-        "notes": true,
-        "channels": true,
-        "folders": true,
-        "direct_tool_servers": true,
-        "web_search": true,
-        "image_generation": true,
-        "code_interpreter": true,
-        "memories": true,
-        "automations": true,
-        "calendar": true,
-        "webhooks": true
-      },
-      "settings": {
-        "interface": true
-      }
-    },
-    "created_at": 1783385666,
-    "updated_at": 1783385735,
-    "member_count": 2
-  }
+    {
+        "id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+        "user_id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
+        "name": "Commerce - Member",
+        "description": "Group for Commerce - Member",
+        "data": {
+            "config": {
+                "share": "members"
+            }
+        },
+        "meta": null,
+        "permissions": {
+            "workspace": {
+                "models": false,
+                "knowledge": true,
+                "prompts": false,
+                "tools": false,
+                "skills": false,
+                "models_import": false,
+                "models_export": false,
+                "prompts_import": false,
+                "prompts_export": false,
+                "tools_import": false,
+                "tools_export": false
+            },
+            "sharing": {
+                "models": false,
+                "public_models": false,
+                "knowledge": false,
+                "public_knowledge": false,
+                "prompts": false,
+                "public_prompts": false,
+                "tools": false,
+                "public_tools": false,
+                "skills": false,
+                "public_skills": false,
+                "notes": false,
+                "public_notes": false,
+                "public_chats": false,
+                "public_calendars": false
+            },
+            "access_grants": {
+                "allow_users": true
+            },
+            "chat": {
+                "controls": true,
+                "valves": true,
+                "system_prompt": true,
+                "params": true,
+                "file_upload": true,
+                "web_upload": true,
+                "delete": true,
+                "delete_message": true,
+                "continue_response": true,
+                "regenerate_response": true,
+                "rate_response": true,
+                "edit": true,
+                "share": true,
+                "export": true,
+                "stt": true,
+                "tts": true,
+                "call": true,
+                "multiple_models": true,
+                "temporary": true,
+                "temporary_enforced": false
+            },
+            "features": {
+                "api_keys": false,
+                "notes": true,
+                "channels": true,
+                "folders": true,
+                "direct_tool_servers": false,
+                "web_search": true,
+                "image_generation": false,
+                "code_interpreter": false,
+                "memories": true,
+                "automations": false,
+                "calendar": true
+            },
+            "settings": {
+                "interface": true
+            }
+        },
+        "created_at": 1783439410,
+        "updated_at": 1783664196,
+        "member_count": 1
+    }
 ]
