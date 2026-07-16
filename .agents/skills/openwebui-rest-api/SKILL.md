@@ -31,7 +31,8 @@ For two common, narrower jobs, use the more specific skill instead of re-derivin
 - **Prefer the narrowest endpoint.** Use `/api/v1/models/model/update` to change one model rather than `/api/v1/models/sync`, which is a declarative reconcile that deletes any model absent from the payload.
 - **Treat bulk/declarative/delete endpoints as destructive actions** (`models/sync`, `*/delete`, `groups/*/update` that touches permissions) — confirm with the user first, same as any other destructive operation in this repo.
 - **Admin-only endpoints** (user list/role changes, group management, global configs) need an admin account's key; a non-admin key gets 401/403.
-- Don't duplicate assistant/manifest design guidance here — if the question is "what should this assistant have access to," go back to `openwebui-assistant-adapter`, not this skill.
+- **Don't duplicate assistant/manifest design guidance here** — if the question is "what should this assistant have access to," go back to `openwebui-assistant-adapter`, not this skill.
+- **Synchronizing configuration**: After making any changes to the live Open WebUI settings (e.g. creating/updating models, changing group access, modifying skills, etc.), run the pull utility script `python3 ai/openwebui/pull_config.py` to pull the latest configuration into `ai/openwebui/synced/` so that it is tracked under Git.
 
 ## Quick verification
 
