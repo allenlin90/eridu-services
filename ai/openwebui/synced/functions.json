@@ -15,14 +15,13 @@
     }
   },
   "valves": {
+    "api_key": "<redacted, see ai/openwebui/.env>",
     "base_url": "http://localhost:8080",
     "collection_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
     "github_owner": "allenlin90",
     "github_repo": "eridu-services",
     "github_ref": "master",
-    "content_paths": "ai/openwebui/knowledge/company-wiki/content/shared/company-wiki-overview.md,ai/openwebui/knowledge/company-wiki/content/shared/governance-ops.md",
-    "api_key": "<redacted, see ai/openwebui/.env>"
+    "content_paths": "ai/openwebui/knowledge/company-wiki/content/shared/company-wiki-overview.md,ai/openwebui/knowledge/company-wiki/content/shared/governance-ops.md"
   },
   "note": "content omitted here -- canonical source is ai/openwebui/functions/sync-pipe.py, applied via POST /api/v1/functions/id/{id}/update per that file's deploy instructions."
 }
-
