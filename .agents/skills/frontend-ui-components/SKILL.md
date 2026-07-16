@@ -14,10 +14,12 @@ How to build and use UI components using the shared `@eridu/ui` package and Shad
 All generic UI components live in `packages/ui`. Do NOT create local copies in apps.
 
 ```typescript
-import { Button } from '@eridu/ui/components/button';
-import { Input } from '@eridu/ui/components/input';
+import { Button } from '@eridu/ui/components/ui/button';
+import { Input } from '@eridu/ui/components/ui/input';
 import { cn } from '@eridu/ui/lib/utils';
 ```
+
+The root `@eridu/ui` barrel remains supported for ordinary named imports. Prefer a stable component subpath for heavy optional surfaces or lazy consumer imports so the intended bundle boundary is explicit. Keep `packages/ui/package.json#sideEffects` limited to real side-effect assets such as the exported global stylesheet; JavaScript component modules must remain tree-shakeable.
 
 ## Decision Priority
 
