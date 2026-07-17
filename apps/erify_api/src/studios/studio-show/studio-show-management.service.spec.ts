@@ -126,8 +126,10 @@ describe('studioShowManagementService', () => {
     create: jest.fn(),
     findSchedulePublishImpactsForStudio: jest.fn(),
     findPendingStaleConflictsForStudio: jest.fn(),
+    findResolvedStaleConflictsForStudio: jest.fn(),
     countSchedulePublishImpactsForStudio: jest.fn(),
     countPendingStaleConflictsForStudio: jest.fn(),
+    countResolvedStaleConflictsForStudio: jest.fn(),
     countForTargets: jest.fn(),
     findForTargets: jest.fn(),
     findLatestScheduleConflictForShow: jest.fn(),
@@ -1648,8 +1650,10 @@ describe('studioShowManagementService', () => {
         confirmed_future_updated: 3,
         confirmed_future_pending_resolution: 2,
         stale_conflict_pending: 4,
+        stale_conflict_resolved: 0,
         past_show_creator_backfilled: 1,
       });
+      expect(auditServiceMock.countResolvedStaleConflictsForStudio).not.toHaveBeenCalled();
     });
 
     it('zeroes kinds excluded by the impact_kind filter without counting them', async () => {
@@ -1664,10 +1668,34 @@ describe('studioShowManagementService', () => {
         confirmed_future_updated: 5,
         confirmed_future_pending_resolution: 0,
         stale_conflict_pending: 0,
+        stale_conflict_resolved: 0,
         past_show_creator_backfilled: 0,
       });
       expect(auditServiceMock.countSchedulePublishImpactsForStudio).toHaveBeenCalledTimes(1);
       expect(auditServiceMock.countPendingStaleConflictsForStudio).not.toHaveBeenCalled();
+    });
+
+    it('counts resolved history rows when resolution_status selects resolved outcomes', async () => {
+      auditServiceMock.countPendingStaleConflictsForStudio.mockResolvedValue(2);
+      auditServiceMock.countResolvedStaleConflictsForStudio.mockResolvedValue(3);
+
+      const summary = await service.getSchedulePublishImpactSummary('std_123', {
+        resolution_status: ['pending', 'applied', 'dismissed'],
+      });
+
+      expect(summary).toEqual({
+        total: 5,
+        confirmed_future_updated: 0,
+        confirmed_future_pending_resolution: 0,
+        stale_conflict_pending: 2,
+        stale_conflict_resolved: 3,
+        past_show_creator_backfilled: 0,
+      });
+      expect(auditServiceMock.countResolvedStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ outcomes: ['applied', 'dismissed'] }),
+      );
+      expect(auditServiceMock.countSchedulePublishImpactsForStudio).not.toHaveBeenCalled();
     });
   });
 
@@ -1723,7 +1751,7 @@ describe('studioShowManagementService', () => {
       expect(auditServiceMock.findPendingStaleConflictsForStudio).not.toHaveBeenCalled();
     });
 
-    it('serves only the stale source when a resolution_status filter is present', async () => {
+    it('serves only the pending-stale source when resolution_status is pending', async () => {
       auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
 
       await service.listSchedulePublishImpacts('std_123', {
@@ -1731,7 +1759,66 @@ describe('studioShowManagementService', () => {
       });
 
       expect(auditServiceMock.findSchedulePublishImpactsForStudio).not.toHaveBeenCalled();
+      expect(auditServiceMock.findResolvedStaleConflictsForStudio).not.toHaveBeenCalled();
       expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledTimes(1);
+    });
+
+    // Regression: applied/dismissed/superseded/auto_resolved selections used to
+    // return an empty page unconditionally — every advertised status must be
+    // servable.
+    it.each([
+      'applied',
+      'dismissed',
+      'superseded',
+      'auto_resolved_no_longer_conflicting',
+    ] as const)('serves resolved history when resolution_status is %s', async (status) => {
+      auditServiceMock.findResolvedStaleConflictsForStudio.mockResolvedValue({ items: [], total: 1 });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {
+        resolution_status: status,
+      });
+
+      expect(auditServiceMock.findResolvedStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ outcomes: [status] }),
+      );
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).not.toHaveBeenCalled();
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).not.toHaveBeenCalled();
+      expect(result.total).toBe(1);
+    });
+
+    it('serves both stale sources for a mixed pending + resolved selection', async () => {
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 2 });
+      auditServiceMock.findResolvedStaleConflictsForStudio.mockResolvedValue({ items: [], total: 3 });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {
+        resolution_status: ['pending', 'applied', 'superseded'],
+      });
+
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.findResolvedStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ outcomes: ['applied', 'superseded'] }),
+      );
+      expect(result.total).toBe(5);
+    });
+
+    // Regression: an end-only date query used to keep the implicit
+    // `startDateFrom = now`, so historical upper bounds returned empty.
+    it('treats an end-only start_date_to as explicit scope and lifts the implicit upcoming-only default', async () => {
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [], total: 0 });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      const startDateTo = '2026-06-30T23:59:59.999Z';
+      await service.listSchedulePublishImpacts('std_123', { start_date_to: startDateTo });
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({
+          startDateFrom: undefined,
+          startDateTo: new Date(startDateTo),
+        }),
+      );
     });
 
     it('resolves publish_run_id to the internal run id for both sources', async () => {

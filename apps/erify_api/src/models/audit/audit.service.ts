@@ -94,4 +94,18 @@ export class AuditService extends BaseModelService {
   ): Promise<number> {
     return this.auditRepository.countPendingStaleConflictsForStudio(studioUid, filters);
   }
+
+  async findResolvedStaleConflictsForStudio(
+    studioUid: string,
+    opts: SchedulePublishImpactQueryFilters & { outcomes?: string[]; take: number; skip: number },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    return this.auditRepository.findResolvedStaleConflictsForStudio(studioUid, opts);
+  }
+
+  async countResolvedStaleConflictsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters & { outcomes?: string[] },
+  ): Promise<number> {
+    return this.auditRepository.countResolvedStaleConflictsForStudio(studioUid, filters);
+  }
 }

@@ -41,4 +41,3 @@ ALTER TABLE "publish_runs" ADD CONSTRAINT "publish_runs_triggered_by_id_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "audits" ADD CONSTRAINT "audits_publish_run_id_fkey" FOREIGN KEY ("publish_run_id") REFERENCES "publish_runs"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-

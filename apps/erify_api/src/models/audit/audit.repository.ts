@@ -373,6 +373,96 @@ export class AuditRepository {
   }
 
   /**
+   * Resolved stale-conflict history for the studio: the `lifecycle: 'resolved'`
+   * Audit rows written by `ScheduleConflictService.writeResolved`, optionally
+   * narrowed to specific outcomes.
+   *
+   * Unlike the pending queue there is no latest-per-show computation —
+   * resolution rows are append-only history where each row is one resolved
+   * conflict episode — so every filter (including change-time and publish-run,
+   * which the pending queue must apply post-distinct) is safe directly in the
+   * DB `where`, and skip/take paginate in the database.
+   */
+  async findResolvedStaleConflictsForStudio(
+    studioUid: string,
+    opts: SchedulePublishImpactQueryFilters & {
+      outcomes?: string[];
+      take: number;
+      skip: number;
+    },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    const where = this.buildResolvedStaleConflictWhere(studioUid, opts);
+
+    const [total, items] = await Promise.all([
+      this.txHost.tx.auditTarget.count({ where }),
+      this.txHost.tx.auditTarget.findMany({
+        where,
+        include: SCHEDULE_PUBLISH_IMPACT_INCLUDE,
+        orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
+        skip: opts.skip,
+        take: opts.take,
+      }),
+    ]);
+
+    return { items, total };
+  }
+
+  /** Count-only variant sharing `buildResolvedStaleConflictWhere` with the list. */
+  async countResolvedStaleConflictsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters & { outcomes?: string[] },
+  ): Promise<number> {
+    return this.txHost.tx.auditTarget.count({
+      where: this.buildResolvedStaleConflictWhere(studioUid, filters),
+    });
+  }
+
+  private buildResolvedStaleConflictWhere(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters & { outcomes?: string[] },
+  ): Prisma.AuditTargetWhereInput {
+    return {
+      targetType: 'SHOW',
+      show: {
+        studio: { uid: studioUid },
+        ...(filters.startDateFrom || filters.startDateTo
+          ? {
+              startTime: {
+                ...(filters.startDateFrom ? { gte: filters.startDateFrom } : {}),
+                ...(filters.startDateTo ? { lte: filters.startDateTo } : {}),
+              },
+            }
+          : {}),
+        deletedAt: null,
+      },
+      audit: {
+        AND: [
+          { metadata: { path: ['impact_kind'], equals: 'stale_conflict' } },
+          { metadata: { path: ['lifecycle'], equals: 'resolved' } },
+          ...(filters.outcomes?.length
+            ? [{
+                OR: filters.outcomes.map((outcome) => ({
+                  metadata: { path: ['outcome'], equals: outcome },
+                })),
+              }]
+            : []),
+        ],
+        ...(filters.changedFrom || filters.changedTo
+          ? {
+              createdAt: {
+                ...(filters.changedFrom ? { gte: filters.changedFrom } : {}),
+                ...(filters.changedTo ? { lte: filters.changedTo } : {}),
+              },
+            }
+          : {}),
+        ...(filters.publishRunId !== undefined
+          ? { publishRunId: filters.publishRunId }
+          : {}),
+      },
+    };
+  }
+
+  /**
    * Change-time and publish-run filters are applied AFTER the latest-per-show
    * + `lifecycle: 'opened'` computation, never inside the DB `where`: filtering
    * before `distinct` could pick an older 'opened' row as a show's "latest"

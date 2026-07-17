@@ -398,6 +398,7 @@ describe('studioShowController', () => {
         confirmed_future_updated: 3,
         confirmed_future_pending_resolution: 1,
         stale_conflict_pending: 2,
+        stale_conflict_resolved: 0,
         past_show_creator_backfilled: 0,
       };
       studioShowManagementServiceMock.getSchedulePublishImpactSummary.mockResolvedValue(summary);

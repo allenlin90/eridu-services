@@ -191,7 +191,11 @@ function ImpactsTab({ studioId, search }: {
 
   return (
     <>
-      <ImpactSummaryCards summary={summary} fallbackTotal={total} />
+      <ImpactSummaryCards
+        summary={summary}
+        fallbackTotal={total}
+        showResolved={(search.resolution_status ?? []).some((status) => status !== 'pending')}
+      />
 
       <SchedulePublishImpactsToolbar
         startFrom={search.start_from ?? ''}
@@ -258,9 +262,10 @@ function ImpactsTab({ studioId, search }: {
   );
 }
 
-function ImpactSummaryCards({ summary, fallbackTotal }: {
+function ImpactSummaryCards({ summary, fallbackTotal, showResolved }: {
   summary: SchedulePublishImpactSummary | undefined;
   fallbackTotal: number;
+  showResolved: boolean;
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -284,6 +289,13 @@ function ImpactSummaryCards({ summary, fallbackTotal }: {
         value={summary?.stale_conflict_pending ?? 0}
         description="Held-back sheet edits awaiting a decision"
       />
+      {showResolved && (
+        <ImpactSummaryCard
+          title="Resolved conflicts"
+          value={summary?.stale_conflict_resolved ?? 0}
+          description="Conflict history matching the selected resolved statuses"
+        />
+      )}
       <ImpactSummaryCard
         title="Creators backfilled"
         value={summary?.past_show_creator_backfilled ?? 0}

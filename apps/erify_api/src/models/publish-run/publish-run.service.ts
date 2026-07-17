@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { PublishRun } from '@prisma/client';
 
-import type { CreatePublishRunPayload } from './schemas/publish-run.schema';
+import type {
+  CreatePublishRunPayload,
+  PublishRunListItem,
+  PublishRunRecord,
+} from './schemas/publish-run.schema';
 import { PublishRunRepository } from './publish-run.repository';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
@@ -19,27 +22,58 @@ export class PublishRunService extends BaseModelService {
     super(utilityService);
   }
 
-  async createPublishRun(payload: CreatePublishRunPayload): Promise<PublishRun> {
-    return this.publishRunRepository.create({
+  async createPublishRun(payload: CreatePublishRunPayload): Promise<PublishRunRecord> {
+    const run = await this.publishRunRepository.create({
       ...payload,
       uid: this.generateUid(),
     });
+
+    return this.toPublishRunRecord(run);
   }
 
   async updatePublishRunSummary(
     id: bigint,
     summary: Record<string, unknown>,
-  ): Promise<PublishRun> {
-    return this.publishRunRepository.updateSummary(id, summary);
+  ): Promise<PublishRunRecord> {
+    return this.toPublishRunRecord(
+      await this.publishRunRepository.updateSummary(id, summary),
+    );
   }
 
-  async getPublishRunByUid(uid: string): Promise<PublishRun | null> {
-    return this.publishRunRepository.findByUid(uid);
+  async getPublishRunByUid(uid: string): Promise<PublishRunRecord | null> {
+    const run = await this.publishRunRepository.findByUid(uid);
+    return run ? this.toPublishRunRecord(run) : null;
   }
 
   async getPublishRunsForStudio(
-    ...params: Parameters<PublishRunRepository['findPaginatedForStudio']>
-  ): ReturnType<PublishRunRepository['findPaginatedForStudio']> {
-    return this.publishRunRepository.findPaginatedForStudio(...params);
+    studioUid: string,
+    opts: { skip: number; take: number },
+  ): Promise<{ items: PublishRunListItem[]; total: number }> {
+    const { items, total } = await this.publishRunRepository.findPaginatedForStudio(studioUid, opts);
+
+    return {
+      items: items.map((run) => ({
+        ...this.toPublishRunRecord(run),
+        schedule: run.schedule,
+        triggeredBy: run.triggeredBy,
+      })),
+      total,
+    };
+  }
+
+  private toPublishRunRecord(run: {
+    id: bigint;
+    uid: string;
+    source: string;
+    summary: unknown;
+    createdAt: Date;
+  }): PublishRunRecord {
+    return {
+      id: run.id,
+      uid: run.uid,
+      source: run.source,
+      summary: run.summary,
+      createdAt: run.createdAt,
+    };
   }
 }

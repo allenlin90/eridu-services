@@ -17,3 +17,22 @@ export type CreatePublishRunPayload = {
   triggeredById: bigint | null;
   source: PublishRunSource;
 };
+
+/**
+ * Schema-owned service result shapes — `PublishRunService` public signatures
+ * expose these, never Prisma model types, so callers stay decoupled from the
+ * ORM (repository-boundary rule).
+ */
+export type PublishRunRecord = {
+  id: bigint;
+  uid: string;
+  source: string;
+  /** JSONB publish summary; concrete shape is owned by the publish pipeline. */
+  summary: unknown;
+  createdAt: Date;
+};
+
+export type PublishRunListItem = PublishRunRecord & {
+  schedule: { uid: string } | null;
+  triggeredBy: { uid: string; name: string | null } | null;
+};

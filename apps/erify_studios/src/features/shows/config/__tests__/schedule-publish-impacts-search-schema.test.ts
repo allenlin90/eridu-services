@@ -38,6 +38,36 @@ describe('schedulePublishImpactsSearchSchema', () => {
     expect(parsed.resolution_status).toEqual(['pending']);
     expect(parsed.publish_run_id).toBe('prun_abc');
   });
+
+  // Regression: URL-editable date params used to accept any string, and
+  // `dayStartIso`/`dayEndIso` then threw a RangeError that crashed the route.
+  it.each(['not-a-date', '2026-7-1', '2026-02-31', '01-07-2026', '2026-02-28T10:00'])(
+    'discards the malformed calendar-day value %s instead of crashing later conversion',
+    (value) => {
+      const parsed = schedulePublishImpactsSearchSchema.parse({
+        start_from: value,
+        start_to: value,
+        changed_from: value,
+        changed_to: value,
+      });
+
+      expect(parsed.start_from).toBeUndefined();
+      expect(parsed.start_to).toBeUndefined();
+      expect(parsed.changed_from).toBeUndefined();
+      expect(parsed.changed_to).toBeUndefined();
+      expect(() => buildSchedulePublishImpactsQueryParams(parsed)).not.toThrow();
+    },
+  );
+
+  it('keeps well-formed calendar-day values', () => {
+    const parsed = schedulePublishImpactsSearchSchema.parse({
+      start_from: '2026-07-01',
+      changed_to: '2026-07-15',
+    });
+
+    expect(parsed.start_from).toBe('2026-07-01');
+    expect(parsed.changed_to).toBe('2026-07-15');
+  });
 });
 
 describe('buildSchedulePublishImpactsQueryParams', () => {

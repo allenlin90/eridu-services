@@ -1,4 +1,4 @@
-import { endOfDay, startOfDay } from 'date-fns';
+import { endOfDay, isValid, parse, startOfDay } from 'date-fns';
 import { z } from 'zod';
 
 import {
@@ -13,6 +13,20 @@ export const SCHEDULE_PUBLISH_IMPACTS_DEFAULT_PAGE_SIZE = 25;
 
 export type SchedulePublishImpactsTab = 'impacts' | 'runs';
 
+/**
+ * Calendar-day URL params must hold a real 'yyyy-MM-dd' date: these values are
+ * URL-editable, and `dayStartIso`/`dayEndIso` would throw a `RangeError` on an
+ * unparseable value (crashing route rendering), so anything else — wrong
+ * shape or an impossible date like 2026-02-31 — is discarded to `undefined`.
+ */
+const calendarDayParamSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  // date-fns `parse` (unlike `new Date`) rejects rolled-over days like 02-31.
+  .refine((value) => isValid(parse(value, 'yyyy-MM-dd', new Date(0))))
+  .optional()
+  .catch(undefined);
+
 export const schedulePublishImpactsSearchSchema = z.object({
   tab: z.enum(['impacts', 'runs']).catch('impacts'),
   // impacts tab
@@ -24,10 +38,10 @@ export const schedulePublishImpactsSearchSchema = z.object({
       SCHEDULE_PUBLISH_IMPACTS_PAGE_SIZES.includes(value as (typeof SCHEDULE_PUBLISH_IMPACTS_PAGE_SIZES)[number]))
     .optional()
     .catch(undefined),
-  start_from: z.string().optional().catch(undefined),
-  start_to: z.string().optional().catch(undefined),
-  changed_from: z.string().optional().catch(undefined),
-  changed_to: z.string().optional().catch(undefined),
+  start_from: calendarDayParamSchema,
+  start_to: calendarDayParamSchema,
+  changed_from: calendarDayParamSchema,
+  changed_to: calendarDayParamSchema,
   impact_kind: z.array(schedulePublishImpactKindSchema).optional().catch(undefined),
   resolution_status: z.array(scheduleConflictResolutionStatusSchema).optional().catch(undefined),
   publish_run_id: z.string().optional().catch(undefined),

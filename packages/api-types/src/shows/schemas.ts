@@ -247,6 +247,12 @@ export const schedulePublishImpactSummarySchema = z.object({
   confirmed_future_updated: z.number().int().nonnegative(),
   confirmed_future_pending_resolution: z.number().int().nonnegative(),
   stale_conflict_pending: z.number().int().nonnegative(),
+  /**
+   * Resolved-conflict history rows in the current filter plan. Non-zero only
+   * when `resolution_status` explicitly selects resolved outcomes — the
+   * default review view serves confirmed + pending rows only.
+   */
+  stale_conflict_resolved: z.number().int().nonnegative(),
   past_show_creator_backfilled: z.number().int().nonnegative(),
 });
 
