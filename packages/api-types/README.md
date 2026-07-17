@@ -654,10 +654,10 @@ Interactive Scalar UI showing all endpoints, schemas, and example requests/respo
 
 ### Related Documentation
 
-- **[Copilot Instructions](../../.github/copilot-instructions.md)** - Conventions for AI agents
-- **[erify_api Architecture](../erify_api/docs/ARCHITECTURE_OVERVIEW.md)** - Backend module structure
-- **[erify_api Business Logic](../erify_api/docs/BUSINESS.md)** - Entity relationships and rules
-- **[Authorization Guide](../erify_api/docs/design/AUTHORIZATION_GUIDE.md)** - Auth patterns and JWTs
+- **[Agent Instructions](../../AGENTS.md)** - Conventions for AI agents
+- **[Architecture Overview](../../docs/engineering/ARCHITECTURE_OVERVIEW.md)** - Backend module structure
+- **[Business Domain](../../docs/domain/BUSINESS.md)** - Entity relationships and rules
+- **[Authorization Guide](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)** - Auth patterns and JWTs
 
 ### Zod Documentation
 
@@ -673,4 +673,4 @@ Interactive Scalar UI showing all endpoints, schemas, and example requests/respo
 
 **Last Updated**: January 2026
 **Maintainers**: Eridu Services Team
-**Questions?** See [Copilot Instructions](../../.github/copilot-instructions.md) or check erify_api architecture docs.
+**Questions?** See [Agent Instructions](../../AGENTS.md) or check the architecture overview.

@@ -52,7 +52,7 @@ After completing these steps:
 
 <Short answer with verification steps if needed.>
 
-→ *See also: [Related Guide](/path/to/related)*
+→ *See also: Related Guide (replace with a relative link)*
 
 ## Related
 
