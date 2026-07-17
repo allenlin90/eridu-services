@@ -3,9 +3,9 @@
 > **Status**: ✅ Implemented — Phase 4
 > **Phase scope**: Phase 4 Wave 2 (Cost Foundation)
 > **Owner app**: `apps/erify_studios`
-> **Tracker**: [`docs/roadmap/PHASE_4.md`](../../../../docs/roadmap/PHASE_4.md)
+> **Tracker**: [`docs/roadmap/PHASE_4.md`](../../../docs/roadmap/PHASE_4.md)
 > **Backend reference**: [`apps/erify_api/docs/COMPENSATION_LINE_ITEMS.md`](../../erify_api/docs/COMPENSATION_LINE_ITEMS.md)
-> **Canonical semantics**: [`docs/domain/economics-cost-model.md`](../../../../docs/domain/economics-cost-model.md)
+> **Canonical semantics**: [`docs/domain/economics-cost-model.md`](../../../docs/domain/economics-cost-model.md)
 > **Depends on**: 2.2 backend contracts; 1.5 Studio Show Management ✅; 1.3 Studio Member Roster ✅
 > **Gates**: 3.1 Studio Economics Review (read-only consumer)
 
@@ -17,7 +17,7 @@ These surfaces cover data input only. Calculator-driven money displays are manag
 
 The per-show creator mapping view renders a backend-calculated creator compensation summary. The frontend submits `SHOW_CREATOR` line-item mutations, then renders totals returned by `/studios/:studioId/shows/:showId/creators/compensation-summary`.
 
-Actuals surfaces follow the cost model's [actual ownership and scope](../../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope). This UI exposes show actuals and shift-block actuals only; future creator participation actuals, platform performance actuals, and platform violation records are distinct resources.
+Actuals surfaces follow the cost model's [actual ownership and scope](../../../docs/domain/economics-cost-model.md#actual-ownership-and-scope). This UI exposes show actuals and shift-block actuals only; future creator participation actuals, platform performance actuals, and platform violation records are distinct resources.
 
 ## Workflow Model
 

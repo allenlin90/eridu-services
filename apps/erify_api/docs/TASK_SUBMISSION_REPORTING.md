@@ -3,7 +3,7 @@
 > **TLDR**: Add a studio-scoped reporting API with a show-first workflow: managers filter shows, discover available task columns contextually, then the BE joins submitted task data into a flat table JSON returned inline. No server-side result storage — the FE caches and applies view filters client-side.
 
 > [!NOTE]
-> **Status: ✅ Implemented** — This document is the architectural reference for the shipped implementation. See [`docs/features/task-submission-reporting.md`](../../../../docs/features/task-submission-reporting.md) for the shipped feature spec.
+> **Status: ✅ Implemented** — This document is the architectural reference for the shipped implementation. See [`docs/features/task-submission-reporting.md`](../../../docs/features/task-submission-reporting.md) for the shipped feature spec.
 
 ## 1. Purpose
 
@@ -31,7 +31,7 @@ This design must fit the current task architecture:
 4. Generate flat table JSON inline — returned in the API response, not stored server-side.
 5. Reuse existing task/show/client relations instead of introducing a parallel reporting store.
 6. Keep the BE stateless for results — the FE owns caching and view-layer filtering.
-7. **Strong semantics, flexible operations** — standardize a small canonical set of shared fields for cross-template reporting without constraining template design or operator workflows. Reporting standardization is an engineering best-practice layer, not an operational constraint. (See feature doc [Key Product Decisions](../../../../docs/features/task-submission-reporting.md#key-product-decisions).)
+7. **Strong semantics, flexible operations** — standardize a small canonical set of shared fields for cross-template reporting without constraining template design or operator workflows. Reporting standardization is an engineering best-practice layer, not an operational constraint. (See feature doc [Key Product Decisions](../../../docs/features/task-submission-reporting.md#key-product-decisions).)
 
 ## 3. Non-Goals
 
@@ -397,7 +397,7 @@ The BE resolves date presets at run time before executing the query. Presets are
 
 ### 4.8 Submission timestamp — deferred
 
-> **Deferred to ideation**: A typed `submittedAt` field on `Task` would improve sort ordering and filtering precision, but the backfill coverage for historical tasks is poor. For MVP, use `status` filtering (`REVIEW`, `COMPLETED`, `CLOSED`) combined with `updatedAt` for sort ordering. See [docs/ideation/submitted-at-state-machine.md](../../../../docs/ideation/submitted-at-state-machine.md) for the full analysis.
+> **Deferred to ideation**: A typed `submittedAt` field on `Task` would improve sort ordering and filtering precision, but the backfill coverage for historical tasks is poor. For MVP, use `status` filtering (`REVIEW`, `COMPLETED`, `CLOSED`) combined with `updatedAt` for sort ordering. See [docs/ideation/submitted-at-state-machine.md](../../../docs/ideation/submitted-at-state-machine.md) for the full analysis.
 
 ### 4.9 Show-targeted tasks only
 
@@ -446,7 +446,7 @@ Migrate to async generation (BullMQ + 202 Accepted + polling) when **any** of th
 3. **Concurrent generation requests cause DB connection pool pressure**.
 4. **Product requires removing the 10,000-row cap**.
 
-See [docs/ideation/bullmq-async-processing.md](../../../../docs/ideation/bullmq-async-processing.md) for the full investigation scope.
+See [docs/ideation/bullmq-async-processing.md](../../../docs/ideation/bullmq-async-processing.md) for the full investigation scope.
 
 ## 5. Data Model Relationships
 
@@ -1035,7 +1035,7 @@ src/models/task-report/
 
 `lib/` files must not import NestJS, Prisma, or any app-specific module.
 
-> **Numeric summaries are deferred from BE scope.** See [docs/ideation/task-analytics-summaries.md](../../../../docs/ideation/task-analytics-summaries.md).
+> **Numeric summaries are deferred from BE scope.**
 
 ## 11. Validation and Guardrails
 

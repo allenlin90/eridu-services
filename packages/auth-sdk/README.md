@@ -677,8 +677,8 @@ If you have existing JWT/JWKS implementation in your service:
 ## Related Documentation
 
 - **[Authorization Guide](../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)** - Authorization guide for erify_api
-- **[Phase 1 Roadmap](../../apps/erify_api/docs/roadmap/PHASE_1.md)** - Implementation roadmap
-- **[Architecture Overview](../../apps/erify_api/docs/ARCHITECTURE_OVERVIEW.md)** - System architecture
+- **[Phase 1 Roadmap](../../docs/roadmap/PHASE_1.md)** - Implementation roadmap
+- **[Architecture Overview](../../docs/engineering/ARCHITECTURE_OVERVIEW.md)** - System architecture
 
 ## License
 

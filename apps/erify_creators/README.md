@@ -56,7 +56,7 @@ When working on erify_creators, refer to these guides:
 | Document                                                      | Use When                                                                  |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | This README                                                   | Understanding project structure, architecture, testing, and setup         |
-| [Copilot Instructions](../../.github/copilot-instructions.md) | Understanding monorepo patterns, conventions, and cross-app communication |
+| [Agent Instructions](../../AGENTS.md)                          | Understanding monorepo patterns, conventions, and cross-app communication |
 | [erify_api Docs](../erify_api/docs/)                          | Working on API integration, understanding backend features                |
 | [Auth SDK Docs](../../packages/auth-sdk/README.md)            | Implementing authentication flows, session management                     |
 | [API Types Docs](../../packages/api-types/README.md)          | Understanding shared schemas and types                                    |
@@ -935,7 +935,7 @@ Access via `import.meta.env.VITE_AUTH_URL` or `import.meta.env.VITE_API_URL`
 
 ### Before Starting Work
 
-1. Review the [Copilot Instructions](.github/copilot-instructions.md) for monorepo conventions
+1. Review the [Agent Instructions](../../AGENTS.md) for monorepo conventions
 2. Check [erify_api docs](../erify_api/docs/) to understand API features you'll integrate
 3. Review the Architecture Principles section to understand the three-layer pattern
 4. Run `pnpm dev` to start the dev server
@@ -978,7 +978,7 @@ pnpm test:coverage
 - [TanStack Router Docs](https://tanstack.com/router)
 - [React Query Docs](https://tanstack.com/query/latest)
 - [Paraglide JS i18n](https://inlang.com/m/gerre34r/library-inlang-paraglideJs)
-- [Monorepo Conventions](../../.github/copilot-instructions.md)
+- [Monorepo Conventions](../../AGENTS.md)
 - [API Documentation](../erify_api/docs/)
 - [React Documentation](https://react.dev)
 - [Vite Documentation](https://vite.dev)
