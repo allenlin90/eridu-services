@@ -373,6 +373,11 @@ export class AuditRepository {
   }
 
   /**
+   * Engineering decision: purpose-built history query, not a service-side
+   * `findMany` — it filters Audit JSONB metadata by lifecycle/outcome while
+   * paging `AuditTarget` rows through studio-scoped shows, which would push
+   * Prisma query-building into the service layer.
+   *
    * Resolved stale-conflict history for the studio: the `lifecycle: 'resolved'`
    * Audit rows written by `ScheduleConflictService.writeResolved`, optionally
    * narrowed to specific outcomes.
