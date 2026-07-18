@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This testing plan is structured for the **Business Unit Managers** (`Commerce - Manager`, `Erify - Manager`, and `Erisa - Manager`) to verify that the custom models and attached skills inside Open WebUI behave according to policy guidelines and route questions to the correct context.
+This testing plan is structured for the **Business Unit Managers** (`Commerce - Sales`/`Commerce - Operation`, `Erify - Offset`/`Erify - Onset`, and `Erisa - Creator`/`Erisa - Campaign`) to verify that the custom models and attached skills inside Open WebUI behave according to policy guidelines and route questions to the correct context.
 
 ---
 
