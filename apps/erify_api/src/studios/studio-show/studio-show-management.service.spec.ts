@@ -11,6 +11,7 @@ import { StudioShowManagementService } from './studio-show-management.service';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
+import { PublishRunService } from '@/models/publish-run/publish-run.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import type { UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
@@ -125,6 +126,10 @@ describe('studioShowManagementService', () => {
     create: jest.fn(),
     findSchedulePublishImpactsForStudio: jest.fn(),
     findPendingStaleConflictsForStudio: jest.fn(),
+    findResolvedStaleConflictsForStudio: jest.fn(),
+    countSchedulePublishImpactsForStudio: jest.fn(),
+    countPendingStaleConflictsForStudio: jest.fn(),
+    countResolvedStaleConflictsForStudio: jest.fn(),
     countForTargets: jest.fn(),
     findForTargets: jest.fn(),
     findLatestScheduleConflictForShow: jest.fn(),
@@ -136,6 +141,10 @@ describe('studioShowManagementService', () => {
   };
   const taskTargetServiceMock = {
     countActiveByShowId: jest.fn().mockResolvedValue(0),
+  };
+  const publishRunServiceMock = {
+    getPublishRunByUid: jest.fn(),
+    getPublishRunsForStudio: jest.fn().mockResolvedValue({ items: [], total: 0 }),
   };
   const actorExtId = 'ext_actor1';
 
@@ -180,6 +189,7 @@ describe('studioShowManagementService', () => {
         { provide: AuditService, useValue: auditServiceMock },
         { provide: ScheduleConflictService, useValue: scheduleConflictServiceMock },
         { provide: TaskTargetService, useValue: taskTargetServiceMock },
+        { provide: PublishRunService, useValue: publishRunServiceMock },
       ],
     }).compile();
 
@@ -1572,6 +1582,7 @@ describe('studioShowManagementService', () => {
           { provide: TaskService, useValue: taskServiceMock },
           { provide: AuditService, useValue: fakeAuditService },
           { provide: TaskTargetService, useValue: taskTargetServiceMock },
+          { provide: PublishRunService, useValue: publishRunServiceMock },
         ],
       }).compile();
 
@@ -1618,7 +1629,286 @@ describe('studioShowManagementService', () => {
     });
   });
 
+  describe('getSchedulePublishImpactSummary', () => {
+    it('aggregates per-kind counts and the pending-stale count from the shared filter plan', async () => {
+      auditServiceMock.countSchedulePublishImpactsForStudio.mockImplementation(
+        async (_studioUid: string, filters: { impactKinds?: string[] }) => {
+          switch (filters.impactKinds?.[0]) {
+            case 'confirmed_future_updated': return 3;
+            case 'confirmed_future_pending_resolution': return 2;
+            case 'past_show_creator_backfilled': return 1;
+            default: return 0;
+          }
+        },
+      );
+      auditServiceMock.countPendingStaleConflictsForStudio.mockResolvedValue(4);
+
+      const summary = await service.getSchedulePublishImpactSummary('std_123', {});
+
+      expect(summary).toEqual({
+        total: 10,
+        confirmed_future_updated: 3,
+        confirmed_future_pending_resolution: 2,
+        stale_conflict_pending: 4,
+        stale_conflict_resolved: 0,
+        past_show_creator_backfilled: 1,
+      });
+      expect(auditServiceMock.countResolvedStaleConflictsForStudio).not.toHaveBeenCalled();
+    });
+
+    it('zeroes kinds excluded by the impact_kind filter without counting them', async () => {
+      auditServiceMock.countSchedulePublishImpactsForStudio.mockResolvedValue(5);
+
+      const summary = await service.getSchedulePublishImpactSummary('std_123', {
+        impact_kind: 'confirmed_future_updated',
+      });
+
+      expect(summary).toEqual({
+        total: 5,
+        confirmed_future_updated: 5,
+        confirmed_future_pending_resolution: 0,
+        stale_conflict_pending: 0,
+        stale_conflict_resolved: 0,
+        past_show_creator_backfilled: 0,
+      });
+      expect(auditServiceMock.countSchedulePublishImpactsForStudio).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.countPendingStaleConflictsForStudio).not.toHaveBeenCalled();
+    });
+
+    it('counts resolved history rows when resolution_status selects resolved outcomes', async () => {
+      auditServiceMock.countPendingStaleConflictsForStudio.mockResolvedValue(2);
+      auditServiceMock.countResolvedStaleConflictsForStudio.mockResolvedValue(3);
+
+      const summary = await service.getSchedulePublishImpactSummary('std_123', {
+        resolution_status: ['pending', 'applied', 'dismissed'],
+      });
+
+      expect(summary).toEqual({
+        total: 5,
+        confirmed_future_updated: 0,
+        confirmed_future_pending_resolution: 0,
+        stale_conflict_pending: 2,
+        stale_conflict_resolved: 3,
+        past_show_creator_backfilled: 0,
+      });
+      expect(auditServiceMock.countResolvedStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ outcomes: ['applied', 'dismissed'] }),
+      );
+      expect(auditServiceMock.countSchedulePublishImpactsForStudio).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listPublishRuns', () => {
+    it('maps publish runs to lean external rows', async () => {
+      publishRunServiceMock.getPublishRunsForStudio.mockResolvedValue({
+        total: 1,
+        items: [
+          {
+            id: BigInt(7),
+            uid: 'prun_abc',
+            source: 'google_sheets_sync',
+            summary: { shows_created: 2, shows_updated: 1 },
+            schedule: { uid: 'schedule_123' },
+            triggeredBy: { uid: 'user_123', name: 'Planner' },
+            createdAt: new Date('2026-07-15T08:00:00.000Z'),
+          },
+        ],
+      });
+
+      const result = await service.listPublishRuns('std_123', { page: 1, limit: 25 });
+
+      expect(publishRunServiceMock.getPublishRunsForStudio).toHaveBeenCalledWith('std_123', { skip: 0, take: 25 });
+      expect(result.total).toBe(1);
+      expect(result.items[0]).toEqual({
+        id: 'prun_abc',
+        source: 'google_sheets_sync',
+        schedule_id: 'schedule_123',
+        triggered_by: { id: 'user_123', name: 'Planner' },
+        summary: { shows_created: 2, shows_updated: 1 },
+        created_at: '2026-07-15T08:00:00.000Z',
+      });
+    });
+  });
+
   describe('listSchedulePublishImpacts', () => {
+    it('passes impact-kind filters to the confirmed-future source and skips the stale source when stale_conflict is excluded', async () => {
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      await service.listSchedulePublishImpacts('std_123', {
+        impact_kind: ['confirmed_future_updated', 'past_show_creator_backfilled'],
+      });
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({
+          impactKinds: ['confirmed_future_updated', 'past_show_creator_backfilled'],
+          // An explicit kind filter lifts the implicit upcoming-only default,
+          // so past-show rows (e.g. creator backfills) stay reachable.
+          startDateFrom: undefined,
+          implicitStartDateFrom: undefined,
+        }),
+      );
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).not.toHaveBeenCalled();
+    });
+
+    // Regression: the untouched default view used to push its upcoming-only
+    // bound into `startDateFrom`, which also hid always-past
+    // `past_show_creator_backfilled` rows. The default now travels as
+    // `implicitStartDateFrom`, which the repository exempts that kind from.
+    it('passes the default upcoming-only bound as implicitStartDateFrom, not startDateFrom', async () => {
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [], total: 0 });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      await service.listSchedulePublishImpacts('std_123', {});
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({
+          startDateFrom: undefined,
+          implicitStartDateFrom: expect.any(Date),
+        }),
+      );
+    });
+
+    it('labels past_show_creator_backfilled rows with their own impact kind', async () => {
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({
+        total: 1,
+        items: [
+          {
+            targetId: BigInt(9),
+            audit: {
+              uid: 'aud_backfill',
+              metadata: {
+                event: 'schedule_publish_impact',
+                schedule_uid: 'schedule_123',
+                external_id: 'EXT-9',
+                impact_kind: 'past_show_creator_backfilled',
+                changed_fields: [],
+                relation_changes: { creator_links_added: 2 },
+              },
+              createdAt: new Date('2026-07-10T10:00:00.000Z'),
+            },
+            show: {
+              uid: 'show_terminal',
+              externalId: 'EXT-9',
+              name: 'Past Show',
+              startTime: new Date('2026-07-01T10:00:00.000Z'),
+              endTime: new Date('2026-07-01T12:00:00.000Z'),
+              showStatus: { name: 'completed', systemKey: 'COMPLETED' },
+              client: { uid: 'client_123', name: 'Client' },
+            },
+          },
+        ],
+      });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {});
+
+      // Regression: this kind used to fall through the mapper to
+      // 'confirmed_future_updated', so the backfilled badge never rendered.
+      expect(result.items[0].impact_kind).toBe('past_show_creator_backfilled');
+      expect(result.items[0].relation_changes).toEqual({ creator_links_added: 2 });
+    });
+
+    it('serves only the pending-stale source when resolution_status is pending', async () => {
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      await service.listSchedulePublishImpacts('std_123', {
+        resolution_status: 'pending',
+      });
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).not.toHaveBeenCalled();
+      expect(auditServiceMock.findResolvedStaleConflictsForStudio).not.toHaveBeenCalled();
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledTimes(1);
+    });
+
+    // Regression: applied/dismissed/superseded/auto_resolved selections used to
+    // return an empty page unconditionally — every advertised status must be
+    // servable.
+    it.each([
+      'applied',
+      'dismissed',
+      'superseded',
+      'auto_resolved_no_longer_conflicting',
+    ] as const)('serves resolved history when resolution_status is %s', async (status) => {
+      auditServiceMock.findResolvedStaleConflictsForStudio.mockResolvedValue({ items: [], total: 1 });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {
+        resolution_status: status,
+      });
+
+      expect(auditServiceMock.findResolvedStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ outcomes: [status] }),
+      );
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).not.toHaveBeenCalled();
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).not.toHaveBeenCalled();
+      expect(result.total).toBe(1);
+    });
+
+    it('serves both stale sources for a mixed pending + resolved selection', async () => {
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 2 });
+      auditServiceMock.findResolvedStaleConflictsForStudio.mockResolvedValue({ items: [], total: 3 });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {
+        resolution_status: ['pending', 'applied', 'superseded'],
+      });
+
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledTimes(1);
+      expect(auditServiceMock.findResolvedStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ outcomes: ['applied', 'superseded'] }),
+      );
+      expect(result.total).toBe(5);
+    });
+
+    // Regression: an end-only date query used to keep the implicit
+    // `startDateFrom = now`, so historical upper bounds returned empty.
+    it('treats an end-only start_date_to as explicit scope and lifts the implicit upcoming-only default', async () => {
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [], total: 0 });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      const startDateTo = '2026-06-30T23:59:59.999Z';
+      await service.listSchedulePublishImpacts('std_123', { start_date_to: startDateTo });
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({
+          startDateFrom: undefined,
+          startDateTo: new Date(startDateTo),
+        }),
+      );
+    });
+
+    it('resolves publish_run_id to the internal run id for both sources', async () => {
+      publishRunServiceMock.getPublishRunByUid.mockResolvedValue({ id: BigInt(42), uid: 'prun_abc' });
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [], total: 0 });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      await service.listSchedulePublishImpacts('std_123', { publish_run_id: 'prun_abc' });
+
+      expect(publishRunServiceMock.getPublishRunByUid).toHaveBeenCalledWith('prun_abc');
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ publishRunId: BigInt(42) }),
+      );
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({ publishRunId: BigInt(42) }),
+      );
+    });
+
+    it('returns an empty page without querying when publish_run_id is unknown', async () => {
+      publishRunServiceMock.getPublishRunByUid.mockResolvedValue(null);
+
+      const result = await service.listSchedulePublishImpacts('std_123', { publish_run_id: 'prun_missing' });
+
+      expect(result).toEqual({ items: [], total: 0 });
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).not.toHaveBeenCalled();
+      expect(auditServiceMock.findPendingStaleConflictsForStudio).not.toHaveBeenCalled();
+    });
+
     it('maps schedule publish impact audits to manager queue rows', async () => {
       const createdAt = new Date('2026-06-29T10:00:00.000Z');
       const startDateFrom = '2026-07-01T00:00:00.000Z';
@@ -1661,16 +1951,15 @@ describe('studioShowManagementService', () => {
 
       expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
         'std_123',
-        {
+        expect.objectContaining({
           startDateFrom: new Date(startDateFrom),
-          startDateTo: undefined,
           skip: 25,
           take: 25,
-        },
+        }),
       );
       expect(auditServiceMock.findPendingStaleConflictsForStudio).toHaveBeenCalledWith(
         'std_123',
-        { skip: 25, take: 25 },
+        expect.objectContaining({ skip: 25, take: 25 }),
       );
       expect(result.total).toBe(1);
       expect(result.items[0]).toEqual({

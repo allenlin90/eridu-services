@@ -1,6 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import type { SchedulePublishImpactRow } from '@eridu/api-types/shows';
+import type {
+  ScheduleConflictResolutionStatus,
+  SchedulePublishImpactKind,
+  SchedulePublishImpactRow,
+} from '@eridu/api-types/shows';
 
 import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
@@ -10,6 +14,11 @@ export type GetSchedulePublishImpactsParams = {
   limit?: number;
   start_date_from?: string;
   start_date_to?: string;
+  changed_from?: string;
+  changed_to?: string;
+  impact_kind?: SchedulePublishImpactKind[];
+  resolution_status?: ScheduleConflictResolutionStatus[];
+  publish_run_id?: string;
 };
 
 export const schedulePublishImpactKeys = {

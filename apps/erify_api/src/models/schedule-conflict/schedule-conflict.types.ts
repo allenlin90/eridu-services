@@ -29,6 +29,12 @@ export type ReconcileShowConflictParams = {
   conflictType: 'update_held_back' | 'removal_held_back';
   /** `null` means nothing was held back for this show on this publish run. */
   heldBack: ScheduleConflictHeldBack | null;
+  /**
+   * `PublishRun` batch id for the publish call driving this reconciliation.
+   * Stamped onto every opened/resolved audit row written here; null only for
+   * rows that predate `PublishRun` tracking.
+   */
+  publishRunId?: bigint | null;
 };
 
 /** The FK-backed fields inside `show_fields` and the Prisma model each resolves against. */

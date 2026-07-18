@@ -493,6 +493,7 @@ describe('adminScheduleController', () => {
           platform_links_updated: 0,
           platform_links_removed: 0,
           tasks_reconciled: 0,
+          creator_mappings_backfilled: 0,
         },
       };
 

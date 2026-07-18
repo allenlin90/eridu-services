@@ -191,15 +191,7 @@ export class PublishingRelationSyncService {
       if (!existing || existing.deletedAt) {
         // Additions and restores of a soft-deleted row always apply — nothing active to conflict with.
         if (!existing) {
-          await tx.showCreator.create({
-            data: {
-              uid: this.showCreatorService.generateShowCreatorUid(),
-              showId: params.showId,
-              creatorId,
-              note: incomingCreator.note,
-              metadata: {},
-            },
-          });
+          await this.createShowCreator(params.showId, creatorId, incomingCreator.note);
         } else {
           await tx.showCreator.update({
             where: { id: existing.id },
@@ -260,6 +252,73 @@ export class PublishingRelationSyncService {
       params.summary.creator_links_removed += staleToRemove.length;
       params.changes.creator_links_removed += staleToRemove.length;
     }
+  }
+
+  /**
+   * Terminal-show creator-mapping backfill (Phase 5 item 7) — fill-gap only.
+   *
+   * Routine relation sync skips terminal (LIVE/COMPLETED) shows entirely, so
+   * a show that passed before creator mapping landed keeps zero `ShowCreator`
+   * rows even though the Sheet still carries its `creators` column. This
+   * bounded step creates those mappings — and ONLY when the show has zero
+   * existing `ShowCreator` rows, soft-deleted included: `ShowCreator` can be
+   * targeted by a `CompensationLineItem` and no settlement/freeze guard
+   * exists yet, so an existing (or resurrectable) mapping is never touched.
+   * Returns the number of mappings created; 0 means not eligible.
+   *
+   * Called once per candidate from `PublishingService` after the main
+   * diff+upsert completes — never from `syncShowRelations`, whose
+   * terminal-show exclusion is intentionally unchanged.
+   */
+  async backfillCreatorsForTerminalShow(params: {
+    showId: bigint;
+    incoming: DiffIncomingShow;
+    uidMaps: PublishingUidMaps;
+  }): Promise<number> {
+    const tx = this.txHost.tx;
+
+    const incomingCreatorById = new Map<bigint, { note: string | undefined }>();
+    (params.incoming.source.creators || []).forEach((creator) => {
+      const creatorInternalId = params.uidMaps.creators.get(creator.creatorId);
+      if (!creatorInternalId) {
+        return;
+      }
+      incomingCreatorById.set(creatorInternalId, { note: creator.note });
+    });
+
+    if (incomingCreatorById.size === 0) {
+      return 0;
+    }
+
+    const existingCount = await tx.showCreator.count({
+      where: { showId: params.showId },
+    });
+    if (existingCount > 0) {
+      return 0;
+    }
+
+    for (const [creatorId, incomingCreator] of incomingCreatorById.entries()) {
+      await this.createShowCreator(params.showId, creatorId, incomingCreator.note);
+    }
+
+    return incomingCreatorById.size;
+  }
+
+  /** Shared `ShowCreator` create write for routine sync and the terminal-show backfill. */
+  private async createShowCreator(
+    showId: bigint,
+    creatorId: bigint,
+    note: string | undefined,
+  ): Promise<void> {
+    await this.txHost.tx.showCreator.create({
+      data: {
+        uid: this.showCreatorService.generateShowCreatorUid(),
+        showId,
+        creatorId,
+        note,
+        metadata: {},
+      },
+    });
   }
 
   private async syncPlatformsForShow(params: {

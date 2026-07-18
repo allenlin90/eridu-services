@@ -2,7 +2,7 @@
 
 ## Current Issue
 
-`StudioShowManagementService.listSchedulePublishImpacts` (`apps/erify_api/src/studios/studio-show/studio-show-management.service.ts`) serves `confirmed_future_*` rows and `stale_conflict` rows from two separately-paginated queries (`AuditService.findSchedulePublishImpactsForStudio` and `AuditService.findPendingStaleConflictsForStudio`) and concatenates each page's results, rather than producing one true cross-kind page sorted and paginated as a single result set.
+`StudioShowManagementService.listSchedulePublishImpacts` (`apps/erify_api/src/studios/studio-show/studio-show-management.service.ts`) serves up to three separately-paginated sources — `confirmed_future_*` rows (`AuditService.findSchedulePublishImpactsForStudio`), pending `stale_conflict` rows (`findPendingStaleConflictsForStudio`), and, since PR #310, resolved stale-conflict history (`findResolvedStaleConflictsForStudio`, active only when `resolution_status` selects resolved outcomes) — and concatenates each page's results, rather than producing one true cross-kind page sorted and paginated as a single result set. Because each active source is queried with the same `skip`/`take`, a page can hold up to `sources × limit` rows (e.g. a mixed `pending + applied` selection returns up to 2× the requested page size).
 
 ## Why It Matters
 

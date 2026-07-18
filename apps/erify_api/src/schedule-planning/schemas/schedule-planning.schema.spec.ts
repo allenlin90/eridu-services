@@ -87,6 +87,7 @@ describe('schedulePlanningSchema', () => {
         platform_links_updated: 1,
         platform_links_removed: 0,
         tasks_reconciled: 0,
+        creator_mappings_backfilled: 0,
       });
 
       expect(parsed.creator_links_added).toBe(3);
@@ -112,6 +113,7 @@ describe('schedulePlanningSchema', () => {
         platform_links_updated: 1,
         platform_links_removed: 0,
         tasks_reconciled: 0,
+        creator_mappings_backfilled: 0,
       });
 
       expect(result.success).toBe(false);

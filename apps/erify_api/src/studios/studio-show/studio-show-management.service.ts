@@ -7,18 +7,23 @@ import type { AuditTargetType } from '@eridu/api-types/audits';
 import type {
   CancelShowWithResolutionInput,
   HeldBackPayload,
+  PublishRunRow,
   RequestCancellationResolutionInput,
   ResolveScheduleConflictInput,
   ResolveShowCancellationInput,
+  ScheduleConflictResolutionStatus,
+  SchedulePublishImpactKind,
   SchedulePublishImpactRow,
+  SchedulePublishImpactSummary,
 } from '@eridu/api-types/shows';
 
 import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platform-performance.schema';
 
 import { HttpError } from '@/lib/errors/http-error.util';
-import type { SchedulePublishImpactAuditTarget } from '@/models/audit/audit.repository';
+import type { SchedulePublishImpactAuditTarget, SchedulePublishImpactQueryFilters } from '@/models/audit/audit.repository';
 import { AuditService } from '@/models/audit/audit.service';
 import { PlatformRepository } from '@/models/platform/platform.repository';
+import { PublishRunService } from '@/models/publish-run/publish-run.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import type { ShowWithPayload } from '@/models/show/schemas/show.schema';
@@ -48,7 +53,19 @@ type SchedulePublishImpactQuery = {
   limit?: number;
   start_date_from?: string;
   start_date_to?: string;
+  changed_from?: string;
+  changed_to?: string;
+  impact_kind?: SchedulePublishImpactKind | SchedulePublishImpactKind[];
+  resolution_status?: ScheduleConflictResolutionStatus | ScheduleConflictResolutionStatus[];
+  publish_run_id?: string;
 };
+
+/** Impact kinds served by the confirmed-future audit query (everything except stale_conflict). */
+const NON_STALE_IMPACT_KINDS: SchedulePublishImpactKind[] = [
+  'confirmed_future_updated',
+  'confirmed_future_pending_resolution',
+  'past_show_creator_backfilled',
+];
 
 @Injectable()
 export class StudioShowManagementService {
@@ -69,6 +86,7 @@ export class StudioShowManagementService {
     private readonly auditService: AuditService,
     private readonly scheduleConflictService: ScheduleConflictService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly publishRunService: PublishRunService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {}
 
@@ -653,23 +671,214 @@ export class StudioShowManagementService {
     const limit = query.limit ?? 25;
     const skip = (page - 1) * limit;
 
-    const [confirmedFuture, staleConflicts] = await Promise.all([
-      this.auditService.findSchedulePublishImpactsForStudio(studioUid, {
-        startDateFrom: query.start_date_from ? new Date(query.start_date_from) : new Date(),
-        startDateTo: query.start_date_to ? new Date(query.start_date_to) : undefined,
-        skip,
-        take: limit,
-      }),
-      this.auditService.findPendingStaleConflictsForStudio(studioUid, { skip, take: limit }),
+    const plan = await this.resolveImpactQueryPlan(query);
+    const empty = { items: [] as SchedulePublishImpactAuditTarget[], total: 0 };
+
+    const [confirmedFuture, staleConflicts, resolvedConflicts] = await Promise.all([
+      plan.includeConfirmed
+        ? this.auditService.findSchedulePublishImpactsForStudio(studioUid, {
+            ...plan.confirmedFilters,
+            skip,
+            take: limit,
+          })
+        : Promise.resolve(empty),
+      plan.includeStale
+        ? this.auditService.findPendingStaleConflictsForStudio(studioUid, {
+            ...plan.staleFilters,
+            skip,
+            take: limit,
+          })
+        : Promise.resolve(empty),
+      plan.includeResolvedStale
+        ? this.auditService.findResolvedStaleConflictsForStudio(studioUid, {
+            ...plan.resolvedStaleFilters,
+            skip,
+            take: limit,
+          })
+        : Promise.resolve(empty),
     ]);
 
     return {
       items: [
         ...confirmedFuture.items.map((item) => this.toSchedulePublishImpactRow(item)),
         ...staleConflicts.items.map((item) => this.toSchedulePublishImpactRow(item)),
+        ...resolvedConflicts.items.map((item) => this.toSchedulePublishImpactRow(item)),
       ],
-      total: confirmedFuture.total + staleConflicts.total,
+      total: confirmedFuture.total + staleConflicts.total + resolvedConflicts.total,
     };
+  }
+
+  /**
+   * KPI-card aggregate over the exact same filter plan and repository
+   * where-builders as `listSchedulePublishImpacts`, so the cards always match
+   * the full filtered result set (never the current page).
+   */
+  async getSchedulePublishImpactSummary(
+    studioUid: string,
+    query: SchedulePublishImpactQuery,
+  ): Promise<SchedulePublishImpactSummary> {
+    const plan = await this.resolveImpactQueryPlan(query);
+
+    const countKind = (kind: SchedulePublishImpactKind): Promise<number> => {
+      const kindsInPlan = plan.confirmedFilters.impactKinds ?? NON_STALE_IMPACT_KINDS;
+      if (!plan.includeConfirmed || !kindsInPlan.includes(kind)) {
+        return Promise.resolve(0);
+      }
+      return this.auditService.countSchedulePublishImpactsForStudio(studioUid, {
+        ...plan.confirmedFilters,
+        impactKinds: [kind],
+      });
+    };
+
+    const [updated, pendingResolution, backfilled, stalePending, staleResolved] = await Promise.all([
+      countKind('confirmed_future_updated'),
+      countKind('confirmed_future_pending_resolution'),
+      countKind('past_show_creator_backfilled'),
+      plan.includeStale
+        ? this.auditService.countPendingStaleConflictsForStudio(studioUid, plan.staleFilters)
+        : Promise.resolve(0),
+      plan.includeResolvedStale
+        ? this.auditService.countResolvedStaleConflictsForStudio(studioUid, plan.resolvedStaleFilters)
+        : Promise.resolve(0),
+    ]);
+
+    return {
+      total: updated + pendingResolution + backfilled + stalePending + staleResolved,
+      confirmed_future_updated: updated,
+      confirmed_future_pending_resolution: pendingResolution,
+      stale_conflict_pending: stalePending,
+      stale_conflict_resolved: staleResolved,
+      past_show_creator_backfilled: backfilled,
+    };
+  }
+
+  async listPublishRuns(
+    studioUid: string,
+    query: { page?: number; limit?: number },
+  ): Promise<{ items: PublishRunRow[]; total: number }> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 25;
+    const skip = (page - 1) * limit;
+
+    const { items, total } = await this.publishRunService.getPublishRunsForStudio(studioUid, {
+      skip,
+      take: limit,
+    });
+
+    return {
+      items: items.map((run) => ({
+        id: run.uid,
+        source: run.source as PublishRunRow['source'],
+        schedule_id: run.schedule?.uid ?? null,
+        triggered_by: run.triggeredBy
+          ? { id: run.triggeredBy.uid, name: run.triggeredBy.name ?? null }
+          : null,
+        summary: this.numberRecord(run.summary),
+        created_at: run.createdAt.toISOString(),
+      })),
+      total,
+    };
+  }
+
+  /**
+   * Resolves the shared filter plan for the impacts list and its summary.
+   *
+   * Date semantics: the legacy implicit "upcoming shows only" default
+   * (`startTime >= now`) applies ONLY to the untouched default view, and even
+   * there it exempts `past_show_creator_backfilled` — those rows only exist on
+   * terminal (past) shows, so the default view still lists and counts them.
+   * Any explicit narrowing filter (impact kind, publish run, change-time
+   * range, or an explicit show-time bound) lifts the default entirely, so
+   * past-show rows — e.g. a run drill-down from the Runs tab — stay
+   * reachable. The pending-stale source never receives the implicit default:
+   * past-dated shows are the entire point of that queue.
+   *
+   * `resolution_status` routes between the two stale sources: `pending`
+   * selects the live review queue (latest-per-show, `lifecycle: 'opened'`),
+   * while resolved statuses (`applied`, `dismissed`, `superseded`,
+   * `auto_resolved_no_longer_conflicting`) select the append-only resolution
+   * history rows matching those outcomes. Non-stale rows carry no resolution
+   * status, so any `resolution_status` filter excludes them.
+   */
+  private async resolveImpactQueryPlan(query: SchedulePublishImpactQuery): Promise<{
+    includeConfirmed: boolean;
+    includeStale: boolean;
+    includeResolvedStale: boolean;
+    confirmedFilters: SchedulePublishImpactQueryFilters;
+    staleFilters: SchedulePublishImpactQueryFilters;
+    resolvedStaleFilters: SchedulePublishImpactQueryFilters & { outcomes?: string[] };
+  }> {
+    const kinds = this.normalizeToArray(query.impact_kind);
+    const resolutionStatuses = this.normalizeToArray(query.resolution_status);
+    const resolvedOutcomes = resolutionStatuses?.filter((status) => status !== 'pending');
+
+    let publishRunId: bigint | undefined;
+    let unknownPublishRun = false;
+    if (query.publish_run_id) {
+      const run = await this.publishRunService.getPublishRunByUid(query.publish_run_id);
+      if (run) {
+        publishRunId = run.id;
+      } else {
+        // Unknown run uid → empty result set, mirroring how unknown uid
+        // filters behave elsewhere in list queries.
+        unknownPublishRun = true;
+      }
+    }
+
+    const hasExplicitScope = Boolean(
+      query.start_date_from
+      || query.start_date_to
+      || query.impact_kind
+      || query.publish_run_id
+      || query.changed_from
+      || query.changed_to,
+    );
+
+    const shared: SchedulePublishImpactQueryFilters = {
+      startDateTo: query.start_date_to ? new Date(query.start_date_to) : undefined,
+      changedFrom: query.changed_from ? new Date(query.changed_from) : undefined,
+      changedTo: query.changed_to ? new Date(query.changed_to) : undefined,
+      publishRunId,
+    };
+
+    const explicitStartDateFrom = query.start_date_from ? new Date(query.start_date_from) : undefined;
+    const nonStaleKinds = kinds?.filter((kind) => kind !== 'stale_conflict');
+
+    return {
+      includeConfirmed: !unknownPublishRun
+        && resolutionStatuses === undefined
+        && (kinds === undefined || (nonStaleKinds?.length ?? 0) > 0),
+      includeStale: !unknownPublishRun
+        && (kinds === undefined || kinds.includes('stale_conflict'))
+        && (resolutionStatuses === undefined || resolutionStatuses.includes('pending')),
+      // Resolved history is opt-in only: the untouched default view stays
+      // confirmed + pending, matching the review queue's purpose.
+      includeResolvedStale: !unknownPublishRun
+        && (kinds === undefined || kinds.includes('stale_conflict'))
+        && (resolvedOutcomes?.length ?? 0) > 0,
+      confirmedFilters: {
+        ...shared,
+        startDateFrom: explicitStartDateFrom,
+        implicitStartDateFrom: hasExplicitScope ? undefined : new Date(),
+        impactKinds: kinds === undefined ? undefined : nonStaleKinds,
+      },
+      staleFilters: {
+        ...shared,
+        startDateFrom: explicitStartDateFrom,
+      },
+      resolvedStaleFilters: {
+        ...shared,
+        startDateFrom: explicitStartDateFrom,
+        outcomes: resolvedOutcomes,
+      },
+    };
+  }
+
+  private normalizeToArray<T>(value: T | T[] | undefined): T[] | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+    return Array.isArray(value) ? value : [value];
   }
 
   async listShowAudits(
@@ -777,7 +986,9 @@ export class StudioShowManagementService {
       ? 'stale_conflict' as const
       : metadata.impact_kind === 'confirmed_future_pending_resolution'
         ? 'confirmed_future_pending_resolution' as const
-        : 'confirmed_future_updated' as const;
+        : metadata.impact_kind === 'past_show_creator_backfilled'
+          ? 'past_show_creator_backfilled' as const
+          : 'confirmed_future_updated' as const;
 
     return {
       audit_id: target.audit.uid,

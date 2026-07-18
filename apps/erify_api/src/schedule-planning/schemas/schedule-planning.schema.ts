@@ -98,6 +98,15 @@ export const restoreFromSnapshotSchema = z.object({
   snapshot_uid: z.string(),
 });
 
+/**
+ * Show statuses treated as terminal by schedule publishing: sheet updates
+ * preserve these shows, and the terminal-show creator backfill (plus its
+ * `/validate` eligibility preview) targets exactly this set. Both consumers
+ * import this constant so the preview can never drift from what publish
+ * actually preserves.
+ */
+export const TERMINAL_PRESERVED_STATUS_KEYS = ['LIVE', 'COMPLETED'] as const;
+
 // Validation result schema
 export const validationResultSchema = z.object({
   isValid: z.boolean(),
@@ -117,6 +126,20 @@ export const validationResultSchema = z.object({
       showTempId: z.string().optional(),
     }),
   ),
+  /**
+   * Non-blocking informational findings — never flip `isValid`. Whatever
+   * process reviews the /validate response before triggering /publish sees
+   * these the same way it sees errors, without being blocked by them.
+   */
+  info: z
+    .array(
+      z.object({
+        type: z.enum(['terminal_show_creator_backfill_eligible']),
+        message: z.string(),
+        count: z.number().int().nonnegative(),
+      }),
+    )
+    .optional(),
 });
 
 // DTOs

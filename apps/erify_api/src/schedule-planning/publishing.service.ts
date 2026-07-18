@@ -6,10 +6,12 @@ import {
   PlanDocument,
   planDocumentSchema,
   PublishScheduleSummary,
+  TERMINAL_PRESERVED_STATUS_KEYS,
 } from './schemas/schedule-planning.schema';
 import type {
   DiffIncomingShow,
   ExistingShow,
+  PublishingUidMaps,
   ScheduleWithRelations,
   ShowRelationSyncChanges,
 } from './publishing.types';
@@ -20,6 +22,8 @@ import { ValidationService } from './validation.service';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { OPERATIONAL_DAY_START_HOUR } from '@/lib/utils/operational-day.util';
 import { AuditService } from '@/models/audit/audit.service';
+import { PublishRunService } from '@/models/publish-run/publish-run.service';
+import { PUBLISH_RUN_SOURCE } from '@/models/publish-run/schemas/publish-run.schema';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
 import type { HeldBackFieldValue, ScheduleConflictHeldBack } from '@/models/schedule-conflict/schedule-conflict.types';
@@ -40,10 +44,7 @@ const PRESERVED_STATUS_KEYS = new Set([
   'CANCELLED',
   'CANCELLED_PENDING_RESOLUTION',
 ]);
-const UPDATE_PRESERVED_STATUS_KEYS = new Set([
-  'LIVE',
-  'COMPLETED',
-]);
+const UPDATE_PRESERVED_STATUS_KEYS = new Set<string>(TERMINAL_PRESERVED_STATUS_KEYS);
 
 @Injectable()
 export class PublishingService {
@@ -60,6 +61,7 @@ export class PublishingService {
     private readonly auditService: AuditService,
     private readonly scheduleConflictService: ScheduleConflictService,
     private readonly taskTargetService: TaskTargetService,
+    private readonly publishRunService: PublishRunService,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
@@ -127,6 +129,16 @@ export class PublishingService {
     if (typeof tx.$executeRaw === 'function') {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(${schedule.id})`;
     }
+
+    // Created up front (same transaction) so its id can be stamped onto every
+    // schedule_publish_impact audit row written below; the summary counts are
+    // written back once the diff+upsert finishes.
+    const publishRun = await this.publishRunService.createPublishRun({
+      scheduleId: schedule.id,
+      studioId: schedule.studioId ?? null,
+      triggeredById: userId,
+      source: PUBLISH_RUN_SOURCE.GOOGLE_SHEETS_SYNC,
+    });
 
     const uidMaps = await buildPublishingUidLookupMaps(planDocument.shows, schedule, tx);
     const statusIds = await this.resolveRequiredStatusIds();
@@ -304,6 +316,7 @@ export class PublishingService {
       confirmed_shows_updated: 0,
       confirmed_shows_pending_resolution: 0,
       publish_impacts_recorded: 0,
+      creator_mappings_backfilled: 0,
       creator_links_added: 0,
       creator_links_updated: 0,
       creator_links_removed: 0,
@@ -383,6 +396,7 @@ export class PublishingService {
       heldBackFields: { changedFields: string[]; old: Record<string, HeldBackFieldValue>; new: Record<string, HeldBackFieldValue> } | null;
     }>();
     const terminalShowIds = new Set<bigint>();
+    const terminalBackfillCandidates: Array<{ existing: ExistingShow; incoming: DiffIncomingShow }> = [];
 
     for (const pair of toUpdate) {
       const { incoming, existing } = pair;
@@ -390,6 +404,9 @@ export class PublishingService {
       if (this.isTerminalStatus(existing, UPDATE_PRESERVED_STATUS_KEYS)) {
         publishSummary.shows_preserved += 1;
         terminalShowIds.add(existing.id);
+        if ((incoming.source.creators?.length ?? 0) > 0) {
+          terminalBackfillCandidates.push({ existing, incoming });
+        }
         continue;
       }
 
@@ -541,6 +558,7 @@ export class PublishingService {
           actorId: userId,
           conflictType: 'removal_held_back',
           heldBack: null,
+          publishRunId: publishRun.id,
         });
         continue;
       }
@@ -563,6 +581,7 @@ export class PublishingService {
           impactKind: 'confirmed_future_pending_resolution',
           changedFields: ['show_status_id'],
           relationChanges: this.createEmptyRelationChanges(),
+          publishRunId: publishRun.id,
         });
         publishSummary.publish_impacts_recorded += 1;
         continue;
@@ -587,6 +606,7 @@ export class PublishingService {
             showPlatforms: [],
             proposedStatusTransition,
           },
+          publishRunId: publishRun.id,
         });
         if (recorded) {
           publishSummary.publish_impacts_recorded += 1;
@@ -645,6 +665,7 @@ export class PublishingService {
         actorId: userId,
         conflictType: 'update_held_back',
         heldBack,
+        publishRunId: publishRun.id,
       });
       if (recorded) {
         publishSummary.publish_impacts_recorded += 1;
@@ -679,6 +700,7 @@ export class PublishingService {
               proposedStatusTransition: null,
             }
           : null,
+        publishRunId: publishRun.id,
       });
       if (recorded) {
         publishSummary.publish_impacts_recorded += 1;
@@ -693,6 +715,7 @@ export class PublishingService {
         actorId: userId,
         conflictType: 'update_held_back',
         heldBack: null,
+        publishRunId: publishRun.id,
       });
     }
 
@@ -713,10 +736,22 @@ export class PublishingService {
         impactKind: 'confirmed_future_updated',
         changedFields,
         relationChanges,
+        publishRunId: publishRun.id,
       });
       publishSummary.confirmed_shows_updated += 1;
       publishSummary.publish_impacts_recorded += 1;
     }
+
+    await this.backfillTerminalShowCreatorMappings({
+      schedule,
+      candidates: terminalBackfillCandidates,
+      uidMaps,
+      publishRunId: publishRun.id,
+      actorId: userId,
+      publishSummary,
+    });
+
+    await this.publishRunService.updatePublishRunSummary(publishRun.id, publishSummary);
 
     const updatedSchedule = await tx.schedule.update({
       where: { id: schedule.id },
@@ -742,6 +777,50 @@ export class PublishingService {
       schedule: updatedSchedule,
       publishSummary,
     };
+  }
+
+  /**
+   * Bounded terminal-show creator-mapping backfill step — one explicit call
+   * after the main diff+upsert completes; the routine per-show loops above
+   * are untouched (see the design spec's §3 boundary). Fill-gap eligibility
+   * (zero existing `ShowCreator` rows) is enforced inside the relation-sync
+   * service; each backfilled show records a `past_show_creator_backfilled`
+   * impact audit stamped with this publish's run id.
+   */
+  private async backfillTerminalShowCreatorMappings(params: {
+    schedule: ScheduleWithRelations;
+    candidates: Array<{ existing: ExistingShow; incoming: DiffIncomingShow }>;
+    uidMaps: PublishingUidMaps;
+    publishRunId: bigint;
+    actorId: bigint;
+    publishSummary: PublishScheduleSummary;
+  }): Promise<void> {
+    for (const candidate of params.candidates) {
+      const created = await this.relationSyncService.backfillCreatorsForTerminalShow({
+        showId: candidate.existing.id,
+        incoming: candidate.incoming,
+        uidMaps: params.uidMaps,
+      });
+      if (created === 0) {
+        continue;
+      }
+
+      params.publishSummary.creator_mappings_backfilled += created;
+      await this.recordSchedulePublishImpact({
+        schedule: params.schedule,
+        showId: candidate.existing.id,
+        actorId: params.actorId,
+        externalId: candidate.incoming.source.externalId,
+        impactKind: 'past_show_creator_backfilled',
+        changedFields: [],
+        relationChanges: {
+          ...this.createEmptyRelationChanges(),
+          creator_links_added: created,
+        },
+        publishRunId: params.publishRunId,
+      });
+      params.publishSummary.publish_impacts_recorded += 1;
+    }
   }
 
   private async resumeSoftDeletedTasksAndTargets(showId: bigint): Promise<void> {
@@ -788,14 +867,16 @@ export class PublishingService {
     showId: bigint;
     actorId: bigint;
     externalId: string | null;
-    impactKind: 'confirmed_future_updated' | 'confirmed_future_pending_resolution';
+    impactKind: 'confirmed_future_updated' | 'confirmed_future_pending_resolution' | 'past_show_creator_backfilled';
     changedFields: string[];
     relationChanges: ShowRelationSyncChanges;
+    publishRunId: bigint;
   }): Promise<void> {
     await this.auditService.create({
       action: 'UPDATE',
       actorId: params.actorId,
       reason: null,
+      publishRunId: params.publishRunId,
       metadata: {
         event: SCHEDULE_PUBLISH_IMPACT_EVENT,
         schedule_uid: params.schedule.uid,

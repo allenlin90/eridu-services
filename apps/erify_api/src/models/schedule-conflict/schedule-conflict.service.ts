@@ -79,7 +79,7 @@ export class ScheduleConflictService {
 
     if (!params.heldBack) {
       if (pending) {
-        await this.writeResolved(params.showId, pending, 'auto_resolved_no_longer_conflicting', null);
+        await this.writeResolved(params.showId, pending, 'auto_resolved_no_longer_conflicting', null, params.publishRunId ?? null);
       }
       return { recorded: false };
     }
@@ -91,7 +91,7 @@ export class ScheduleConflictService {
     }
 
     if (pending) {
-      await this.writeResolved(params.showId, pending, 'superseded', null);
+      await this.writeResolved(params.showId, pending, 'superseded', null, params.publishRunId ?? null);
     }
 
     await this.writeOpened(params, resolvedHeldBack);
@@ -237,6 +237,7 @@ export class ScheduleConflictService {
       actorId: params.actorId,
       reason: null,
       metadata: metadata as unknown as Record<string, unknown>,
+      publishRunId: params.publishRunId ?? null,
       targets: [{ targetType: 'SHOW', targetId: params.showId }],
     });
   }
@@ -246,6 +247,9 @@ export class ScheduleConflictService {
     pending: StaleConflictMetadata,
     outcome: 'applied' | 'dismissed' | 'superseded' | 'auto_resolved_no_longer_conflicting',
     resolution: { actorId: bigint; reason: string } | null,
+    // Only publish-driven reconciliation carries a run id; manual resolve
+    // paths (apply/dismiss/eligibility) write outside any publish batch.
+    publishRunId: bigint | null = null,
   ): Promise<void> {
     const metadata: StaleConflictMetadata = {
       ...pending,
@@ -259,6 +263,7 @@ export class ScheduleConflictService {
       actorId: resolution?.actorId ?? null,
       reason: resolution?.reason ?? null,
       metadata: metadata as unknown as Record<string, unknown>,
+      publishRunId,
       targets: [{ targetType: 'SHOW', targetId: showId }],
     });
   }

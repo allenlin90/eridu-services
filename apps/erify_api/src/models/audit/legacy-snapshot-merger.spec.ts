@@ -206,6 +206,7 @@ describe('legacy-snapshot-merger', () => {
         userAgent: null,
         reason: null,
         metadata: {} as any,
+        publishRunId: null,
         createdAt: new Date('2026-04-02T10:00:00.000Z'),
         targets: [],
       } as AuditWithTargets);

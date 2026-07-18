@@ -243,6 +243,73 @@ describe('validationService', () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    describe('terminal-show creator backfill info', () => {
+      it('reports a non-blocking info entry for terminal shows with creators and zero mappings', async () => {
+        const findManyByFilter = async (args: { where?: { showStatus?: unknown } }) =>
+          args?.where?.showStatus
+            ? [{ id: BigInt(9), clientId: BigInt(1), externalId: 'show_temp_1', _count: { showCreators: 0 } }]
+            : [];
+        mockTransactionClient.show.findMany.mockImplementation(findManyByFilter);
+        mockPrismaClient.show.findMany.mockImplementation(findManyByFilter);
+
+        const result = await service.validateSchedule(mockScheduleData);
+
+        expect(result.isValid).toBe(true);
+        expect(result.errors).toHaveLength(0);
+        expect(result.info).toEqual([
+          expect.objectContaining({
+            type: 'terminal_show_creator_backfill_eligible',
+            count: 1,
+          }),
+        ]);
+      });
+
+      it('omits the info entry when the terminal show already has mappings', async () => {
+        const findManyByFilter = async (args: { where?: { showStatus?: unknown } }) =>
+          args?.where?.showStatus
+            ? [{ id: BigInt(9), clientId: BigInt(1), externalId: 'show_temp_1', _count: { showCreators: 2 } }]
+            : [];
+        mockTransactionClient.show.findMany.mockImplementation(findManyByFilter);
+        mockPrismaClient.show.findMany.mockImplementation(findManyByFilter);
+
+        const result = await service.validateSchedule(mockScheduleData);
+
+        expect(result.isValid).toBe(true);
+        expect(result.info).toBeUndefined();
+      });
+
+      // Regression: duplicate plan rows for the same (client, external_id)
+      // used to each count toward the eligible total; the count is per
+      // distinct show (the duplicate itself is a separate blocking error).
+      it('counts each eligible show once even when the payload duplicates its row', async () => {
+        const duplicatedSchedule = {
+          ...mockScheduleData,
+          planDocument: {
+            ...mockScheduleData.planDocument,
+            shows: [
+              mockScheduleData.planDocument.shows[0],
+              { ...mockScheduleData.planDocument.shows[0] },
+            ],
+          },
+        };
+        const findManyByFilter = async (args: { where?: { showStatus?: unknown } }) =>
+          args?.where?.showStatus
+            ? [{ id: BigInt(9), clientId: BigInt(1), externalId: 'show_temp_1', _count: { showCreators: 0 } }]
+            : [];
+        mockTransactionClient.show.findMany.mockImplementation(findManyByFilter);
+        mockPrismaClient.show.findMany.mockImplementation(findManyByFilter);
+
+        const result = await service.validateSchedule(duplicatedSchedule);
+
+        expect(result.info).toEqual([
+          expect.objectContaining({
+            type: 'terminal_show_creator_backfill_eligible',
+            count: 1,
+          }),
+        ]);
+      });
+    });
+
     it('should fail fast when creator payload entries are malformed', async () => {
       // Clone the mock data to avoid mutating shared state
       // Clone the mock data using spread to avoid BigInt serialization issues and mutation

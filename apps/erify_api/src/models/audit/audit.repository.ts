@@ -58,6 +58,36 @@ export type SchedulePublishImpactAuditTarget = Prisma.AuditTargetGetPayload<{
 }>;
 
 /**
+ * Shared filter set for the schedule-publish-impacts review queries. The list
+ * rows and the KPI summary counts must both derive from these builders so the
+ * two can never drift.
+ */
+export type SchedulePublishImpactQueryFilters = {
+  /** Show-time range (`Show.startTime`). */
+  startDateFrom?: Date;
+  startDateTo?: Date;
+  /**
+   * The untouched default view's "upcoming shows only" bound. Unlike the
+   * explicit `startDateFrom`, it does NOT constrain
+   * `past_show_creator_backfilled` rows — those only ever exist on terminal
+   * (past) shows, so a date default that hid them would make the kind
+   * unreachable without a manual filter.
+   */
+  implicitStartDateFrom?: Date;
+  /** Change-time range (`Audit.createdAt`). */
+  changedFrom?: Date;
+  changedTo?: Date;
+  /**
+   * Non-stale impact kinds to include; omit for every non-stale kind.
+   * `stale_conflict` is never served by the confirmed-future query — it is
+   * owned by the pending-stale query.
+   */
+  impactKinds?: string[];
+  /** Internal `PublishRun.id` to scope to one publish batch. */
+  publishRunId?: bigint;
+};
+
+/**
  * Engineering decision: `AuditRepository` does NOT extend `BaseRepository`.
  *
  * `BaseRepository<T extends WithSoftDelete>` requires a `deletedAt` column,
@@ -88,6 +118,9 @@ export class AuditRepository {
       metadata: (payload.metadata ?? {}) as Prisma.InputJsonValue,
       ...(payload.actorId != null && {
         actor: { connect: { id: payload.actorId } },
+      }),
+      ...(payload.publishRunId != null && {
+        publishRun: { connect: { id: payload.publishRunId } },
       }),
       targets: {
         create: payload.targets.map((t) => this.toTargetCreateInput(t)),
@@ -159,45 +192,12 @@ export class AuditRepository {
 
   async findSchedulePublishImpactsForStudio(
     studioUid: string,
-    opts: {
-      startDateFrom: Date;
-      startDateTo?: Date;
+    opts: SchedulePublishImpactQueryFilters & {
       take: number;
       skip: number;
     },
   ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
-    // Engineering decision: this is a purpose-built review queue query, not a
-    // generic `findMany`, because it must page AuditTarget rows joined through
-    // upcoming studio-scoped Shows while filtering Audit metadata by event.
-    // `impact_kind: 'stale_conflict'` rows share the same `event` value by
-    // design but are served exclusively by `findPendingStaleConflictsForStudio`
-    // — excluded here via `NOT` so a stale_conflict show's audit rows never
-    // double up across the two sources or leak resolved rows into this queue.
-    const where: Prisma.AuditTargetWhereInput = {
-      targetType: 'SHOW',
-      show: {
-        studio: { uid: studioUid },
-        startTime: {
-          gte: opts.startDateFrom,
-          ...(opts.startDateTo ? { lte: opts.startDateTo } : {}),
-        },
-        deletedAt: null,
-      },
-      audit: {
-        metadata: {
-          path: ['event'],
-          equals: 'schedule_publish_impact',
-        },
-      },
-      NOT: {
-        audit: {
-          metadata: {
-            path: ['impact_kind'],
-            equals: 'stale_conflict',
-          },
-        },
-      },
-    };
+    const where = this.buildConfirmedFutureImpactWhere(studioUid, opts);
 
     const [total, items] = await Promise.all([
       this.txHost.tx.auditTarget.count({ where }),
@@ -215,6 +215,113 @@ export class AuditRepository {
     ]);
 
     return { items, total };
+  }
+
+  /** Count-only variant sharing `buildConfirmedFutureImpactWhere` with the list. */
+  async countSchedulePublishImpactsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters,
+  ): Promise<number> {
+    return this.txHost.tx.auditTarget.count({
+      where: this.buildConfirmedFutureImpactWhere(studioUid, filters),
+    });
+  }
+
+  /**
+   * Engineering decision: this is a purpose-built review queue query, not a
+   * generic `findMany`, because it must page AuditTarget rows joined through
+   * studio-scoped Shows while filtering Audit metadata by event.
+   * `impact_kind: 'stale_conflict'` rows share the same `event` value by
+   * design but are served exclusively by `findPendingStaleConflictsForStudio`
+   * — excluded here via `NOT` so a stale_conflict show's audit rows never
+   * double up across the two sources or leak resolved rows into this queue.
+   *
+   * Show-time bounds are optional here; the caller (service layer) decides
+   * whether the implicit "upcoming only" default applies — an explicit
+   * impact-kind, publish-run, or change-time filter must be able to reach
+   * past-show rows (e.g. `past_show_creator_backfilled`).
+   */
+  private buildConfirmedFutureImpactWhere(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters,
+  ): Prisma.AuditTargetWhereInput {
+    const and: Prisma.AuditTargetWhereInput[] = [];
+
+    if (filters.impactKinds?.length) {
+      and.push({
+        OR: filters.impactKinds.map((kind) => ({
+          audit: {
+            metadata: {
+              path: ['impact_kind'],
+              equals: kind,
+            },
+          },
+        })),
+      });
+    }
+
+    // The implicit upcoming-only default exempts `past_show_creator_backfilled`:
+    // those rows only exist on terminal (past) shows, so constraining them to
+    // `startTime >= now` would make the kind invisible in the default view.
+    // An explicit `startDateFrom`/`startDateTo` (user-chosen) still applies to
+    // every kind via the plain `show.startTime` filter above.
+    if (filters.implicitStartDateFrom) {
+      and.push({
+        OR: [
+          { show: { startTime: { gte: filters.implicitStartDateFrom } } },
+          {
+            audit: {
+              metadata: {
+                path: ['impact_kind'],
+                equals: 'past_show_creator_backfilled',
+              },
+            },
+          },
+        ],
+      });
+    }
+
+    return {
+      targetType: 'SHOW',
+      show: {
+        studio: { uid: studioUid },
+        ...(filters.startDateFrom || filters.startDateTo
+          ? {
+              startTime: {
+                ...(filters.startDateFrom ? { gte: filters.startDateFrom } : {}),
+                ...(filters.startDateTo ? { lte: filters.startDateTo } : {}),
+              },
+            }
+          : {}),
+        deletedAt: null,
+      },
+      audit: {
+        metadata: {
+          path: ['event'],
+          equals: 'schedule_publish_impact',
+        },
+        ...(filters.changedFrom || filters.changedTo
+          ? {
+              createdAt: {
+                ...(filters.changedFrom ? { gte: filters.changedFrom } : {}),
+                ...(filters.changedTo ? { lte: filters.changedTo } : {}),
+              },
+            }
+          : {}),
+        ...(filters.publishRunId !== undefined
+          ? { publishRunId: filters.publishRunId }
+          : {}),
+      },
+      ...(and.length ? { AND: and } : {}),
+      NOT: {
+        audit: {
+          metadata: {
+            path: ['impact_kind'],
+            equals: 'stale_conflict',
+          },
+        },
+      },
+    };
   }
 
   /**
@@ -280,12 +387,147 @@ export class AuditRepository {
    */
   async findPendingStaleConflictsForStudio(
     studioUid: string,
-    opts: { take: number; skip: number },
+    opts: SchedulePublishImpactQueryFilters & { take: number; skip: number },
   ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    const pending = await this.pendingStaleConflictsForStudio(studioUid, opts);
+
+    return {
+      items: pending.slice(opts.skip, opts.skip + opts.take),
+      total: pending.length,
+    };
+  }
+
+  /** Count-only variant sharing `pendingStaleConflictsForStudio` with the list. */
+  async countPendingStaleConflictsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters,
+  ): Promise<number> {
+    return (await this.pendingStaleConflictsForStudio(studioUid, filters)).length;
+  }
+
+  /**
+   * Engineering decision: purpose-built history query, not a service-side
+   * `findMany` — it filters Audit JSONB metadata by lifecycle/outcome while
+   * paging `AuditTarget` rows through studio-scoped shows, which would push
+   * Prisma query-building into the service layer.
+   *
+   * Resolved stale-conflict history for the studio: the `lifecycle: 'resolved'`
+   * Audit rows written by `ScheduleConflictService.writeResolved`, optionally
+   * narrowed to specific outcomes.
+   *
+   * Unlike the pending queue there is no latest-per-show computation —
+   * resolution rows are append-only history where each row is one resolved
+   * conflict episode — so every filter (including change-time and publish-run,
+   * which the pending queue must apply post-distinct) is safe directly in the
+   * DB `where`, and skip/take paginate in the database.
+   */
+  async findResolvedStaleConflictsForStudio(
+    studioUid: string,
+    opts: SchedulePublishImpactQueryFilters & {
+      outcomes?: string[];
+      take: number;
+      skip: number;
+    },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    const where = this.buildResolvedStaleConflictWhere(studioUid, opts);
+
+    const [total, items] = await Promise.all([
+      this.txHost.tx.auditTarget.count({ where }),
+      this.txHost.tx.auditTarget.findMany({
+        where,
+        include: SCHEDULE_PUBLISH_IMPACT_INCLUDE,
+        orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
+        skip: opts.skip,
+        take: opts.take,
+      }),
+    ]);
+
+    return { items, total };
+  }
+
+  /** Count-only variant sharing `buildResolvedStaleConflictWhere` with the list. */
+  async countResolvedStaleConflictsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters & { outcomes?: string[] },
+  ): Promise<number> {
+    return this.txHost.tx.auditTarget.count({
+      where: this.buildResolvedStaleConflictWhere(studioUid, filters),
+    });
+  }
+
+  private buildResolvedStaleConflictWhere(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters & { outcomes?: string[] },
+  ): Prisma.AuditTargetWhereInput {
+    return {
+      targetType: 'SHOW',
+      show: {
+        studio: { uid: studioUid },
+        ...(filters.startDateFrom || filters.startDateTo
+          ? {
+              startTime: {
+                ...(filters.startDateFrom ? { gte: filters.startDateFrom } : {}),
+                ...(filters.startDateTo ? { lte: filters.startDateTo } : {}),
+              },
+            }
+          : {}),
+        deletedAt: null,
+      },
+      audit: {
+        AND: [
+          { metadata: { path: ['impact_kind'], equals: 'stale_conflict' } },
+          { metadata: { path: ['lifecycle'], equals: 'resolved' } },
+          ...(filters.outcomes?.length
+            ? [{
+                OR: filters.outcomes.map((outcome) => ({
+                  metadata: { path: ['outcome'], equals: outcome },
+                })),
+              }]
+            : []),
+        ],
+        ...(filters.changedFrom || filters.changedTo
+          ? {
+              createdAt: {
+                ...(filters.changedFrom ? { gte: filters.changedFrom } : {}),
+                ...(filters.changedTo ? { lte: filters.changedTo } : {}),
+              },
+            }
+          : {}),
+        ...(filters.publishRunId !== undefined
+          ? { publishRunId: filters.publishRunId }
+          : {}),
+      },
+    };
+  }
+
+  /**
+   * Change-time and publish-run filters are applied AFTER the latest-per-show
+   * + `lifecycle: 'opened'` computation, never inside the DB `where`: filtering
+   * before `distinct` could pick an older 'opened' row as a show's "latest"
+   * when the true latest row (a 'resolved' one from a later publish) falls
+   * outside the filter — misreporting an already-resolved conflict as pending.
+   * Show-scoped filters (studio, start-time) are safe in the `where` because
+   * they never change which audit row is a given show's latest.
+   */
+  private async pendingStaleConflictsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters,
+  ): Promise<SchedulePublishImpactAuditTarget[]> {
     const latestPerShow = await this.txHost.tx.auditTarget.findMany({
       where: {
         targetType: 'SHOW',
-        show: { studio: { uid: studioUid }, deletedAt: null },
+        show: {
+          studio: { uid: studioUid },
+          ...(filters.startDateFrom || filters.startDateTo
+            ? {
+                startTime: {
+                  ...(filters.startDateFrom ? { gte: filters.startDateFrom } : {}),
+                  ...(filters.startDateTo ? { lte: filters.startDateTo } : {}),
+                },
+              }
+            : {}),
+          deletedAt: null,
+        },
         audit: {
           metadata: {
             path: ['impact_kind'],
@@ -298,15 +540,22 @@ export class AuditRepository {
       orderBy: [{ audit: { createdAt: 'desc' } }, { audit: { id: 'desc' } }],
     });
 
-    const pending = latestPerShow.filter((target) => {
+    return latestPerShow.filter((target) => {
       const metadata = target.audit.metadata as { lifecycle?: string } | null;
-      return metadata?.lifecycle === 'opened';
+      if (metadata?.lifecycle !== 'opened') {
+        return false;
+      }
+      if (filters.changedFrom && target.audit.createdAt < filters.changedFrom) {
+        return false;
+      }
+      if (filters.changedTo && target.audit.createdAt > filters.changedTo) {
+        return false;
+      }
+      if (filters.publishRunId !== undefined && target.audit.publishRunId !== filters.publishRunId) {
+        return false;
+      }
+      return true;
     });
-
-    return {
-      items: pending.slice(opts.skip, opts.skip + opts.take),
-      total: pending.length,
-    };
   }
 
   private toTargetCreateInput(

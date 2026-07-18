@@ -28,6 +28,12 @@ export type CreateAuditPayload = {
    */
   reason?: string | null;
   metadata?: AuditMetadata;
+  /**
+   * Set only on `schedule_publish_impact` rows written during a schedule
+   * publish call, linking the row to its `PublishRun` batch. Null/omitted for
+   * every other audit writer.
+   */
+  publishRunId?: bigint | null;
   targets: CreateAuditTargetPayload[];
 };
 

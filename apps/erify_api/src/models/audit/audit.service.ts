@@ -5,7 +5,7 @@ import type {
   AuditWithTargets,
   CreateAuditPayload,
 } from './schemas/audit.schema';
-import type { SchedulePublishImpactAuditTarget } from './audit.repository';
+import type { SchedulePublishImpactAuditTarget, SchedulePublishImpactQueryFilters } from './audit.repository';
 import { AuditRepository } from './audit.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -62,14 +62,19 @@ export class AuditService extends BaseModelService {
 
   async findSchedulePublishImpactsForStudio(
     studioUid: string,
-    opts: {
-      startDateFrom: Date;
-      startDateTo?: Date;
+    opts: SchedulePublishImpactQueryFilters & {
       take: number;
       skip: number;
     },
   ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
     return this.auditRepository.findSchedulePublishImpactsForStudio(studioUid, opts);
+  }
+
+  async countSchedulePublishImpactsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters,
+  ): Promise<number> {
+    return this.auditRepository.countSchedulePublishImpactsForStudio(studioUid, filters);
   }
 
   async findLatestScheduleConflictForShow(showId: bigint): Promise<AuditWithTargets | null> {
@@ -78,8 +83,29 @@ export class AuditService extends BaseModelService {
 
   async findPendingStaleConflictsForStudio(
     studioUid: string,
-    opts: { take: number; skip: number },
+    opts: SchedulePublishImpactQueryFilters & { take: number; skip: number },
   ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
     return this.auditRepository.findPendingStaleConflictsForStudio(studioUid, opts);
+  }
+
+  async countPendingStaleConflictsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters,
+  ): Promise<number> {
+    return this.auditRepository.countPendingStaleConflictsForStudio(studioUid, filters);
+  }
+
+  async findResolvedStaleConflictsForStudio(
+    studioUid: string,
+    opts: SchedulePublishImpactQueryFilters & { outcomes?: string[]; take: number; skip: number },
+  ): Promise<{ items: SchedulePublishImpactAuditTarget[]; total: number }> {
+    return this.auditRepository.findResolvedStaleConflictsForStudio(studioUid, opts);
+  }
+
+  async countResolvedStaleConflictsForStudio(
+    studioUid: string,
+    filters: SchedulePublishImpactQueryFilters & { outcomes?: string[] },
+  ): Promise<number> {
+    return this.auditRepository.countResolvedStaleConflictsForStudio(studioUid, filters);
   }
 }

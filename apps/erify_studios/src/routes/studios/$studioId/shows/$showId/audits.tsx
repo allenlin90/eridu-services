@@ -170,7 +170,7 @@ function createColumns(studioId: string): ColumnDef<AuditApiResponse>[] {
               <Link
                 to="/studios/$studioId/schedule-publish-impacts"
                 params={{ studioId }}
-                search={{ page: 1 }}
+                search={{ tab: 'impacts', page: 1 }}
                 className="text-primary font-medium hover:underline text-xs block mt-1"
               >
                 View in Publish Audit list
