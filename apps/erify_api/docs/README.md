@@ -45,6 +45,7 @@
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for the operations-expansion track                  |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
 | [Show-Level Issue Ownership](./design/SHOW_ISSUE_OWNERSHIP_DESIGN.md)                              | 📐      | Locked Phase 5 item 9 issue workflow and transactional reconciliation design   |
+| [`erify_api` Architecture Refactoring Guide](./design/ARCHITECTURE_REFACTORING_GUIDE.md)           | 📐      | Capability-first modular-monolith direction, selective DDD, and CQRS decision gates |
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
 
