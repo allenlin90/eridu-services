@@ -404,6 +404,50 @@ Consider `@nestjs/cqrs` for one capability only when at least two of these are t
 
 Consider a separate read store only when measured load, query complexity, historical analytics, or availability requirements justify eventual consistency. The deferred data-warehouse and analytics plans should remain separate from this structural refactor.
 
+## Governance: How Architecture Triggers Become Work
+
+Architecture thresholds should route review, not act as automatic pattern installers. A 601-line file, a ninth collaborator, or a wider module graph is evidence to inspect cohesion; it is not sufficient evidence to introduce DDD tactical objects, CQRS buses, a new repository layer, or another runtime.
+
+Use four trigger classes:
+
+| Trigger class | Examples | Response |
+| --- | --- | --- |
+| Hard invariant | Transaction visibility regression, unbounded input, leaked internal ID, new module cycle, unjustified cross-capability persistence access | Resolve in the current PR before merge |
+| Local design signal | Backend file above roughly 600 LOC, frontend route/feature above roughly 200 LOC, service above roughly eight collaborators | Review cohesion; split, document an exception, or maintain an active split plan |
+| Strategic decision gate | CQRS, worker runtime, separate read model, package extraction, or a port with a second real adapter | Begin an architecture decision only when the documented evidence gates are met |
+| Repository trend | Module breadth, shallow-module count, dependency-graph width, runtime import closure | Compare periodically; investigate meaningful regression rather than an isolated count |
+
+### Pull Request Review
+
+Every pre-merge review should run the architecture trigger audit in [the canonical PR review workflow](../../../../.agents/workflows/pr-review.md). The audit is diff-scoped: check only triggers caused, crossed, or materially changed by the PR and record one outcome:
+
+- `NOT TRIGGERED`;
+- `TRIGGERED — HANDLED`;
+- `TRIGGERED — REGISTERED` in the canonical tech-debt or ideation register;
+- `BLOCKING` for a hard invariant violation.
+
+In Codex, invoke the bridge skill explicitly when reliability matters:
+
+```text
+$pr-ready review the current branch against origin/master
+```
+
+Codex may also select the skill implicitly from a request such as “is this PR ready to merge?”, but a Markdown workflow file does not execute by itself. The repository skill reads and executes the canonical workflow.
+
+### Periodic Repository Health
+
+Repository-wide trends need a separate bookkeeping cadence because one PR cannot determine whether the overall architecture is drifting. Run [the repository health workflow](../../../../.agents/workflows/repository-health.md) at each phase boundary or within three months, whichever comes first. A monthly scheduled scan may provide an earlier read-only signal:
+
+```text
+Every month, run $repository-health for this project. Compare architecture
+signals with the previous snapshot, reconcile verified triggers, and report
+findings without implementing refactors or creating a parallel backlog.
+```
+
+The scheduled scan should discover and compare signals. Human review decides whether evidence warrants implementation. Performance gates should use runtime measurements and observability rather than source counts.
+
+The persistence matrix and capability-first conventions in this document remain proposed until the pilot succeeds. The generic trigger-audit process can be adopted without making those proposed patterns canonical.
+
 ## Phased Refactoring Plan
 
 ### Phase 0 — Safety And Baselines

@@ -41,11 +41,30 @@ print_limited_matches "risky optional-chain equality guards" "if\\s*\\([^)]*\\?\
 # Flag for manual review when useMemo appears tied to table pagination/filter shaping.
 print_limited_matches "possible over-memoized table state" "useMemo\\s*\\([^)]*(tablePagination|pageCount|pageIndex|pageSize|columnFilters|sorting)"
 
-echo "-- large ts/tsx files (>300 lines) --"
-rg --files "${ROOT_DIR}" -g '*.ts' -g '*.tsx' -g '!**/node_modules/**' \
+echo "-- backend architecture size signals (>600 lines; manual cohesion review) --"
+rg --files "${ROOT_DIR}" -g '*.ts' -g '*.tsx' -g '!**/node_modules/**' -g '!**/*.spec.*' -g '!**/*.test.*' -g '!**/*.gen.*' \
   | while IFS= read -r f; do
+      case "${f}" in
+        *apps/erify_api/src/*) ;;
+        *) continue ;;
+      esac
       lines="$(wc -l < "$f" | tr -d ' ')"
-      if [ "${lines}" -gt 300 ]; then
+      if [ "${lines}" -gt 600 ]; then
+        printf "%s:%s\n" "$f" "$lines"
+      fi
+    done \
+  | sort -t: -k2,2nr || true
+echo
+
+echo "-- frontend route/feature size signals (>200 lines; manual cohesion review) --"
+rg --files "${ROOT_DIR}" -g '*.ts' -g '*.tsx' -g '!**/node_modules/**' -g '!**/__tests__/**' -g '!**/*.spec.*' -g '!**/*.test.*' -g '!**/*.gen.*' \
+  | while IFS= read -r f; do
+      case "${f}" in
+        *apps/erify_studios/src/routes/*|*apps/erify_studios/src/features/*|*apps/erify_creators/src/routes/*|*apps/erify_creators/src/features/*) ;;
+        *) continue ;;
+      esac
+      lines="$(wc -l < "$f" | tr -d ' ')"
+      if [ "${lines}" -gt 200 ]; then
         printf "%s:%s\n" "$f" "$lines"
       fi
     done \

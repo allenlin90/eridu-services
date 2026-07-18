@@ -24,9 +24,38 @@ Map each changed path to its review gate:
 | `apps/eridu_auth/src/`                                                           | [§ eridu\_auth gate](#eridu_auth-gate)        |
 | `apps/erify_studios/src/` · `apps/erify_creators/src/`                           | [§ Frontend gate](#frontend-gate)             |
 | `packages/api-types/` · `packages/auth-sdk/` · `packages/ui/` · `packages/i18n/` | [§ Shared package gate](#shared-package-gate) |
-| `apps/*/docs/` · `docs/`                                                         | [§ Documentation gate](#documentation-gate)   |
+| `apps/*/docs/` · `docs/` · `.agents/`                                            | [§ Documentation gate](#documentation-gate)   |
 
 Multiple gates apply when a PR spans layers. Run all that match.
+
+---
+
+## Architecture trigger audit
+
+Run this audit against the changed code and the canonical tech-debt, ideation, and design documents related to that surface. A threshold is normally a prompt for review, not an automatic instruction to introduce a pattern or broaden the PR.
+
+Classify each applicable signal:
+
+| Signal class | Examples | Required outcome |
+| --- | --- | --- |
+| Hard invariant | New module cycle or unjustified `forwardRef`; transaction, authorization, soft-delete, UID-boundary, or bounded-input regression | Resolve before merge. **BLOCKING.** |
+| Local design signal | A behavior-bearing backend file crosses roughly 600 LOC; a frontend route or feature module crosses roughly 200 LOC; a service constructor grows beyond roughly eight collaborators | Load the relevant refactor/design skill and assess cohesion. Split, document a cohesive exception, or update an active split plan. The number alone is not blocking. |
+| Existing decision trigger | The diff satisfies or materially changes a trigger in a related `docs/tech-debt/`, `docs/ideation/`, or active design document | Handle it in scope, or update the canonical entry with current evidence, owner/scope, and acceptance criteria. Do not create a parallel backlog. |
+| Strategic architecture gate | CQRS infrastructure, worker runtime, read store, package extraction, or a new port/adapter boundary becomes plausible | Start or update an architecture decision when its documented evidence gates are met. Do not adopt the pattern mechanically from a count. |
+| Repository trend | Total module breadth, shallow-module count, dependency-graph width, or whole-runtime import closure | Defer repository-wide measurement to `repository-health.md` unless this PR directly regresses the signal. |
+
+Record one result for every trigger affected by the diff:
+
+- `NOT TRIGGERED` — the relevant threshold or gate remains unmet;
+- `TRIGGERED — HANDLED` — the PR contains the scoped implementation or documentation response;
+- `TRIGGERED — REGISTERED` — broader work is intentionally separate and its canonical debt/ideation entry was reconciled in this PR;
+- `BLOCKING` — the diff violates a hard invariant or crosses an explicit mandatory gate without a response.
+
+- [ ] Related tech-debt, ideation, and active design documents were checked for triggers changed by this PR.
+- [ ] Size and collaborator thresholds were treated as cohesion-review signals, not automatic refactor mandates.
+- [ ] Any new repository export, cross-capability persistence dependency, module cycle/`forwardRef`, or runtime import-closure expansion has an explicit architectural justification.
+- [ ] Advanced patterns were introduced only against their documented evidence gates.
+- [ ] Trigger outcomes and evidence appear in the review verdict.
 
 ---
 
@@ -257,6 +286,7 @@ Only once §1–§3 are done is the verdict **ready to merge**.
 ## Completion Checklist
 
 - [ ] All applicable gates run (erify_api / eridu_auth / frontend / packages / docs).
+- [ ] Architecture trigger audit recorded `NOT TRIGGERED`, `TRIGGERED — HANDLED`, `TRIGGERED — REGISTERED`, or `BLOCKING` for every affected signal.
 - [ ] Every new named repository method: necessity tested; exceptions documented in code and feature doc.
 - [ ] No Prisma types in service signatures; no business logic in controllers.
 - [ ] All implemented design docs promoted; no `✅` items remaining in any Design table.
