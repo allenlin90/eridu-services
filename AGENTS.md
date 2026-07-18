@@ -123,10 +123,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 #### Knowledge And Doc Lifecycle
 - After feature delivery, behavior changes, or refactors, run the `knowledge-sync` skill.
-- When a phase closes, PRDs ship, or docs are reorganized, run `.agents/workflows/doc-lifecycle.md`.
+- When a phase closes, PRDs ship, or docs are reorganized, run the `doc-lifecycle` skill for bookkeeping and artifact transitions.
 - When a backwards-incompatible schema redesign lands for a shipped feature, run `.agents/workflows/feature-version-cutover.md` (manual trigger). It decides whether to update docs in place or promote the feature doc to a versioned folder (`v1.md` archived, `README.md` describing v2), and enforces same-PR updates across all related docs and skills.
 - Use `docs/tech-debt/` for accepted implementation gaps and cleanup issues that should be fixed later; use `docs/ideation/` for deferred product or architecture ideas that need future discovery or PRD promotion.
-- Before merging a PR, run the `pr-ready` skill, which executes `.agents/workflows/pr-review.md` end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and `doc-lifecycle.md` so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
+- Before merging a PR, run the `pr-ready` skill, which executes `.agents/workflows/pr-review.md` end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and the `doc-lifecycle` skill so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
 - During design review, optimization investigations, or phase planning, cross-check `.agents/workflows/ideation-lifecycle.md`.
 - At each phase boundary or at least every three months, run the `repository-health` skill to reconcile implementation quality, package/test health, documentation lifecycle, skills, and the canonical tech-debt and ideation registers. Keep broad cleanup in separate scoped PRs.
 
@@ -224,7 +224,7 @@ Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and des
 7. Before writing an implementation plan for a new or undecided frontend UX, validate it with the user via `ui-mockup-discussion` (rendered mockups, not prose descriptions) — see `.agents/skills/ui-mockup-discussion/SKILL.md`.
 8. Verify each impacted workspace with the checklist below.
 9. For feature, refactor, or behavior changes, run knowledge sync.
-10. For doc or phase-boundary work, run the appropriate lifecycle workflow.
+10. For doc or phase-boundary work, run the appropriate lifecycle skill or workflow.
 
 ### Verification Checklist (Mandatory)
 Run for every changed workspace or package:

@@ -1,6 +1,6 @@
 ---
 name: monorepo-doc-layering
-description: Place eridu-services docs in the correct root, app, design, or package layer when creating or restructuring docs.
+description: Place eridu-services docs in the correct root, app, design, package, or domain layer.
 ---
 
 # Monorepo Doc Layering
@@ -38,8 +38,8 @@ Preserve a consistent documentation model in `eridu-services`:
    - Delete the original file from `apps/*/docs/design/`.
    - Move its index entry from the Design table to the Features table in `apps/*/docs/README.md` with `✅` status.
    - Remove it from `apps/*/docs/design/README.md`.
-   - See `.agents/workflows/doc-lifecycle.md` § "Design Doc Promotion" for the full step-by-step.
-8. When a mid-phase scope simplification strands multiple downstream PRDs, consolidate the remaining work into PR entries inside `docs/roadmap/PHASE_<n>.md`. Promote any locked contract among them to `docs/domain/`. Delete the stranded PRDs and any standalone breakdown specs / implementation plans — git history preserves them. See `.agents/workflows/doc-lifecycle.md` § "Tracker Consolidation".
+   - See the [doc-lifecycle bookkeeping reference](../doc-lifecycle/references/bookkeeping.md#design-doc-promotion) for the full procedure.
+8. When a mid-phase scope simplification strands multiple downstream PRDs, consolidate the remaining work into PR entries inside `docs/roadmap/PHASE_<n>.md`. Promote any locked contract among them to `docs/domain/`. Delete the stranded PRDs and any standalone breakdown specs / implementation plans — git history preserves them. See the [doc-lifecycle bookkeeping reference](../doc-lifecycle/references/bookkeeping.md#tracker-consolidation).
 9. Update the nearest README indexes whenever a doc moves layers.
 10. Remove legacy ownership language that still implies one app owns the product or roadmap.
 11. Normalize Markdown links so they use relative paths from the current document.

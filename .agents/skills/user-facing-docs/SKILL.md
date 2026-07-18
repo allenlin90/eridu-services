@@ -1,6 +1,6 @@
 ---
 name: user-facing-docs
-description: Convert feature docs into eridu_docs guides, SOPs, FAQs, and onboarding organized by workflow and function.
+description: Create eridu_docs guides, SOPs, FAQs, and onboarding for shipped product features.
 ---
 
 # User-Facing Documentation Generator
@@ -54,7 +54,7 @@ Mermaid diagrams for user flows, process SOPs, and state transitions. Plain lang
 
 ## Integration with Doc Lifecycle
 
-When `doc-lifecycle.md` promotes a shipped PRD:
+When the `doc-lifecycle` skill promotes a shipped PRD:
 1. Promote to feature doc → `docs/features/`
 2. Generate user-facing docs (this skill) → `apps/eridu_docs/`
 3. Update sidebar only if new workflow area introduced
