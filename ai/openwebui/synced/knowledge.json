@@ -6,112 +6,94 @@
     "meta": null,
     "access_grants": [
         {
-            "id": "4283f1d7-0ab9-4df4-8e16-455fa14a5bd0",
+            "id": "c37e0d7c-2835-4754-a92b-bc8785710cf5",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+            "principal_id": "ac8a3e5d-76d0-486b-9c9a-576e6c587b1b",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "e106c804-2eec-49c9-8bc8-d03d4744cfa5",
+            "id": "db3d273d-2123-43ab-abd4-cf4b275c3693",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+            "principal_id": "13b52c81-eff3-47e4-80a8-10c665e37784",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "253c37bb-69fa-4580-bc89-6d450c568d05",
+            "id": "05f61178-76fb-4b5b-8602-a67670f3b1b5",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+            "principal_id": "0309e329-3af8-44e6-a666-994e08b816c8",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "75fef625-9fc8-4f1a-a0cb-d22310efc714",
+            "id": "3b609e5d-ea6c-43b6-a0c4-bd9ae4b383e7",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+            "principal_id": "a56a6a87-6942-4b4a-a7d0-eb86f9862859",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "da7bcdd6-a453-4d6d-aab2-a4f2dd1c7368",
+            "id": "243894d4-46b9-4e90-8a85-3519c2e3f00e",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+            "principal_id": "a0c6d928-ed7a-4528-95dd-887a82a97752",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "e452d1df-b035-4587-bcb5-373a5d2e28da",
+            "id": "53a63e4d-574c-4330-9237-11c2de4453d1",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+            "principal_id": "9c912c64-6bfe-4c0d-a8e5-f416d8e5fe56",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "ef1114f0-9ca2-4163-991a-b3d19ee39101",
+            "id": "2bb8ec00-0243-449c-88ac-46f0ef7ed9f5",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+            "principal_id": "768416a7-4602-4471-af88-2aa36e43b5b1",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "d6cd6201-f254-47db-b38c-53ac02a9268b",
+            "id": "d36d8084-727d-4f99-b5ef-4de0b5371a80",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
+            "principal_id": "50e407d9-4756-4aeb-9ac9-3f99d275e3b7",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "e681fc7f-4fa4-47a1-97bc-c33c11897bde",
+            "id": "8623eadc-4ca4-41a6-aa3e-7abb1b623694",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+            "principal_id": "e5867280-ba3e-4463-bba4-bdae77469876",
             "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         },
         {
-            "id": "9b8092c8-cc24-416e-ae45-1576ca6343f8",
+            "id": "f3de36f5-2c03-44dc-ba1f-f0ce5903bbf0",
             "resource_type": "knowledge",
             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
             "principal_type": "group",
-            "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+            "principal_id": "414dfc1d-7fe3-48cd-b148-8497bd695b73",
             "permission": "read",
-            "created_at": 1783915916
-        },
-        {
-            "id": "fc990554-126a-43db-bf10-952e28aa01b2",
-            "resource_type": "knowledge",
-            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
-            "principal_type": "group",
-            "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
-            "permission": "read",
-            "created_at": 1783915916
-        },
-        {
-            "id": "f6befd2f-89a3-4ca1-ac2f-361b97b8fd93",
-            "resource_type": "knowledge",
-            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
-            "principal_type": "group",
-            "principal_id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
-            "permission": "read",
-            "created_at": 1783915916
+            "created_at": 1784303350
         }
     ],
     "created_at": 1783915061,
