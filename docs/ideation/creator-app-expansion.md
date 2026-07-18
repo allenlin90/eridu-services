@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [PHASE_4.md](../roadmap/PHASE_4.md), [pwa-push-notifications.md](./pwa-push-notifications.md)
+> **Related**: [PHASE_4.md](../roadmap/PHASE_4.md), [Operational Notifications and PWA Push](../prd/notification-system.md)
 
 ## What
 

@@ -314,7 +314,7 @@ The Phase 4 base supports each of the deferred concepts as a clean addition. One
 
 **Bank-statement reconciliation.** Once payment processing produces a `PaymentRun` record, future bank-statement integration compares PaymentRun amounts vs reference economics figures and surfaces mismatches as new `CompensationLineItem` adjustments. This is a new feature on top of the cost model, not a change to it.
 
-**Notifications on manager edits to actuals / snapshot fields.** A future notification workflow can alert recipients when audited values change. Out of scope for Phase 4; recipients see edits on next view read.
+**Notifications on manager edits to actuals / snapshot fields.** The [notification PRD](../prd/notification-system.md) can register a recipient policy for audited values that require a user-visible alert. Out of scope for Phase 4; recipients currently see edits on next view read.
 
 **Advanced compensation rule engine (Phase 5).** Tiered commission, OT formulas, bonus rules. Future rule-engine output becomes line items or computed components through this same data model. The cost model stores outcomes; the rule engine produces them.
 

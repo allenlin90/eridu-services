@@ -99,7 +99,7 @@ block-beta
 | ------- | ---------- | -------- | --------- | -------- |
 | REST | `apps/erify_api/src/main.ts` | Admin, studio, user, and integration clients | HTTP routes | Public/API-key guarded depending on route |
 | MCP | `apps/erify_api/src/main.mcp.ts` | OpenWebUI first, LiteLLM/partners later | Streamable HTTP MCP | Private Railway service in Phase 1 |
-| Worker | Future `apps/erify_api/src/main.worker.ts` | Async jobs such as notifications and reports | BullMQ processors | Private worker process |
+| Worker | Future `apps/erify_api/src/main.worker.ts` | Async jobs such as [notification delivery](../prd/notification-system.md) and reports | BullMQ processors | Private worker process |
 
 Public partner/client MCP access is a separate API posture from the private OpenWebUI rollout. It needs an explicit authn/authz, rate-limit, and audit model before a public domain or external ingress is attached; see [Public MCP Access Control](../ideation/public-mcp-access-control.md).
 

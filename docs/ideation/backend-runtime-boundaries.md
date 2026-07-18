@@ -2,7 +2,7 @@
 
 > **Status**: Active ideation
 > **Origin**: MCP foundation architecture review
-> **Related**: [System Architecture Overview](../engineering/ARCHITECTURE_OVERVIEW.md), [MCP Server](../../apps/erify_api/docs/MCP_SERVER.md), [Public MCP Access Control](./public-mcp-access-control.md), [BullMQ Async Processing](./bullmq-async-processing.md)
+> **Related**: [System Architecture Overview](../engineering/ARCHITECTURE_OVERVIEW.md), [Operational Notifications and PWA Push](../prd/notification-system.md), [MCP Server](../../apps/erify_api/docs/MCP_SERVER.md), [Public MCP Access Control](./public-mcp-access-control.md), [BullMQ Async Processing](./bullmq-async-processing.md)
 
 ## What
 
@@ -60,7 +60,7 @@ Controllers, MCP handlers, and BullMQ processors should not contain business log
 
 1. The MCP foundation needs a private OpenWebUI integration before a broad backend runtime refactor.
 2. The current REST route contracts are already grouped by prefix and authorization boundary, so a runtime split can be incremental.
-3. BullMQ is not yet in the codebase; worker runtime decisions should land with the first concrete async job surface.
+3. BullMQ is not yet in the codebase; the notification PRD selects the first concrete worker use case, and the runtime should land with that implementation.
 4. Package extraction is premature until multiple real consumers stabilize the shared business interfaces.
 
 ## Decision Gates for Promotion
@@ -84,6 +84,7 @@ Promote to a PRD or implementation design when any of these are true:
 
 ### Worker runtime shape
 
+- Use the notification PRD as the first active worker slice; broader runtime separation remains incremental.
 - Add `main.worker.ts` and `WorkerAppModule` when BullMQ is introduced.
 - REST endpoints enqueue jobs; worker processors execute jobs.
 - Worker processors call services/use-cases; they do not call REST controllers and do not own business rules.
