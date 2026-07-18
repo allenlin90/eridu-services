@@ -1746,9 +1746,69 @@ describe('studioShowManagementService', () => {
           // An explicit kind filter lifts the implicit upcoming-only default,
           // so past-show rows (e.g. creator backfills) stay reachable.
           startDateFrom: undefined,
+          implicitStartDateFrom: undefined,
         }),
       );
       expect(auditServiceMock.findPendingStaleConflictsForStudio).not.toHaveBeenCalled();
+    });
+
+    // Regression: the untouched default view used to push its upcoming-only
+    // bound into `startDateFrom`, which also hid always-past
+    // `past_show_creator_backfilled` rows. The default now travels as
+    // `implicitStartDateFrom`, which the repository exempts that kind from.
+    it('passes the default upcoming-only bound as implicitStartDateFrom, not startDateFrom', async () => {
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({ items: [], total: 0 });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      await service.listSchedulePublishImpacts('std_123', {});
+
+      expect(auditServiceMock.findSchedulePublishImpactsForStudio).toHaveBeenCalledWith(
+        'std_123',
+        expect.objectContaining({
+          startDateFrom: undefined,
+          implicitStartDateFrom: expect.any(Date),
+        }),
+      );
+    });
+
+    it('labels past_show_creator_backfilled rows with their own impact kind', async () => {
+      auditServiceMock.findSchedulePublishImpactsForStudio.mockResolvedValue({
+        total: 1,
+        items: [
+          {
+            targetId: BigInt(9),
+            audit: {
+              uid: 'aud_backfill',
+              metadata: {
+                event: 'schedule_publish_impact',
+                schedule_uid: 'schedule_123',
+                external_id: 'EXT-9',
+                impact_kind: 'past_show_creator_backfilled',
+                changed_fields: [],
+                relation_changes: { creator_links_added: 2 },
+              },
+              createdAt: new Date('2026-07-10T10:00:00.000Z'),
+            },
+            show: {
+              uid: 'show_terminal',
+              externalId: 'EXT-9',
+              name: 'Past Show',
+              startTime: new Date('2026-07-01T10:00:00.000Z'),
+              endTime: new Date('2026-07-01T12:00:00.000Z'),
+              showStatus: { name: 'completed', systemKey: 'COMPLETED' },
+              client: { uid: 'client_123', name: 'Client' },
+            },
+          },
+        ],
+      });
+      auditServiceMock.findPendingStaleConflictsForStudio.mockResolvedValue({ items: [], total: 0 });
+
+      const result = await service.listSchedulePublishImpacts('std_123', {});
+
+      // Regression: this kind used to fall through the mapper to
+      // 'confirmed_future_updated', so the backfilled badge never rendered.
+      expect(result.items[0].impact_kind).toBe('past_show_creator_backfilled');
+      expect(result.items[0].relation_changes).toEqual({ creator_links_added: 2 });
     });
 
     it('serves only the pending-stale source when resolution_status is pending', async () => {

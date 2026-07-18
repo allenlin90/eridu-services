@@ -277,6 +277,37 @@ describe('validationService', () => {
         expect(result.isValid).toBe(true);
         expect(result.info).toBeUndefined();
       });
+
+      // Regression: duplicate plan rows for the same (client, external_id)
+      // used to each count toward the eligible total; the count is per
+      // distinct show (the duplicate itself is a separate blocking error).
+      it('counts each eligible show once even when the payload duplicates its row', async () => {
+        const duplicatedSchedule = {
+          ...mockScheduleData,
+          planDocument: {
+            ...mockScheduleData.planDocument,
+            shows: [
+              mockScheduleData.planDocument.shows[0],
+              { ...mockScheduleData.planDocument.shows[0] },
+            ],
+          },
+        };
+        const findManyByFilter = async (args: { where?: { showStatus?: unknown } }) =>
+          args?.where?.showStatus
+            ? [{ id: BigInt(9), clientId: BigInt(1), externalId: 'show_temp_1', _count: { showCreators: 0 } }]
+            : [];
+        mockTransactionClient.show.findMany.mockImplementation(findManyByFilter);
+        mockPrismaClient.show.findMany.mockImplementation(findManyByFilter);
+
+        const result = await service.validateSchedule(duplicatedSchedule);
+
+        expect(result.info).toEqual([
+          expect.objectContaining({
+            type: 'terminal_show_creator_backfill_eligible',
+            count: 1,
+          }),
+        ]);
+      });
     });
 
     it('should fail fast when creator payload entries are malformed', async () => {

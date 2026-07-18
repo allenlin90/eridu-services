@@ -5,6 +5,7 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import {
   planDocumentSchema,
   ShowPlanItem,
+  TERMINAL_PRESERVED_STATUS_KEYS,
   ValidationError,
   ValidationResult,
 } from './schemas/schedule-planning.schema';
@@ -186,7 +187,7 @@ export class ValidationService {
         clientId: { in: clientIds },
         externalId: { in: candidates.map((show) => show.externalId) },
         deletedAt: null,
-        showStatus: { systemKey: { in: ['LIVE', 'COMPLETED'] } },
+        showStatus: { systemKey: { in: [...TERMINAL_PRESERVED_STATUS_KEYS] } },
       },
       select: {
         id: true,
@@ -202,10 +203,19 @@ export class ValidationService {
         .map((show) => `${show.clientId.toString()}:${show.externalId}`),
     );
 
-    return candidates.filter((show) => {
-      const clientId = uidMaps.clients.get(show.clientId);
-      return clientId !== undefined && zeroMappingByKey.has(`${clientId.toString()}:${show.externalId}`);
-    }).length;
+    // Count distinct shows, not payload rows — duplicate plan rows for the
+    // same (client, external_id) are a separate blocking error and must not
+    // inflate this informational count.
+    const eligibleShowKeys = new Set(
+      candidates
+        .map((show) => {
+          const clientId = uidMaps.clients.get(show.clientId);
+          return clientId !== undefined ? `${clientId.toString()}:${show.externalId}` : null;
+        })
+        .filter((key): key is string => key !== null && zeroMappingByKey.has(key)),
+    );
+
+    return eligibleShowKeys.size;
   }
 
   private async validateExternalIdRules(

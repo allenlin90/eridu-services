@@ -6,6 +6,7 @@ import {
   PlanDocument,
   planDocumentSchema,
   PublishScheduleSummary,
+  TERMINAL_PRESERVED_STATUS_KEYS,
 } from './schemas/schedule-planning.schema';
 import type {
   DiffIncomingShow,
@@ -43,10 +44,7 @@ const PRESERVED_STATUS_KEYS = new Set([
   'CANCELLED',
   'CANCELLED_PENDING_RESOLUTION',
 ]);
-const UPDATE_PRESERVED_STATUS_KEYS = new Set([
-  'LIVE',
-  'COMPLETED',
-]);
+const UPDATE_PRESERVED_STATUS_KEYS = new Set<string>(TERMINAL_PRESERVED_STATUS_KEYS);
 
 @Injectable()
 export class PublishingService {

@@ -784,12 +784,14 @@ export class StudioShowManagementService {
    * Resolves the shared filter plan for the impacts list and its summary.
    *
    * Date semantics: the legacy implicit "upcoming shows only" default
-   * (`startTime >= now`) applies ONLY to the untouched default view. Any
-   * explicit narrowing filter (impact kind, publish run, change-time range,
-   * or an explicit show-time bound) lifts it, so past-show rows — e.g.
-   * `past_show_creator_backfilled` or a run drill-down from the Runs tab —
-   * stay reachable. The pending-stale source never receives the implicit
-   * default: past-dated shows are the entire point of that queue.
+   * (`startTime >= now`) applies ONLY to the untouched default view, and even
+   * there it exempts `past_show_creator_backfilled` — those rows only exist on
+   * terminal (past) shows, so the default view still lists and counts them.
+   * Any explicit narrowing filter (impact kind, publish run, change-time
+   * range, or an explicit show-time bound) lifts the default entirely, so
+   * past-show rows — e.g. a run drill-down from the Runs tab — stay
+   * reachable. The pending-stale source never receives the implicit default:
+   * past-dated shows are the entire point of that queue.
    *
    * `resolution_status` routes between the two stale sources: `pending`
    * selects the live review queue (latest-per-show, `lifecycle: 'opened'`),
@@ -856,7 +858,8 @@ export class StudioShowManagementService {
         && (resolvedOutcomes?.length ?? 0) > 0,
       confirmedFilters: {
         ...shared,
-        startDateFrom: explicitStartDateFrom ?? (hasExplicitScope ? undefined : new Date()),
+        startDateFrom: explicitStartDateFrom,
+        implicitStartDateFrom: hasExplicitScope ? undefined : new Date(),
         impactKinds: kinds === undefined ? undefined : nonStaleKinds,
       },
       staleFilters: {
@@ -983,7 +986,9 @@ export class StudioShowManagementService {
       ? 'stale_conflict' as const
       : metadata.impact_kind === 'confirmed_future_pending_resolution'
         ? 'confirmed_future_pending_resolution' as const
-        : 'confirmed_future_updated' as const;
+        : metadata.impact_kind === 'past_show_creator_backfilled'
+          ? 'past_show_creator_backfilled' as const
+          : 'confirmed_future_updated' as const;
 
     return {
       audit_id: target.audit.uid,

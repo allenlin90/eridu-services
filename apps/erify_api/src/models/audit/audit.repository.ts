@@ -66,6 +66,14 @@ export type SchedulePublishImpactQueryFilters = {
   /** Show-time range (`Show.startTime`). */
   startDateFrom?: Date;
   startDateTo?: Date;
+  /**
+   * The untouched default view's "upcoming shows only" bound. Unlike the
+   * explicit `startDateFrom`, it does NOT constrain
+   * `past_show_creator_backfilled` rows — those only ever exist on terminal
+   * (past) shows, so a date default that hid them would make the kind
+   * unreachable without a manual filter.
+   */
+  implicitStartDateFrom?: Date;
   /** Change-time range (`Audit.createdAt`). */
   changedFrom?: Date;
   changedTo?: Date;
@@ -237,6 +245,42 @@ export class AuditRepository {
     studioUid: string,
     filters: SchedulePublishImpactQueryFilters,
   ): Prisma.AuditTargetWhereInput {
+    const and: Prisma.AuditTargetWhereInput[] = [];
+
+    if (filters.impactKinds?.length) {
+      and.push({
+        OR: filters.impactKinds.map((kind) => ({
+          audit: {
+            metadata: {
+              path: ['impact_kind'],
+              equals: kind,
+            },
+          },
+        })),
+      });
+    }
+
+    // The implicit upcoming-only default exempts `past_show_creator_backfilled`:
+    // those rows only exist on terminal (past) shows, so constraining them to
+    // `startTime >= now` would make the kind invisible in the default view.
+    // An explicit `startDateFrom`/`startDateTo` (user-chosen) still applies to
+    // every kind via the plain `show.startTime` filter above.
+    if (filters.implicitStartDateFrom) {
+      and.push({
+        OR: [
+          { show: { startTime: { gte: filters.implicitStartDateFrom } } },
+          {
+            audit: {
+              metadata: {
+                path: ['impact_kind'],
+                equals: 'past_show_creator_backfilled',
+              },
+            },
+          },
+        ],
+      });
+    }
+
     return {
       targetType: 'SHOW',
       show: {
@@ -268,18 +312,7 @@ export class AuditRepository {
           ? { publishRunId: filters.publishRunId }
           : {}),
       },
-      ...(filters.impactKinds?.length
-        ? {
-            OR: filters.impactKinds.map((kind) => ({
-              audit: {
-                metadata: {
-                  path: ['impact_kind'],
-                  equals: kind,
-                },
-              },
-            })),
-          }
-        : {}),
+      ...(and.length ? { AND: and } : {}),
       NOT: {
         audit: {
           metadata: {
