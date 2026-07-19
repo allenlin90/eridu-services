@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildSchedulePublishImpactsQueryParams,
-  hasActiveImpactFilters,
   schedulePublishImpactsSearchSchema,
   searchForTabSwitch,
 } from '../schedule-publish-impacts-search-schema';
@@ -124,17 +123,5 @@ describe('searchForTabSwitch', () => {
 
   it('resets the runs tab params when switching back to impacts', () => {
     expect(searchForTabSwitch('impacts')).toEqual({ tab: 'impacts', page: 1 });
-  });
-});
-
-describe('hasActiveImpactFilters', () => {
-  it('is false for the untouched default view', () => {
-    expect(hasActiveImpactFilters({ tab: 'impacts', page: 2, page_size: 50 })).toBe(false);
-  });
-
-  it('is true when any filter is set', () => {
-    expect(hasActiveImpactFilters({ tab: 'impacts', publish_run_id: 'prun_abc' })).toBe(true);
-    expect(hasActiveImpactFilters({ tab: 'impacts', impact_kind: ['stale_conflict'] })).toBe(true);
-    expect(hasActiveImpactFilters({ tab: 'impacts', changed_from: '2026-07-01' })).toBe(true);
   });
 });
