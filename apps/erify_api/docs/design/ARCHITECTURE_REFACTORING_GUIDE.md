@@ -3,6 +3,7 @@
 > **Status**: Proposed direction
 > **Source snapshot**: `f677b627` (PR base; `apps/erify_api/src` is unchanged through current `master`)
 > **Scope**: Structure, module ownership, service and persistence boundaries, DDD, CQRS, runtime composition, testing, and performance guardrails
+> **Visual companion**: [`architecture-refactoring-visual.html`](./architecture-refactoring-visual.html) — a diagrammed walkthrough of the problem, the NestJS-vs-Rails philosophy, Nest conventions, the phased plan, and the risks. Open it in a browser.
 
 ## Executive Decision
 
@@ -656,6 +657,7 @@ The recommended answers are included so discussion can focus on the real tradeof
 - [Codebase Hardening Program](../../../../.agents/skills/codebase-hardening-program/SKILL.md)
 - [Phase 5 Roadmap](../../../../docs/roadmap/PHASE_5.md)
 - [Read-Path Optimization](../READ_PATH_OPTIMIZATION.md)
+- [Architecture Direction — Visual Companion](./architecture-refactoring-visual.html)
 - [NestJS Modules](https://docs.nestjs.com/modules)
 - [NestJS CQRS](https://docs.nestjs.com/recipes/cqrs)
 - [Prisma With NestJS](https://www.prisma.io/docs/guides/frameworks/nestjs)
