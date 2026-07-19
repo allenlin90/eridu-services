@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "agents:validate": "node scripts/validate-agent-skills.mjs",
+    "architecture:signals": "node scripts/measure-erify-api-architecture.mjs",
     "build": "turbo build",
     "dev": "turbo dev --concurrency=20",
     "dev:creators": "turbo dev --filter=erify_creators... --filter=erify_api... --filter=eridu_auth...",

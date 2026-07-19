@@ -57,6 +57,14 @@ Record one result for every trigger affected by the diff:
 - [ ] Advanced patterns were introduced only against their documented evidence gates.
 - [ ] Trigger outcomes and evidence appear in the review verdict.
 
+When a PR changes `apps/erify_api` module imports, exports, runtime entry modules, or capability boundaries, run:
+
+```bash
+pnpm architecture:signals
+```
+
+Compare the output with the architecture baseline named by the affected design/canonical document. A new cycle is blocking. Edge, shallow-module, exported-repository, or runtime-closure changes are review signals that require explanation, not automatic failures.
+
 ---
 
 ## erify_api gate

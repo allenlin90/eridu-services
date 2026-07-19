@@ -1,7 +1,7 @@
 # `erify_api` Architecture Refactoring Guide
 
 > **Status**: Proposed direction
-> **Repository snapshot**: 2026-07-18
+> **Source snapshot**: `f677b627` (PR base; `apps/erify_api/src` is unchanged through current `master`)
 > **Scope**: Structure, module ownership, service and persistence boundaries, DDD, CQRS, runtime composition, testing, and performance guardrails
 
 ## Executive Decision
@@ -19,13 +19,16 @@ Do **not** adopt `@nestjs/cqrs` across the application now. Use CQRS thinking fi
 
 The recommended sequence is:
 
-1. Establish characterization, transaction, module-graph, and performance baselines.
-2. Remove proven shallow ceremony and close current persistence leaks.
-3. Pilot optional repositories on one low-risk model, `ShowStatus`.
-4. Consolidate code by capability, beginning with the show reference catalog and show operations.
-5. Decompose the two overloaded workflow services along cohesive use cases.
-6. Slim the MCP runtime and optimize measured hot paths.
-7. Re-evaluate CQRS or asynchronous processing only at explicit decision gates.
+1. Keep a reproducible static architecture snapshot and build an isolated real-database safety harness.
+2. Ship independent correctness fixes and low-risk cleanup without waiting for the performance baseline.
+3. Close current persistence leaks behind the real-database transaction and rollback characterization.
+4. Pilot optional repositories on one low-risk model, `ShowStatus`.
+5. Consolidate code by capability, beginning with the show reference catalog and show operations.
+6. Establish performance baselines before decomposing schedule publishing or narrowing the MCP runtime.
+7. Slim the MCP runtime and optimize only measured hot paths.
+8. Re-evaluate CQRS or asynchronous processing only at explicit decision gates.
+
+Execute accepted work through the [`codebase-hardening-program`](../../../../.agents/skills/codebase-hardening-program/SKILL.md) lifecycle. This guide fixes the direction and decision gates; it is not a parallel backlog. Convert selected work into independently reviewable items, keep the baseline green, characterize behavior before structural changes, reconcile the tracker after merges, and retire residuals to the canonical tech-debt register. Correctness changes remain separate, explicitly behavior-changing items that flip characterization tests to the intended expectation.
 
 ## What DDD Means Here
 
@@ -84,17 +87,17 @@ Admin, studio, me, integration, and MCP remain authorization and transport conce
 
 ## Repository-Grounded Findings
 
-The following is a static architecture snapshot, not a runtime performance benchmark.
+The following is a static architecture snapshot, not a runtime performance benchmark. Run `pnpm architecture:signals` to reproduce it. The command scans `apps/erify_api/src/**/*.ts`, counts physical lines including blanks and comments, treats each unique static import between local `*.module.ts` files as one directed edge, detects cycles with depth-first search, and calculates the MCP closure from `McpAppModule` including the entry module.
 
 | Signal | Current evidence | Interpretation |
 | --- | ---: | --- |
-| Nest modules | 89 | High navigation and registration breadth |
-| Static local module edges | 289 | A wide dependency graph |
+| Nest modules | 90 | High navigation and registration breadth |
+| Static local module edges | 293 | A wide dependency graph |
 | Detected static module cycles | 0 | The graph is broad, not cyclic |
-| Modules at or below 20 LOC | 71 | Much of the graph is registration ceremony |
-| Model modules | 26 | The model layer largely mirrors tables |
-| Production services | 67 | Services are already the main business API |
-| Repositories | 29 | Repository value varies substantially by model |
+| Modules at or below 20 LOC | 74 | Much of the graph is registration ceremony |
+| Model modules | 27 | The model layer largely mirrors tables |
+| Production services | 68 | Services are already the main business API |
+| Repositories | 30 | Repository value varies substantially by model |
 | Controllers | 53 | Transport surfaces are well separated by audience |
 | Specs | 156 | Local unit coverage is a strength |
 | Actual E2E test files | 0 | Module wiring and real transaction behavior lack a broad safety net |
@@ -154,7 +157,7 @@ The known inherited-delegate problem is already tracked in [`erify-api-refactor-
 
 The service is a useful public API. The separate repository is not clearly earning its extra seam.
 
-`UtilityService` is another shallow module: it wraps UID generation and time-range overlap, yet `UtilityModule` is imported by 47 modules. Pure deterministic functions do not require Nest dependency injection merely to be testable.
+`UtilityService` is another shallow module: it wraps UID generation and time-range overlap, yet `UtilityModule` is imported by 48 modules. Pure deterministic functions do not require Nest dependency injection merely to be testable.
 
 **Direction**: preserve a stable service API but fold shallow persistence and pure utilities. Measure reduced imports, mocks, files, and navigation steps in the pilot.
 
@@ -162,8 +165,8 @@ The service is a useful public API. The separate repository is not clearly earni
 
 Two files contain several capabilities behind one class:
 
-- [`studio-show-management.service.ts`](../../src/studios/studio-show/studio-show-management.service.ts): 1,211 LOC and 17 injected collaborators. It owns create, update, detail, deletion, cancellation, conflict resolution, publish-impact reads, audit reads, assignment replacement, and performance correction.
-- [`publishing.service.ts`](../../src/schedule-planning/publishing.service.ts): 945 LOC and 10 collaborators. Its `publish()` transaction performs validation, diff planning, lifecycle decisions, row updates, task reconciliation, relation synchronization, conflict handling, and audit writes with a 30-second timeout.
+- [`studio-show-management.service.ts`](../../src/studios/studio-show/studio-show-management.service.ts): 1,421 LOC and 18 injected collaborators. It owns create, update, detail, deletion, cancellation, conflict resolution, publish-run listing and filtered publish-impact reads, audit reads, assignment replacement, and performance correction.
+- [`publishing.service.ts`](../../src/schedule-planning/publishing.service.ts): 1,025 LOC and 11 collaborators. Its `publish()` transaction performs validation, diff planning, publish-run recording, lifecycle decisions, row updates, task reconciliation, relation synchronization, conflict handling, and audit writes with a 30-second timeout.
 
 These are not arguments for one handler class per endpoint. They are evidence for a few cohesive internal modules:
 
@@ -362,7 +365,7 @@ Every option must preserve:
 - audit and optimistic-lock behavior;
 - bounded list and bulk inputs.
 
-If the team accepts this matrix, update `AGENTS.md`, `repository-pattern-nestjs`, `service-pattern-nestjs`, and `orchestration-service-nestjs` in the same pilot PR. Until then, the current repository-first rules remain canonical.
+If the team accepts this matrix, the same pilot PR must reconcile every instruction or architecture document that asserts “repository for all DB access.” This includes `AGENTS.md`, `repository-pattern-nestjs`, `service-pattern-nestjs`, `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in `database-patterns`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md`. Until then, the current repository-first rules remain canonical.
 
 ## CQRS: What It Is And Why Not Yet
 
@@ -450,15 +453,13 @@ The persistence matrix and capability-first conventions in this document remain 
 
 ## Phased Refactoring Plan
 
-### Phase 0 — Safety And Baselines
+### Phase 0a — Isolated Safety Harness
 
-Before moving production code:
+Before persistence-boundary or behavior-bearing structural changes:
 
-1. Add a small real-database integration harness for PostgreSQL/Prisma and CLS.
+1. Add a small real-database integration harness for PostgreSQL/Prisma and CLS using a dedicated test database or disposable container. It must not share the Docker Compose development volume or accept the development `DATABASE_URL`; destructive reset commands may target only the explicitly validated test database.
 2. Characterize one shallow CRUD flow, one show workflow, one schedule publish rollback, and MCP runtime boot.
-3. Record module graph nodes/edges/cycles and MCP reachable modules.
-4. Record query count, payload size, and latency for selected show, task, MCP, and publish paths.
-5. Capture API response shapes and soft-delete/audit side effects.
+3. Capture API response shapes and soft-delete/audit side effects.
 
 Minimum gates:
 
@@ -468,18 +469,33 @@ Minimum gates:
 - public responses contain UIDs, not internal IDs;
 - current unit suite remains green.
 
+Phase 0a gates the generic restore/lazy-delegate work, the `ShowStatus` persistence pilot, and any behavior-bearing decomposition that could change transaction or soft-delete behavior. It does not block independent correctness fixes already covered by focused unit or wiring tests.
+
+### Phase 0b — Architecture And Performance Baselines
+
+Before Phases 5–6 or any PR claiming performance improvement:
+
+1. Maintain `pnpm architecture:signals` as the reproducible module-graph and MCP-closure checker, and keep its `pr-ready` enforcement point current as runtime entry modules change.
+2. Record the command output as the comparison baseline for module nodes, edges, cycles, shallow modules, exported repositories, and MCP reachable modules.
+3. Record query count, payload size, lock duration, and latency for selected show, task, MCP, and publish paths.
+
+Phase 0b is observability work. It does not block Phase 1 correctness fixes or the Phase 2 pilot when those changes make no performance claim and their Phase 0a safety gates are satisfied.
+
 ### Phase 1 — Correctness And Low-Risk Ceremony Cleanup
 
-- Fix or remove the unusable generic `BaseRepository.restore()` behavior.
-- Implement the transaction-aware lazy delegate or stop using inherited base writes in transactions.
-- Add hard maximums to MCP list queries.
-- Reassess the 1,000-item schedule bulk limit against actual timeout and partial-success requirements.
-- Remove duplicate and unused module imports and unnecessary root-module re-exports.
-- Remove the empty OpenAPI dynamic module if it has no runtime role.
-- Replace `UtilityService` with pure UID/time utilities, or narrow it to an actual injectable adapter if deterministic ID injection is required.
-- Type the authorization membership value in `StudioGuard`.
+| Work item | Required gate |
+| --- | --- |
+| Add hard maximums to MCP list queries | Ship as an independent live-surface fix using the existing MCP specs; do not wait for Phase 0 |
+| Remove the duplicate `AuditModule` import, other unused module imports, and unnecessary root re-exports | Module wiring test plus build; do not wait for Phase 0 |
+| Remove the empty OpenAPI dynamic module if it has no runtime role | Bootstrap/OpenAPI wiring verification plus build; do not wait for Phase 0 |
+| Type the authorization membership value in `StudioGuard` | Focused guard specs and typecheck; do not wait for Phase 0 |
+| Replace `UtilityService` with pure UID/time utilities, or narrow it to an actual injectable adapter | Existing unit baseline and focused utility/service specs; no real-database dependency |
+| Fix or remove generic `BaseRepository.restore()` and implement the transaction-aware lazy delegate, or stop inherited base writes in transactions | Phase 0a real-database transaction, restore, and rollback characterization |
+| Reassess the 1,000-item schedule bulk limit | Phase 0b timeout/partial-success evidence; preserve the established sequential partial-success contract unless measurements justify change |
 
 Keep these changes in small PRs. Do not combine them with folder moves.
+
+The restore/lazy-delegate PR must update `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and close or rewrite the lazy-delegate row in `erify-api-refactor-residuals.md`. The UtilityService PR must reconcile `service-pattern-nestjs`, including the `BaseModelService` UID-generation contract.
 
 ### Phase 2 — Optional Repository Pilot: `ShowStatus`
 
@@ -513,7 +529,7 @@ Suggested first slices:
 3. create/update plus platform assignment replacement;
 4. read-only publish impacts and audit queries.
 
-After each slice, remove the corresponding collaborators and private helpers from `StudioShowManagementService`. Split the 621-line controller by sub-resource if that makes route ownership clearer; multiple focused controllers may share the same route prefix.
+After each slice, remove the corresponding collaborators and private helpers from `StudioShowManagementService`. Split the 675-line controller by sub-resource if that makes route ownership clearer; multiple focused controllers may share the same route prefix.
 
 ### Phase 5 — Decompose Schedule Publishing
 
@@ -547,6 +563,22 @@ After the modular-monolith cleanup, review evidence for:
 - package extraction only after a second real consumer exists;
 - separate databases only for scaling, isolation, or analytics requirements.
 
+### Per-Phase Knowledge Sync
+
+Each implementation PR updates only the knowledge artifacts whose asserted pattern changed. This table is the minimum routing set; `knowledge-sync` must also discover any additional file that makes the same assertion.
+
+| Phase | Minimum knowledge reconciliation |
+| --- | --- |
+| 0a | `backend-testing-patterns`, `database-patterns`, and the real-database test runbook/configuration |
+| 0b | `engineering-best-practices-enforcer`, `pr-review.md`, `repository-health.md`, and this guide's reproducible baseline |
+| 1 | `service-pattern-nestjs`, `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and `erify-api-refactor-residuals.md` |
+| 2 | Every repository-first doctrine location named in the Persistence Decision Matrix acceptance gate, plus the `ShowStatus` feature/module documentation |
+| 3 | `design-patterns`, `backend-controller-pattern-nestjs`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md` |
+| 4 | `show-production-lifecycle`, `orchestration-service-nestjs`, `backend-large-file-refactor`, and the Phase 5 roadmap state-machine workstream |
+| 5 | `schedule-continuity-workflow`, `orchestration-service-nestjs`, `database-patterns`, and schedule-planning documentation |
+| 6 | MCP/runtime documentation, `service-pattern-nestjs`, `openwebui-mcp-tool-integration`, and `backend-runtime-boundaries.md` |
+| 7 | Only the skill, ideation/ADR, runtime documentation, and operational guidance for the advanced pattern actually accepted |
+
 ## Verification Gates For Every Migration Slice
 
 ### Behavior
@@ -578,7 +610,7 @@ After the modular-monolith cleanup, review evidence for:
 - `pnpm --filter erify_api test`
 - `pnpm --filter erify_api build`
 - targeted real-database integration tests
-- module graph and MCP import-closure check
+- `pnpm architecture:signals`, compared with the recorded module-graph and MCP-closure baseline
 - documentation and skill knowledge sync
 
 ## Success Measures
@@ -615,6 +647,8 @@ The recommended answers are included so discussion can focus on the real tradeof
 - [API Performance Evaluation and Optimization](../../../../docs/ideation/api-performance-optimization.md)
 - [Repository Refactor Residuals](../../../../docs/tech-debt/erify-api-refactor-residuals.md)
 - [Fact Extraction Size Decision](../../../../docs/tech-debt/fact-extraction-service-size.md)
+- [Codebase Hardening Program](../../../../.agents/skills/codebase-hardening-program/SKILL.md)
+- [Phase 5 Roadmap](../../../../docs/roadmap/PHASE_5.md)
 - [Read-Path Optimization](../READ_PATH_OPTIMIZATION.md)
 - [NestJS Modules](https://docs.nestjs.com/modules)
 - [NestJS CQRS](https://docs.nestjs.com/recipes/cqrs)

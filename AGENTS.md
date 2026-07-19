@@ -262,6 +262,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm sherif
+pnpm architecture:signals
 ```
 
 ### Backend API Patterns

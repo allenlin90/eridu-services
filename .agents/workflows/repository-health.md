@@ -28,6 +28,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm architecture:signals
 bash .agents/skills/engineering-best-practices-enforcer/scripts/scan-quality-signals.sh
 ```
 
