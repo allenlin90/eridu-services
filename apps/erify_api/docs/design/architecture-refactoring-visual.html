@@ -300,6 +300,37 @@
   .gatemark .glabel { writing-mode: vertical-rl; text-orientation: mixed; font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; margin-top: .3rem; color: var(--warn); }
   .track-legend { display: flex; flex-wrap: wrap; gap: 1.2rem; margin-top: 1rem; font-size: .82rem; color: var(--muted); }
   .track-legend span { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--mono); }
+
+  /* ---- effort / sequencing table ---- */
+  .efftable-scroll { overflow-x: auto; margin-top: 16px; }
+  .efftable { border-collapse: collapse; width: 100%; min-width: 620px; font-size: .86rem; }
+  .efftable th, .efftable td { text-align: left; padding: .62rem .85rem; border-bottom: 1px solid var(--rule); }
+  .efftable th { font-family: var(--mono); font-size: .67rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+  .efftable tbody td { vertical-align: top; }
+  .efftable .ph { font-family: var(--mono); font-weight: 700; color: var(--ink); }
+  .efftable .eff { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .efftable .when-now { color: var(--target); font-family: var(--mono); font-size: .8rem; }
+  .efftable .when-gate { color: var(--warn); font-family: var(--mono); font-size: .8rem; }
+  .efftable .when-later { color: var(--faint); font-family: var(--mono); font-size: .8rem; }
+  .efftable tr:last-child td { border-bottom: none; }
+
+  /* ---- reframed decisions ---- */
+  .reframe-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .reframe { padding: 1.25rem 1.35rem; }
+  .reframe-tag { font-family: var(--mono); font-size: .62rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; padding: .16rem .45rem; border-radius: 5px; display: inline-block; margin-bottom: .9rem; }
+  .reframe-tag.bug { background: var(--danger-tint); color: var(--danger); }
+  .reframe-tag.drift { background: var(--warn-tint); color: var(--warn); }
+  .reframe-tag.reframe { background: var(--current-tint); color: var(--current); }
+  .reframe-tag.process { background: var(--target-tint); color: var(--target); }
+  .rf-was, .rf-now { font-size: .89rem; line-height: 1.45; padding-left: .9rem; border-left: 2px solid var(--rule-strong); margin-bottom: .5rem; }
+  .rf-now { border-left-color: var(--target); }
+  .rf-was { color: var(--muted); }
+  .rf-now { color: var(--ink); }
+  .rf-was > span, .rf-now > span { font-family: var(--mono); font-size: .61rem; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; display: block; margin-bottom: .18rem; }
+  .rf-was > span { color: var(--faint); }
+  .rf-now > span { color: var(--target); }
+  .rf-why { font-size: .82rem; color: var(--muted); margin-top: .7rem; padding-top: .65rem; border-top: 1px dashed var(--rule); line-height: 1.5; }
+  .rf-why em { color: var(--warn); font-style: normal; font-family: var(--mono); font-size: .92em; }
   .lg-box { width: 20px; height: 12px; border-radius: 3px; flex: none; }
 
   /* ---- challenge cards ---- */
@@ -387,7 +418,7 @@
   <div class="wrap">
     <span class="kicker"><span class="dot"></span> erify_api · architecture decision · proposed direction</span>
     <h1>From table-first modules to capability-first ownership</h1>
-    <p class="lede read">Why the refactor points this way, how it differs from what we have, the framework philosophy underneath it, a worked example of one capability end to end, what makes it hard, and why it comes out better. A visual companion to <span class="mono">ARCHITECTURE_REFACTORING_GUIDE.md</span> — every number here is reproducible with <code>pnpm architecture:signals</code>.</p>
+    <p class="lede read">Why the refactor points this way, how it differs from what we have, the framework philosophy underneath it, a worked example of one capability end to end, the earlier decisions it corrects, a sized roadmap, and why it comes out better. A visual companion to <span class="mono">ARCHITECTURE_REFACTORING_GUIDE.md</span> — every number here is reproducible with <code>pnpm architecture:signals</code>.</p>
     <div class="verdict-row">
       <span class="verdict-chip"><b>Keep</b> the NestJS modular monolith</span>
       <span class="verdict-chip"><b>Reorganize</b> around business capabilities</span>
@@ -855,11 +886,76 @@ class ShowQueries {
     </div>
   </section>
 
-  <!-- 09 THE PLAN -->
+  <!-- 09 DECISIONS CORRECTED -->
   <section class="plate">
     <div class="wrap">
       <div class="plate-head reveal">
         <div class="idx">09 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">Setting the record straight</span>
+          <h2>The earlier decisions this guide corrects</h2>
+          <p class="read">None of these were reckless — each was a reasonable default at the time. The guide reframes them because the codebase grew past the assumption. Tags mark whether it's a confirmed bug, doctrine that drifted from the code, a reframed convention, or a process improvement.</p>
+        </div>
+      </div>
+
+      <div class="reframe-list reveal" style="animation-delay:.05s">
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">reframed convention</span>
+          <div class="rf-was"><span>Was</span> A repository for every model — "repositories hide all DB access."</div>
+          <div class="rf-now"><span>Now</span> Optional and evidence-based: simple CRUD uses <span class="mono">tx.&lt;model&gt;</span> directly; a repository exists only for genuine persistence complexity.</div>
+          <div class="rf-why">Most repositories just mirror Prisma. <em>Proposed — becomes canonical only after the ShowStatus pilot.</em></div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">reframed axis</span>
+          <div class="rf-was"><span>Was</span> Organize by database table (one module per model) and by HTTP audience.</div>
+          <div class="rf-now"><span>Now</span> Organize by business capability; table and audience become attributes of a slice, not folders.</div>
+          <div class="rf-why">27 model modules and audience trees scatter one use case; 74/90 modules are ceremony.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag bug">confirmed bug</span>
+          <div class="rf-was"><span>Was</span> <span class="mono">BaseRepository</span> is a safe shared abstraction to build on.</div>
+          <div class="rf-now"><span>Now</span> Fix or retire it: its generic <span class="mono">restore()</span> can't restore a row, and inherited methods bind to the non-transactional client.</div>
+          <div class="rf-why">Dormant only because every real flow overrides it. A latent trap for the next author.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag drift">doctrine drift</span>
+          <div class="rf-was"><span>Was</span> Doctrine: "repositories are private module internals."</div>
+          <div class="rf-now"><span>Now</span> Reality: 6 are exported, so callers bypass model-service invariants. Close the leak — persistence stays private.</div>
+          <div class="rf-why">The written rule and the implementation had silently diverged.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">reframed convention</span>
+          <div class="rf-was"><span>Was</span> <span class="mono">UtilityService</span> is injected everywhere so it's testable.</div>
+          <div class="rf-now"><span>Now</span> Pure deterministic functions (UID, time-overlap) don't need DI to be tested; fold them into <span class="mono">shared/util</span>.</div>
+          <div class="rf-why">48 modules import it purely for two pure functions.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">refined guardrail</span>
+          <div class="rf-was"><span>Was</span> Many modules or a large file is automatically a smell to split.</div>
+          <div class="rf-now"><span>Now</span> Split by cohesion and co-change, not by LOC. A deep repository, a cohesive large file, or anemic reference data is not an anti-pattern.</div>
+          <div class="rf-why">Guards against over-correcting the cleanup into new churn.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag process">process fix</span>
+          <div class="rf-was"><span>Was</span> Architecture metrics written as prose that goes stale on the next PR.</div>
+          <div class="rf-now"><span>Now</span> <span class="mono">pnpm architecture:signals</span> regenerates every figure and self-stamps the commit; wired into pr-review and repository-health.</div>
+          <div class="rf-why">The guide's own first draft had already drifted — this closes that loop.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag process">process fix</span>
+          <div class="rf-was"><span>Was</span> Treat the reorg as a scheduled big-bang migration and this doc as a parallel backlog.</div>
+          <div class="rf-now"><span>Now</span> Trigger-gated phases executed through the <span class="mono">codebase-hardening-program</span> lifecycle — one PR per item, behavior-preserving.</div>
+          <div class="rf-why">Avoids a half-migrated tree and a second, competing process authority.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 THE PLAN -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">10 ▸</div>
         <div class="htext">
           <span class="eyebrow">How it actually ships</span>
           <h2>Trigger-gated phases — not a scheduled big-bang migration</h2>
@@ -886,6 +982,25 @@ class ShowQueries {
           <span><span class="lg-box" style="background:var(--warn-tint);border:1px dashed var(--warn)"></span> trigger-gated</span>
           <span><span class="lg-box" style="background:var(--surface-2);border:1px solid var(--rule)"></span> later / on evidence</span>
         </div>
+        <div class="efftable-scroll">
+          <table class="efftable">
+            <thead>
+              <tr><th>Phase</th><th>Ships as</th><th>Effort (focused)</th><th>Starts</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="ph">0a</td><td>Isolated real-DB harness + characterization</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">now</td></tr>
+              <tr><td class="ph">0b</td><td>Signals baseline recorded (perf instrumentation deferred to pre-Phase-5)</td><td class="eff">~2–3 days</td><td class="when-now">now · parallel</td></tr>
+              <tr><td class="ph">1</td><td>Correctness + cleanup: MCP max, dup import, OpenAPI, StudioGuard, restore/delegate, UtilityService</td><td class="eff">~1–1.5 wk · 4–6 PRs</td><td class="when-now">now (indep.) / after 0a (gated)</td></tr>
+              <tr><td class="ph">2</td><td>ShowStatus pilot + persistence-matrix acceptance (7 doctrine files)</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">after 0a</td></tr>
+              <tr><td class="ph">3</td><td>Consolidate show catalog (4 reference models) into one module</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-now">after 2</td></tr>
+              <tr><td class="ph">4</td><td>Dissolve <span class="mono">studio-show-management</span> into show-operations, 4 slices</td><td class="eff">~3–5 wk · 4–6 PRs</td><td class="when-gate">on roadmap item 18</td></tr>
+              <tr><td class="ph">5</td><td>Decompose <span class="mono">publishing.service</span>, atomic boundary preserved</td><td class="eff">~2–4 wk · 3–5 PRs</td><td class="when-gate">on item 18 publish / perf evidence</td></tr>
+              <tr><td class="ph">6</td><td>ShowQueries/TaskQueries providers; MCP imports read-only</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-later">with / after 4</td></tr>
+              <tr><td class="ph">7</td><td>Reassess CQRS / workers / read models — decision checkpoint, not code</td><td class="eff">review only</td><td class="when-later">ongoing</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="path-note">Effort is focused engineering time for one maintainer plus AI agents, not calendar time. The <strong>scheduled foundation</strong> (0a→3) is roughly one quarter part-time; the <strong>gated capability work</strong> (4–6) lands opportunistically when item 18 ships — deliberately not dated, because forcing it early is the risk the plan avoids.</p>
       </div>
       <div class="callout reveal" style="animation-delay:.1s">
         <span class="clab">The key scheduling insight</span>
@@ -894,11 +1009,11 @@ class ShowQueries {
     </div>
   </section>
 
-  <!-- 10 CHALLENGES -->
+  <!-- 11 CHALLENGES -->
   <section class="plate" style="border-bottom:none">
     <div class="wrap">
       <div class="plate-head reveal">
-        <div class="idx">10 ▸</div>
+        <div class="idx">11 ▸</div>
         <div class="htext">
           <span class="eyebrow">What makes it hard</span>
           <h2>The honest risks — and how the plan contains each</h2>
