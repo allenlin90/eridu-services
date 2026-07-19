@@ -46,7 +46,7 @@ Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) uses workstream briefs for addit
 
 | PRD | Workstream | Status |
 | --- | --- | --- |
-| [Operational Notifications and PWA Push](./notification-system.md) | Generic in-app notifications, delivery worker, PWA push, and reusable domain policies | Active requirements |
+| [Operational Notifications and PWA Push](./notification-system.md) | Notification center, read status, optional PWA push, and reusable event policies | Active requirements |
 
 - Studio schedule management was deferred (revisit with the Client Portal workstream); retained at [`future/studio-schedule-management.md`](./future/studio-schedule-management.md).
 - Future P&L revenue workflow is sketched in [`future/pnl-revenue-workflow.md`](./future/pnl-revenue-workflow.md); redraft when revenue planning restarts.

@@ -1,247 +1,225 @@
 # PRD: Operational Notifications and PWA Push
 
 > **Status**: Active requirements — implementation not started
-> **Workstream**: Phase 5 items 15 and 21; reusable frontend platform capability
-> **Related**: [Frontend PWA App Shell](../features/frontend-pwa-app-shell.md), [Phase 5](../roadmap/PHASE_5.md), [System Architecture Overview](../engineering/ARCHITECTURE_OVERVIEW.md), [Collaboration and Communication](../ideation/collaboration-communication.md)
+> **Workstream**: Notification center foundation; Phase 5 items 15 and 21; PWA delivery channel
+> **Related**: [Frontend PWA App Shell](../features/frontend-pwa-app-shell.md), [Phase 5](../roadmap/PHASE_5.md), [Collaboration and Communication](../ideation/collaboration-communication.md)
 
 ## Summary
 
-Build one operational notification capability for `erify_api`, `erify_studios`, and `erify_creators`. The in-app inbox is the durable user experience; PWA push is an optional delivery channel that brings a user back to the relevant record.
+Build two related but distinct product capabilities:
 
-The product model, recipient policy, preferences, and delivery history remain internal. Delivery runs asynchronously in a separate worker runtime that shares the `erify_api` modules and PostgreSQL database. A managed notification platform is not required for the first implementation, but channel adapters may use an external provider later without moving domain policy or inbox ownership out of Erify.
+1. **Notification center** — a persistent, user-specific inbox where people can review operational notifications, see unread status, mark items read or unread, and open the relevant work.
+2. **PWA push delivery** — an optional browser and operating-system channel that alerts a user about an existing notification and brings them back to the app.
+
+The notification center is the product source of truth. Push availability, permission, or delivery success never determines whether a notification exists or whether it remains unread.
+
+## Terminology and Layer Boundaries
+
+| Layer | Meaning |
+| --- | --- |
+| Notification | A user-visible operational record in the Erify notification center |
+| Push notification | An optional device alert that points to an existing notification |
+| Worker | A runtime that performs background delivery work |
+| Queue | A transport and coordination mechanism, such as BullMQ, that a worker may consume |
+
+This PRD defines the first two product layers. Worker deployment and queue selection are separate engineering decisions that must preserve the product behavior below.
 
 ## Problem
 
-Operational changes are currently silent unless a user revisits the affected screen or receives an external message. This creates avoidable misses around assignments, cancellations, issues, schedule changes, and show lifecycle transitions.
+Operational changes are silent unless a user revisits the affected screen or receives an external message. This creates avoidable misses around assignments, cancellations, issues, schedule changes, and show lifecycle transitions.
 
-The repository already has:
-
-- installable PWA shells in `erify_studios` and `erify_creators`;
-- authenticated users, studio membership, assignments, and role policies in `erify_api`;
-- standard `Audit` / `AuditTarget` history for selected semantic changes;
-- a planned private worker runtime for asynchronous jobs.
-
-It does not yet have a notification event model, inbox, preferences, push subscriptions, or delivery worker. Auth credential email callbacks in `eridu_auth` are also placeholders, but they are a separate security-message concern.
+Both frontend apps already have installable PWA shells, but neither app has a conventional notification center or push delivery. Notification requirements are needed before selecting detailed delivery infrastructure.
 
 ## Goals
 
-- Give every eligible recipient a reliable in-app record independent of push permission or delivery success.
-- Notify the correct stakeholders from domain state changes without coupling push calls into model services.
-- Support both frontend PWAs with one event taxonomy and API contract.
-- Keep audit history, user inbox state, and channel delivery attempts separate and queryable.
-- Make delivery retryable and idempotent without rolling back a successful business mutation.
-- Allow new domain event families to register recipient and channel policies without creating another notification subsystem.
-- Preserve a path to managed delivery adapters or a separate service if scale and ownership later justify them.
+- Give each eligible user a persistent notification history independent of push.
+- Make new and unread work visible through a familiar notification-center experience.
+- Let users review, mark, and revisit notifications across sessions and devices.
+- Bring users back to action-required work through safe, contextual deep links.
+- Allow users to opt into push separately from their in-app notification history.
+- Define reusable business rules for assignments, cancellations, issues, schedule impacts, shifts, lifecycle transitions, and future mentions.
+- Keep notification visibility aligned with current permissions and studio membership.
 
 ## Non-Goals
 
-- Replacing `Audit` / `AuditTarget` as the record of who changed business data.
-- Building a global CQRS or application-wide event bus.
-- Shipping comments, threads, watchers, or @mentions in this workstream.
-- Sending verification, reset-password, magic-link, or invitation secrets from `eridu_auth`.
+- Replacing `Audit` / `AuditTarget` as the record of what business data changed and why.
+- Defining database tables, API route shapes, queue topology, worker deployment, or provider-specific integration.
+- Building comments, threaded discussion, watchers, or @mentions in this workstream.
+- Sending verification, password-reset, magic-link, or invitation secrets from `eridu_auth`.
 - Adding marketing campaigns, SMS, or offline mutation replay.
-- Guaranteeing that every audit entry produces a user notification.
+- Notifying users about every audit entry, draft edit, or automated bookkeeping change.
 
 ## Users
 
 | User | Need |
 | --- | --- |
-| Assigned operator | Know when work is assigned, reassigned, blocked, or ready for review |
+| Assigned operator | Know when work is assigned, reassigned, blocked, returned, or ready for review |
 | Studio admin or manager | See operational exceptions, cancellations, escalations, and important lifecycle changes |
-| Creator | Receive relevant assignment, schedule, or show updates without access to studio-only details |
-| System operator | Diagnose delivery failures without reading private notification content from logs |
+| Creator | Receive relevant assignment, schedule, or show updates without seeing studio-only details |
+| Multi-device user | Keep one consistent read state while using Erify on more than one browser or device |
 
-## Decisions of Record
+## User Stories
 
-| Decision | Requirement |
-| --- | --- |
-| Product ownership | `erify_api` owns operational notification events, recipients, inbox state, preferences, and delivery records because it already owns the domain data and authorization needed to calculate them. |
-| Deployment | Start as an internal capability in the `erify_api` codebase. Run HTTP APIs in the REST runtime and asynchronous delivery in a private worker runtime sharing the same services, repositories, and database. |
-| Source of truth | PostgreSQL is authoritative for events and per-user inbox state. Push is a best-effort delivery channel, never the only record. |
-| Event boundary | Domain orchestration explicitly records a typed notification event in the same transaction as the business mutation. Do not add a speculative global event bus. |
-| External systems | Do not adopt a managed notification platform for the first version. Preserve a channel-adapter boundary so a provider can later handle delivery without owning domain policy or inbox truth. |
-| Push transport | Start with standards-based Web Push. Push payloads contain minimal display data and an allow-listed, same-origin deep link. |
-| Audit | Audit answers what changed and why. Notifications answer who should know and whether delivery was attempted. A mutation may write both, but neither record substitutes for the other. |
-| Authentication | `eridu_auth` continues to own credential and account-lifecycle messages. Operational recipients are `erify_api` users mapped from the Better Auth JWT subject through `User.extId`. |
+- As a user, I can open a notification center and see my newest notifications first.
+- As a user, I can see an accurate unread badge without opening the notification center.
+- As a user, I can distinguish unread and read notifications and filter to unread items.
+- As a user, I can mark one notification read or unread and mark all notifications read.
+- As a user, I can select a notification and open the relevant task, show, issue, shift, or review surface.
+- As a user, my read state stays consistent across sessions and devices.
+- As a user, I can use the notification center even when push is unsupported, denied, disabled, or temporarily failing.
+- As a user, I can enable or disable push without deleting or changing my in-app notification history.
 
-## Why Not a Microservice Yet
+## Notification Center Requirements
 
-Recipient calculation depends directly on studio membership, roles, assignments, issue ownership, and show state. Moving the first version outside `erify_api` would introduce duplicated authorization data, a cross-service identity contract, and distributed consistency before there is an independent scaling or ownership need.
+### Entry Point and List
 
-Extract a notification service only when at least one of these conditions is real:
+- `erify_studios` and `erify_creators` expose a consistent notification entry point with an unread badge.
+- The notification center shows notifications newest first with server-backed pagination.
+- Users can switch between **All** and **Unread** views.
+- New notifications update the unread badge during normal app use without requiring the user to find and reload the affected feature page.
+- Notification history remains available after an item is read. Delete and archive actions are outside the first release.
 
-- several backend services outside `erify_api` must publish operational events;
-- delivery needs independent availability, scaling, deployment, or data-retention ownership;
-- the event and recipient contracts are stable enough to version across services;
-- notification operations need a dedicated team or service-level objective.
+### Notification Content
 
-An extraction must preserve the internal event contract and user identity mapping. It must not turn an external provider's identifier into the product's canonical user or notification ID.
+Each notification shows:
 
-## Internal Versus Managed Platform
+- a clear title and short summary;
+- its category and urgency when relevant;
+- when the event occurred;
+- the actor or system source when that information is useful and safe;
+- its read or unread state;
+- the work item or destination it opens.
 
-| Option | Fit | Decision |
-| --- | --- | --- |
-| Internal capability plus worker | Keeps transactions, authorization, inbox, and stakeholder policy close to the owning domains; requires operating retries and push credentials | **Selected** |
-| Managed orchestration platform | Can reduce multi-channel delivery work, but introduces a second user/event model and vendor dependency before channel volume warrants it | Defer; evaluate as a delivery adapter if operational burden grows |
-| Dedicated notification microservice | Provides isolation, but requires versioned cross-service events and distributed identity/authorization immediately | Defer until extraction triggers are met |
-| Direct push calls from domain services | Smallest initial code path, but loses transactional durability, retry isolation, and a channel-independent inbox | Rejected |
+Content is written for the recipient. It does not expose raw audit metadata, private evidence, secret links, compensation values, or details the recipient could not see on the destination screen.
 
-## Product Model
+### Read Status
 
-The implementation must provide these concepts without exposing database IDs:
+- A new notification starts as unread for each recipient.
+- Selecting a notification marks it read and attempts to open its destination.
+- Users can explicitly mark an item read or unread without opening it.
+- **Mark all as read** clears the user's current unread count.
+- Read state belongs to the user, not one browser installation, and remains consistent across supported apps and devices.
+- Showing, delivering, or dismissing a push alert does not mark its notification read. Explicitly opening it from the notification center or through an authenticated push selection marks it read.
 
-| Concept | Responsibility |
-| --- | --- |
-| Notification event | Immutable typed fact accepted with a domain mutation; includes actor, studio, subject, template data, deep-link target, idempotency key, and occurrence time |
-| Recipient | One stable per-user inbox record for an event, including read state and recipient-specific visibility-safe content |
-| Preference | User choice per event family and channel; in-app eligibility remains available even when push is disabled |
-| Push subscription | One browser/app installation endpoint associated with one authenticated user, app, locale, and lifecycle status |
-| Delivery attempt | Channel-specific status, retry count, timestamps, and provider-safe error classification |
+### Navigation and Access
 
-Recipient identities are resolved and persisted when the event is accepted so later membership changes do not rewrite notification history. The actor is excluded by default unless the event policy explicitly requires a self-notification.
+- Selecting a notification opens the most specific relevant destination available to that user.
+- The destination rechecks current authorization; a notification never grants access.
+- If the record was deleted, the user's access changed, or the destination is unavailable, the app opens a safe fallback and explains that the item is no longer available.
+- A user can read only their own notifications. Studio roles do not grant access to another user's inbox.
 
-## Audit and State-Change Contract
+### Grouping and Duplication
 
-Notification policy is registered per typed event family. Each policy defines:
+- One business event produces at most one notification for the same recipient unless product policy explicitly defines a follow-up reminder.
+- Retries or repeated processing never create duplicate user-visible items.
+- Batch workflows create a useful summary instead of flooding recipients. Schedule publishing, for example, groups related changes by publish run and recipient.
+- Draft edits, cosmetic changes, automated bookkeeping, and high-volume fact writes remain quiet unless a product rule explicitly promotes them.
 
-1. which semantic state change is eligible;
-2. which recipients can see the subject;
-3. whether events are grouped or deduplicated;
-4. the default channels and urgency;
-5. the safe deep-link target and fallback route.
+## Notification Preferences
 
-Do not generate notifications by polling or blindly replaying `Audit` rows. Audit metadata may be too detailed, noisy, or sensitive for recipients. The orchestration path that performs a mutation writes its required audit entry and notification event together, then the worker delivers only after commit.
+- The notification center records every notification for which the user is an eligible recipient in the first release.
+- Push preferences are separate from notification-center eligibility.
+- Users can disable push globally or by event family without deleting notification history.
+- Push preference, browser permission, and device availability are presented as distinct states.
+- No notification can bypass an operating-system denial or the user's disabled push preference.
 
-Delivery failure never reverses the business mutation. Event creation failure inside the domain transaction does roll back a mutation that promises a notification, preventing a silent partial write.
+## PWA Push Requirements
+
+- A push alert is created only for an existing notification that is eligible for push.
+- Push is off until the user takes an explicit action to enable it for the current app and browser installation.
+- Permission requests explain the benefit and current notification scope before opening the browser prompt.
+- Unsupported, denied, dismissed, enabled, expired, and revoked states have clear, non-blocking UX. The app does not repeatedly prompt after denial or dismissal.
+- Users can enable push on multiple devices. Each app and browser installation can be managed independently.
+- Push content is brief and privacy-safe. Sensitive detail is available only after the authenticated app opens.
+- Selecting a push opens or focuses the correct app, marks the associated notification read after authentication, and routes to its destination.
+- Dismissing a push has no effect on the notification or its unread state.
+- Disabled or failed push delivery has no effect on notification-center availability.
+- Signing out prevents that browser installation from showing future push intended for the previous user.
+
+## Business Rules
+
+- Recipient rules are defined per event family and use current roles, assignments, ownership, and studio context.
+- The actor is excluded by default unless a self-notification has a clear user benefit.
+- The notification center records who should know; audit history records what changed and why. A business action may produce both records, but they remain separate.
+- A failed push attempt never reverses a completed business action or removes its in-app notification.
+- Erify owns notification identity, recipient visibility, read status, and preferences. An external provider may deliver a channel but does not become the source of truth for the user's notification center.
+- `eridu_auth` continues to own credential and account-lifecycle messages. Authentication secrets never appear in operational notifications or push payloads.
+- Future comments and mentions publish through this notification capability rather than creating another inbox or delivery system.
 
 ## Event Catalog
 
-The catalog defines reusable policy families. Activation remains phased with the owning domain.
+The catalog defines the initial reusable business policies. Activation remains phased with the owning workflow.
 
-| Event family | Trigger | Default audience | Delivery rule |
+| Event family | Trigger | Default recipients | Push eligibility |
 | --- | --- | --- | --- |
-| Task assignment | Assign, reassign, or remove an assignee | New assignee; previous assignee on removal | In-app; push when enabled; first implementation pilot |
-| Task workflow | Submission requested, blocked, returned, or review completed | Assignee and relevant reviewer | In-app; push for action-required states |
-| Cancellation gate | Pending cancellation opened or resolved | Managers and directly affected assignees | In-app; push for opened pending cancellation; no speculative no-op seam |
-| Show issue | Issue opened, assigned, escalated, or severity materially raised | Owner and managers selected by issue policy | Phase 5 item 15; push for action-required or high-severity events |
-| Schedule publish impact | A `PublishRun` changes multiple shows or assignments | Affected users and managers | One grouped event per recipient and publish run, not one push per changed row |
-| Shift assignment | Shift assigned, materially changed, or cancelled | Assigned member | In-app; push when enabled |
-| Show lifecycle | Confirmed or later transition, cancellation, or urgent near/on-air change | Stakeholders selected by lifecycle state and role | Phase 5 item 21 after the state machine owns transitions |
-| Audited operational override | Manager changes an actual, snapshot, or other recipient-visible protected value | Directly affected user when product policy marks it visible | In-app by default; push only for action-required changes |
-| Mention | A future comment mentions a user | Mentioned user | Owned by the collaboration workstream; publishes through this capability |
-
-Draft edits, cosmetic changes, automated bookkeeping, and high-volume fact writes remain quiet unless an event policy explicitly promotes them. Batch-producing workflows must aggregate notifications around their existing batch identity where available.
-
-## In-App Experience
-
-- Both apps expose a notification inbox with unread count, newest-first pagination, read/unread state, and mark-all-read.
-- Selecting an item opens an authorized deep link to the relevant record. If the record is gone or access changed, the app opens a safe fallback and explains that the item is unavailable.
-- The inbox renders from typed event data and recipient-safe template arguments; it does not expose raw audit diffs.
-- In-app notifications are available regardless of browser push support.
-- Duplicate retries do not create duplicate inbox items.
-- A user sees only their own recipient records. Studio roles do not grant access to another user's inbox.
-
-## Preferences
-
-- In-app records are on for every eligible event in the first version.
-- Push is off until the user explicitly enables it for the current app/browser installation.
-- Users can disable push globally or by event family without deleting inbox history.
-- The system distinguishes application preference, browser permission, subscription health, and delivery status.
-- No event can bypass an operating-system denial or a user's disabled push preference.
-
-## PWA Push Experience
-
-Both frontend apps already use prompt-based PWA updates and `NetworkOnly` API handling. Push implementation must preserve those invariants.
-
-- Request browser permission only after an explicit user action that explains the benefit and current event scope.
-- Handle unsupported, denied, dismissed, subscribed, expired, and revoked states without repeated permission prompts.
-- Support multiple active devices per user and keep subscriptions separated by app.
-- Move each app to a custom service worker strategy that can handle `push` and `notificationclick` while retaining current Workbox precache, navigation fallback, update, recovery, and API caching behavior.
-- Open or focus the correct app window on click and navigate only to validated same-origin routes.
-- Deactivate the server association before logout so another user of the same browser cannot receive the previous user's notifications.
-- Remove invalid endpoints after permanent Web Push responses and allow clean resubscription.
-- Store the app's supported locale with the subscription so server-rendered push text can use the correct notification template language.
-
-Push content is deliberately brief. Sensitive diffs, reasons, compensation values, and private issue evidence are fetched after the user opens the authenticated app.
-
-## API Outcomes
-
-The authenticated `me` surface must support:
-
-- paginated notification list and unread count;
-- mark one notification read or unread and mark all read;
-- read and update notification preferences;
-- register, refresh, list, and revoke the current user's push subscriptions.
-
-Contracts use snake_case Zod schemas from `@eridu/api-types`, UID-based external identifiers, and idempotent subscription registration. Studio-scoped deep links do not weaken the destination route's existing membership and role guards.
-
-## Delivery and Operations
-
-1. A domain orchestration service writes the business mutation, required audit, notification event, and recipients in one transaction.
-2. The worker claims committed, available deliveries and calls the selected channel adapter.
-3. Attempts use at-least-once processing with an idempotency key so retries do not duplicate user-visible notifications.
-4. Transient failures retry with bounded backoff; permanent subscription failures deactivate the endpoint.
-5. Structured logs and metrics include event type, channel, status, attempt count, and correlation IDs, but exclude message bodies, endpoint tokens, audit diffs, and credential links.
-6. Operators can inspect aggregate queued, delivered, failed, and permanently invalid counts without impersonating a user's inbox.
-
-The first implementation may introduce BullMQ with the private `erify_api` worker entrypoint described in the architecture overview. Queue transport remains an adapter; product rules stay in services and repositories.
-
-## `eridu_auth` Boundary
-
-`eridu_auth` does not use an operational notification system today. Its Better Auth callbacks for verification, password reset, email change, magic link, and organization invitation are placeholders.
-
-Those credential and account-lifecycle messages remain owned by `eridu_auth` and its future email-provider adapter because they may contain secrets, must work independently of operational domain data, and have different security and delivery requirements. They must never be copied into `NotificationEvent` payloads or PWA push.
-
-A later security-alert policy may publish sanitized facts such as “account role changed” or “new organization invitation created” through an explicit service contract. Such events contain no token, reset URL, session ID, or provider payload. Operational recipient mapping uses the Better Auth user ID from the JWT and the existing `erify_api.User.extId` association.
+| Task assignment | Assign, reassign, or remove an assignee | New assignee; previous assignee on removal | Eligible; first-release pilot |
+| Task workflow | Submission required, blocked, returned, or review completed | Assignee and relevant reviewer | Action-required states |
+| Cancellation | Pending cancellation opened or resolved | Managers and directly affected assignees | Pending cancellation and urgent outcomes |
+| Show issue | Issue opened, assigned, escalated, or materially raised in severity | Owner and relevant managers | Action-required or high-severity events |
+| Schedule publish impact | One publish run changes shows or assignments | Affected users and managers | Grouped summary only |
+| Shift assignment | Shift assigned, materially changed, or cancelled | Assigned member | Eligible |
+| Show lifecycle | Confirmed or later transition, cancellation, or urgent near/on-air change | Stakeholders selected by lifecycle role | Important and urgent transitions |
+| Audited operational override | A manager changes a recipient-visible protected value | Directly affected user when product policy marks it visible | Action-required changes only |
+| Mention | A future comment mentions a user | Mentioned user | Eligible when collaboration ships |
 
 ## Delivery Phases
 
-### 1. Foundation and Pilot
+### 1. Notification Center Foundation
 
-- Add the typed event catalog, recipient policy registry, durable event/recipient records, preferences, inbox APIs, and worker boundary.
-- Ship task assignment/reassignment as the direct-user pilot.
-- Add observability, idempotency, and retry behavior before enabling push.
+- Ship the notification entry point, unread badge, All/Unread views, read actions, history, and authorized deep links in both apps.
+- Use task assignment and reassignment as the first direct-recipient event family.
+- Verify consistent read state across sessions and devices before adding push.
 
-### 2. PWA Push
+### 2. PWA Push Delivery
 
-- Add subscription and preference UX to both apps.
-- Add custom service-worker push/click behavior while preserving existing shell behavior.
-- Deliver pilot events through Web Push and verify multiple-device, logout, expiry, and deep-link behavior.
+- Add push opt-in, permission status, device management, and event-family preferences.
+- Deliver task-assignment notifications through push without changing their notification-center behavior.
+- Verify click-through, dismissal, logout, expiry, multiple-device, and disabled-delivery behavior.
 
-### 3. Operational Policy Packs
+### 3. Operational Event Families
 
-- Add cancellation gate and grouped schedule-publish events from existing workflows.
-- Activate issue-event notifications with Phase 5 item 15 after issue ownership lands.
-- Add shift and audited-override policies when their stakeholder rules are approved.
+- Add cancellation and grouped schedule-publish notifications from existing workflows.
+- Activate issue notifications with Phase 5 item 15 after issue ownership lands.
+- Add shift and audited-override policies when their recipient rules are approved.
 - Activate lifecycle notifications with Phase 5 item 21 after the state machine owns status transitions.
 
-### 4. Collaboration and Channel Expansion
+### 4. Collaboration
 
-- Let comments and @mentions publish through the same event contract when collaboration is promoted.
-- Evaluate managed delivery, email, or other channels only from measured delivery volume, reliability burden, or product demand.
+- Let comments and @mentions publish through the same notification center when collaboration is promoted.
+- Add other delivery channels only when product demand justifies them.
 
 ## Acceptance Criteria
 
-### Foundation
+### Notification Center
 
-- [ ] A pilot assignment mutation atomically writes one typed event and one recipient record for each eligible user.
-- [ ] A retry or repeated idempotency key does not create another inbox item.
-- [ ] Users can list only their notifications, see an accurate unread count, and update read state.
-- [ ] Audit entries remain separate and notification payloads contain no raw audit metadata.
-- [ ] Delivery failure does not reverse the completed domain mutation.
-- [ ] Domain tests cover each activated event's trigger, recipient, actor exclusion, deduplication, and rollback behavior.
+- [ ] Both apps expose a notification entry point with an accurate unread badge.
+- [ ] Users can view newest-first All and Unread lists with persistent history.
+- [ ] Users can mark one item read or unread and mark all items read.
+- [ ] Read state remains consistent across sessions, apps, and devices.
+- [ ] Selecting a notification marks it read and opens an authorized destination or safe fallback.
+- [ ] One event creates no more than one user-visible notification per recipient.
+- [ ] Batch events are grouped according to their business policy.
+- [ ] Notification content never exposes data unavailable on the authorized destination.
 
-### Push
+### PWA Push
 
-- [ ] Push can be enabled only through explicit user action and works independently per app/browser installation.
-- [ ] Both apps receive and open a pilot push through a validated same-origin deep link.
-- [ ] Existing PWA update/recovery behavior and `NetworkOnly` API handling pass regression checks after the service-worker change.
-- [ ] Logout deactivates the current user association before another user can use the browser profile.
-- [ ] Invalid subscriptions are deactivated and can be registered again without duplicate active records.
-- [ ] Push payloads and logs contain no secret, private audit diff, or credential link.
+- [ ] Push is optional, explicitly enabled, and configurable independently from notification history.
+- [ ] Both apps can deliver and open an eligible task-assignment push.
+- [ ] A push click marks the associated notification read and opens its destination; delivery or dismissal alone does not change read state.
+- [ ] Unsupported, denied, disabled, expired, and failed push states do not affect the notification center.
+- [ ] Users can manage multiple device subscriptions without duplicate inbox items.
+- [ ] Signing out prevents future push intended for the previous user on that browser installation.
+- [ ] Push content contains no credential secret or recipient-inaccessible operational detail.
 
-### Extensibility
+### Business Boundaries
 
-- [ ] Cancellation, issue, publish-run, shift, lifecycle, override, and mention policies can reuse the same event/recipient/delivery contracts.
-- [ ] A managed provider can be introduced behind a channel adapter without migrating inbox ownership or changing domain publishers.
-- [ ] `eridu_auth` credential email can operate without the operational notification worker, and no auth secret enters the event store.
+- [ ] Audit history and notification read state remain separate concepts.
+- [ ] `eridu_auth` credential messages operate independently and never enter the operational notification center.
+- [ ] New event families can reuse the same notification-center and optional push behaviors.
+- [ ] External delivery providers cannot become authoritative for notification identity, recipient access, read state, or preferences.
+
+## Engineering Handoff Boundary
+
+Implementation planning may choose service placement, persistence, API contracts, worker deployment, queue transport, and provider adapters after these business requirements are accepted.
+
+Worker runtime and queue transport must remain separate layers. If BullMQ is selected, BullMQ jobs are consumed by workers; there is no product-level “worker first, BullMQ later” migration. Those details belong in implementation design, not this PRD.
