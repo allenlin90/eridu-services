@@ -21,29 +21,31 @@ This skill manages documentation state. It does not discover product requirement
 
 Most initiatives need one active canonical document, not one document in every folder. Use three lifecycle roles:
 
-| Role | Question | Canonical home |
-| --- | --- | --- |
-| Active requirements | What user problem and outcome are we committing to? | `docs/prd/` |
-| Optional design | Which unresolved implementation decisions must be made? | `apps/*/docs/design/`, only when needed |
-| Current truth | What behavior or contract exists now? | Choose `docs/features/`, `apps/*/docs/`, or `docs/domain/` by scope |
+| Role                   | Question                                                | Canonical home                                                        |
+| ---------------------- | ------------------------------------------------------- | --------------------------------------------------------------------- |
+| Committed requirements | What are we ready and intending to build?               | `docs/prd/`                                                           |
+| Optional design        | Which unresolved implementation decisions must be made? | `apps/*/docs/design/`, only when needed                               |
+| Current truth          | What behavior or contract exists now?                   | Choose `docs/features/`, `apps/*/docs/`, or `docs/domain/` by scope   |
 
-The default path is **PRD → current truth → retire the PRD**. Add a design only when established implementation patterns do not answer a material technical question. A PRD and design may coexist only when they answer different questions; link them instead of copying requirements.
+A PRD exists only for work the team is ready and intends to deliver. If the scope is not committed, is waiting on a trigger, or is only a future possibility, keep it in `docs/ideation/`. Do not create `current`, `next`, or `future` PRD buckets.
 
-One PRD may contain phased capabilities when they share one product outcome. Split it only when the capabilities have independent commitments or owners and the combined acceptance boundary is unclear; do not split documents merely because the implementation has separate technical layers.
+The default path is **ideation (optional) → PRD → current truth → retire the PRD**. Add a design only when established implementation patterns do not answer a material technical question. A PRD and design may coexist only when they answer different questions; link them instead of copying requirements.
+
+One PRD may contain phased capabilities only when every included capability is committed and they share one product outcome. Put uncommitted later capabilities in ideation. Split a PRD when capabilities have independent commitments or owners and the combined acceptance boundary is unclear; do not split documents merely because the implementation has separate technical layers.
 
 The other locations are registers, not parallel specifications:
 
-| Register | Purpose |
-| --- | --- |
-| `docs/ideation/` | Uncommitted ideas that still need discovery |
-| `docs/roadmap/` | Sequence and status, linked to the canonical document |
-| `docs/tech-debt/` | Accepted implementation gaps that remain after delivery |
+| Register          | Purpose                                                                   |
+| ----------------- | ------------------------------------------------------------------------- |
+| `docs/ideation/`  | Anything not yet ready or committed, including future possibilities       |
+| `docs/roadmap/`   | Sequence and status, linked to the canonical document                     |
+| `docs/tech-debt/` | Accepted implementation gaps that remain after delivery                   |
 
 For current truth, choose the narrowest sufficient owner: `docs/features/` for cross-app product behavior, `apps/*/docs/` for one app's behavior, or `docs/domain/` for a stable semantic contract. Create more than one only when they serve genuinely different scopes or audiences.
 
 ## Workflow
 
-1. **Name the trigger.** Identify the initiative and the lifecycle event: promoted, shipped, deferred, consolidated, moved, or retired.
+1. **Name the trigger.** Identify the initiative and the lifecycle event: promoted, shipped, decommitted, consolidated, moved, or retired.
 2. **Inventory the artifact set.** Find its PRD, roadmap entries, ideation docs, designs, plans, feature docs, app docs, and README rows.
 3. **Choose the canonical state.** Apply the simple artifact model and remove duplicate responsibilities.
 4. **Apply the transition.** Use [references/bookkeeping.md](references/bookkeeping.md) for the matching procedure.

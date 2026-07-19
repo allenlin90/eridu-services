@@ -6,10 +6,10 @@ Use only the procedure that matches the current transition. Do not run every sec
 
 Before moving or deleting an artifact, compare its scope with the code and current roadmap:
 
-- **Active** — the committed scope is still in progress.
+- **Committed** — the PRD describes work the team is ready and intends to deliver.
 - **Partial** — a coherent portion shipped while material committed scope remains.
 - **Shipped** — the acceptance outcomes are implemented and the completing PR is ready to land.
-- **Deferred** — the team is no longer committed to delivering it in the current phase.
+- **No longer committed** — the team is no longer ready or intending to deliver the PRD's remaining scope.
 
 These are delivery states. **Promoted to a domain contract** and **superseded by another artifact** are retirement dispositions, not additional states.
 
@@ -26,14 +26,15 @@ These are delivery states. **Promoted to a domain contract** and **superseded by
 
 - Promote a meaningful shipped outcome to the appropriate current-truth document.
 - Rewrite the PRD around only the remaining committed outcome.
-- If the remainder no longer warrants a PRD, record it as roadmap scope, ideation, or tech debt according to its nature and delete the PRD.
-- For a phased PRD, retire only the shipped requirements. Keep the remaining outcome in the same PRD when it still shares one product commitment; split it only when ownership or acceptance is now genuinely independent.
+- If the remainder is no longer committed, preserve useful product discovery in ideation or an accepted implementation gap in tech debt, then delete it from the PRD.
+- For a phased PRD, retire only the shipped requirements. Keep remaining phases in the same PRD only while they are committed and share one product outcome; move uncommitted later possibilities to ideation.
 
-### Deferred
+### No Longer Committed
 
-1. Record the deferral and any sequencing impact in the roadmap.
-2. Preserve unresolved discovery in `docs/ideation/` only when the idea remains actionable.
-3. Delete the stale PRD. Write a new PRD if the work is recommitted under materially different context.
+1. Update the roadmap to remove the delivery commitment and record any sequencing impact.
+2. Preserve useful product discovery in `docs/ideation/` only when the idea remains actionable.
+3. Delete the PRD. Never keep it in a `future`, `next`, or `deferred` PRD bucket.
+4. Write a fresh PRD if the team later becomes ready and recommits to the work.
 
 ### Promote to Domain Contract
 
@@ -80,7 +81,7 @@ Use this when a scope simplification leaves several downstream PRDs restating on
 3. Delete superseded PRDs, breakdown specs, and implementation plans.
 4. Repoint links and shrink indexes that no longer own substantive content.
 
-Do not consolidate a novel feature with unresolved product decisions; keep its PRD active.
+If the team is not ready to commit to a novel feature, keep it in ideation. Once it is committed, give its requirements one active PRD.
 
 ## Phase Boundary Reconciliation
 
@@ -108,9 +109,10 @@ After a move or deletion:
 ## Completion Checklist
 
 - [ ] Each durable question has one canonical owner.
-- [ ] Active PRDs describe only committed, unshipped outcomes.
+- [ ] PRDs contain only committed work the team is ready and intends to deliver.
+- [ ] Uncommitted, trigger-dependent, and future product scope lives in ideation, not a separate PRD bucket.
 - [ ] Shipped behavior has one primary current-truth owner; extra docs exist only for a distinct scope or audience.
 - [ ] Roadmap entries record sequencing and status without duplicating requirements.
 - [ ] Completed design and planning artifacts are retired.
-- [ ] Deferred ideas and accepted implementation gaps are stored in the correct registers.
+- [ ] Uncommitted ideas and accepted implementation gaps are stored in the correct registers.
 - [ ] Indexes, status labels, and cross-references agree with the filesystem.
