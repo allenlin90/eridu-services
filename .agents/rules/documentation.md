@@ -9,7 +9,7 @@
 
 ## Bookkeeping Invariants
 
-1. Keep one canonical document for each durable question: ideation decides whether, a PRD defines the committed product outcome, an optional design defines unresolved implementation choices, and the roadmap records sequence and status.
+1. Use three lifecycle roles: a PRD for active product requirements, an optional design for unresolved implementation choices, and one current-truth owner after shipment. Ideation, roadmaps, and tech debt are registers, not parallel specifications.
 2. Do not duplicate requirements across a PRD, design, roadmap entry, and implementation plan. Link the canonical source instead.
 3. A documentation lifecycle change updates the owning index, status, roadmap link, and cross-references in the same PR.
 4. Delete retired planning artifacts after preserving durable decisions in their canonical home. Git history is the archive; do not leave retirement stubs.

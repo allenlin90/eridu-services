@@ -17,28 +17,35 @@ This skill manages documentation state. It does not discover product requirement
 - Use [knowledge-sync](../../workflows/knowledge-sync.md) when shipped behavior or engineering conventions changed.
 - Use [user-facing-docs](../user-facing-docs/SKILL.md) when a shipped feature needs guides, SOPs, or FAQs.
 
-## Minimum Artifact Model
+## Simple Artifact Model
 
-Keep one canonical document for each durable question. Do not create parallel documents that restate the same scope.
+Most initiatives need one active canonical document, not one document in every folder. Use three lifecycle roles:
 
-| Question | Canonical home |
+| Role | Question | Canonical home |
+| --- | --- | --- |
+| Active requirements | What user problem and outcome are we committing to? | `docs/prd/` |
+| Optional design | Which unresolved implementation decisions must be made? | `apps/*/docs/design/`, only when needed |
+| Current truth | What behavior or contract exists now? | Choose `docs/features/`, `apps/*/docs/`, or `docs/domain/` by scope |
+
+The default path is **PRD → current truth → retire the PRD**. Add a design only when established implementation patterns do not answer a material technical question. A PRD and design may coexist only when they answer different questions; link them instead of copying requirements.
+
+One PRD may contain phased capabilities when they share one product outcome. Split it only when the capabilities have independent commitments or owners and the combined acceptance boundary is unclear; do not split documents merely because the implementation has separate technical layers.
+
+The other locations are registers, not parallel specifications:
+
+| Register | Purpose |
 | --- | --- |
-| Is this idea worth committing to? | `docs/ideation/` |
-| What user problem and outcome are we committing to? | `docs/prd/` |
-| When will the work happen? | `docs/roadmap/` |
-| How will an app implement an unresolved technical shape? | `apps/*/docs/design/` when needed |
-| What stable domain contract must implementations follow? | `docs/domain/` |
-| What product behavior shipped? | `docs/features/` |
-| How does one app's shipped behavior work? | `apps/*/docs/` |
-| What accepted implementation gap remains? | `docs/tech-debt/` |
+| `docs/ideation/` | Uncommitted ideas that still need discovery |
+| `docs/roadmap/` | Sequence and status, linked to the canonical document |
+| `docs/tech-debt/` | Accepted implementation gaps that remain after delivery |
 
-A PRD and a design may coexist only when they answer different questions. Link them and keep requirements in the PRD; do not copy the PRD into the design. A roadmap entry links the canonical document and records status—it does not become another requirements document.
+For current truth, choose the narrowest sufficient owner: `docs/features/` for cross-app product behavior, `apps/*/docs/` for one app's behavior, or `docs/domain/` for a stable semantic contract. Create more than one only when they serve genuinely different scopes or audiences.
 
 ## Workflow
 
 1. **Name the trigger.** Identify the initiative and the lifecycle event: promoted, shipped, deferred, consolidated, moved, or retired.
 2. **Inventory the artifact set.** Find its PRD, roadmap entries, ideation docs, designs, plans, feature docs, app docs, and README rows.
-3. **Choose the canonical state.** Apply the minimum artifact model and remove duplicate responsibilities.
+3. **Choose the canonical state.** Apply the simple artifact model and remove duplicate responsibilities.
 4. **Apply the transition.** Use [references/bookkeeping.md](references/bookkeeping.md) for the matching procedure.
 5. **Update bookkeeping.** Repair the nearest indexes, status labels, roadmap links, and cross-references in the same change.
 6. **Retire transient artifacts.** Delete completed PRDs, designs, specs, and plans after preserving any durable decision in its canonical home. Git history is the archive.

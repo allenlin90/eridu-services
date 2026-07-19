@@ -10,23 +10,24 @@ Before moving or deleting an artifact, compare its scope with the code and curre
 - **Partial** — a coherent portion shipped while material committed scope remains.
 - **Shipped** — the acceptance outcomes are implemented and the completing PR is ready to land.
 - **Deferred** — the team is no longer committed to delivering it in the current phase.
-- **Operating contract** — the document now defines stable domain semantics rather than future product scope.
-- **Obsolete** — another canonical artifact or product decision superseded it.
+
+These are delivery states. **Promoted to a domain contract** and **superseded by another artifact** are retirement dispositions, not additional states.
 
 ## PRD Transitions
 
 ### Shipped
 
-1. Create or update `docs/features/<feature>.md` with the delivered behavior, users, durable product decisions, acceptance record, and links to app-level canonical docs.
+1. Create or update `docs/features/<feature>.md` as the cross-app current-truth summary: delivered behavior, users, durable product decisions, acceptance record, and links to app-level docs when those serve a distinct audience.
 2. Run `user-facing-docs` when users need a guide, SOP, or FAQ.
 3. Update `docs/features/README.md`, `docs/prd/README.md`, and the relevant roadmap entry.
 4. Delete the PRD. Do not leave a retired stub.
 
 ### Partial
 
-- Promote a meaningful shipped outcome to `docs/features/`.
+- Promote a meaningful shipped outcome to the appropriate current-truth document.
 - Rewrite the PRD around only the remaining committed outcome.
 - If the remainder no longer warrants a PRD, record it as roadmap scope, ideation, or tech debt according to its nature and delete the PRD.
+- For a phased PRD, retire only the shipped requirements. Keep the remaining outcome in the same PRD when it still shares one product commitment; split it only when ownership or acceptance is now genuinely independent.
 
 ### Deferred
 
@@ -34,11 +35,17 @@ Before moving or deleting an artifact, compare its scope with the code and curre
 2. Preserve unresolved discovery in `docs/ideation/` only when the idea remains actionable.
 3. Delete the stale PRD. Write a new PRD if the work is recommitted under materially different context.
 
-### Operating Contract
+### Promote to Domain Contract
 
 1. Move the stable semantic contract to `docs/domain/<name>.md`.
 2. Remove it from the active PRD index.
 3. Repoint features, designs, and roadmap entries to the domain contract.
+
+### Superseded
+
+1. Preserve any still-valid decision in the new canonical document.
+2. Repoint indexes, roadmap entries, and cross-references.
+3. Delete the superseded artifact rather than keeping a retirement stub.
 
 ## Design Doc Promotion
 
@@ -102,7 +109,7 @@ After a move or deletion:
 
 - [ ] Each durable question has one canonical owner.
 - [ ] Active PRDs describe only committed, unshipped outcomes.
-- [ ] Shipped behavior is represented by feature and app canonical docs as needed.
+- [ ] Shipped behavior has one primary current-truth owner; extra docs exist only for a distinct scope or audience.
 - [ ] Roadmap entries record sequencing and status without duplicating requirements.
 - [ ] Completed design and planning artifacts are retired.
 - [ ] Deferred ideas and accepted implementation gaps are stored in the correct registers.
