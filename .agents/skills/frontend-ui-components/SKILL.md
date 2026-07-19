@@ -37,6 +37,8 @@ This codebase already has hand-rolled, non-componentized tables predating the `D
 | Component | Rule |
 |---|---|
 | Date/Time Pickers | Use `ResponsiveDateTimePicker` (or `DatePicker`/`DateTimePicker`) from `@eridu/ui`, not native `<input type="date">` |
+| Date Range Filters | One semantic interval uses one `DatePickerWithRange`; do not expose separate from/to `DatePicker` controls unless the two bounds have different domain meanings |
+| Filter-Dense Toolbars | Two or more secondary filters live behind one `Filters` trigger: `Popover` on desktop and `Sheet`/`Drawer` on mobile. Keep search, refresh, page size, and primary actions outside because they are not secondary filters |
 | Mobile-visible Dialogs | Render as `Drawer` (vaul) below `md`; share body with the desktop `Dialog`. Default to `ResponsiveDateTimePicker` and the responsive dialog pattern for any new dialog reachable on mobile |
 | Async Lookup Fields | 2+ `AsyncCombobox` in same form → extract each into `memo()` field component |
 | Select vs. Combobox | A select-style field backed by more than ~5 options (entities like clients, creators, templates, mechanics — anything that can grow) must use `AsyncCombobox` (search-as-you-type, server-paginated), not the native `Select`. A flat `<Select>` rendering every option client-side doesn't scale once a studio has dozens of clients and forces an unbounded fetch to populate it. Reserve plain `Select` for genuinely small, fixed enums (status, role, a handful of literal choices). See `task-template-builder.tsx`'s client-binding combobox (search state + `useQuery` + `AsyncCombobox`) as the canonical pattern — reuse it rather than re-deriving it per page. |
@@ -119,6 +121,21 @@ Ensure that any new feature touching operational entities adheres to this three-
 - Date fields: `DatePicker`; datetime: `ResponsiveDateTimePicker` for mobile-reachable surfaces, `DateTimePicker` otherwise
 - Native date inputs only with documented exception
 
+## Control-Composition Consistency
+
+Before composing a toolbar, form, or review surface, inspect the nearest same-purpose shipped
+screen and the shared primitive that owns the interaction. Inventory each control as primary
+search, secondary filter, view control, or action before choosing components.
+
+- Use semantic controls rather than exposing transport fields: a URL/API `*_from` + `*_to`
+  pair that represents one interval is one `DatePickerWithRange` in the UI.
+- Consolidate two or more secondary filters into one responsive `Filters` surface with an
+  active-filter count and one reset action. Do not make users scan multiple adjacent dropdowns.
+- Keep page size, refresh, export, and create actions outside the filter surface. Resetting
+  filters must not reset those independent view controls.
+- When no equivalent exists, run `ui-mockup-discussion`; otherwise follow the existing pattern
+  directly and record the reference in the implementation or PR evidence.
+
 ## Styling (Tailwind CSS v4)
 
 Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped colors (`bg-primary`, `text-muted-foreground`).
@@ -142,6 +159,8 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 - [ ] Accessible (Radix primitives, `aria-label` on icon buttons)
 - [ ] Theme-mapped Tailwind colors
 - [ ] Date fields use `DatePicker` / `DateTimePicker` / `ResponsiveDateTimePicker`
+- [ ] One semantic date interval uses one `DatePickerWithRange`, not separate from/to controls
+- [ ] Two or more secondary filters are consolidated behind one responsive `Filters` trigger; view controls stay outside and survive filter reset
 - [ ] Datetime pickers on mobile-reachable forms use `ResponsiveDateTimePicker`
 - [ ] Mobile-reachable Dialogs render as `Drawer` below `md` (responsive dialog → drawer pattern) with a shared body
 - [ ] `erify_studios` mobile-reachable forms use the app-local `ResponsiveDialog` wrapper unless a feature needs custom shell behavior

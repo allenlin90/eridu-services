@@ -21,7 +21,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 9. [Studios Internal Read Traffic Hardening](./STUDIOS_INTERNAL_READ_TRAFFIC.md)
 10. [Task Submission Reporting Frontend Reference](./TASK_SUBMISSION_REPORTING.md)
 11. [Studio Creator Onboarding Frontend Reference](./STUDIO_CREATOR_ONBOARDING.md)
-12. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md) — CRUD, show actuals, and current-view export
+12. [Studio Show Management Frontend Reference](./STUDIO_SHOW_MANAGEMENT.md) — CRUD, show actuals, schedule-impact review, and current-view export
 13. [Compensation Line Items + Actuals Frontend Reference](./COMPENSATION_LINE_ITEMS.md)
 14. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
 15. [Entity Detail Routes (PR 14)](./ENTITY_DETAIL_ROUTES.md) — entity edit dialogs → dedicated routes; 14a creator, 14b member, and 14d shift detail shipped (14c show planned)
@@ -31,7 +31,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 
 Active (in progress):
 
-1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Planned follow-up
+1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Remaining cancellation-queue and task-warning follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
 3. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
 4. [Show-Level Issue Ownership](../../erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md) — 📐 Cross-app Phase 5 item 8 design locked for implementation

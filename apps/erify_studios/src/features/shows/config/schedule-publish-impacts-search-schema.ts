@@ -90,15 +90,3 @@ export function buildSchedulePublishImpactsQueryParams(
 export function searchForTabSwitch(tab: SchedulePublishImpactsTab): SchedulePublishImpactsSearch {
   return tab === 'runs' ? { tab: 'runs', runs_page: 1 } : { tab: 'impacts', page: 1 };
 }
-
-export function hasActiveImpactFilters(search: SchedulePublishImpactsSearch): boolean {
-  return Boolean(
-    search.start_from
-    || search.start_to
-    || search.changed_from
-    || search.changed_to
-    || search.impact_kind?.length
-    || search.resolution_status?.length
-    || search.publish_run_id,
-  );
-}

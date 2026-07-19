@@ -87,6 +87,10 @@ A stacked trend/series whose columns are also reported as scalar subtotals (e.g.
 - **Switching tabs clears the other tabs' filter/page params** so the URL stays clean (see `setActiveTab` in the view model).
 - Each tab's status/severity/completeness filter is a narrowed enum in the schema; the `ALL` Select option maps to `undefined`, never a literal `'ALL'` in the URL.
 - Reset the tab's page to 1 on any of its own search/filter changes.
+- Represent each semantic date interval with one `DatePickerWithRange`, even when the URL/API
+  contract stores separate `*_from` and `*_to` bounds. Update both bounds atomically.
+- Consolidate two or more secondary filters behind one responsive `Filters` Popover/Sheet.
+  Page size, refresh, and export remain outside and survive filter reset.
 
 ### `manualFiltering` search must be wired both ways AND backed by a query param
 
@@ -133,6 +137,7 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Trend columns reconcile with their scalar subtotals (`sum(trend) === subtotal`), guarded by a test
 - [ ] Only the current operational day silently refetches
 - [ ] Active tab + all tab filters/pages in validated route search; tab switch clears other tabs' params
+- [ ] Semantic date intervals use one range picker; secondary filters share one responsive filter surface; resetting filters preserves view controls
 - [ ] Every `manualFiltering` search box is wired end-to-end (`columnFilters`/`onColumnFiltersChange` + route `*_name` param + backend `where` filter) and proven by a test — no dead toolbar search
 - [ ] Role/enum filter options send the **persisted** value (lowercase `STUDIO_ROLE`, stored enum), not the UI label; a selector spanning two concepts (role vs `isDutyManager`) maps each via a co-located, unit-tested `to<Filter>QueryParams` translator
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils

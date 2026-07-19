@@ -76,16 +76,24 @@ Access rules:
 
 `stale_conflict` rows — sheet edits the backend held back because the show already has recorded actuals, per `apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md` § Stale Conflict Rule — get a `Review` action alongside the two existing FYI impact kinds (`confirmed_future_updated`, `confirmed_future_pending_resolution`), which stay read-only. `Review` opens a docked panel showing the `held_back` diff and a required-reason Apply/Dismiss form.
 
+The Impacts tab keeps its filter state in validated URL params. Show-time and change-time bounds
+each render as one `DatePickerWithRange`; impact kind, resolution status, and publish-run scope
+share one responsive `Filters` Popover/Sheet. Page size and refresh remain outside that surface,
+and resetting filters preserves the selected page size.
+
 ### Key Frontend Modules
 
 - `src/components/responsive-sheet.tsx` — desktop right-docked sheet / mobile bottom drawer swap, sibling to `responsive-dialog.tsx`
 - `src/features/shows/api/resolve-schedule-conflict.ts` — `useResolveScheduleConflict` mutation hook
 - `src/features/shows/components/held-back-diff.tsx` — pure presentational diff renderer
 - `src/features/shows/components/schedule-conflict-review-panel.tsx` — hosts the diff, reason field, and Apply/Dismiss actions inside `ResponsiveSheet`
+- `src/features/shows/components/schedule-publish-impact-filters.tsx` — responsive consolidated filters and date-range controls
+- `src/features/shows/components/schedule-publish-impacts-toolbar.tsx` — filter trigger, page size, and refresh composition
 
 ### UX Rules
 
 - Apply/Dismiss stay disabled until the reason field is non-empty; the reason is recorded on the show's audit history
+- represent each semantic date interval with one range picker and consolidate secondary filters behind one responsive trigger; filter reset must preserve independent view controls
 - a resolved `stale_conflict` row stays visible, dimmed (`getRowClassName` on the shared `DataTable`), rather than disappearing immediately — the planner sees the outcome of their action
 - `SHOW_NO_LONGER_ELIGIBLE` shows an inline banner and does not close the panel (the conflict was auto-resolved server-side); the list is invalidated rather than cache-patched since there is no updated row to patch with
 - `held_back.show_creators[]`/`show_platforms[]` render a bare creator/platform uid, not a name — the shipped payload carries no display name for these entries (tracked in [`docs/tech-debt/schedule-conflict-held-back-creators-platforms-no-display-name.md`](../../../docs/tech-debt/schedule-conflict-held-back-creators-platforms-no-display-name.md)); a uid is safe to display per this app's external-ID strategy, just not human-readable

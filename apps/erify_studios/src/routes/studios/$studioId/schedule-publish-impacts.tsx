@@ -33,7 +33,6 @@ import type {
 } from '@/features/shows/config/schedule-publish-impacts-search-schema';
 import {
   buildSchedulePublishImpactsQueryParams,
-  hasActiveImpactFilters,
   SCHEDULE_PUBLISH_IMPACTS_DEFAULT_PAGE_SIZE,
   schedulePublishImpactsSearchSchema,
   searchForTabSwitch,
@@ -166,8 +165,14 @@ function ImpactsTab({ studioId, search }: {
   }, [search.resolution_status, setFilters]);
 
   const clearFilters = useCallback(() => {
-    void navigate({ search: searchForTabSwitch('impacts'), replace: true });
-  }, [navigate]);
+    void navigate({
+      search: {
+        ...searchForTabSwitch('impacts'),
+        ...(search.page_size ? { page_size: search.page_size } : {}),
+      },
+      replace: true,
+    });
+  }, [navigate, search.page_size]);
 
   const handlePaginationChange = useCallback((updater: Updater<PaginationState>) => {
     const current: PaginationState = {
@@ -200,12 +205,16 @@ function ImpactsTab({ studioId, search }: {
       <SchedulePublishImpactsToolbar
         startFrom={search.start_from ?? ''}
         startTo={search.start_to ?? ''}
-        onStartFromChange={(value) => setFilters({ start_from: value || undefined })}
-        onStartToChange={(value) => setFilters({ start_to: value || undefined })}
+        onStartRangeChange={(from, to) => setFilters({
+          start_from: from || undefined,
+          start_to: to || undefined,
+        })}
         changedFrom={search.changed_from ?? ''}
         changedTo={search.changed_to ?? ''}
-        onChangedFromChange={(value) => setFilters({ changed_from: value || undefined })}
-        onChangedToChange={(value) => setFilters({ changed_to: value || undefined })}
+        onChangedRangeChange={(from, to) => setFilters({
+          changed_from: from || undefined,
+          changed_to: to || undefined,
+        })}
         selectedImpactKinds={search.impact_kind ?? []}
         onToggleImpactKind={toggleImpactKind}
         selectedResolutionStatuses={search.resolution_status ?? []}
@@ -214,7 +223,6 @@ function ImpactsTab({ studioId, search }: {
         onClearPublishRun={() => setFilters({ publish_run_id: undefined })}
         pageSize={pageSize}
         onPageSizeChange={(value) => setFilters({ page_size: value as SchedulePublishImpactsSearch['page_size'] })}
-        hasActiveFilters={hasActiveImpactFilters(search)}
         onClearFilters={clearFilters}
         isFetching={isFetching}
         onRefresh={() => void refetch()}

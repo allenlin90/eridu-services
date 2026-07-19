@@ -37,6 +37,7 @@ Also run `pnpm --filter <app> build` when any of the mandatory-build triggers in
    - Confirm loading/empty/data UI states still match expected behavior.
    - Confirm route/search-param behaviors still match expected URL contract.
    - Confirm pagination/date/filter transitions behave correctly after extraction/decomposition.
+   - For touched filterable UIs, confirm one semantic date interval is one range control; two or more secondary filters share one responsive filter surface; active count/reset work; and resetting filters preserves page size, refresh, export, and other independent view controls.
    - For standard paginated frontend views, confirm the route still uses the shared pagination stack:
      - `useTableUrlState` owns URL pagination state
      - query uses `placeholderData: keepPreviousData`
