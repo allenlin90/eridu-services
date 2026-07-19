@@ -23,8 +23,8 @@ The recommended sequence is:
 2. Ship independent correctness fixes and low-risk cleanup without waiting for the performance baseline.
 3. Close current persistence leaks behind the real-database transaction and rollback characterization.
 4. Pilot optional repositories on one low-risk model, `ShowStatus`.
-5. Consolidate code by capability, beginning with the show reference catalog and show operations.
-6. Establish performance baselines before decomposing schedule publishing or narrowing the MCP runtime.
+5. Consolidate the show reference catalog, then let [Phase 5 roadmap item 18](../../../../docs/roadmap/PHASE_5.md#18-show-lifecycle-state-machine) activate the show-operations lifecycle work when it starts.
+6. Establish performance baselines before any trigger-gated schedule-publishing decomposition or MCP runtime narrowing.
 7. Slim the MCP runtime and optimize only measured hot paths.
 8. Re-evaluate CQRS or asynchronous processing only at explicit decision gates.
 
@@ -453,6 +453,10 @@ The persistence matrix and capability-first conventions in this document remain 
 
 ## Phased Refactoring Plan
 
+Phases 4 and 5 are destination maps, not scheduled folder-migration waves. Phase 4 activates when [Phase 5 roadmap item 18](../../../../docs/roadmap/PHASE_5.md#18-show-lifecycle-state-machine) starts, or when an earlier show-operations change already requires the same structural decomposition. Item 18 builds the canonical lifecycle transition service inside `ShowOperationsModule`; it must not introduce a fifth status writer or perform a standalone folder move.
+
+Phase 5 activates only when item 18's schedule-publish integration touches `PublishingService`, or when measured query count, lock duration, rollback risk, or maintainability evidence independently justifies decomposition. Until then, preserve the current publishing facade and transactional boundary.
+
 ### Phase 0a — Isolated Safety Harness
 
 Before persistence-boundary or behavior-bearing structural changes:
@@ -518,9 +522,9 @@ If the pilot succeeds, group show type, status, standard, and platform reference
 
 Move admin catalog controllers next to the capability while preserving routes and guards. The module should export only the services or queries used by other capabilities.
 
-### Phase 4 — Deepen Show Operations
+### Phase 4 — Trigger-Gated Show Operations
 
-Create a `ShowOperationsModule` as the owner of show lifecycle workflows. Move code incrementally from `studios/studio-show` and `show-orchestration` behind a stable public API.
+Activate this phase with roadmap item 18 or an earlier show-operations change that requires the same capability boundary. Create a `ShowOperationsModule` as the owner of show lifecycle workflows, and implement item 18's canonical lifecycle transition service inside it. Move code incrementally from `studios/studio-show` and `show-orchestration` behind a stable public API; do not create a fifth status writer or run a standalone folder migration.
 
 Suggested first slices:
 
@@ -531,7 +535,9 @@ Suggested first slices:
 
 After each slice, remove the corresponding collaborators and private helpers from `StudioShowManagementService`. Split the 675-line controller by sub-resource if that makes route ownership clearer; multiple focused controllers may share the same route prefix.
 
-### Phase 5 — Decompose Schedule Publishing
+### Phase 5 — Trigger-Gated Schedule Publishing
+
+Activate this phase when item 18 routes schedule-publish transitions through the lifecycle service and that integration requires `PublishingService` decomposition, or when Phase 0b measurements expose material query, lock, rollback, or maintainability risk. Otherwise keep the current facade intact.
 
 Preserve one transactional entry point while separating:
 
@@ -574,8 +580,8 @@ Each implementation PR updates only the knowledge artifacts whose asserted patte
 | 1 | `service-pattern-nestjs`, `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and `erify-api-refactor-residuals.md` |
 | 2 | Every repository-first doctrine location named in the Persistence Decision Matrix acceptance gate, plus the `ShowStatus` feature/module documentation |
 | 3 | `design-patterns`, `backend-controller-pattern-nestjs`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md` |
-| 4 | `show-production-lifecycle`, `orchestration-service-nestjs`, `backend-large-file-refactor`, and the Phase 5 roadmap state-machine workstream |
-| 5 | `schedule-continuity-workflow`, `orchestration-service-nestjs`, `database-patterns`, and schedule-planning documentation |
+| 4 | `show-production-lifecycle`, `orchestration-service-nestjs`, `backend-large-file-refactor`, and [Phase 5 roadmap item 18](../../../../docs/roadmap/PHASE_5.md#18-show-lifecycle-state-machine) |
+| 5 | `schedule-continuity-workflow`, `orchestration-service-nestjs`, `database-patterns`, item 18's schedule-publish integration, and schedule-planning documentation |
 | 6 | MCP/runtime documentation, `service-pattern-nestjs`, `openwebui-mcp-tool-integration`, and `backend-runtime-boundaries.md` |
 | 7 | Only the skill, ideation/ADR, runtime documentation, and operational guidance for the advanced pattern actually accepted |
 
