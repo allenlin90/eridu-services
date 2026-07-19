@@ -46,7 +46,7 @@ const FIX_SCHEMA = {
 const CONVENTIONS = `Project conventions (from AGENTS.md — apply these, don't restate them):
 - Skills live in .agents/skills/<name>/SKILL.md (+ optional references/ subfolder). They must stay generic; avoid recording implementation details (specific file paths, line numbers, function/class names, LOC counts, inlined code snapshots) unless the reference is a stable, foundational convention AGENTS.md itself establishes (e.g. "use task.service.ts as the reference implementation").
 - A common failure mode: a skill describes a pattern that was aspirational/planned, and the code has since implemented it differently — or the code evolved and the skill's snapshot is now stale.
-- docs/ holds product docs: domain/, engineering/, features/, prd/ (incl. prd/future/), roadmap/ (PHASE_1..5.md), ideation/, tech-debt/, workflows/, superpowers/specs (transient design specs, retired once shipped per .agents/workflows/doc-lifecycle.md).
+- docs/ holds product docs: domain/, engineering/, features/, prd/ (committed requirements only), roadmap/ (PHASE_1..5.md), ideation/ (uncommitted, trigger-dependent, or future scope), tech-debt/, workflows/, and superpowers/specs + superpowers/plans (transient execution aids retired per .agents/skills/doc-lifecycle/SKILL.md).
 - This is a documentation-only audit: never edit application/source code, only files under .agents/ and docs/ (markdown/.mdc).`
 
 function reviewPrompt(files, codeHints, extraNote) {
@@ -64,7 +64,7 @@ For every file, identify:
 1. "implementation-detail" — passages pinned to a specific file path, line number, exact function/class/variable name, LOC count, or an inlined code snippet mirroring a current implementation snapshot that will go stale. Flag for generalization (this applies to skills/workflows/rules — docs/ content describing actual shipped behavior is expected to be specific and should NOT be flagged for this).
 2. "stale-fact" / "outdated-pattern" — a statement that no longer matches the current code or current doc/roadmap state (renamed, removed, restructured, status changed since the doc was written).
 3. "broken-reference" — a path to another file (skill, doc, or code) that no longer exists.
-4. "retire-candidate" — a design spec/PRD whose described work has fully shipped and, per .agents/workflows/doc-lifecycle.md, should be retired.
+4. "retire-candidate" — a design spec/PRD whose described work has fully shipped and, per .agents/skills/doc-lifecycle/SKILL.md, should be retired.
 
 Do not flag accurate content, stylistic choices, or stable cross-references between skills/AGENTS.md/docs. For every finding, give exact evidence: quote the passage and cite the current code/doc file:line (or state the referenced path doesn't exist). If something seems missing but isn't a misstatement, add a one-line note to "suggestions" — do not draft the content. List every reviewed file that has zero issues in "clean_files".`
 }
@@ -94,7 +94,7 @@ ${JSON.stringify(review.findings, null, 2)}
 For each finding:
 - "stale-fact" / "outdated-pattern" / "broken-reference": re-verify against current code/docs (grep/read), then correct the text in the named file to match reality.
 - "implementation-detail": rewrite the flagged passage to describe the pattern/convention generically, dropping the brittle specific (path/line/snippet/LOC count) — unless that would make the guidance meaningless, in which case keep only the minimum needed.
-- "retire-candidate": read .agents/workflows/doc-lifecycle.md and follow its retirement procedure for that artifact type (e.g. Superpowers Spec/Plan Retirement, Design Doc Promotion). Capture any still-useful durable decision in its proper home BEFORE deleting, per that procedure — but do not invent new sections elsewhere; only fold in content the spec/PRD itself already states.
+- "retire-candidate": read .agents/skills/doc-lifecycle/SKILL.md and .agents/skills/doc-lifecycle/references/bookkeeping.md, then follow the retirement procedure for that artifact type (e.g. Planning Artifact Retirement, Design Doc Promotion). Capture any still-useful durable decision in its proper home BEFORE deleting, per that procedure — but do not invent new sections elsewhere; only fold in content the spec/PRD itself already states.
 
 Hard constraints:
 - Only touch files under .agents/ or docs/ (markdown/.mdc). Never edit application/source code, configs, or anything else.
@@ -246,15 +246,17 @@ const WORKFLOW_RULE_BATCHES = [
   {
     name: 'workflows-a',
     files: [
-      '.agents/workflows/doc-lifecycle.md',
+      '.agents/skills/doc-lifecycle/SKILL.md',
+      '.agents/skills/doc-lifecycle/references/bookkeeping.md',
       '.agents/workflows/feature-version-cutover.md',
       '.agents/workflows/ideation-lifecycle.md',
+      '.agents/workflows/integration-pr-delivery.md',
       '.agents/workflows/knowledge-sync.md',
       '.agents/workflows/plan-completeness-audit.md',
       '.agents/workflows/pr-review.md',
       '.agents/workflows/prod-data-sync.md',
     ],
-    codeHints: 'verify any referenced .agents/skills/<name> directories exist, any referenced docs/ paths exist (docs/roadmap/PHASE_4.md, PHASE_5.md, docs/domain/, docs/prd/, docs/superpowers/specs/), and that examples cited (e.g. the "Phase 4 consolidation 2026-05-16" / economics-cost-model.md promotion example) still match the current state of those files.',
+    codeHints: 'verify referenced skills, workflows, and docs exist; lifecycle guidance consistently keeps committed requirements in docs/prd/, uncommitted scope in docs/ideation/, and Superpowers specs/plans as transient execution aids; integration PR delivery must remain an overlay on the same lifecycle.',
   },
   {
     name: 'workflows-b-and-rules',
@@ -286,16 +288,14 @@ const MISC_DOC_BATCHES = [
     extraNote: undefined,
   },
   {
-    name: 'workflow-docs-and-14c-spec',
+    name: 'workflow-docs',
     files: [
       'docs/workflows/shift-operations.md',
       'docs/workflows/README.md',
       'docs/workflows/task-and-operations-review.md',
       'docs/workflows/creator-operations.md',
-      'docs/superpowers/specs/2026-06-06-pr-14c-show-detail-design.md',
     ],
-    codeHints: 'apps/erify_api/src/modules/studio-shifts/ for shift-operations.md, task-review/show-run-review modules for task-and-operations-review.md, creator-mapping/studio-creator-roster for creator-operations.md, and apps/erify_studios/src/features/shows/ + apps/erify_studios/docs/ENTITY_DETAIL_ROUTES.md for the 14c spec.',
-    extraNote: `Special context for docs/superpowers/specs/2026-06-06-pr-14c-show-detail-design.md: docs/roadmap/PHASE_4.md row 14 already shows "✅ Shipped" with a "Landed (2026-06-06, PR #134)" note for 14c, and row 21.7 also shows "✅ Shipped" (PR #136). The spec's own header says it "retires once 14c merges" with durable content landing in apps/erify_studios/docs/ENTITY_DETAIL_ROUTES.md. Read apps/erify_studios/docs/ENTITY_DETAIL_ROUTES.md and confirm it already documents 14c (show detail route, Details/Actuals/Compensation tabs, authorization, share-link contract) as shipped. If so, this spec is a "retire-candidate" — also run \`grep -rn "pr-14c-show-detail-design" . --include="*.md"\` to find any remaining cross-references that would need repointing/removing.`,
+    codeHints: 'apps/erify_api/src/modules/studio-shifts/ for shift-operations.md, task-review/show-run-review modules for task-and-operations-review.md, and creator-mapping/studio-creator-roster for creator-operations.md.',
   },
   {
     name: 'domain-and-index-docs',
@@ -309,7 +309,7 @@ const MISC_DOC_BATCHES = [
       'docs/ideation/README.md',
     ],
     codeHints: 'apps/erify_api/src/modules/studio-costs/, compensation-line-items, and apps/erify_studios/src/features/me (me-show-compensations, me-shift-compensations) to verify whether "Wave 2" cost-stack work described as "in progress" is actually shipped and routed; and the actual docs/features, docs/prd, docs/roadmap, docs/tech-debt, docs/ideation directory listings for each README\'s index accuracy.',
-    extraNote: `Special context: .agents/workflows/doc-lifecycle.md states that during the "Phase 4 consolidation (2026-05-16)" example, economics-cost-model.md was "promoted to docs/domain/". Check whether docs/domain/economics-cost-model.md and docs/domain/BUSINESS.md still describe the cost-stack/compensation work (line items, economics service, costs dashboard, /me compensation self-views) as "Wave 2 in progress" even though it is implemented and routed in code — if so this is a stale-fact / retire-candidate (status header should reflect shipped state per doc-lifecycle's promotion conventions).`,
+    extraNote: `Special context: .agents/skills/doc-lifecycle/references/bookkeeping.md defines promotion to docs/domain/ for stable semantic contracts. Check whether docs/domain/economics-cost-model.md and docs/domain/BUSINESS.md still describe the cost-stack/compensation work (line items, economics service, costs dashboard, /me compensation self-views) as "Wave 2 in progress" even though it is implemented and routed in code — if so this is a stale-fact (status should reflect current behavior rather than planning state).`,
   },
 ]
 
@@ -332,9 +332,9 @@ const PRD_ITEMS = [
     context: `"Compensation & Costs" doc-drift: "Costs dashboard and creator/operator compensation self-views noted as Wave 2 'in progress' in docs/domain but shipped in code... the cost-model PRD should be retired/promoted per doc-lifecycle". Verify against apps/erify_api/src/modules/studio-costs, compensation-line-items, and apps/erify_studios/src/features/me (me-show-compensations, me-shift-compensations) — these should be implemented and routed. If docs/domain/economics-cost-model.md or docs/domain/BUSINESS.md still mark this work as "in progress" / "Wave 2" / "planned", that's a stale-fact needing a status update to reflect shipped state.`,
   },
   {
-    name: 'client-mechanics-status',
-    files: ['docs/prd/client-mechanics.md'],
-    context: `"Reference Data" / "Auth & RBAC" findings: "ACCOUNT_MANAGER money-redacted template review (Zod allow-list projection) and read-only template GET routes for ACCOUNT_MANAGER/ADMIN/MANAGER... Planned — Phase 4 PR 20.x; only the role + mechanic catalog foundation (20.1) shipped" and "Client Mechanics management UI, account-manager read-ops with money redaction, template<->client binding... Planned — Phase 4 PR 20.2-20.7; only 20.1 backend foundation shipped, no frontend". Check apps/erify_api for the client-mechanic catalog module (PR 20.1, ACCOUNT_MANAGER role) vs whether PR 20.2-20.7 scope (UI, money-redacted template review, mechanic-coverage models) exists in apps/erify_studios. Verify docs/prd/client-mechanics.md's status markers for 20.1 vs 20.2-20.7 accurately reflect this (20.1 done, 20.2-20.7 not started).`,
+    name: 'client-mechanics-shipped-status',
+    files: ['docs/features/client-mechanics.md'],
+    context: `Client Mechanics Phase 4 PR 20.1–20.8 is shipped: catalog and ACCOUNT_MANAGER foundation, management UI, money-redacted read paths, template-to-client binding, Loop × Mechanic assignment, bidirectional coverage, and backfill. Cross-check the feature doc against apps/erify_studios/docs/CLIENT_MECHANICS_MANAGEMENT.md and the implemented API/frontend surfaces. Verify it links to the current app doc and contains no stale language that presents shipped scope as an active PRD or unfinished plan.`,
   },
   {
     name: 'studio-reference-prds-status',
@@ -345,17 +345,17 @@ const PRD_ITEMS = [
 For both, verify the PRD's status header accurately says this is planned/not-yet-implemented (Phase 5 candidate) rather than implying it's done.`,
   },
   {
-    name: 'future-prds-status',
+    name: 'uncommitted-prd-placement',
     files: [
       'docs/prd/future/member-actuals-attestation.md',
       'docs/prd/future/pnl-revenue-workflow.md',
       'docs/prd/future/studio-schedule-management.md',
     ],
-    context: `"Compensation & Costs" / "Member Self-Service" / "Shows & Scheduling" findings, all "Deferred":
+    context: `These documents currently live in the legacy docs/prd/future/ location. The canonical lifecycle reserves docs/prd/ for committed requirements and docs/ideation/ for uncommitted, trigger-dependent, or future scope.
 1. member-actuals-attestation.md: member self-attest of shift actualStartTime/actualEndTime with per-timestamp source attribution — confirm /me shift/show-compensation endpoints in apps/erify_api remain read-only (no member-write attestation path), and that the "flag missing actuals" affordance described as "Planned but absent" in PR 10 is indeed absent from /me or studio-shifts code.
 2. pnl-revenue-workflow.md: revenue input (GMV/net_sales) per ShowPlatform driving commission-cost resolution — confirm no revenue-input UI/commission calculator exists yet, and that COMMISSION/HYBRID costs still resolve to null with COMMISSION_REVENUE_NOT_AVAILABLE in apps/erify_api's compensation calculation code.
 3. studio-schedule-management.md: studio-native schedule management (studio-scoped CRUD, publish, duplication) — confirm Schedule CRUD/publish still lives only under /admin/schedules (system-admin / GoogleSheetsApiKeyGuard) with no studio-scoped schedule write endpoints, and that the doc's "Deferred 2026-04-22" status framing is still accurate (not superseded by a later roadmap decision in docs/roadmap/PHASE_5.md).
-For each file, only flag if the doc's stated status/scope no longer matches code reality — these are expected to remain "Deferred"/"Future" docs, so most likely outcome is "clean".`,
+If a document remains uncommitted, report its placement and any language treating it as a future PRD as an "outdated-pattern" even when its product status is otherwise accurate; preserve actionable discovery when it moves to ideation. If the team has recommitted to it, it needs an active PRD rather than a future bucket.`,
   },
 ]
 
