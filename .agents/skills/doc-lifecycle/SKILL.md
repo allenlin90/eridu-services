@@ -14,6 +14,7 @@ This skill manages documentation state. It does not discover product requirement
 - Use [doc-hygiene](../doc-hygiene/SKILL.md) to rewrite a document as current truth.
 - Use [monorepo-doc-layering](../monorepo-doc-layering/SKILL.md) to decide where a document belongs.
 - Use [ideation-lifecycle](../../workflows/ideation-lifecycle.md) to assess whether an idea is ready for promotion.
+- Use [integration-pr-delivery](../../workflows/integration-pr-delivery.md) when a large committed scope needs several reviewed PRs but must land to `master` as one unit.
 - Use [knowledge-sync](../../workflows/knowledge-sync.md) when shipped behavior or engineering conventions changed.
 - Use [user-facing-docs](../user-facing-docs/SKILL.md) when a shipped feature needs guides, SOPs, or FAQs.
 
@@ -42,6 +43,12 @@ The other locations are registers, not parallel specifications:
 | `docs/tech-debt/` | Accepted implementation gaps that remain after delivery                   |
 
 For current truth, choose the narrowest sufficient owner: `docs/features/` for cross-app product behavior, `apps/*/docs/` for one app's behavior, or `docs/domain/` for a stable semantic contract. Create more than one only when they serve genuinely different scopes or audiences.
+
+## Large-Scope Delivery Overlay
+
+Long-running delivery does not create a second documentation lifecycle. Use the [integration PR delivery workflow](../../workflows/integration-pr-delivery.md) on top of this artifact model when several reviewed breakdown PRs must land to `master` together.
+
+The main integration PR may coordinate one or more committed PRDs and a transient Superpowers spec or implementation plan. Each PRD remains canonical for its own requirements; the plan only maps slices, dependencies, and verification. Breakdown PRs merge into the integration branch, while the main PR owns final lifecycle retirement and the single merge to `master`.
 
 ## Workflow
 

@@ -206,6 +206,8 @@ All checks must pass before merge.
 
 Run this after the gates and verification pass, **before** declaring the PR ready to merge. Correct code is necessary but not sufficient: the knowledge artifacts a PR touches — skills, canonical docs, lifecycle docs — must travel *with the code in the same PR*. Updates deferred to "after merge" drift out of sync and skip the review that would have caught them, which is exactly the failure the `phase-roadmap-status-update-timing` rule exists to prevent.
 
+For the [integration PR delivery workflow](integration-pr-delivery.md), run this review on every breakdown PR before it merges into the integration branch, then run it again on the complete main PR diff against `master`. A breakdown PR retires only artifacts it fully completes; the main PR owns program-level lifecycle retirement, final roadmap status, and the combined merge-readiness verdict.
+
 Scope this to what **this PR** changed. This is not a full phase audit — that belongs to the `doc-lifecycle` skill at phase close.
 
 ### 1. Sync knowledge artifacts

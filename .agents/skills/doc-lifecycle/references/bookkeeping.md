@@ -72,6 +72,8 @@ When the full plan ships:
 
 Keep the artifacts while the plan is active or split across in-flight PRs.
 
+For an integration-PR program, keep the shared PRD, spec, and plan until every breakdown PR has merged into the integration branch and the main PR satisfies the complete acceptance boundary. A breakdown PR retires only an artifact it fully owns; it must not retire program-level artifacts early. The main PR preserves durable decisions and retires the shared planning artifacts during final wrap-up.
+
 ## Tracker Consolidation
 
 Use this when a scope simplification leaves several downstream PRDs restating one established contract.

@@ -6,24 +6,27 @@ description: Audit a multi-PR implementation plan for workflow gaps before sign-
 
 Run this whenever a plan is being written, revised, signed off, or when an unexpected gap is discovered in implementation. Produces a structured gap report and a list of edits to apply to the plan before code is touched.
 
-> **Companion**: read `.agents/skills/plan-workflow-completeness/SKILL.md` for the five invariants the audit checks.
+> **Companion**: read `.agents/skills/plan-workflow-completeness/SKILL.md` for the invariants the audit checks.
 
 ---
 
 ## Step 0 — Identify the plan and the contract
 
-A "plan" here means any document that breaks work into multiple PRs. In this repo that takes two shapes:
+A "plan" here means any document that breaks work into multiple PRs. In this repo it commonly takes these shapes:
 
 - A transient implementation plan (e.g. `implementation_plan.md` or under `docs/roadmap/`).
+- A transient Superpowers plan under `docs/superpowers/plans/`, optionally paired with a technical or decomposition spec under `docs/superpowers/specs/`.
 - The **PR Roadmap** section of `docs/roadmap/PHASE_<n>.md` (consolidated tracker).
 
 A "contract" means the truth source the plan is implementing against. In this repo:
 
-- A PRD at `docs/prd/<feature>.md`.
+- One or more PRDs at `docs/prd/<feature>.md`.
 - A locked operating contract at `docs/domain/<name>.md` (e.g., `economics-cost-model.md`).
 
+For an [integration PR delivery program](integration-pr-delivery.md), audit every owning PRD and the combined acceptance boundary. The main PR checklist and transient plan coordinate delivery; neither replaces the PRDs as requirements sources.
+
 ```bash
-# Find the plan (either shape)
+# Find the plan
 ls docs/roadmap/ 2>/dev/null | grep -i <feature>
 rg -n "^## PR Roadmap|^### PR " docs/roadmap/
 
