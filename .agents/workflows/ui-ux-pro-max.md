@@ -46,7 +46,30 @@ Extract key information from user request:
 - **Industry**: healthcare, fintech, gaming, education, etc.
 - **Stack**: React, Vue, Next.js, or default to `html-tailwind`
 
-### Step 2: Search Relevant Domains
+### Step 2: Check Repository Consistency
+
+Before external design research or component selection, inspect the nearest same-purpose shipped
+screen and the shared primitives available in the target app/package. External recommendations
+only resolve choices the repository has not already settled.
+
+Record a short control inventory:
+
+| Control class | Examples | Consistency rule |
+|---|---|---|
+| Primary input | Search | May stay visible in the toolbar |
+| Secondary filter | Status, kind, assignee, date interval | Two or more consolidate behind one responsive `Filters` trigger |
+| View control | Page size, density, refresh | Stays outside filters and survives filter reset |
+| Action | Export, create, publish | Stays visually distinct from filtering |
+
+Then map domain semantics to controls, not API field count. A `*_from` + `*_to` pair describing
+one interval is one `DatePickerWithRange`, not two date selectors. Compare desktop and mobile
+behavior against the nearest equivalent: filter Popover on desktop, Sheet/Drawer on mobile.
+
+If a shipped pattern settles the UX, follow it and skip speculative alternatives. If no useful
+precedent exists or the product behavior remains structurally undecided, run
+`ui-mockup-discussion` before implementation.
+
+### Step 3: Search Relevant Domains
 
 Use `search.py` multiple times to gather comprehensive information. Search until you have enough context.
 
@@ -65,7 +88,7 @@ python3 .shared/ui-ux-pro-max/scripts/search.py "<keyword>" --domain <domain> [-
 7. **UX** - Get best practices and anti-patterns
 8. **Stack** - Get stack-specific guidelines (default: html-tailwind)
 
-### Step 3: Stack Guidelines (Default: html-tailwind)
+### Step 4: Stack Guidelines (Default: html-tailwind)
 
 If user doesn't specify a stack, **default to `html-tailwind`**.
 
@@ -227,6 +250,13 @@ Before delivering UI code, verify these items:
 - [ ] No content hidden behind fixed navbars
 - [ ] Responsive at 320px, 768px, 1024px, 1440px
 - [ ] No horizontal scroll on mobile
+
+### Repository Consistency
+
+- [ ] Nearest same-purpose shipped screen and shared primitive were inspected
+- [ ] One semantic date interval uses one range picker
+- [ ] Two or more secondary filters use one responsive filter surface
+- [ ] View controls/actions remain outside filters and survive filter reset
 
 ### Accessibility
 - [ ] All images have alt text

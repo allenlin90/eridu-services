@@ -122,6 +122,8 @@ Full reference: `.agents/skills/frontend-state-management/SKILL.md`
 ### Components and UI
 
 - [ ] Shared primitives come from `@eridu/ui` — no local re-implementations of Radix/Tailwind primitives.
+- [ ] The rendered control composition was compared with the nearest same-purpose shipped screen and shared primitive, not reviewed only for local correctness. The PR identifies the reference or explains why no precedent applies.
+- [ ] A semantic date interval (`*_from` + `*_to`) renders as one `DatePickerWithRange`; two or more secondary filters are consolidated behind one responsive `Filters` Popover/Sheet. Search, page size, refresh, export, and primary actions stay outside; filter reset preserves independent view controls.
 - [ ] Form/dialog field inventory matches the intended product/API contract; any intentionally excluded fields (for example `external_id`) are documented in the design doc and called out near form/schema composition.
 - [ ] Date and datetime editing uses `DatePicker` / `DateTimePicker` / `ResponsiveDateTimePicker` from `@eridu/ui`; native `type="date"` / `type="datetime-local"` inputs only appear with a documented exception.
 - [ ] Datetime pickers on any mobile-reachable form use `ResponsiveDateTimePicker` (not `DateTimePicker`) so the picker becomes a vaul `Drawer` below `md`.
@@ -247,6 +249,7 @@ Only once §1–§3 are done is the verdict **ready to merge**.
 - [ ] Docs section lists canonical paths (not `design/` paths for promoted docs).
 - [ ] Validation section reflects current pass/fail state for all affected workspaces.
 - [ ] **If the PR touches UI** (Frontend gate or eridu_auth frontend): the PR description embeds in-browser screenshots of the shipped UI states (empty/populated/error/each dialog as relevant) per `.agents/skills/pr-ui-screenshot-review/SKILL.md`. This is required, not optional, for any PR that adds or materially changes rendered UI — evidence only, never committed to the repo. A PR that only tweaks copy, a single style value, or non-visual logic in a UI file may skip this; note the skip reason in the description rather than silently omitting it.
+- [ ] **If the PR changes a filterable surface**: UI evidence includes the filter surface open at desktop and mobile widths, so reviewers can verify consolidation, date-range semantics, active-filter state, reset behavior, and overflow—not only the table with filters collapsed.
 - [ ] **If the feature's UX was validated pre-implementation** via `ui-mockup-discussion` (rendered mockup + user discussion, not a prose description): the PR description links back to the settled decision — the design/spec doc's UX section, or a one-line summary of what was validated and where. This is what lets a reviewer check the shipped UI against the UX that was actually agreed on, not just against the code diff. If the PR's UX was fully pre-specified (no mockup phase needed), note that instead of leaving the check silently unaddressed.
 
 ---

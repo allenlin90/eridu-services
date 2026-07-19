@@ -19,19 +19,24 @@ export function DatePickerWithRange({
   setDate,
   open,
   onOpenChange,
+  id = 'date',
+  placeholder = 'Pick a date range',
 }: {
   className?: string;
   date: DateRange | undefined;
   setDate: (date: DateRange | undefined) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  id?: string;
+  placeholder?: string;
 }) {
   return (
     <div className={cn('grid gap-2', className)}>
       <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
           <Button
-            id="date"
+            id={id}
+            type="button"
             variant="outline"
             className={cn(
               'w-full justify-start text-left font-normal',
@@ -55,9 +60,11 @@ export function DatePickerWithRange({
                         format(date.from, 'LLL dd, y')
                       )
                 )
-              : (
-                  <span>Pick a date range</span>
-                )}
+              : date?.to
+                ? `Until ${format(date.to, 'LLL dd, y')}`
+                : (
+                    <span>{placeholder}</span>
+                  )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

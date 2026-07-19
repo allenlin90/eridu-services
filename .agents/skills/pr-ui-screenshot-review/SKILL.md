@@ -13,7 +13,7 @@ Run `git diff --name-only origin/master...HEAD` (or the PR's actual base). Only 
 
 ## Workflow
 
-1. **Drive the real feature**, not a mock. Start the actual dev server(s), sign in as a real (seeded/test) user, and exercise every UI state worth showing a reviewer (empty state, populated state, each dialog/confirmation, error states if relevant).
+1. **Drive the real feature**, not a mock. Start the actual dev server(s), sign in as a real (seeded/test) user, and exercise every UI state worth showing a reviewer (empty state, populated state, each dialog/confirmation, error states if relevant). For a filterable surface, capture the filters open at desktop and mobile widths as well as the collapsed table state; verify secondary filters are consolidated, semantic date intervals use range pickers, active-filter/reset state is legible, and the mobile Sheet/Drawer does not overflow.
 2. **Redact before you screenshot, not after.** Before capturing any state that displays a secret/token/credential (API key reveal, session token, password reset link, etc.), overwrite the on-screen value in the DOM first:
    ```js
    // browser_evaluate, before browser_take_screenshot

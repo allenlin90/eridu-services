@@ -1,9 +1,9 @@
 # Frontend Design and Implementation Plan: Schedule Continuity Support
 
-> **TLDR**: Frontend follow-up for schedule-continuity visibility now starts from the shipped cancellation gate. Status compatibility, show-detail cancellation/resolution dialogs, and the duty-manager dashboard entry exist; focused queue views, task-context warnings, and publish impact visibility remain follow-up scope.
+> **TLDR**: Frontend follow-up for schedule-continuity visibility now starts from the shipped cancellation gate and schedule-publish impact review. Status compatibility, show-detail cancellation/resolution dialogs, the duty-manager dashboard entry, and the publish-impact surface exist; focused cancellation queues and task-context warnings remain follow-up scope.
 
 > [!NOTE]
-> **Status: 📐 Follow-up design** — Core publish continuity and the role-tiered cancellation gate are shipped. The focused studio queue, task-context warning flow, and publish impact visibility below remain planned follow-up work.
+> **Status: 📐 Follow-up design** — Core publish continuity, the role-tiered cancellation gate, and `/schedule-publish-impacts` are shipped. The focused cancellation queue and task-context warning flow below remain planned follow-up work.
 
 ## 1. Purpose
 
@@ -38,7 +38,7 @@ Out of scope:
 
 1. Studio operational pages for show/task management already exist.
 2. System schedule page exists (basic list/edit/delete/snapshots).
-3. No dedicated FE surface today for publish impact summary from Sheets path.
+3. `/studios/$studioId/schedule-publish-impacts` provides a dedicated, URL-filtered impact and publish-run review surface for managers/admins.
 4. Show detail exposes cancellation resolution, and the dashboard exposes the active Duty Manager request path; a focused pending-resolution queue and task-context warnings remain follow-up work.
 
 ## 3.1 Confirmed Gap from Current Rollout
@@ -138,13 +138,14 @@ Changes:
 1. Add filter chips or quick filter for pending-resolution show state (if available in task payload relation).
 2. Keep assignment/reassign flows unchanged.
 
-## 7.4 Optional publish impact UI
+## 7.4 Shipped publish impact UI
 
-If BE exposes publish summary in admin APIs:
-
-1. add lightweight panel or toast summary in schedule-related admin views
-2. summary includes: created / updated / removed / pending-resolution / restored counts
-3. candidate: `apps/erify_studios/src/routes/system/schedules/index.tsx`
+The manager/admin route is shipped at
+`apps/erify_studios/src/routes/studios/$studioId/schedule-publish-impacts.tsx`. It provides
+summary cards, URL-synced Impacts/Publish runs tabs, consolidated responsive filters, and direct
+stale-conflict review. Canonical current behavior lives in
+[`../STUDIO_SHOW_MANAGEMENT.md`](../STUDIO_SHOW_MANAGEMENT.md#schedule-publish-impacts); this design
+does not duplicate its implementation contract.
 
 ---
 
