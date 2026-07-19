@@ -4,7 +4,7 @@ Design/proposal/in-progress documents for `erify_studios`.
 
 ## Index
 
-1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned follow-up for studio resolve UX
+1. [Schedule Continuity FE Design](./DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — Planned cancellation-queue and task-context warning follow-up
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
 3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
 4. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — ⏸️ Deferred Phase 5 reference (revisit for Client Portal)
