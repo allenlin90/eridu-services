@@ -58,7 +58,7 @@ Cross-check:
 - `.agents/skills/`, `.agents/workflows/`, `.agents/rules/`, and `AGENTS.md` for ownership, routing, duplication, and stale links;
 - `.claude/CLAUDE.md` remains a thin adapter of at most 30 lines.
 
-Run `knowledge-sync.md`, `doc-lifecycle.md`, and `ideation-lifecycle.md` only for artifacts whose trigger conditions are met.
+Run `knowledge-sync.md`, the `doc-lifecycle` skill, and `ideation-lifecycle.md` only for artifacts whose trigger conditions are met.
 
 ## Step 4 — Reconcile findings
 

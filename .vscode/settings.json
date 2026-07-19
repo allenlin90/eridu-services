@@ -8,6 +8,10 @@
   // Disable the default formatter, use eslint instead
   "prettier.enable": false,
   "editor.formatOnSave": false,
+  // Use the formatter already selected for Markdown when saving.
+  "[markdown]": {
+    "editor.formatOnSave": true
+  },
 
   // Auto fix
   "editor.codeActionsOnSave": {

@@ -1,6 +1,6 @@
 ---
 name: monorepo-doc-layering
-description: Place eridu-services docs in the correct root, app, design, or package layer when creating or restructuring docs.
+description: Place eridu-services docs in the correct root, app, design, package, or domain layer.
 ---
 
 # Monorepo Doc Layering
@@ -38,8 +38,8 @@ Preserve a consistent documentation model in `eridu-services`:
    - Delete the original file from `apps/*/docs/design/`.
    - Move its index entry from the Design table to the Features table in `apps/*/docs/README.md` with `✅` status.
    - Remove it from `apps/*/docs/design/README.md`.
-   - See `.agents/workflows/doc-lifecycle.md` § "Design Doc Promotion" for the full step-by-step.
-8. When a mid-phase scope simplification strands multiple downstream PRDs, consolidate the remaining work into PR entries inside `docs/roadmap/PHASE_<n>.md`. Promote any locked contract among them to `docs/domain/`. Delete the stranded PRDs and any standalone breakdown specs / implementation plans — git history preserves them. See `.agents/workflows/doc-lifecycle.md` § "Tracker Consolidation".
+   - See the [doc-lifecycle bookkeeping reference](../doc-lifecycle/references/bookkeeping.md#design-doc-promotion) for the full procedure.
+8. When a mid-phase scope simplification strands multiple downstream PRDs, consolidate the remaining work into PR entries inside `docs/roadmap/PHASE_<n>.md`. Promote any locked contract among them to `docs/domain/`. Delete the stranded PRDs and any standalone breakdown specs / implementation plans — git history preserves them. See the [doc-lifecycle bookkeeping reference](../doc-lifecycle/references/bookkeeping.md#tracker-consolidation).
 9. Update the nearest README indexes whenever a doc moves layers.
 10. Remove legacy ownership language that still implies one app owns the product or roadmap.
 11. Normalize Markdown links so they use relative paths from the current document.
@@ -49,7 +49,7 @@ Preserve a consistent documentation model in `eridu-services`:
 ## Placement Rules
 
 - Put cross-app roadmap and phase status in `docs/roadmap/`. When a phase has multiple PRs of remaining additive work, those entries live in `docs/roadmap/PHASE_<n>.md` § PR Roadmap — not as separate plan files.
-- Put active in-flight requirements in `docs/prd/` only when the work introduces a new domain, new pattern, or unresolved product decisions. Additive work that mirrors a shipped pattern goes to the phase doc's PR roadmap section, not `docs/prd/`. Promote to `docs/features/` when shipped.
+- Put committed in-flight product requirements in `docs/prd/` when a dedicated requirements document is warranted. Keep uncommitted, trigger-dependent, and future possibilities in `docs/ideation/`; never create `current`, `next`, or `future` PRD buckets. Additive work that mirrors a shipped pattern goes to the phase doc's PR roadmap section, not `docs/prd/`. Promote to `docs/features/` when shipped.
 - Put locked operating contracts (semantic specs that active and shipped features conform to) in `docs/domain/`, not `docs/prd/`. Move a PRD there once the contract is signed off and features are being implemented against it.
 - For features that undergo a backwards-incompatible schema redesign, promote the feature doc from a flat file to a versioned folder (`docs/features/<feature>/README.md` for the current version, `vN.md` for retired versions). See [docs/features/README.md § Versioning Convention](../../../docs/features/README.md#versioning-convention-schema-redesigns) and run [.agents/workflows/feature-version-cutover.md](../../workflows/feature-version-cutover.md).
 - Put cross-feature end-to-end flow guides in `docs/workflows/`.

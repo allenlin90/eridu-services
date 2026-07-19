@@ -6,7 +6,7 @@ description: Pre-merge quality gate — pattern compliance, code review, and ver
 
 Run this workflow before merging any PR. Scope the changed layers first, then run only the gates that apply. The final **Wrap-up** step is part of the merge-readiness verdict — a PR is not "ready" until the knowledge and doc changes it implies have landed in the same PR.
 
-> **Companion**: The [Wrap-up step](#wrap-up--knowledge-sync--merge-readiness-verdict) folds `knowledge-sync.md` and `doc-lifecycle.md` into this gate, so skill/doc/lifecycle updates land *in the same PR* before the verdict — not in a follow-up commit after merge.
+> **Companion**: The [Wrap-up step](#wrap-up--knowledge-sync--merge-readiness-verdict) folds `knowledge-sync.md` and the [doc-lifecycle skill](../skills/doc-lifecycle/SKILL.md) into this gate, so skill/doc/lifecycle updates land *in the same PR* before the verdict — not in a follow-up commit after merge.
 
 ---
 
@@ -163,7 +163,7 @@ Full reference: `.claude/memory/monorepo-package-rules.md`
 
 ## Documentation gate
 
-- [ ] Any implemented design doc in `apps/*/docs/design/` has been promoted (stripped of task lists, moved to `docs/` root, indexes updated). See `doc-lifecycle.md` § **Design Doc Promotion**.
+- [ ] Any implemented design doc in `apps/*/docs/design/` has been promoted (stripped of task lists, moved to `docs/` root, indexes updated). See the `doc-lifecycle` skill's **Design Doc Promotion** procedure.
 - [ ] Shipped feature docs and roadmap/index tables point to canonical `apps/*/docs/*.md` files, not deleted `apps/*/docs/design/*.md` paths.
 - [ ] PRD for shipped features promoted to `docs/features/` and deleted from `docs/prd/`.
 - [ ] `apps/*/docs/README.md` Features table lists promoted docs with `✅` and correct paths (not `design/` paths).
@@ -206,7 +206,9 @@ All checks must pass before merge.
 
 Run this after the gates and verification pass, **before** declaring the PR ready to merge. Correct code is necessary but not sufficient: the knowledge artifacts a PR touches — skills, canonical docs, lifecycle docs — must travel *with the code in the same PR*. Updates deferred to "after merge" drift out of sync and skip the review that would have caught them, which is exactly the failure the `phase-roadmap-status-update-timing` rule exists to prevent.
 
-Scope this to what **this PR** changed. This is not a full phase audit — that belongs to `doc-lifecycle.md` at phase close.
+For the [integration PR delivery workflow](integration-pr-delivery.md), run this review on every breakdown PR before it merges into the integration branch, then run it again on the complete main PR diff against `master`. A breakdown PR retires only artifacts it fully completes; the main PR owns program-level lifecycle retirement, final roadmap status, and the combined merge-readiness verdict.
+
+Scope this to what **this PR** changed. This is not a full phase audit — that belongs to the `doc-lifecycle` skill at phase close.
 
 ### 1. Sync knowledge artifacts
 
@@ -219,11 +221,11 @@ Run the parts of `knowledge-sync.md` that apply to the behavior/contracts this P
 
 ### 2. Retire shipped lifecycle docs
 
-For artifacts **this PR completes**, run the matching `doc-lifecycle.md` sub-process — and retire them in this PR so the planning artifact and its implementation land and close together:
+For artifacts **this PR completes**, run the matching `doc-lifecycle` procedure — and retire them in this PR so the planning artifact and its implementation land and close together:
 
-- [ ] **Design docs** — any `apps/*/docs/design/*.md` whose behavior shipped here is promoted to the app's `docs/` root and removed from the design index (`doc-lifecycle.md` § Design Doc Promotion).
-- [ ] **PRDs** — any `docs/prd/*.md` this PR fully implements is promoted to `docs/features/` and deleted (`doc-lifecycle.md` § 2 → Shipped PRDs).
-- [ ] **Superpowers specs/plans** — any `docs/superpowers/specs|plans/*` this PR fully implements is retired (`doc-lifecycle.md` § Superpowers Spec/Plan Retirement).
+- [ ] **Design docs** — any `apps/*/docs/design/*.md` whose behavior shipped here is promoted to the app's `docs/` root and removed from the design index (`doc-lifecycle` → Design Doc Promotion).
+- [ ] **PRDs** — any `docs/prd/*.md` this PR fully implements is promoted to `docs/features/` and deleted (`doc-lifecycle` → PRD Transitions → Shipped).
+- [ ] **Superpowers specs/plans** — any `docs/superpowers/specs|plans/*` this PR fully implements is retired (`doc-lifecycle` → Planning Artifact Retirement).
 - [ ] **Roadmap** — the relevant `docs/roadmap/PHASE_*.md` row status is updated to what actually shipped, in this PR.
 - [ ] **Links** — no stale references to moved/deleted docs remain: `grep -rn "<old-path>" . --include="*.md" --exclude-dir=node_modules --exclude-dir=.git`.
 

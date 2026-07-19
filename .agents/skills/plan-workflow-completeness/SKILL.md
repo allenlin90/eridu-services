@@ -10,11 +10,12 @@ Ensures every actor has surfaces for every read and write in their journey. Run 
 ## When to Invoke
 
 - Writing/revising an active implementation plan
+- Preparing or revising the breakdown for a main integration PR
 - Reviewing a plan before sign-off
 - Discovering a gap in a shipped task — audit the rest
 - Phase-close: every plan must pass
 
-## The Five Invariants
+## Completeness Invariants
 
 ### 1. Actor Coverage
 Every actor in the PRD has ≥1 surface (read or write) for every workflow step involving them. Build an actor × step matrix. Blank cells are gaps or intentional.
@@ -43,7 +44,7 @@ Speculative seams with no functional consumer belong in ideation unless they rem
 
 ## How to Run
 
-1. Read PRD + plan side-by-side; build actor-coverage matrix
+1. Read the owning PRD or PRDs plus the plan side-by-side; build actor-coverage matrix
 2. For each scoped-out item, find forwarding address; list orphans
 3. For each snapshot field, find write/edit/UI rows; list missing
 4. For each read view, find feeder writes; list unreachable
@@ -70,3 +71,4 @@ Speculative seams with no functional consumer belong in ideation unless they rem
 - [ ] Parallel entities: same UX or written asymmetry reason
 - [ ] Correctness-sensitive follow-ups are classified before implementation
 - [ ] Completion criteria are scenario-based
+- [ ] For an integration program, every breakdown PR maps to a committed PRD outcome and the main PR's combined acceptance boundary

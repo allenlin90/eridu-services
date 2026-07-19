@@ -6,7 +6,7 @@ description: Cross-check ideation topics during design, investigation, and revie
 
 Run this workflow during design reviews, optimization investigations, and code reviews to keep `docs/ideation/` current and actionable.
 
-> **Companion**: Run `doc-lifecycle.md` for phase boundary cleanups (PRD promotion, index updates). Run this workflow for ideation-specific cross-checks during active development.
+> **Companion**: Run the [doc-lifecycle skill](../skills/doc-lifecycle/SKILL.md) for phase-boundary bookkeeping and artifact transitions. Run this workflow for ideation-specific cross-checks during active development.
 
 ## Trigger Conditions
 
