@@ -135,6 +135,7 @@
   /* ---- plates ---- */
   main { padding-bottom: 5rem; }
   .plate { padding: clamp(2.6rem, 6vw, 4.4rem) 0; border-bottom: 1px solid var(--rule); }
+  @media (max-width: 720px) { .trace-grid { grid-template-columns: 1fr; } }
   .plate-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.6rem; }
   .plate-head .idx {
     font-family: var(--mono); font-weight: 700; font-size: .82rem;
@@ -342,6 +343,30 @@
 
   .intro-prose { margin-bottom: 1.4rem; }
 
+  /* ---- code / file tree ---- */
+  .tree, .code {
+    font-family: var(--mono); font-size: .82rem; line-height: 1.7; margin: 0;
+    white-space: pre; overflow-x: auto; color: var(--ink);
+  }
+  .tree .cmt, .code .cmt { color: var(--faint); }
+  .tree .pub, .code .cmt + * { }
+  .tree .pub { color: var(--target); font-weight: 640; }
+  .tree .priv { color: var(--muted); }
+  .code { color: var(--ink); }
+
+  /* ---- request traces ---- */
+  .trace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+  .trace-badge {
+    font-family: var(--mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; padding: .22rem .55rem; border-radius: 5px; display: inline-block; margin-bottom: .95rem;
+  }
+  .trace.write .trace-badge { background: var(--target-tint); color: var(--target); }
+  .trace.read .trace-badge { background: var(--current-tint); color: var(--current); }
+  .trace ol { margin: 0; padding-left: 1.25rem; font-size: .88rem; color: var(--ink); line-height: 1.55; }
+  .trace ol li { margin-bottom: .5rem; }
+  .trace-foot { margin-top: 1rem; padding-top: .85rem; border-top: 1px dashed var(--rule); font-size: .83rem; color: var(--muted); }
+  .trace-foot b { font-family: var(--mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--target); display: block; margin-bottom: .28rem; }
+
   a { color: var(--target); text-underline-offset: 2px; }
   :focus-visible { outline: 2px solid var(--target); outline-offset: 2px; border-radius: 4px; }
 
@@ -362,7 +387,7 @@
   <div class="wrap">
     <span class="kicker"><span class="dot"></span> erify_api · architecture decision · proposed direction</span>
     <h1>From table-first modules to capability-first ownership</h1>
-    <p class="lede read">Why the refactor points this way, how it differs from what we have, the framework philosophy underneath it, what makes it hard, and why it comes out better. A visual companion to <span class="mono">ARCHITECTURE_REFACTORING_GUIDE.md</span> — every number here is reproducible with <code>pnpm architecture:signals</code>.</p>
+    <p class="lede read">Why the refactor points this way, how it differs from what we have, the framework philosophy underneath it, a worked example of one capability end to end, what makes it hard, and why it comes out better. A visual companion to <span class="mono">ARCHITECTURE_REFACTORING_GUIDE.md</span> — every number here is reproducible with <code>pnpm architecture:signals</code>.</p>
     <div class="verdict-row">
       <span class="verdict-chip"><b>Keep</b> the NestJS modular monolith</span>
       <span class="verdict-chip"><b>Reorganize</b> around business capabilities</span>
@@ -569,6 +594,11 @@
         <span class="clab">An honest caveat</span>
         <p>This isn't "NestJS forbids Rails." Nest <em>can</em> render MVC views, and TypeORM even offers an optional Active Record mode. The point is that Nest's grain (modules + providers), Prisma's Data Mapper, and our multi-runtime, cross-entity domain all pull the same way — toward capability-and-provider organization rather than model-and-row.</p>
       </div>
+
+      <div class="callout reveal" style="animation-delay:.16s">
+        <span class="clab">Why not just use Ruby on Rails, then?</span>
+        <p>Because we want Rails's <em>locality</em> — organize around the work, keep the path from request to rule short — but not Active Record's row-centric center of gravity, and we carry constraints Rails serves worse. The React frontends share one typed contract with the API through <span class="mono">@eridu/api-types</span> (Zod + Prisma as the source of truth); the whole monorepo is one language and one toolchain; the same domain must serve REST <em>and</em> an MCP server today — workers next — as separate runtimes on one provider graph; and our invariants are explicit multi-entity transactions, not per-row callbacks. Rails would fracture the stack and fight every one of those. The slice organization we want predates Rails and isn't Rails-owned — capability-first NestJS keeps the good part of Rails on a stack chosen for reasons Rails can't satisfy.</p>
+      </div>
     </div>
   </section>
 
@@ -643,11 +673,92 @@
     </div>
   </section>
 
-  <!-- 05 WHY BETTER -->
+  <!-- 05 WORKED EXAMPLE -->
   <section class="plate">
     <div class="wrap">
       <div class="plate-head reveal">
         <div class="idx">05 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">What "done" looks like</span>
+          <h2>A worked example: one capability, end to end</h2>
+          <p class="read">Abstract until you see it on a real slice. Here is <span class="mono">show-operations</span> — the richest capability — as it would look finished. Same endpoints, same Prisma schema, same behavior as today; one owner instead of three trees.</p>
+        </div>
+      </div>
+
+      <div class="card tick reveal" style="animation-delay:.05s">
+        <pre class="tree"><span class="cmt"># everything that changes together lives in one module</span>
+show-operations/
+├─ <span class="pub">show-operations.module.ts</span>      <span class="cmt"># exports ONLY the two public providers ↓</span>
+├─ <span class="pub">show-operations.service.ts</span>     <span class="cmt"># public WRITE facade — thin, delegates</span>
+├─ <span class="pub">show-queries.service.ts</span>        <span class="cmt"># public READ api — DTO projections</span>
+├─ internal/
+│  ├─ <span class="priv">show-lifecycle.service.ts</span>    <span class="cmt"># canonical status state machine (roadmap item 18)</span>
+│  ├─ <span class="priv">show-assignment.service.ts</span>   <span class="cmt"># platform / creator assignment sync</span>
+│  └─ <span class="priv">show-performance.service.ts</span>  <span class="cmt"># performance correction workflow</span>
+├─ policies/
+│  └─ <span class="priv">show-transition.policy.ts</span>    <span class="cmt"># pure: is this edge allowed? role tier? reason?</span>
+├─ persistence/
+│  └─ <span class="priv">show.repository.ts</span>           <span class="cmt"># PRIVATE, deep: optimistic-locked + bulk writes</span>
+├─ http/
+│  ├─ <span class="priv">admin-show.controller.ts</span>     <span class="cmt"># same routes + guards as today</span>
+│  └─ <span class="priv">studio-show.controller.ts</span>
+└─ schema/
+   └─ <span class="priv">show.schema.ts</span>               <span class="cmt"># Zod contracts + payload types (unchanged)</span></pre>
+      </div>
+
+      <p class="read path-note" style="margin-top:1.2rem">The module exports exactly two things — the only surface other capabilities and runtimes may touch:</p>
+      <div class="card tick reveal" style="animation-delay:.08s; margin-top:.6rem">
+        <pre class="code"><span class="cmt">// write side — task-oriented methods, never CRUD verbs</span>
+class ShowOperationsService {
+  cancelShow(p): Promise&lt;Show&gt;
+  transitionStatus(p): Promise&lt;Show&gt;
+  createShow(p) · updateShow(p) · replaceAssignments(p) · correctPerformance(p)
+}
+<span class="cmt">// read side — one scoped query each, DTO-projected</span>
+class ShowQueries {
+  getShow(uid, scope) · listShows(filter) · getPublishImpacts(filter)
+  getShowForMcp(uid, membership)   <span class="cmt">// single scoped read, no second round-trip</span>
+}</pre>
+      </div>
+
+      <h3 class="read reveal" style="margin:2rem 0 .8rem; animation-delay:.1s">The same capability, two runtimes</h3>
+      <div class="trace-grid reveal" style="animation-delay:.12s">
+        <div class="card trace write tick">
+          <span class="trace-badge">REST · write · cancel a show</span>
+          <ol>
+            <li><span class="mono">PATCH /studios/:id/shows/:id/cancel</span> hits <span class="mono">StudioShowController</span>.</li>
+            <li>Guards run (Throttler → JwtAuth → StudioProtected); membership is validated and the UID is decoded to an internal id at the boundary.</li>
+            <li>Zod parses the body; the controller calls <span class="mono">showOperationsService.cancelShow()</span> and does nothing else.</li>
+            <li>The facade delegates to <span class="mono">showLifecycleService.transition()</span>, which owns the single <span class="mono">@Transactional()</span>.</li>
+            <li>In one transaction: load with <span class="mono">deletedAt:null</span>, run the pure transition policy, write the optimistic-locked status (version bump), write the Audit row.</li>
+            <li>The result maps back to a snake_case response carrying the UID; the internal id never leaves.</li>
+          </ol>
+          <div class="trace-foot"><b>Enforced right here</b> transaction boundary · soft delete · optimistic lock · UID boundary · audit — all at one seam, not scattered.</div>
+        </div>
+        <div class="card trace read tick">
+          <span class="trace-badge">MCP · read · fetch a show</span>
+          <ol>
+            <li>The <span class="mono">get_show</span> tool calls <span class="mono">showQueries.getShowForMcp(uid, membership)</span> — nothing else.</li>
+            <li>That's one scoped query returning a DTO. No second relation read.</li>
+            <li>The MCP runtime imports only <span class="mono">*Queries</span> providers + the auth policy — it never boots the write-heavy task and extraction modules.</li>
+            <li>Same visibility and scope rule as REST, because both go through the one capability owner.</li>
+          </ol>
+          <div class="trace-foot"><b>Why it matters</b> the 24-module MCP boot closure collapses to a handful, and REST and MCP cannot drift apart.</div>
+        </div>
+      </div>
+
+      <div class="callout reveal" style="animation-delay:.14s">
+        <span class="clab">This is the whole refactor, on one slice</span>
+        <p>The finished module <em>is</em> the ten responsibilities that today live in the 1,421-LOC <span class="mono">studio-show-management.service.ts</span>, redistributed into a facade + three internal services + queries + policy + repository. No endpoint, schema, or behavior changes. And the precedent already works: <span class="mono">task-orchestration.service.ts</span> is exactly this shape today. The refactor is "make each capability look like task-orchestration already does."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 WHY BETTER -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">06 ▸</div>
         <div class="htext">
           <span class="eyebrow">Why it's better</span>
           <h2>Locality, honest seams, and less to hold in your head</h2>
@@ -665,11 +776,11 @@
     </div>
   </section>
 
-  <!-- 06 CQRS -->
+  <!-- 07 CQRS -->
   <section class="plate">
     <div class="wrap">
       <div class="plate-head reveal">
-        <div class="idx">06 ▸</div>
+        <div class="idx">07 ▸</div>
         <div class="htext">
           <span class="eyebrow">Why not a CQRS bus (yet)</span>
           <h2>Move to level 2, stop there until the gates are met</h2>
@@ -709,11 +820,11 @@
     </div>
   </section>
 
-  <!-- 07 PERSISTENCE MATRIX -->
+  <!-- 08 PERSISTENCE MATRIX -->
   <section class="plate">
     <div class="wrap">
       <div class="plate-head reveal">
-        <div class="idx">07 ▸</div>
+        <div class="idx">08 ▸</div>
         <div class="htext">
           <span class="eyebrow">The new persistence rule</span>
           <h2>Repositories become optional and evidence-based</h2>
@@ -744,11 +855,11 @@
     </div>
   </section>
 
-  <!-- 08 THE PLAN -->
+  <!-- 09 THE PLAN -->
   <section class="plate">
     <div class="wrap">
       <div class="plate-head reveal">
-        <div class="idx">08 ▸</div>
+        <div class="idx">09 ▸</div>
         <div class="htext">
           <span class="eyebrow">How it actually ships</span>
           <h2>Trigger-gated phases — not a scheduled big-bang migration</h2>
@@ -783,11 +894,11 @@
     </div>
   </section>
 
-  <!-- 09 CHALLENGES -->
+  <!-- 10 CHALLENGES -->
   <section class="plate" style="border-bottom:none">
     <div class="wrap">
       <div class="plate-head reveal">
-        <div class="idx">09 ▸</div>
+        <div class="idx">10 ▸</div>
         <div class="htext">
           <span class="eyebrow">What makes it hard</span>
           <h2>The honest risks — and how the plan contains each</h2>
