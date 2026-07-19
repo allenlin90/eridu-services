@@ -9,7 +9,7 @@ This runbook covers app-shell PWA behavior for `erify_studios`:
 
 Feature-level context lives in [Frontend PWA App Shell](../../../docs/features/frontend-pwa-app-shell.md).
 
-Push notification delivery and advanced offline mutation workflows are intentionally deferred.
+Push notification delivery is tracked in the [Operational Notifications and PWA Push PRD](../../../docs/prd/notification-system.md). Advanced offline mutation workflows remain deferred.
 
 ## Static Hosting Policy
 

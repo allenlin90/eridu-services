@@ -31,7 +31,7 @@ Potential scope:
 - **Cross-functional ticketing** — ad-hoc task creation without templates (commerce, design, moderation); client self-service ticketing
 - **Material management** — `Material` / `MaterialType` / `ShowMaterial` models with immutable versioning; attachment workflows
 - **Inventory management** — tracking physical assets, equipment, and consumables across studios
-- **Collaboration & communication** — in-system threaded comments, @mentions, notification delivery
+- **Collaboration & communication** — in-system threaded comments and @mentions publishing through the [notification capability](../prd/notification-system.md)
 
 Related ideation topics:
 - `docs/ideation/cross-functional-ticketing.md`
@@ -74,7 +74,6 @@ These are explicitly out of Phase 4 scope and candidates for Phase 6:
 | Creator HR & operations (HRMS, fixed cost tracking)                                     | Phase 4 out-of-scope, ideation                                                                                                                                 | A               |
 | Full-text search & admin UX searchability                                               | Phase 4 out-of-scope, ideation                                                                                                                                 | C (or either)   |
 | Ticketing & material management                                                         | Phase 4 out-of-scope, ideation                                                                                                                                 | B               |
-| PWA push notifications                                                                  | Ideation                                                                                                                                                       | B               |
 | Creator app expansion                                                                   | Ideation                                                                                                                                                       | B               |
 | Studio reference data management (clients, platforms, types, standards, statuses)       | Phase 4 gap analysis                                                                                                                                           | C               |
 | Studio creator profile editing (name/alias at studio level)                             | Phase 4 gap analysis                                                                                                                                           | C               |

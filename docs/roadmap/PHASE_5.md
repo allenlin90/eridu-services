@@ -104,7 +104,7 @@ Each row is one workstream or deliverable. Items are numbered in execution order
 
 **Ideation disposition**
 
-- Promoted into the active Phase 5 list: existing creator roster/onboarding scope where it governs `/creators` intake (item 2), `schedule-publish-task-due-date-reconciliation.md` (item 5), `late-material-edit-audit-policy.md` where it informs correction/issue reason capture (items 6 and 9), and the issue-event boundary from `show-change-notification-audit-ledger.md` as a candidate (item 15).
+- Promoted into the active Phase 5 list: existing creator roster/onboarding scope where it governs `/creators` intake (item 2), `schedule-publish-task-due-date-reconciliation.md` (item 5), `late-material-edit-audit-policy.md` where it informs correction/issue reason capture (items 6 and 9), and the issue-event policy from the [notification PRD](../prd/notification-system.md) as a candidate (item 15).
 - Kept as dependency context rather than active work: `studio-config-settings.md` for state-gate enforcement levels and studio-timezone configuration; it remains out of scope until state enforcement or studio settings becomes a selected workstream. Item 19 explicitly defers per-studio block-level configuration there.
 - Kept deferred: task report batching/analytics summaries, performance re-backfill, shift optimistic versioning, lookup bundle scalability, show-platform batch restore, and broad collaboration topics. These are useful adjacent extensions but do not close the core Phase 5 lifecycle gaps.
 
@@ -142,10 +142,11 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 - Legacy shows already in `cancelled_pending_resolution` without a gate-opening audit row remain resolvable through the same `show_cancellation` gate.
 - Broader follow-up ownership, notifications, comments, and full lifecycle transition enforcement remain outside this item.
 
-**Deferred follow-up (June 2026)**: a follow-up PR (#236, split into #237–#240) built and reviewed three extensions on top of this gate — unifying schedule publish onto the gate primitive, a notification seam, and Duty Manager note amendment. All three were closed without merging: they reach into correctness-sensitive code (or speculate on architecture) ahead of the state-machine/mechanism design in items 18/19, for value that can wait. The audit-trail gaps they would have closed are recorded as tech debt; the designs are preserved as ideation docs to revisit **inside item 18**, which is now explicitly scoped as the canonical transition mechanism these designs anticipated (see item 18's scope decision) rather than landing piecemeal:
+**Deferred follow-up (June 2026)**: a follow-up PR (#236, split into #237–#240) built and reviewed three extensions on top of this gate — unifying schedule publish onto the gate primitive, a notification seam, and Duty Manager note amendment. All three were closed without merging: they reach into correctness-sensitive code or speculated on architecture ahead of the owning mechanisms. The audit-trail gaps are recorded as tech debt; the two transition designs remain ideation to revisit **inside item 18**, while the notification seam is superseded by the generic notification PRD and its cancellation-gate policy:
 
 - [`schedule-publish-removal-no-audit.md`](../tech-debt/schedule-publish-removal-no-audit.md), [`schedule-publish-restore-no-audit.md`](../tech-debt/schedule-publish-restore-no-audit.md) — tech debt
-- [`schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md), [`gate-notification-seam.md`](../ideation/gate-notification-seam.md), [`cancellation-gate-note-amendment.md`](../ideation/cancellation-gate-note-amendment.md) — ideation
+- [`schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md), [`cancellation-gate-note-amendment.md`](../ideation/cancellation-gate-note-amendment.md) — transition ideation
+- [Operational Notifications and PWA Push](../prd/notification-system.md) — notification event and delivery contract
 
 ### 5. Schedule-change task reconciliation
 
@@ -183,7 +184,7 @@ Automated sourcing is limited to facts that positively report an anomaly: active
 
 The API uses one studio-scoped `/show-issues` collection with UID-only external identifiers and real database pagination. Show detail receives an Issues tab, while Show Run Review receives a lean unresolved count and lazy paginated Issues tab. Assignment, severity, escalation, resolution, reopening, and automated evidence changes use standard `Audit` history.
 
-**Architecture boundary**: use explicit `ShowIssueWorkflowService` and `ShowIssueReconciliationService` orchestration, not a generic event bus or NestJS CQRS. Item 15 is the promotion point for a durable outbox/event publisher if notifications become a second independent consumer.
+**Architecture boundary**: use explicit `ShowIssueWorkflowService` and `ShowIssueReconciliationService` orchestration, not a generic event bus or NestJS CQRS. The [notification PRD](../prd/notification-system.md) owns the durable event/outbox capability; item 15 activates the issue publisher after that foundation exists.
 
 **Implementation readiness**: the data model, roles, route shape, automated identity/resolution rules, transaction boundary, read surfaces, performance contract, and deferrals are locked in the linked design. No product or architecture decision blocks implementation.
 
@@ -231,9 +232,9 @@ This checklist emits the **same shared condition contract as item 11** (one sche
 
 ### 15. Issue-event notifications
 
-**Source**: [`show-change-notification-audit-ledger.md`](../ideation/show-change-notification-audit-ledger.md); [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
+**Source**: [Operational Notifications and PWA Push](../prd/notification-system.md); [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
 
-**Candidate** — promote after item 9 lands if issue opens, extraction-detected anomalies, or issue severity changes need stakeholder notification before the full lifecycle state machine exists. This work uses the issue record as its trigger source and stays separate from state-transition notifications.
+**Candidate** — promote after item 9 lands if issue opens, extraction-detected anomalies, or issue severity changes need stakeholder notification before the full lifecycle state machine exists. This work activates the PRD's show-issue policy through the shared event/recipient capability and stays separate from state-transition notifications.
 
 ### 16. Cross-surface navigation continuity
 
@@ -251,12 +252,12 @@ Feature-specific exports remain focused: planning, task setup, creator mapping, 
 
 ### 18. Show lifecycle state machine
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine; [`Show Cancellation Gate`](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md); ideation docs [`schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md), [`gate-notification-seam.md`](../ideation/gate-notification-seam.md), [`cancellation-gate-note-amendment.md`](../ideation/cancellation-gate-note-amendment.md)
+**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine; [`Show Cancellation Gate`](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md); ideation docs [`schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md) and [`cancellation-gate-note-amendment.md`](../ideation/cancellation-gate-note-amendment.md)
 
 **Scope decision (July 2026 review)**: item 18 is the **single canonical show-status transition mechanism**, not a fifth parallel writer. Today `Show.status` is written by four independent paths with uneven validation: studio generic edit (guards only the two cancellation statuses), admin generic edit (no validation — item 8 closes the immediate bypass), `ShowCancellationGateService` (the only path with reason capture, actor-tier checks, active-task guard, and Audit history), and schedule publish (direct writes, no audit — tracked tech debt). Item 18 converges them:
 
 1. **Transition service**: a lifecycle transition service owning the transition graph (`draft → confirmed → live → completed` plus cancellation paths), server-side transition validation, and `Audit`-row history, extending the status + Audit pattern the cancellation gate proved. There is no task-based `STATE_GATE` mechanism in code — the lifecycle skill has been corrected on this point; whether gates ever become task-backed is this item's design decision, not an existing constraint.
-2. **Fold in the cancellation gate**: the item 4 endpoints remain the cancellation UX but delegate to the transition service as its cancellation transitions. The three deferred ideation designs above are revisited **inside this item**, not before or after it.
+2. **Fold in the cancellation gate**: the item 4 endpoints remain the cancellation UX but delegate to the transition service as its cancellation transitions. The two deferred state-machine designs above are revisited **inside this item**, not before or after it. Notification publishing follows the [notification PRD](../prd/notification-system.md) and item 21 rather than a no-op gate-specific seam.
 3. **Route schedule publish through it**: automatic cancel/pending/restore status changes go through the same service, closing [`schedule-publish-removal-no-audit.md`](../tech-debt/schedule-publish-removal-no-audit.md) and [`schedule-publish-restore-no-audit.md`](../tech-debt/schedule-publish-restore-no-audit.md).
 4. **Retire free-form status editing**: generic edit paths stop accepting arbitrary `show_status_id`; the frontend replaces the status dropdown with guided transition actions.
 
@@ -283,9 +284,9 @@ Transitions stay manager-driven and **ungated**: readiness/completion conditions
 
 ### 21. State-transition notifications
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
+**Source**: [Operational Notifications and PWA Push](../prd/notification-system.md); [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §2
 
-**Blocked** — promote only after state machine, issue severity model, stakeholder list, channels, recipients, and timing rules are defined. Draft changes should remain quiet, confirmed-show changes should notify stakeholders, and near/on-air changes may need escalation based on issue severity and reason.
+**Blocked** — the notification PRD defines the common channels, recipients, and timing principles; activate this policy only after item 18 owns state transitions and item 9 defines issue severity. Draft changes remain quiet, confirmed-show changes notify selected stakeholders, and near/on-air changes may escalate based on severity and reason.
 
 **Boundary**: issue-event notifications are item 15. This item is only for lifecycle state transitions.
 

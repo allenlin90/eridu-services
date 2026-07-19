@@ -42,7 +42,12 @@ PRDs are **phase-scoped and transient**:
 
 ## Phase 5
 
-Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) has no PRDs of its own yet — pickup items are scoped directly as workstream briefs in the phase tracker rather than separate PRDs.
+Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) uses workstream briefs for additive lifecycle work. The cross-app notification capability introduces a new product and runtime pattern, so it has one active PRD:
+
+| PRD | Workstream | Status |
+| --- | --- | --- |
+| [Operational Notifications and PWA Push](./notification-system.md) | Notification center, read status, optional PWA push, and reusable event policies | Active requirements |
+
 - Studio schedule management was deferred (revisit with the Client Portal workstream); retained at [`future/studio-schedule-management.md`](./future/studio-schedule-management.md).
 - Future P&L revenue workflow is sketched in [`future/pnl-revenue-workflow.md`](./future/pnl-revenue-workflow.md); redraft when revenue planning restarts.
 - Member actuals attestation is retained at [`future/member-actuals-attestation.md`](./future/member-actuals-attestation.md); revisit when an authoritative hardware actuals source is operationally available.

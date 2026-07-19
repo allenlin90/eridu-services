@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from compensation line items Phase 2.2 actuals and snapshot readiness, May 2026
 > **Origin**: Actuals and snapshot audit policy discussion
-> **Related**: [show-change-notification-audit-ledger.md](./show-change-notification-audit-ledger.md), [Phase 4 roadmap (compensation line items PRs)](../roadmap/PHASE_4.md), [Economics cost model](../domain/economics-cost-model.md)
+> **Related**: [Operational Notifications and PWA Push](../prd/notification-system.md), [Phase 4 roadmap (compensation line items PRs)](../roadmap/PHASE_4.md), [Economics cost model](../domain/economics-cost-model.md)
 
 ## What
 
@@ -23,7 +23,7 @@ The first target domain is show and shift editing, with later reuse for schedule
 1. The current Phase 2.2 slice is scoped to actual timestamp fields and compensation snapshot readiness, not a full operational audit ledger.
 2. Late-edit policy needs product agreement on which changes are material enough to audit, which require a reason, and which should notify stakeholders.
 3. A general policy should be implemented once through shared helper/service boundaries instead of adding one-off checks to each controller.
-4. The notification/audit ledger topic is still deferred; late-edit auditing can ship independently, but it should not conflict with the future ledger model.
+4. Late-edit auditing can ship independently, but any user alert must follow the notification PRD's separate event and recipient policy.
 
 ## Decision Gates for Promotion
 
@@ -32,7 +32,7 @@ Promote to a PRD when **any** of these are true:
 1. Operators need to explain or reconcile changes made after a show, shift, assignment, or task has started.
 2. Product requires reason capture for schedule, status, assignment, compensation, or actual-time edits near execution time.
 3. Repeated postponements or late rescheduling create trust, payout, or reporting concerns.
-4. The show change notification/audit ledger is promoted and needs a concrete policy for material-change thresholds.
+4. An activated notification policy needs concrete material-change thresholds for audited edits.
 5. Finance or operations needs a user-visible change history for late edits before payout review.
 
 ## Implementation Notes (Preserved Context)
@@ -102,12 +102,12 @@ Start with fields that affect operations, payout, or reporting:
 
 Avoid logging cosmetic metadata, notes, and non-operational display fields in the first version unless product explicitly classifies them as auditable.
 
-### Relationship to Notification Ledger
+### Relationship to Notifications
 
-This policy defines **when** a mutation is auditable. The show change notification/audit ledger defines **where durable events live** and how stakeholder notifications are delivered.
+This policy defines **when** a mutation is auditable. The notification PRD defines which audited mutations also create a separate user-visible event and how recipients are selected.
 
 The safe sequence is:
 
 1. add shared late-edit audit decision helper
 2. write audit entries into existing metadata or a narrow audit table
-3. promote the broader mutation journal only when notification or cross-domain query needs justify it
+3. register a notification event policy only when a recipient and user-visible outcome are defined
