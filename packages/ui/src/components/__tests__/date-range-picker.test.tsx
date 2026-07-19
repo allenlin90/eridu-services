@@ -32,4 +32,16 @@ describe('datePickerWithRange', () => {
 
     expect(screen.getByRole('button', { name: 'Until Jul 19, 2026' })).toBeInTheDocument();
   });
+
+  it('lets consumers localize an end-only range label', () => {
+    render(
+      <DatePickerWithRange
+        date={{ from: undefined, to: new Date(2026, 6, 19) }}
+        setDate={vi.fn()}
+        formatEndOnlyLabel={() => 'Through Jul 19, 2026'}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Through Jul 19, 2026' })).toBeInTheDocument();
+  });
 });

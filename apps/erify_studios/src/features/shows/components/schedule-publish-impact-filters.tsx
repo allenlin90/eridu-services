@@ -95,6 +95,9 @@ function DateRangeFilter({
         <DatePickerWithRange
           id={id}
           placeholder={placeholder}
+          formatEndOnlyLabel={(endDate) => m.schedule_publish_impacts_filter_until_date({
+            date: format(endDate, 'LLL dd, y'),
+          })}
           className="min-w-0 flex-1"
           date={date}
           setDate={(nextRange) => {

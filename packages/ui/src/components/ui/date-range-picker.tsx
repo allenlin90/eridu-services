@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { DateRange } from 'react-day-picker';
 
 import { Button } from '@eridu/ui/components/ui/button';
@@ -21,6 +22,7 @@ export function DatePickerWithRange({
   onOpenChange,
   id = 'date',
   placeholder = 'Pick a date range',
+  formatEndOnlyLabel = (endDate) => `Until ${format(endDate, 'LLL dd, y')}`,
 }: {
   className?: string;
   date: DateRange | undefined;
@@ -29,6 +31,7 @@ export function DatePickerWithRange({
   onOpenChange?: (open: boolean) => void;
   id?: string;
   placeholder?: string;
+  formatEndOnlyLabel?: (endDate: Date) => ReactNode;
 }) {
   return (
     <div className={cn('grid gap-2', className)}>
@@ -61,7 +64,7 @@ export function DatePickerWithRange({
                       )
                 )
               : date?.to
-                ? `Until ${format(date.to, 'LLL dd, y')}`
+                ? formatEndOnlyLabel(date.to)
                 : (
                     <span>{placeholder}</span>
                   )}

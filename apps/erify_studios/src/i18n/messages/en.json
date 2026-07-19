@@ -26,6 +26,7 @@
   "schedule_publish_impacts_filter_show_time_placeholder": "Pick a show time range",
   "schedule_publish_impacts_filter_change_time": "Change time",
   "schedule_publish_impacts_filter_change_time_placeholder": "Pick a change time range",
+  "schedule_publish_impacts_filter_until_date": "Until {date}",
   "schedule_publish_impacts_filter_clear_range": "Clear {label} range",
   "schedule_publish_impacts_filter_impact_kind": "Impact kind",
   "schedule_publish_impacts_filter_kind_updated": "Updated",
