@@ -450,7 +450,7 @@ findings without implementing refactors or creating a parallel backlog.
 
 The scheduled scan should discover and compare signals. Human review decides whether evidence warrants implementation. Performance gates should use runtime measurements and observability rather than source counts.
 
-The persistence matrix and capability-first conventions in this document remain proposed until the pilot succeeds. The generic trigger-audit process can be adopted without making those proposed patterns canonical.
+Capability-first placement is accepted for new work. The persistence matrix remains proposed until the pilot succeeds: repository-first data access stays canonical in the meantime. The generic trigger-audit process applies to both the accepted placement rule and any pilot-gated pattern.
 
 ## Phased Refactoring Plan
 
@@ -496,7 +496,7 @@ Phase 0b is observability work. It does not block Phase 1 correctness fixes or t
 | Type the authorization membership value in `StudioGuard` | Focused guard specs and typecheck; do not wait for Phase 0 |
 | Replace `UtilityService` with pure UID/time utilities, or narrow it to an actual injectable adapter | Existing unit baseline and focused utility/service specs; no real-database dependency |
 | Fix or remove generic `BaseRepository.restore()` and implement the transaction-aware lazy delegate, or stop inherited base writes in transactions | Phase 0a real-database transaction, restore, and rollback characterization |
-| Reassess the 1,000-item schedule bulk limit | Phase 0b timeout/partial-success evidence; preserve the established sequential partial-success contract unless measurements justify change |
+| Reassess the 1,000-item schedule bulk limit | Phase 0a harness plus task-scoped timeout/partial-success measurements; preserve the established sequential partial-success contract unless measurements justify change |
 
 Keep these changes in small PRs. Do not combine them with folder moves.
 

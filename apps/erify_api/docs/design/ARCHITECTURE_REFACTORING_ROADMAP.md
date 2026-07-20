@@ -98,7 +98,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
 | T9 | Fix `BaseRepository.restore()` + tx-aware lazy delegate | M | T1 | ⏸ |
-| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 · T2 | ⏸ |
+| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | ⏸ |
 
 ### T9 — Fix `BaseRepository.restore()` + transaction-aware lazy delegate
 
@@ -109,21 +109,21 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 ### T10 — Reassess the 1,000-item schedule bulk limit
 
-- **Scope**: judge the bulk maximum against real timeout and partial-success evidence. Preserve the established sequential partial-success contract unless measurements justify a change; the likely outcome is "no change, now documented."
-- **Gate**: T1 (safety) and T2 (evidence).
+- **Scope**: use the isolated harness to collect task-scoped timeout and partial-success evidence for the bulk path, then judge the maximum. Preserve the established sequential partial-success contract unless measurements justify a change; the likely outcome is "no change, now documented." This is targeted characterization, not the deferred Phase 0b runtime-performance baseline.
+- **Gate**: T1 (isolated safety harness).
 - **Skills**: `database-patterns`, `schedule-continuity-workflow`.
 
 ## Wave 2 — the pilot (gates the rest)
 
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
-| T11 | Phase 2: `ShowStatus` persistence pilot | M | T1 | ⏸ |
+| T11 | Phase 2: `ShowStatus` persistence pilot | M | T1 · T9 | ⏸ |
 | T12 | Persistence-matrix acceptance (doctrine reconciliation) | M | T11 passes | ⏸ |
 
 ### T11 — Phase 2: `ShowStatus` persistence pilot
 
 - **Scope**: keep `ShowStatusService`'s public methods and API contracts stable; fold the shallow repository into the service via the transaction-aware delegate, or replace it with a small private query provider if pagination warrants. Evaluate files/registrations/mocks removed, controller-to-DB readability, soft-delete and transaction parity, whether any caller needed a repository API, and whether Prisma types leaked into the public contract.
-- **Gate**: T1.
+- **Gate**: T1 and T9 — the isolated harness and transaction-aware delegate must be available before the pilot.
 - **Skills**: `repository-pattern-nestjs`, `service-pattern-nestjs`.
 
 ### T12 — Persistence-matrix acceptance (doctrine reconciliation)
