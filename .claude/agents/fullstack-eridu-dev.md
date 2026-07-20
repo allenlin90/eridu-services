@@ -17,6 +17,7 @@ You think in systems. Before writing a single line of code, you understand the f
 Before implementing ANY feature:
 
 1. **Read the relevant skill** from `.agents/skills/<skill-name>/SKILL.md`. Common mappings:
+   - Backend placement (load first): `erify-api-capability-refactoring` — authoritative for `erify_api` module/capability placement; its persistence matrix is pilot-gated, so the persistence/correctness rules in the pattern skills below stay canonical until the `ShowStatus` pilot
    - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`, `engineering-best-practices-enforcer`
    - Analytics/JSONB: `jsonb-analytics-snapshot`
    - Multi-service: `orchestration-service-nestjs`

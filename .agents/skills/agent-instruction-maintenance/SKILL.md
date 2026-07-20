@@ -51,8 +51,9 @@ When a task changes an established pattern, convention, or architectural directi
 
 1. **Enumerate.** Grep the pattern name and the owning skill across the instruction surface:
    ```bash
-   grep -rln "<skill-name>\|<pattern-term>" .agents docs apps/*/docs AGENTS.md
+   grep -rln "<skill-name>\|<pattern-term>" .agents .claude docs apps/*/docs AGENTS.md
    ```
+   Include `.claude/` — Claude-specific agents (`.claude/agents/`) and memory (`.claude/memory/`) can route work to the old pattern too.
 2. **Classify each hit** — reconcile now (asserts the superseded pattern as canonical), routing pointer (add a direction note), or intentionally deferred (record the gate — e.g. pilot-gated doctrine; never leave it silently stale).
 3. **Reconcile in the same PR.** A canonical skill or doc left asserting the superseded pattern is a blocking inconsistency, not a follow-up.
 4. **Keep scope honest.** If a direction is only partly accepted (e.g. placement now, persistence pilot-gated), the skills must state exactly which part is active and which is gated — never blanket-deprecate ahead of the gate.

@@ -1,0 +1,5 @@
+# Superseded for placement by erify-api-capability-refactoring; reached deliberately
+# (via that skill's pointers or explicit invocation), so keep it out of the implicit
+# routing catalog rather than competing with the authoritative placement skill.
+policy:
+  allow_implicit_invocation: false

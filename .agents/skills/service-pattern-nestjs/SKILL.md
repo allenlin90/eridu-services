@@ -6,42 +6,96 @@ description: Legacy erify_api model-service pattern. Capability skill wins on pl
 # Service Pattern - NestJS (Superseded for placement)
 
 > **Superseded for architecture and placement selection.**
->
-> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is
-> authoritative for where a capability service, command/use case, or query provider
-> lives. Its persistence-matrix rules (direct `TransactionHost.tx`, retiring
-> `BaseRepository`) are pilot-gated — until the `ShowStatus` pilot lands, the persistence
-> and correctness rules below remain canonical.
+> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
+> decides *where* a capability service, command/use case, or query provider lives.
+> **This skill stays canonical for *how* a model service is implemented until the
+> `ShowStatus` pilot (roadmap T11/T12):** the persistence path (`BaseModelService`,
+> repository-backed CRUD) and every correctness rule below still apply to new and
+> refactored `erify_api` code. Do not adopt the pilot-gated direct-`txHost.tx`
+> persistence matrix outside the pilot PR.
 
-## Allowed Use
+Implementation guide for NestJS Services in Eridu.
 
-Use this skill only when maintaining untouched legacy model-service code where changing
-the architecture is explicitly outside the task scope.
+## Canonical Examples
 
-Do not use this skill to justify:
+Study these real implementations as the source of truth:
+- **Model Service**: [task-template.service.ts](../../../apps/erify_api/src/models/task-template/task-template.service.ts)
+- **Schema File**: [task-template.schema.ts](../../../apps/erify_api/src/models/task-template/schemas/task-template.schema.ts)
+- **Base Service**: [base-model.service.ts](../../../apps/erify_api/src/lib/services/base-model.service.ts)
 
-- creating a model service per Prisma model;
-- extending `BaseModelService` by default;
-- preserving pass-through services for pattern consistency;
-- forcing `Controller -> Service -> Repository` on new or refactored code;
-- placing business workflows under table-shaped modules.
+> See [references/service-examples.md](references/service-examples.md) for detailed code examples.
 
-For refactoring, follow the capability ownership, command/query separation, persistence
-decision matrix, transaction rules, and review checklist in the authoritative skill.
+## Service Architecture
 
-## Legacy Safety Rules
+```
+Controller → Service → Repository → Database
+               ├─ Model Services (single entity CRUD)
+               └─ Orchestration Services (multi-entity workflows)
+```
 
-When a task is strictly limited to legacy maintenance, continue to preserve these
-correctness constraints:
+### Model Services
 
-- keep Zod parsing at the transport boundary;
-- do not expose raw `Prisma.*` argument types through public service APIs;
-- make business-state transitions explicit;
-- preserve UID, optimistic-locking, soft-delete, audit, and error behavior;
-- route transaction-dependent persistence through `TransactionHost.tx`.
+Extend `BaseModelService`. Handle single-entity CRUD, UID generation, and domain logic.
 
-## Authority
+### Orchestration Services
 
-If this file conflicts with
-[`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md), the
-capability-refactoring skill wins.
+Coordinate multiple Model Services. Use `@Transactional()` for atomicity. See `orchestration-service-nestjs` skill.
+
+## Critical Rules
+
+### 1. Extend BaseModelService
+
+Define `UID_PREFIX` (no trailing underscore). Inject `UtilityService`. Use `this.generateUid()`.
+
+### 2. No ORM Coupling
+
+🔴 Services MUST NEVER import or use `Prisma.*` types in method signatures.
+
+- **Schema files** MAY use Prisma types to define payload types.
+- **Services** import payload types from schemas, not Prisma.
+- **Pass-through methods** use `Parameters<Repository['method']>` to match repo signatures.
+- **Money / `Prisma.Decimal`:** `Decimal` is a `Prisma.*` type — don't expose it in public service signatures; convert `Decimal` → string at the boundary. Format with the canonical `decimalToString` (`lib/utils`); don't add parallel money formatters with divergent semantics. A shared domain `Money` type is a deferred direction decision (see `docs/tech-debt/erify-api-refactor-residuals.md`).
+
+### 3. Never Call Zod `.parse()` in Services
+
+The controller/DTO layer validates input. Services accept typed payloads. Parsing again is double-validation in the wrong layer.
+
+### 4. Repository Owns Where-Clause Building
+
+Services pass domain-level parameters. Repositories build ORM-specific filters internally.
+
+### 5. Domain Transition Rule
+
+Business-state transitions (not generic field updates) must be explicit service actions with invariants: allowed states, blocking conditions, audit context, idempotent behavior.
+
+## Error Handling by Service Type
+
+| Service Type | Pattern |
+|---|---|
+| Model Service | Return `null` for not-found. Controller calls `ensureResourceExists()`. |
+| Orchestration Service | May throw `HttpError.badRequest()` / `HttpError.forbidden()` for cross-domain constraints. |
+| Controller | Verifies existence BEFORE calling mutation service. |
+
+## When Does a Model Service Justify Existing?
+
+A model service exists to generate UIDs, enforce invariants, translate payloads, and be the module's stable public API. A pass-through service is acceptable for pattern consistency and UID generation. A service with no UID generation and zero logic should be questioned.
+
+## Checklist
+
+- [ ] Extends `BaseModelService` with `UID_PREFIX` (no trailing underscore)
+- [ ] 🔴 Schema-defined payload types, never `Prisma.*` in service signatures
+- [ ] 🔴 Never calls Zod `.parse()` — accepts typed payloads
+- [ ] 🔴 `Parameters<Repository['method']>` for pass-through methods
+- [ ] 🔴 Repository builds where-clauses, not service
+- [ ] 🔴 Returns `null` for not-found (no throws in read operations)
+- [ ] Catches `VersionConflictError` → `HttpError.conflict()`
+- [ ] Bulk operations use repository bulk methods, not loops
+- [ ] Dedicated methods preferred over exposing `include` parameters
+- [ ] Mark internal orchestration methods with `@internal` JSDoc
+
+## Related Skills
+
+- [Repository Pattern](../repository-pattern-nestjs/SKILL.md) — Data access patterns
+- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Controller patterns
+- [Database Patterns](../database-patterns/SKILL.md) — Transactions, soft delete, locking
+- [Data Validation](../data-validation/SKILL.md) — Input validation patterns

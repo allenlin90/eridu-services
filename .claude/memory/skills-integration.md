@@ -112,6 +112,8 @@ Source of truth:
 
 ## Critical Skills Clarifications
 
+> **Placement authority (2026-07):** For `erify_api`, `erify-api-capability-refactoring` is now authoritative for *placement* (which capability owns a use case, where a workflow/persistence lives) and supersedes the two skills below for that decision. Its persistence-decision matrix is **pilot-gated** — repository-first persistence and the correctness rules in these skills stay canonical until the `ShowStatus` pilot (roadmap T11/T12). "PRIMARY" below means canonical for persistence/correctness, not for module placement.
+
 ### service-pattern-nestjs (PRIMARY)
 
 **Key Rules** (from skill):
@@ -309,7 +311,7 @@ async findPaginated(params: {
 ## Skills vs Memory Files
 
 ### When to Use Skills
-- ✅ **Creating new models** → `service-pattern-nestjs`, `repository-pattern-nestjs`
+- ✅ **Creating new `erify_api` capabilities/models** → `erify-api-capability-refactoring` first for placement, then `service-pattern-nestjs`, `repository-pattern-nestjs` for persistence/correctness (canonical until the `ShowStatus` pilot)
 - ✅ **Adding guards** → `erify-authorization`
 - ✅ **Frontend API** → `frontend-api-layer`, `frontend-state-management`
 - ✅ **Shared types** → `shared-api-types`
