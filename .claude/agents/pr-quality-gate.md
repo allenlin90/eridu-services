@@ -97,6 +97,9 @@ async create(payload: CreateTaskPayload): Promise<Task>  // ✅
 ```
 
 ### File Structure Compliance
+
+> **Placement superseded:** `/src/models/{domain}/` is the legacy table-first layout. New `erify_api` work is placed by business capability per `erify-api-capability-refactoring` — do not flag capability-first placement as non-compliant. The three-tier boundaries below and repository-first persistence stay canonical until the `ShowStatus` pilot (roadmap T11/T12).
+
 Backend:
 ```
 /src/models/{domain}/

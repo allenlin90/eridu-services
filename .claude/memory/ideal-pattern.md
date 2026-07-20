@@ -2,6 +2,8 @@
 
 **Based on analysis of task model (best service) + studio-membership model (best schema)**
 
+> **Placement superseded (2026-07).** The `/models/{domain}` layout below is the legacy **table-first placement**. For new `erify_api` work, [`erify-api-capability-refactoring`](../../.agents/skills/erify-api-capability-refactoring/SKILL.md) is authoritative for placement — organize by business capability, not one module/service/repository per Prisma model. What remains canonical here is the *persistence and correctness* pattern (three-tier schema, payload types, UID boundaries, `deletedAt` soft delete, repository-first data access); repository-first persistence stays canonical until the `ShowStatus` pilot (roadmap T11/T12) proves the persistence-decision matrix.
+
 ## File Structure
 
 ```
