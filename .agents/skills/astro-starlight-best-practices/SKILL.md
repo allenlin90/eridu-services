@@ -43,6 +43,9 @@ Default static. Use `client:visible` (below-fold), `client:idle` (medium), `clie
 ### 9) Images
 Use `astro:assets` (`<Image />`, `<Picture />`). `alt` mandatory. `public/` images are not optimized.
 
+### 10) Generated Types
+Astro content types must exist before plain `tsc` runs. Typecheck scripts that invoke `tsc --noEmit` directly must run `astro sync` first so a fresh checkout does not depend on a prior `astro check`, build, or dev process.
+
 ## Verification
 
 ```bash

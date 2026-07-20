@@ -7,7 +7,7 @@
     "start": "node ./dist/server/entry.mjs",
     "build": "astro build && node ./scripts/build-pagefind-index.mjs",
     "lint": "astro check",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "astro sync && tsc --noEmit",
     "preview": "astro preview",
     "astro": "astro"
   },
