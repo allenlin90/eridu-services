@@ -1,6 +1,6 @@
 # `erify_api` Architecture Refactoring Guide
 
-> **Status**: Proposed direction
+> **Status**: Accepted direction — capability-first placement is the default for new `erify_api` work as of the merge of this guide. The persistence-matrix rule (a simple capability service using `TransactionHost.tx` directly instead of a repository) stays pilot-gated: repository-first data-access remains canonical until the `ShowStatus` pilot proves the matrix and reconciles all repository-first doctrine in the same PR.
 > **Source snapshot**: `f677b627` (PR base; `apps/erify_api/src` is unchanged through current `master`)
 > **Scope**: Structure, module ownership, service and persistence boundaries, DDD, CQRS, runtime composition, testing, and performance guardrails
 > **Visual companion**: [`architecture-refactoring-visual.html`](./architecture-refactoring-visual.html) — a diagrammed walkthrough of the problem, the NestJS-vs-Rails philosophy, Nest conventions, the phased plan, and the risks. Open it in a browser.
