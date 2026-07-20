@@ -1,15 +1,18 @@
 ---
 name: repository-pattern-nestjs
-description: DEPRECATED legacy erify_api repository pattern. Do not use BaseRepository by default; use erify-api-capability-refactoring first.
+description: Legacy erify_api repository pattern. Capability skill wins on placement; repository-first persistence stays canonical until the ShowStatus pilot.
 ---
 
-# Repository Pattern - Prisma/NestJS (Deprecated)
+# Repository Pattern - Prisma/NestJS (Superseded for placement)
 
-> **Deprecated for new code and refactoring.**
+> **Superseded for architecture and placement selection.**
 >
-> Use [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
-> as the authoritative architecture skill. Repositories are now selective persistence
-> tools, not the default layer for every Prisma model.
+> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is
+> authoritative for where persistence lives and whether a capability needs a repository.
+> Its persistence-matrix rules — repositories as selective tools, direct
+> `TransactionHost.tx`, retiring `BaseRepository` — are **pilot-gated**. Until the
+> `ShowStatus` pilot lands, repository-first data access and `BaseRepository.softDelete()`
+> remain canonical for persistence, and the safety rules below apply.
 
 ## Allowed Use
 
@@ -25,10 +28,11 @@ Do not use this skill to justify:
 - exporting repositories for cross-module convenience;
 - relying on inherited `BaseRepository` methods inside transactions.
 
-For new or refactored code, apply the persistence decision matrix in the authoritative
-capability-refactoring skill. Shallow capability services may use
-`TransactionHost.tx.<model>` directly. Specialized repositories remain appropriate for
-complex queries, optimistic writes, raw SQL, aggregate persistence, synchronization,
+For placement, apply the capability-ownership rules in the capability-refactoring skill.
+The persistence-decision matrix there (shallow capability services using
+`TransactionHost.tx.<model>` directly) is pilot-gated: until the `ShowStatus` pilot is
+accepted, keep persistence in a repository. Specialized repositories remain appropriate
+for complex queries, optimistic writes, raw SQL, aggregate persistence, synchronization,
 audit storage, and transaction-sensitive operations.
 
 ## Legacy Safety Rules
@@ -47,8 +51,9 @@ When a task is strictly limited to legacy repository maintenance:
 
 `BaseRepository` is not an approved default for expansion. Its broad generic types leak
 Prisma concepts, inherited delegates are not transaction-aware, and its generic
-`restore()` behavior is incorrect for deleted rows. Refactoring should retire or replace
-it rather than reproduce it.
+`restore()` behavior is incorrect for deleted rows. Do not expand its use or add new
+reliance on its unsafe inherited behavior. Retiring or replacing it is the pilot-gated
+destination (roadmap T9/T11) — not a change to make outside that work.
 
 ## Authority
 

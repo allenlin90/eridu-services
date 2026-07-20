@@ -269,7 +269,7 @@ The full iteration log is in PR #104's commit history: `f9014f84` → `8d2e84d8`
 
 ## Related skills
 
-- [orchestration-service-nestjs](../orchestration-service-nestjs/SKILL.md) — `TaskOrchestrationService.submitTaskContent` is the canonical caller; "Race-Safe Writes on Persisted-Scope Entities" section is required reading
+- [orchestration-service-nestjs](../orchestration-service-nestjs/SKILL.md) — `TaskOrchestrationService.submitTaskContent` is the canonical caller; the race-safe-write and JSON-discriminator-guard rules under "Legacy Safety Rules" are required reading
 - [service-pattern-nestjs](../service-pattern-nestjs/SKILL.md) — model service surface
 - [database-patterns](../database-patterns/SKILL.md) — `@Transactional()` + CLS
 - [backend-testing-patterns](../backend-testing-patterns/SKILL.md) — Jest module wiring with CLS-transactional

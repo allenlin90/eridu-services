@@ -208,6 +208,7 @@ Full reference: `.claude/memory/monorepo-package-rules.md`
 - [ ] `apps/*/docs/README.md` Features table lists promoted docs with `✅` and correct paths (not `design/` paths).
 - [ ] `apps/*/docs/design/README.md` contains only active design proposals; no shipped/implemented items remain in the design index.
 - [ ] Accepted non-blocking review issues are captured in `docs/tech-debt/` with scope, risk, trigger to fix, and acceptance criteria.
+- [ ] **If this PR changes an established pattern, convention, or architectural direction** (deprecates/supersedes a skill, flips a default, changes a doctrine): every skill/rule/workflow/doc asserting the old pattern is reconciled in this PR, or explicitly deferred with a recorded gate. Enumerate via `grep -rln "<skill/pattern>" .agents docs apps/*/docs AGENTS.md`. A canonical doc left asserting the superseded pattern is **BLOCKING**. If the direction is only partly accepted, the skills state which part is active and which is gated. See `agent-instruction-maintenance` § Pattern or Direction Change Gate.
 - [ ] No stale links to deleted or moved files.
 
 ---

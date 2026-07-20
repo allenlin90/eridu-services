@@ -1,16 +1,17 @@
 ---
 name: orchestration-service-nestjs
-description: DEPRECATED legacy erify_api orchestration pattern. Do not create orchestration services by default; use erify-api-capability-refactoring first.
+description: Legacy erify_api orchestration pattern. Capability skill wins on placement; workflow correctness rules here stay canonical until the ShowStatus pilot.
 ---
 
-# Orchestration Service Pattern - NestJS (Deprecated)
+# Orchestration Service Pattern - NestJS (Superseded for placement)
 
-> **Deprecated for new code and refactoring.**
+> **Superseded for architecture and placement selection.**
 >
-> Use [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
-> as the authoritative architecture skill. Cross-model behavior does not automatically
-> require a generic orchestration layer; place workflows under the business capability
-> that owns the use case.
+> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is
+> authoritative for where a cross-model workflow lives: place it under the business
+> capability that owns the use case rather than a generic orchestration layer. The
+> workflow correctness rules below (transactions, advisory locks, race-safe writes)
+> remain canonical.
 
 ## Allowed Use
 

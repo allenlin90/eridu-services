@@ -1,16 +1,17 @@
 ---
 name: service-pattern-nestjs
-description: DEPRECATED legacy erify_api model-service pattern. Do not use for new code or refactoring; use erify-api-capability-refactoring first.
+description: Legacy erify_api model-service pattern. Capability skill wins on placement; persistence and correctness rules here stay canonical until the ShowStatus pilot.
 ---
 
-# Service Pattern - NestJS (Deprecated)
+# Service Pattern - NestJS (Superseded for placement)
 
-> **Deprecated for new code and refactoring.**
+> **Superseded for architecture and placement selection.**
 >
-> Use [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
-> as the authoritative architecture skill. It decides whether a capability service,
-> named command/use case, query provider, specialized repository, or direct
-> transaction-aware Prisma access is appropriate.
+> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is
+> authoritative for where a capability service, command/use case, or query provider
+> lives. Its persistence-matrix rules (direct `TransactionHost.tx`, retiring
+> `BaseRepository`) are pilot-gated — until the `ShowStatus` pilot lands, the persistence
+> and correctness rules below remain canonical.
 
 ## Allowed Use
 

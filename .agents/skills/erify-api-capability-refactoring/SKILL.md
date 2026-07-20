@@ -1,27 +1,27 @@
 ---
 name: erify-api-capability-refactoring
-description: >
-  Guide refactoring decisions in apps/erify_api. Use when changing NestJS modules,
-  services, repositories, Prisma access, transactions, complex workflows, read paths,
-  MCP composition, or tests. Prefer capability ownership and explicit use cases while
-  preserving established correctness conventions.
+description: Capability-first placement for apps/erify_api NestJS refactors — modules, persistence, transactions, workflows, read paths, MCP. Matrix stays pilot-gated.
 ---
 
 # `erify_api` Capability Refactoring Skill
 
-## Authority and Deprecation Policy
+## Authority and Scope
 
-This is the authoritative architecture skill for all new `erify_api` code and every refactoring task. Read and apply it before any lower-level implementation skill.
+This is the authoritative skill for **capability placement** in `erify_api`: which capability owns a use case, where a workflow lives, and how modules, transports, and read paths are organized. Read and apply it before any lower-level implementation skill when deciding structure.
 
-The following skills are deprecated architectural patterns and must not be used to select a design:
+For that placement decision it supersedes the design-selection guidance in:
 
 - `service-pattern-nestjs`
 - `repository-pattern-nestjs`
 - `orchestration-service-nestjs`
 
-They may be consulted only for safety constraints while maintaining untouched legacy code whose architecture is explicitly outside the task scope. They must not justify adding new model-shaped services, default repositories, `BaseRepository`, generic orchestration services, or table-first modules.
+Do not use those three skills to justify adding a new model-shaped service, a repository per Prisma model, a default `BaseRepository`, a generic orchestration service, or a table-first module. For that decision, this skill wins.
 
-When instructions conflict, this skill wins. Refactoring should actively remove deprecated patterns when doing so is within the selected capability scope and characterization coverage protects behavior.
+### Persistence doctrine is pilot-gated
+
+Capability-first **placement** is active now. The **persistence-decision matrix** — a shallow capability service using `TransactionHost.tx.<model>` directly instead of a repository, and retiring `BaseRepository` as the default — is **proposed and pilot-gated**, not yet canonical. Per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md), repository-first data access stays canonical until the `ShowStatus` pilot (roadmap T11) proves the matrix and reconciles all repository-first doctrine in one PR (T12).
+
+Until that pilot lands, for persistence keep using repositories and `BaseRepository.softDelete()` per [`repository-pattern-nestjs`](../repository-pattern-nestjs/SKILL.md) and [`database-patterns`](../database-patterns/SKILL.md). The sections below that describe direct-Prisma access and `BaseRepository` retirement are the **destination** — apply them only inside the pilot or once it is accepted. Do not flip persistence doctrine outside the pilot PR.
 
 ## Purpose
 
@@ -542,15 +542,15 @@ For each refactoring PR:
 
 ## Migration Priorities
 
-Recommended order:
+This is a destination map and dependency order, not a scheduled queue. Each step activates only on its trigger; do not start a later step ahead of its gate. [`ARCHITECTURE_REFACTORING_ROADMAP.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_ROADMAP.md) is the authoritative task and gate list.
 
-1. Correct or retire unsafe generic `BaseRepository` behavior.
-2. Stop adding table-shaped modules and pass-through repositories.
-3. Pilot shallow direct persistence on one low-risk reference capability.
+1. Correct or retire unsafe generic `BaseRepository` behavior (roadmap T9).
+2. Stop adding table-shaped modules and pass-through repositories (placement rule, active now).
+3. Pilot shallow direct persistence on one low-risk reference capability — the `ShowStatus` pilot (roadmap T11), gated on step 1 and the safety harness. Persistence doctrine flips only if this pilot is accepted (T12); until then repository-first stays canonical.
 4. Consolidate show reference data into a coherent catalog capability.
-5. Decompose studio show management by use case behind a stable facade.
+5. Decompose studio show management by use case behind a stable facade — a destination map, not a standalone move; activates when Phase 5 show-lifecycle work (roadmap item 18) starts or an earlier change already requires the same decomposition.
 6. Decompose schedule publishing into planning, application, reconciliation, and query
-   responsibilities.
+   responsibilities — activates only when item 18 touches `PublishingService` or measured evidence justifies it; until then preserve the current publishing facade and transactional boundary.
 7. Narrow MCP composition to read-only query providers.
 8. Add real-database transaction and module-wiring tests.
 9. Re-evaluate `@nestjs/cqrs` only after explicit commands and queries are established.
