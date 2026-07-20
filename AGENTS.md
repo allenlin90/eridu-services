@@ -134,6 +134,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ### Core Engineering Rules
 - Never expose DB internal IDs from API responses. Use UID-based external IDs.
 - Backend (`erify_api`) follows repository/service/controller separation.
+- New `erify_api` work follows the capability-first modular-monolith direction ([`ARCHITECTURE_REFACTORING_GUIDE.md`](apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)): place a use case with the business capability that owns the rule instead of adding another table-first or audience-first slice; do not create a Nest module or repository per Prisma model by default; keep persistence providers private, retaining a repository only when it hides real persistence complexity; introduce no global CQRS bus, speculative interface, exported repository, or folder migration without a demonstrated trigger. This changes code **placement** now — it does not change persistence doctrine: "repository for all DB access" and repository/service/controller separation remain canonical until the `ShowStatus` pilot proves the persistence-decision matrix and reconciles all repository-first doctrine in the same PR.
 - Use Zod schemas and consistent snake_case (API) <-> camelCase (service/domain) transformations.
 - Prefer bulk DB operations and relation includes over N+1 query patterns.
 - Maintain strict typing. Do not bypass with `any` or `@ts-ignore` unless explicitly requested.
@@ -262,6 +263,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm sherif
+pnpm architecture:signals
 ```
 
 ### Backend API Patterns

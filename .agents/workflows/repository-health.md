@@ -11,11 +11,12 @@ Run this workflow at least once per phase, before starting a hardening program, 
 Produce one severity-ordered report containing:
 
 1. verified findings with file references;
-2. existing register entries that already cover each finding;
-3. impact, risk, and a measurable trigger to fix;
-4. the smallest reviewable work-item sequence;
-5. verification commands and outcomes;
-6. documentation, skill, workflow, and register updates made during bookkeeping.
+2. current architecture signals compared with the previous recorded snapshot when one exists;
+3. existing register entries that already cover each finding;
+4. impact, risk, and a measurable trigger to fix;
+5. the smallest reviewable work-item sequence;
+6. verification commands and outcomes;
+7. documentation, skill, workflow, and register updates made during bookkeeping.
 
 Classify proposed changes as behavior-preserving, adjacent, or behavior-changing. A periodic review may update bookkeeping artifacts, but implementation work should land as separate scoped PRs.
 
@@ -27,10 +28,23 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm architecture:signals
 bash .agents/skills/engineering-best-practices-enforcer/scripts/scan-quality-signals.sh
 ```
 
 Record failures by workspace. A script that prints `No tests specified` is a coverage gap, not a passing test suite. Do not run fix-mode lint against a dirty worktree unless the resulting edits are in scope.
+
+Record a lightweight architecture snapshot in the review report or PR description. Compare it with the last available snapshot rather than treating an isolated count as a finding. Include, where applicable:
+
+- module nodes, local edges, cycles, and `forwardRef` usage;
+- shallow modules and modules that primarily re-export providers;
+- behavior-bearing backend files above roughly 600 LOC and frontend route/feature modules above roughly 200 LOC;
+- services with roughly more than eight injected collaborators;
+- exported repositories and cross-capability persistence imports;
+- REST, MCP, and worker runtime import closures;
+- public service signatures that expose ORM query types.
+
+If a signal is not mechanically measurable yet, record the sampled files and manual evidence. Do not invent precision.
 
 ## Step 2 — Audit the implementation
 
@@ -46,6 +60,8 @@ Check:
 - **Workspace/package health** — `workspace:*` dependencies, lockfile alignment, runtime exports from `dist`, build declarations/maps, script parity, and shared-package consumer validation.
 
 Confirm every candidate against source. Counts and scanners are discovery tools, not findings.
+
+For each changed signal, classify it using the PR review vocabulary: hard invariant, local design signal, existing decision trigger, strategic architecture gate, or repository trend. Reconcile only verified triggers; do not turn every threshold crossing into an implementation project.
 
 ## Step 3 — Audit knowledge alignment
 
@@ -86,11 +102,15 @@ Turn accepted work into small items. Each item must state scope, invariant, char
 - Keep dated evidence in the PR description or an explicitly requested report; keep canonical docs written as current truth.
 - Schedule the next review at the next phase boundary or within three months, whichever comes first.
 
+A lightweight read-only signal scan may also run monthly as a scheduled task. It should report changes from the previous snapshot and invoke `$repository-health`; it must not automatically refactor code or create a second backlog. The full human review remains phase-boundary or at least quarterly work.
+
 ## Completion checklist
 
 - [ ] Baseline and workspace-specific failures recorded.
+- [ ] Architecture signals compared with the previous snapshot where available.
 - [ ] All apps and shared packages sampled against their canonical patterns.
 - [ ] High-severity findings verified against source.
+- [ ] Trigger crossings classified without treating advisory thresholds as automatic failures.
 - [ ] Existing registers reconciled before new entries were created.
 - [ ] Documentation and agent guidance checked for lifecycle drift.
 - [ ] Work items are independently reviewable and behavior changes are explicit.

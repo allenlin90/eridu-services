@@ -11,6 +11,9 @@ Active design documents for planned and in-progress features. Once a feature shi
 5. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
 6. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — Deferred Phase 5 (revisit for Client Portal)
 7. [Show-Level Issue Ownership](./SHOW_ISSUE_OWNERSHIP_DESIGN.md) — Phase 5 item 9 design locked for implementation
+8. [`erify_api` Architecture Refactoring Guide](./ARCHITECTURE_REFACTORING_GUIDE.md) — Accepted capability-first modular-monolith direction with a pilot-gated persistence matrix and CQRS decision gates
+   - [Visual Companion](./architecture-refactoring-visual.html) — diagrammed walkthrough (problem, NestJS-vs-Rails philosophy, Nest conventions, phased plan, risks); open in a browser
+   - [Implementation Roadmap](./ARCHITECTURE_REFACTORING_ROADMAP.md) — the follow-up task backlog (T1–T13) for the do-now foundation, with gates, skills, and knowledge-sync targets
 
 ## Note
 

@@ -252,7 +252,9 @@ Feature-specific exports remain focused: planning, task setup, creator mapping, 
 
 ### 18. Show lifecycle state machine
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine; [`Show Cancellation Gate`](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md); ideation docs [`schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md) and [`cancellation-gate-note-amendment.md`](../ideation/cancellation-gate-note-amendment.md)
+**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle State Machine; [`Show Cancellation Gate`](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md); [`erify_api` Architecture Refactoring Guide](../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md#phase-4--trigger-gated-show-operations); ideation docs [`schedule-publish-gate-unification.md`](../ideation/schedule-publish-gate-unification.md) and [`cancellation-gate-note-amendment.md`](../ideation/cancellation-gate-note-amendment.md)
+
+**Architecture activation**: item 18 activates Phase 4 of the architecture guide. Implement the transition service inside `ShowOperationsModule`; do not create a fifth parallel writer or perform a standalone folder move. Its schedule-publish integration activates the guide's Phase 5 only when that integration requires `PublishingService` decomposition, or when measured query, lock, rollback, or maintainability risk independently reaches the guide's gate.
 
 **Scope decision (July 2026 review)**: item 18 is the **single canonical show-status transition mechanism**, not a fifth parallel writer. Today `Show.status` is written by four independent paths with uneven validation: studio generic edit (guards only the two cancellation statuses), admin generic edit (no validation — item 8 closes the immediate bypass), `ShowCancellationGateService` (the only path with reason capture, actor-tier checks, active-task guard, and Audit history), and schedule publish (direct writes, no audit — tracked tech debt). Item 18 converges them:
 

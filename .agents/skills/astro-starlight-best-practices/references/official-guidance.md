@@ -15,6 +15,11 @@ Primary sources used for this skill.
   - Key points:
     - Content collections are Astro’s recommended way to manage and type-check structured content.
     - Schemas are powered by `astro/zod`.
+- CLI sync command:
+  - https://docs.astro.build/en/reference/cli-reference/#astro-sync
+  - Key points:
+    - `astro sync` generates TypeScript types for Astro modules and content collections.
+    - Run it before standalone `tsc` checks that cannot assume another Astro command has generated `.astro/types.d.ts`.
 - Images:
   - https://docs.astro.build/en/guides/images/
   - Key points:

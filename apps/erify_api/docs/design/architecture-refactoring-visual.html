@@ -1,0 +1,1091 @@
+<title>erify_api — Architecture Direction, Visualized</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #e9ecef;
+    --surface: #fbfcfd;
+    --surface-2: #f1f4f6;
+    --ink: #15202b;
+    --muted: #5c6875;
+    --faint: #8794a1;
+    --rule: #d3d9df;
+    --rule-strong: #b9c1c9;
+    --current: #63718a;
+    --current-tint: #e7eaf0;
+    --target: #0a8a72;
+    --target-tint: #dcefe9;
+    --warn: #a56a12;
+    --warn-tint: #f2e8d4;
+    --danger: #a83c2c;
+    --danger-tint: #f1ddd8;
+    --shadow: 0 1px 2px rgba(20,32,43,.05), 0 6px 20px rgba(20,32,43,.06);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --maxw: 1080px;
+    --readw: 70ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1319;
+      --surface: #181e26;
+      --surface-2: #1e2630;
+      --ink: #e8edf2;
+      --muted: #9aa6b3;
+      --faint: #6d7a88;
+      --rule: #2a333d;
+      --rule-strong: #384451;
+      --current: #8a97ad;
+      --current-tint: #232b36;
+      --target: #2bbda2;
+      --target-tint: #16302b;
+      --warn: #d8a24a;
+      --warn-tint: #2e2818;
+      --danger: #e0705c;
+      --danger-tint: #2f1f1b;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #e9ecef; --surface: #fbfcfd; --surface-2: #f1f4f6; --ink: #15202b;
+    --muted: #5c6875; --faint: #8794a1; --rule: #d3d9df; --rule-strong: #b9c1c9;
+    --current: #63718a; --current-tint: #e7eaf0; --target: #0a8a72; --target-tint: #dcefe9;
+    --warn: #a56a12; --warn-tint: #f2e8d4; --danger: #a83c2c; --danger-tint: #f1ddd8;
+    --shadow: 0 1px 2px rgba(20,32,43,.05), 0 6px 20px rgba(20,32,43,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1319; --surface: #181e26; --surface-2: #1e2630; --ink: #e8edf2;
+    --muted: #9aa6b3; --faint: #6d7a88; --rule: #2a333d; --rule-strong: #384451;
+    --current: #8a97ad; --current-tint: #232b36; --target: #2bbda2; --target-tint: #16302b;
+    --warn: #d8a24a; --warn-tint: #2e2818; --danger: #e0705c; --danger-tint: #2f1f1b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .read { max-width: var(--readw); }
+
+  /* ---- type ---- */
+  h1, h2, h3 { text-wrap: balance; line-height: 1.12; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  h1 { font-size: clamp(2rem, 5vw, 3.1rem); letter-spacing: -.025em; }
+  h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); letter-spacing: -.02em; }
+  h3 { font-size: 1.14rem; letter-spacing: -.01em; }
+  p { margin: 0 0 1rem; color: var(--ink); }
+  .lede { font-size: 1.2rem; color: var(--muted); }
+  strong { font-weight: 680; }
+  .mono { font-family: var(--mono); }
+  code {
+    font-family: var(--mono); font-size: .86em;
+    background: var(--surface-2); border: 1px solid var(--rule);
+    padding: .08em .38em; border-radius: 5px; white-space: nowrap;
+  }
+  .eyebrow {
+    font-family: var(--mono); font-size: .72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .18em; color: var(--target);
+  }
+
+  /* ---- header ---- */
+  header.hero {
+    border-bottom: 1px solid var(--rule);
+    background:
+      linear-gradient(var(--bg), var(--bg)) padding-box,
+      repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px 100%) border-box;
+    padding: clamp(3rem, 9vw, 6rem) 0 clamp(2rem, 5vw, 3.5rem);
+    position: relative;
+  }
+  .hero-grid {
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 26px 26px;
+    background-position: center;
+    -webkit-mask-image: radial-gradient(120% 80% at 50% 0%, #000 30%, transparent 72%);
+    mask-image: radial-gradient(120% 80% at 50% 0%, #000 30%, transparent 72%);
+    opacity: .5;
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  }
+  header.hero .wrap { position: relative; z-index: 1; }
+  .hero h1 { margin-bottom: 1.1rem; }
+  .kicker {
+    display: inline-flex; align-items: center; gap: .55rem;
+    font-family: var(--mono); font-size: .74rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    border: 1px solid var(--rule-strong); border-radius: 999px;
+    padding: .32rem .7rem; margin-bottom: 1.6rem; background: var(--surface);
+  }
+  .kicker .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--target); }
+  .verdict-row { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.8rem; }
+  .verdict-chip {
+    font-family: var(--mono); font-size: .78rem; letter-spacing: .02em;
+    border: 1px solid var(--rule-strong); border-radius: 7px;
+    padding: .5rem .8rem; background: var(--surface); color: var(--muted);
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .verdict-chip b { color: var(--ink); font-weight: 640; }
+
+  /* ---- plates ---- */
+  main { padding-bottom: 5rem; }
+  .plate { padding: clamp(2.6rem, 6vw, 4.4rem) 0; border-bottom: 1px solid var(--rule); }
+  @media (max-width: 720px) { .trace-grid { grid-template-columns: 1fr; } }
+  .plate-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.6rem; }
+  .plate-head .idx {
+    font-family: var(--mono); font-weight: 700; font-size: .82rem;
+    color: var(--target); letter-spacing: .05em; padding-top: .25rem;
+    flex: none; width: 3.1rem;
+  }
+  .plate-head .htext h2 { margin-bottom: .5rem; }
+  .plate-head .htext p { margin: 0; color: var(--muted); }
+
+  /* ---- generic card ---- */
+  .card {
+    position: relative; background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 12px; padding: 1.35rem 1.4rem; box-shadow: var(--shadow);
+  }
+  /* blueprint corner ticks */
+  .tick::before, .tick::after {
+    content: ""; position: absolute; width: 9px; height: 9px;
+    border-color: var(--rule-strong); border-style: solid; pointer-events: none;
+  }
+  .tick::before { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+  .tick::after { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+
+  /* ---- stat tiles ---- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .stat { position: relative; padding: 1.25rem 1.3rem 1.15rem; }
+  .stat .figure {
+    font-family: var(--mono); font-weight: 700; font-size: 2.15rem; line-height: 1;
+    letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+  }
+  .stat .figure .unit { font-size: .95rem; color: var(--faint); font-weight: 600; margin-left: .15rem; }
+  .stat .label { margin-top: .55rem; font-size: .92rem; color: var(--muted); line-height: 1.4; }
+  .stat.flag .figure { color: var(--danger); }
+  .stat.warnfig .figure { color: var(--warn); }
+
+  /* ---- meter ---- */
+  .meter { margin-top: .7rem; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--rule); }
+  .meter > span { display: block; height: 100%; border-radius: 999px; }
+
+  /* ---- two-column compare ---- */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+  .compare .col-head {
+    display: flex; align-items: center; gap: .55rem; margin-bottom: 1rem;
+    font-family: var(--mono); font-size: .78rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 600;
+  }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .col.current .col-head { color: var(--current); }
+  .col.target .col-head { color: var(--target); }
+
+  /* ---- pipeline (path) ---- */
+  .pipe { display: flex; flex-wrap: wrap; align-items: center; gap: .38rem; }
+  .hop {
+    font-family: var(--mono); font-size: .8rem; padding: .4rem .6rem; border-radius: 7px;
+    border: 1px solid var(--rule-strong); background: var(--surface-2); white-space: nowrap;
+  }
+  .col.current .hop { border-color: var(--current); color: var(--ink); }
+  .col.target .hop { border-color: var(--target); background: var(--target-tint); color: var(--ink); }
+  .arrow { color: var(--faint); font-family: var(--mono); font-weight: 700; }
+  .hop.leak { border-style: dashed; border-color: var(--danger); color: var(--danger); background: var(--danger-tint); }
+  .path-note { margin-top: .9rem; font-size: .86rem; color: var(--muted); }
+  .path-note b { font-family: var(--mono); }
+
+  /* ---- axis diagram ---- */
+  .axis-scroll { overflow-x: auto; padding-bottom: .4rem; }
+  .axis { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0; align-items: stretch; min-width: 620px; }
+  .axis-col { padding: 1rem .9rem; }
+  .axis-col h4 {
+    margin: 0 0 .8rem; font-family: var(--mono); font-size: .72rem; text-transform: uppercase;
+    letter-spacing: .09em; color: var(--muted); font-weight: 600;
+  }
+  .axis-chip {
+    font-family: var(--mono); font-size: .78rem; padding: .34rem .5rem; border-radius: 6px;
+    border: 1px solid var(--rule); margin-bottom: .4rem; background: var(--surface-2); color: var(--muted);
+  }
+  .axis-chip.hit { border-color: var(--danger); background: var(--danger-tint); color: var(--ink); font-weight: 600; }
+  .axis-join { display: flex; align-items: center; justify-content: center; color: var(--faint); font-family: var(--mono); font-size: 1.3rem; padding: 0 .3rem; }
+
+  /* ---- philosophy mental-model table ---- */
+  .mm-scroll { overflow-x: auto; padding-bottom: .3rem; }
+  .mm {
+    display: grid; grid-template-columns: minmax(140px, .82fr) 1.3fr 1.3fr; min-width: 680px;
+    border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);
+  }
+  .mm > div { padding: .9rem 1.05rem; border-bottom: 1px solid var(--rule); font-size: .89rem; line-height: 1.5; }
+  .mm > div:nth-child(3n+2), .mm > div:nth-child(3n) { border-left: 1px solid var(--rule); }
+  .mm > div:nth-last-child(-n+3) { border-bottom: none; }
+  .mm-head {
+    font-family: var(--mono); font-size: .71rem; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 600; background: var(--surface-2); color: var(--muted);
+  }
+  .mm-head.cur { color: var(--current); }
+  .mm-head.tgt { color: var(--target); }
+  .mm .dim { font-family: var(--mono); font-size: .77rem; font-weight: 600; color: var(--ink); background: var(--surface-2); }
+  .mm .tgt-cell { background: var(--target-tint); }
+
+  /* ---- reasons ---- */
+  .reasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 16px; }
+  .reason { padding: 1.2rem 1.25rem; }
+  .reason h4 { margin: 0 0 .5rem; font-size: .98rem; font-weight: 640; }
+  .reason h4 .rk { font-family: var(--mono); color: var(--target); font-size: .82rem; margin-right: .45rem; }
+  .reason p { margin: 0; font-size: .88rem; color: var(--muted); line-height: 1.5; }
+
+  /* ---- conventions ---- */
+  .conv-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+  .conv { display: flex; gap: 1rem; align-items: flex-start; padding: 1.2rem 1.3rem; }
+  .conv .cn { font-family: var(--mono); font-weight: 700; color: var(--target); font-size: 1.05rem; flex: none; line-height: 1.4; font-variant-numeric: tabular-nums; }
+  .conv .ct { font-weight: 640; font-size: 1rem; margin-bottom: .35rem; }
+  .conv .cw { font-size: .87rem; color: var(--muted); line-height: 1.55; }
+  .conv .cw b { color: var(--target); font-weight: 700; font-family: var(--mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; margin-right: .4rem; }
+
+  /* ---- ladder (CQRS) ---- */
+  .ladder-scroll { overflow-x: auto; }
+  .ladder { display: flex; gap: 0; min-width: 640px; margin-top: .4rem; }
+  .rung { flex: 1; padding: 1rem .85rem 1.1rem; border: 1px solid var(--rule); border-right: none; position: relative; background: var(--surface); }
+  .rung:last-child { border-right: 1px solid var(--rule); border-radius: 0 10px 10px 0; }
+  .rung:first-child { border-radius: 10px 0 0 10px; }
+  .rung .lv { font-family: var(--mono); font-size: .72rem; color: var(--faint); font-weight: 600; }
+  .rung .lt { font-weight: 640; font-size: .96rem; margin: .3rem 0 .35rem; }
+  .rung .ld { font-size: .82rem; color: var(--muted); line-height: 1.4; }
+  .rung.here { background: var(--current-tint); border-color: var(--current); }
+  .rung.goal { background: var(--target-tint); border-color: var(--target); }
+  .rung .pin {
+    position: absolute; top: -11px; left: .85rem; font-family: var(--mono); font-size: .64rem;
+    text-transform: uppercase; letter-spacing: .08em; font-weight: 700; padding: .12rem .45rem; border-radius: 5px; color: #fff;
+  }
+  .rung.here .pin { background: var(--current); }
+  .rung.goal .pin { background: var(--target); }
+  .rung.gate-rung .pin { background: var(--warn); }
+  .rung.gate-rung { border-style: dashed; }
+
+  /* ---- decision matrix ---- */
+  .matrix { display: flex; flex-direction: column; gap: 10px; }
+  .mrow { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 1rem 1.15rem; }
+  .mrow .cond { font-size: .95rem; }
+  .mrow .cond b { font-family: var(--mono); font-weight: 640; font-size: .9em; }
+  .verdict-out {
+    font-family: var(--mono); font-size: .8rem; font-weight: 600; padding: .4rem .7rem; border-radius: 7px;
+    white-space: nowrap; text-align: center;
+  }
+  .out-direct { background: var(--target-tint); color: var(--target); border: 1px solid var(--target); }
+  .out-query { background: var(--surface-2); color: var(--ink); border: 1px solid var(--rule-strong); }
+  .out-repo { background: var(--warn-tint); color: var(--warn); border: 1px solid var(--warn); }
+  .out-port { background: var(--current-tint); color: var(--current); border: 1px solid var(--current); }
+
+  /* ---- phase track ---- */
+  .track-scroll { overflow-x: auto; padding-bottom: .5rem; }
+  .track { display: flex; align-items: stretch; gap: 10px; min-width: 760px; }
+  .phase {
+    flex: 1; min-width: 96px; position: relative; padding: 1rem .8rem 1.05rem; border-radius: 10px;
+    border: 1px solid var(--rule); background: var(--surface);
+  }
+  .phase .pid { font-family: var(--mono); font-weight: 700; font-size: .82rem; }
+  .phase .pname { font-size: .82rem; color: var(--muted); margin-top: .3rem; line-height: 1.35; }
+  .phase.sched { border-color: var(--target); }
+  .phase.sched .pid { color: var(--target); }
+  .phase.gated { border-style: dashed; border-color: var(--warn); background: var(--warn-tint); }
+  .phase.gated .pid { color: var(--warn); }
+  .phase.later { opacity: .72; }
+  .gatemark {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: none; width: 30px; color: var(--warn); font-family: var(--mono); font-weight: 700;
+  }
+  .gatemark .glabel { writing-mode: vertical-rl; text-orientation: mixed; font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; margin-top: .3rem; color: var(--warn); }
+  .track-legend { display: flex; flex-wrap: wrap; gap: 1.2rem; margin-top: 1rem; font-size: .82rem; color: var(--muted); }
+  .track-legend span { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--mono); }
+
+  /* ---- effort / sequencing table ---- */
+  .efftable-scroll { overflow-x: auto; margin-top: 16px; }
+  .efftable { border-collapse: collapse; width: 100%; min-width: 620px; font-size: .86rem; }
+  .efftable th, .efftable td { text-align: left; padding: .62rem .85rem; border-bottom: 1px solid var(--rule); }
+  .efftable th { font-family: var(--mono); font-size: .67rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+  .efftable tbody td { vertical-align: top; }
+  .efftable .ph { font-family: var(--mono); font-weight: 700; color: var(--ink); }
+  .efftable .eff { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .efftable .when-now { color: var(--target); font-family: var(--mono); font-size: .8rem; }
+  .efftable .when-gate { color: var(--warn); font-family: var(--mono); font-size: .8rem; }
+  .efftable .when-later { color: var(--faint); font-family: var(--mono); font-size: .8rem; }
+  .efftable tr:last-child td { border-bottom: none; }
+
+  /* ---- reframed decisions ---- */
+  .reframe-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .reframe { padding: 1.25rem 1.35rem; }
+  .reframe-tag { font-family: var(--mono); font-size: .62rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; padding: .16rem .45rem; border-radius: 5px; display: inline-block; margin-bottom: .9rem; }
+  .reframe-tag.bug { background: var(--danger-tint); color: var(--danger); }
+  .reframe-tag.drift { background: var(--warn-tint); color: var(--warn); }
+  .reframe-tag.reframe { background: var(--current-tint); color: var(--current); }
+  .reframe-tag.process { background: var(--target-tint); color: var(--target); }
+  .rf-was, .rf-now { font-size: .89rem; line-height: 1.45; padding-left: .9rem; border-left: 2px solid var(--rule-strong); margin-bottom: .5rem; }
+  .rf-now { border-left-color: var(--target); }
+  .rf-was { color: var(--muted); }
+  .rf-now { color: var(--ink); }
+  .rf-was > span, .rf-now > span { font-family: var(--mono); font-size: .61rem; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; display: block; margin-bottom: .18rem; }
+  .rf-was > span { color: var(--faint); }
+  .rf-now > span { color: var(--target); }
+  .rf-why { font-size: .82rem; color: var(--muted); margin-top: .7rem; padding-top: .65rem; border-top: 1px dashed var(--rule); line-height: 1.5; }
+  .rf-why em { color: var(--warn); font-style: normal; font-family: var(--mono); font-size: .92em; }
+  .lg-box { width: 20px; height: 12px; border-radius: 3px; flex: none; }
+
+  /* ---- challenge cards ---- */
+  .challenges { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .chal { position: relative; padding: 1.3rem 1.35rem 1.3rem 1.6rem; overflow: hidden; }
+  .chal::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+  .chal.sev-high::before { background: var(--danger); }
+  .chal.sev-mid::before { background: var(--warn); }
+  .chal.sev-ok::before { background: var(--target); }
+  .chal h3 { font-size: 1.02rem; margin-bottom: .5rem; }
+  .chal .sev {
+    font-family: var(--mono); font-size: .64rem; text-transform: uppercase; letter-spacing: .1em;
+    font-weight: 700; padding: .16rem .45rem; border-radius: 5px; display: inline-block; margin-bottom: .7rem;
+  }
+  .chal.sev-high .sev { background: var(--danger-tint); color: var(--danger); }
+  .chal.sev-mid .sev { background: var(--warn-tint); color: var(--warn); }
+  .chal.sev-ok .sev { background: var(--target-tint); color: var(--target); }
+  .chal p { font-size: .9rem; color: var(--muted); margin: 0 0 .7rem; }
+  .chal .fix { font-size: .86rem; color: var(--ink); border-top: 1px dashed var(--rule); padding-top: .7rem; }
+  .chal .fix b { font-family: var(--mono); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--target); display: block; margin-bottom: .25rem; }
+
+  /* ---- outcome list ---- */
+  .outcomes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .outcome { display: flex; gap: .85rem; align-items: flex-start; padding: 1.15rem 1.2rem; }
+  .outcome .mk { font-family: var(--mono); font-weight: 700; color: var(--target); flex: none; font-size: 1.05rem; line-height: 1.4; }
+  .outcome .ot { font-size: .96rem; }
+  .outcome .ot b { font-weight: 640; }
+  .outcome .ot span { color: var(--muted); }
+
+  /* ---- callout ---- */
+  .callout {
+    border-left: 3px solid var(--target); background: var(--target-tint);
+    padding: 1.1rem 1.3rem; border-radius: 0 10px 10px 0; margin-top: 1.4rem;
+  }
+  .callout p { margin: 0; font-size: .95rem; }
+  .callout .clab { font-family: var(--mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--target); font-weight: 700; display: block; margin-bottom: .4rem; }
+
+  footer { padding: 2.6rem 0 3rem; color: var(--faint); font-size: .82rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; align-items: center; }
+  footer .mono { color: var(--muted); }
+
+  .intro-prose { margin-bottom: 1.4rem; }
+
+  /* ---- code / file tree ---- */
+  .tree, .code {
+    font-family: var(--mono); font-size: .82rem; line-height: 1.7; margin: 0;
+    white-space: pre; overflow-x: auto; color: var(--ink);
+  }
+  .tree .cmt, .code .cmt { color: var(--faint); }
+  .tree .pub, .code .cmt + * { }
+  .tree .pub { color: var(--target); font-weight: 640; }
+  .tree .priv { color: var(--muted); }
+  .code { color: var(--ink); }
+
+  /* ---- request traces ---- */
+  .trace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+  .trace-badge {
+    font-family: var(--mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; padding: .22rem .55rem; border-radius: 5px; display: inline-block; margin-bottom: .95rem;
+  }
+  .trace.write .trace-badge { background: var(--target-tint); color: var(--target); }
+  .trace.read .trace-badge { background: var(--current-tint); color: var(--current); }
+  .trace ol { margin: 0; padding-left: 1.25rem; font-size: .88rem; color: var(--ink); line-height: 1.55; }
+  .trace ol li { margin-bottom: .5rem; }
+  .trace-foot { margin-top: 1rem; padding-top: .85rem; border-top: 1px dashed var(--rule); font-size: .83rem; color: var(--muted); }
+  .trace-foot b { font-family: var(--mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--target); display: block; margin-bottom: .28rem; }
+
+  a { color: var(--target); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--target); outline-offset: 2px; border-radius: 4px; }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    .compare { grid-template-columns: 1fr; }
+    .plate-head { flex-direction: column; gap: .4rem; }
+    .plate-head .idx { width: auto; padding-top: 0; }
+  }
+
+  .reveal { opacity: 0; transform: translateY(14px); animation: rise .6s cubic-bezier(.2,.7,.3,1) forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .reveal { animation: none; opacity: 1; transform: none; } }
+</style>
+
+<header class="hero">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="wrap">
+    <span class="kicker"><span class="dot"></span> erify_api · architecture decision · proposed direction</span>
+    <h1>From table-first modules to capability-first ownership</h1>
+    <p class="lede read">Why the refactor points this way, how it differs from what we have, the framework philosophy underneath it, a worked example of one capability end to end, the earlier decisions it corrects, a sized roadmap, and why it comes out better. A visual companion to <span class="mono">ARCHITECTURE_REFACTORING_GUIDE.md</span> — every number here is reproducible with <code>pnpm architecture:signals</code>.</p>
+    <div class="verdict-row">
+      <span class="verdict-chip"><b>Keep</b> the NestJS modular monolith</span>
+      <span class="verdict-chip"><b>Reorganize</b> around business capabilities</span>
+      <span class="verdict-chip"><b>Selective</b> DDD · no global CQRS bus</span>
+      <span class="verdict-chip"><b>Trigger-gated</b>, not a big-bang move</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- 01 THE PROBLEM -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">01 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">The problem</span>
+          <h2>The layout is organized by table and by audience — not by what the code does</h2>
+          <p class="read">Two of the three primary axes are accidental. A business change chases the same use case across audience folders, orchestration services, and one-module-per-table trees.</p>
+        </div>
+      </div>
+
+      <div class="card tick reveal" style="animation-delay:.05s">
+        <div class="axis-scroll">
+          <div class="axis">
+            <div class="axis-col">
+              <h4>HTTP audience</h4>
+              <div class="axis-chip">admin/</div>
+              <div class="axis-chip hit">studios/studio-show</div>
+              <div class="axis-chip">me/</div>
+              <div class="axis-chip">backdoor/</div>
+              <div class="axis-chip">google-sheets/</div>
+            </div>
+            <div class="axis-join">→</div>
+            <div class="axis-col">
+              <h4>Shared workflows</h4>
+              <div class="axis-chip hit">show-orchestration/</div>
+              <div class="axis-chip">schedule-planning/</div>
+              <div class="axis-chip">task-orchestration/</div>
+              <div class="axis-chip">orchestration/</div>
+            </div>
+            <div class="axis-join">→</div>
+            <div class="axis-col">
+              <h4>Persistence models &times;27</h4>
+              <div class="axis-chip hit">models/show/</div>
+              <div class="axis-chip hit">models/show-status/</div>
+              <div class="axis-chip hit">models/show-platform/</div>
+              <div class="axis-chip">models/task/</div>
+              <div class="axis-chip">…one module per table</div>
+            </div>
+          </div>
+        </div>
+        <p class="path-note" style="margin-top:1.1rem">Highlighted: a single <b>show cancellation</b> change. It lands in three separate trees and roughly five folders — none of which <em>owns</em> the use case. History confirms it: 17 of 27 recent studio-show commits also touched <span class="mono">show-orchestration</span> or <span class="mono">models/show*</span>.</p>
+      </div>
+
+      <div class="stats reveal" style="margin-top:16px; animation-delay:.1s">
+        <div class="card stat tick warnfig">
+          <div class="figure">74<span class="unit">/90</span></div>
+          <div class="label">Nest modules are <strong>≤20 LOC</strong> — mostly registration ceremony, not a public API</div>
+          <div class="meter"><span style="width:82%;background:var(--warn)"></span></div>
+        </div>
+        <div class="card stat tick flag">
+          <div class="figure">24<span class="unit">mods</span></div>
+          <div class="label">boot inside the MCP runtime to serve <strong>4 read-only tools</strong> — write-heavy task &amp; extraction modules included</div>
+        </div>
+        <div class="card stat tick flag">
+          <div class="figure">0</div>
+          <div class="label"><strong>end-to-end tests.</strong> Module wiring &amp; real transaction behavior have no safety net today</div>
+        </div>
+        <div class="card stat tick warnfig">
+          <div class="figure">6</div>
+          <div class="label"><strong>repositories leak</strong> through module exports — callers can bypass model-service invariants at will</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 HOW DIFFERENT -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">02 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">How it differs</span>
+          <h2>Reverse the primary axis: a capability owns the whole use case</h2>
+          <p class="read">Admin, studio, me, and MCP stay as <em>transport &amp; authorization</em>. They stop dictating where domain logic lives. Everything that changes together moves behind one capability's public API.</p>
+        </div>
+      </div>
+
+      <div class="card tick reveal" style="animation-delay:.05s">
+        <div class="compare">
+          <div class="col current">
+            <div class="col-head"><span class="swatch" style="background:var(--current)"></span> Today · path from route to rule</div>
+            <div class="pipe">
+              <span class="hop">Controller</span><span class="arrow">→</span>
+              <span class="hop">OrchestrationService</span><span class="arrow">→</span>
+              <span class="hop">ModelService</span><span class="arrow">→</span>
+              <span class="hop">Repository</span><span class="arrow">→</span>
+              <span class="hop">BaseRepository</span><span class="arrow">→</span>
+              <span class="hop">Prisma</span>
+            </div>
+            <p class="path-note">…and where a repo is exported, callers skip the middle entirely:</p>
+            <div class="pipe" style="margin-top:.5rem">
+              <span class="hop">Controller</span><span class="arrow">→</span>
+              <span class="hop leak">Repository (bypass)</span><span class="arrow">→</span>
+              <span class="hop">Prisma</span>
+            </div>
+            <p class="path-note"><b>6 hops</b>, an inconsistent seam, and invariants that can be routed around.</p>
+          </div>
+          <div class="col target">
+            <div class="col-head"><span class="swatch" style="background:var(--target)"></span> Target · one deliberate public surface</div>
+            <div class="pipe">
+              <span class="hop">Controller / MCP tool</span><span class="arrow">→</span>
+              <span class="hop">Capability API</span><span class="arrow">→</span>
+              <span class="hop">Use case · *Queries</span><span class="arrow">→</span>
+              <span class="hop">Persistence (tx-aware)</span>
+            </div>
+            <p class="path-note" style="margin-top:1.1rem">Persistence is private. A capability exports a small, intentional service/query surface — never a general repository. If a model service can't do an atomic op, the capability adds an owned persistence method instead of exporting the repo.</p>
+            <p class="path-note"><b>Fewer hops</b>, a single owner, no bypass door.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout reveal" style="animation-delay:.1s">
+        <span class="clab">The distinction that matters</span>
+        <p>This is <strong>strategic DDD</strong> — group by capability and shared language — with <strong>tactical DDD only where a real invariant exists</strong>. We are <em>not</em> wrapping every Prisma row in an aggregate, repository interface, mapper, and factory. Reference data (show types, statuses, platforms) stays plain CRUD.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 TWO PHILOSOPHIES -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">03 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">The framework philosophy</span>
+          <h2>Why NestJS isn't organized like Rails — and why that fits us</h2>
+          <p class="read">The reshape above isn't a style preference. It follows from what NestJS actually is, and from how it differs from the Rails / Active&nbsp;Record tradition of MVC.</p>
+        </div>
+      </div>
+
+      <div class="read intro-prose reveal" style="animation-delay:.04s">
+        <p>In the Rails tradition, the <strong>model is the center of gravity</strong>. Active Record fuses three things onto one class — the table row, how it persists itself, and the business behavior around it. The advice is "fat models, skinny controllers," and the organizing axis is the database table: one model per table, and domain logic accretes on the model.</p>
+        <p>NestJS descends from a different lineage — Angular. Its building blocks are <strong>dependency injection, modules, and providers</strong>. The unit of encapsulation is not the class, it is the <em>module</em>: a boundary that declares providers, imports other modules, and exports a deliberate public surface. Business logic lives in injected <em>services</em>, and — with Prisma — the database row is an inert typed object with no behavior of its own (the Data Mapper pattern, the opposite of Active Record).</p>
+      </div>
+
+      <div class="card tick reveal" style="animation-delay:.08s">
+        <div class="mm-scroll">
+          <div class="mm">
+            <div class="mm-head dim">Dimension</div>
+            <div class="mm-head cur">Rails · Active Record MVC</div>
+            <div class="mm-head tgt">NestJS · modular IoC</div>
+
+            <div class="dim">Unit of encapsulation</div>
+            <div>The <strong>model class</strong> — row, persistence, and behavior fused together</div>
+            <div class="tgt-cell">The <strong>module</strong> — a boundary whose <code>exports</code> are its public interface; providers stay private</div>
+
+            <div class="dim">Data access</div>
+            <div>Active Record — the row saves itself; the ORM is fused to the model; <span class="mono">before_save</span> callbacks</div>
+            <div class="tgt-cell">Data Mapper — Prisma returns inert typed rows; behavior lives in injected services</div>
+
+            <div class="dim">Wiring</div>
+            <div>Implicit global constants — call <span class="mono">User</span> from anywhere</div>
+            <div class="tgt-cell">Explicit dependency injection — the IoC container owns lifecycles and seams</div>
+
+            <div class="dim">Primary axis</div>
+            <div>One model per table; logic accretes on the model</div>
+            <div class="tgt-cell">Feature / capability modules; Nest's own guidance is to group by feature</div>
+
+            <div class="dim">Runtime shape</div>
+            <div>One web request→response runtime</div>
+            <div class="tgt-cell">A provider graph that many transports mount on — HTTP, MCP, workers</div>
+
+            <div class="dim">When logic outgrows it</div>
+            <div>Reach for a "service object" <em>beside</em> the model</div>
+            <div class="tgt-cell">The service / use-case <em>is</em> the home — there is no model to outgrow</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="read reveal" style="margin:2rem 0 .3rem; animation-delay:.1s">Why model-based encapsulation doesn't carry <em>our</em> domain</h3>
+      <p class="read path-note reveal" style="margin-top:.3rem; animation-delay:.1s">Active Record is excellent when a request maps cleanly to one row's lifecycle. Ours rarely do.</p>
+      <div class="reasons reveal" style="animation-delay:.12s">
+        <div class="card reason tick">
+          <h4><span class="rk">01</span>Prisma is Data Mapper</h4>
+          <p>There is no live model object to hang behavior on. Emulating Active Record over Prisma rebuilds the mapping layer Prisma deliberately removed — more code, more surprise.</p>
+        </div>
+        <div class="card reason tick">
+          <h4><span class="rk">02</span>Invariants span many entities</h4>
+          <p><span class="mono">publish()</span> coordinates shows, tasks, snapshots, conflicts, and audit inside one 30-second transaction. That's an orchestrated use case with an explicit boundary — not a method on the <span class="mono">Show</span> row.</p>
+        </div>
+        <div class="card reason tick">
+          <h4><span class="rk">03</span>Guarantees are cross-cutting</h4>
+          <p>CLS transactions, optimistic locking, soft delete, audit, and UID boundaries live at service / repository seams. Active Record's <span class="mono">before_save</span> callbacks are a famously fragile home for them.</p>
+        </div>
+        <div class="card reason tick">
+          <h4><span class="rk">04</span>Even Rails concedes</h4>
+          <p>When logic outgrows the model, Rails reaches for service objects. Our capability use-case services formalize exactly that shape — from the start, not as an escape hatch.</p>
+        </div>
+      </div>
+
+      <div class="callout reveal" style="animation-delay:.14s">
+        <span class="clab">An honest caveat</span>
+        <p>This isn't "NestJS forbids Rails." Nest <em>can</em> render MVC views, and TypeORM even offers an optional Active Record mode. The point is that Nest's grain (modules + providers), Prisma's Data Mapper, and our multi-runtime, cross-entity domain all pull the same way — toward capability-and-provider organization rather than model-and-row.</p>
+      </div>
+
+      <div class="callout reveal" style="animation-delay:.16s">
+        <span class="clab">Why not just use Ruby on Rails, then?</span>
+        <p>Because we want Rails's <em>locality</em> — organize around the work, keep the path from request to rule short — but not Active Record's row-centric center of gravity, and we carry constraints Rails serves worse. The React frontends share one typed contract with the API through <span class="mono">@eridu/api-types</span> (Zod + Prisma as the source of truth); the whole monorepo is one language and one toolchain; the same domain must serve REST <em>and</em> an MCP server today — workers next — as separate runtimes on one provider graph; and our invariants are explicit multi-entity transactions, not per-row callbacks. Rails would fracture the stack and fight every one of those. The slice organization we want predates Rails and isn't Rails-owned — capability-first NestJS keeps the good part of Rails on a stack chosen for reasons Rails can't satisfy.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 NESTJS CONVENTIONS -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">04 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">NestJS conventions</span>
+          <h2>The idioms Nest rewards — and the reason behind each</h2>
+          <p class="read">These aren't arbitrary. Each convention buys a specific property: testability, encapsulation, or a short path from request to rule. The refactor leans further into them, it doesn't invent new ones.</p>
+        </div>
+      </div>
+
+      <div class="conv-list reveal" style="animation-delay:.05s">
+        <div class="card conv tick">
+          <span class="cn">1</span>
+          <div>
+            <div class="ct">Group by feature, not by type</div>
+            <div class="cw"><b>Why</b> Cohesion and locality. A change lands in one module instead of being smeared across all-controllers / all-services / all-repositories folders. This is Nest's own module guidance.</div>
+          </div>
+        </div>
+        <div class="card conv tick">
+          <span class="cn">2</span>
+          <div>
+            <div class="ct">Export a deliberate public API</div>
+            <div class="cw"><b>Why</b> A module's <code>exports</code> array <em>is</em> its contract. Keeping persistence private means callers physically cannot route around an invariant.</div>
+          </div>
+        </div>
+        <div class="card conv tick">
+          <span class="cn">3</span>
+          <div>
+            <div class="ct">Put logic in providers, inject by constructor</div>
+            <div class="cw"><b>Why</b> The container manages lifecycle; dependencies swap for mocks in tests; each provider keeps a single responsibility.</div>
+          </div>
+        </div>
+        <div class="card conv tick">
+          <span class="cn">4</span>
+          <div>
+            <div class="ct">Keep controllers thin</div>
+            <div class="cw"><b>Why</b> Transport is a detail. The same service must serve a REST controller, an MCP tool, and a future worker without change — so business rules can't live in the controller.</div>
+          </div>
+        </div>
+        <div class="card conv tick">
+          <span class="cn">5</span>
+          <div>
+            <div class="ct">Depend on injection, not <span class="mono">new</span></div>
+            <div class="cw"><b>Why</b> Decoupling and testability. Wiring is declared once at the module boundary, not hardcoded into every call site.</div>
+          </div>
+        </div>
+        <div class="card conv tick">
+          <span class="cn">6</span>
+          <div>
+            <div class="ct">Don't over-globalize</div>
+            <div class="cw"><b>Why</b> A provider that's global-by-default turns the dependency graph into implicit soup. Share only what is genuinely shared; keep the rest module-private.</div>
+          </div>
+        </div>
+        <div class="card conv tick">
+          <span class="cn">7</span>
+          <div>
+            <div class="ct">Match data-access depth to real complexity</div>
+            <div class="cw"><b>Why</b> Nest does <em>not</em> mandate a repository per entity — that's a community habit. A seam should exist for genuine persistence complexity, not as ceremony. This is the one convention the guide sharpens.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout reveal" style="animation-delay:.1s">
+        <span class="clab">Where we already stand</span>
+        <p>We follow most of this already — Zod three-tier contracts, CLS transaction propagation, the task-orchestration facade over cohesive sub-services, and mostly module-private providers. The guide sharpens the two idioms this codebase under-applies by default: <strong>organize by capability rather than by table</strong>, and <strong>let repository depth follow persistence complexity</strong>. Nothing here abandons Nest — it commits to it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 WORKED EXAMPLE -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">05 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">What "done" looks like</span>
+          <h2>A worked example: one capability, end to end</h2>
+          <p class="read">Abstract until you see it on a real slice. Here is <span class="mono">show-operations</span> — the richest capability — as it would look finished. Same endpoints, same Prisma schema, same behavior as today; one owner instead of three trees.</p>
+        </div>
+      </div>
+
+      <div class="card tick reveal" style="animation-delay:.05s">
+        <pre class="tree"><span class="cmt"># everything that changes together lives in one module</span>
+show-operations/
+├─ <span class="pub">show-operations.module.ts</span>      <span class="cmt"># exports ONLY the two public providers ↓</span>
+├─ <span class="pub">show-operations.service.ts</span>     <span class="cmt"># public WRITE facade — thin, delegates</span>
+├─ <span class="pub">show-queries.service.ts</span>        <span class="cmt"># public READ api — DTO projections</span>
+├─ internal/
+│  ├─ <span class="priv">show-lifecycle.service.ts</span>    <span class="cmt"># canonical status state machine (roadmap item 18)</span>
+│  ├─ <span class="priv">show-assignment.service.ts</span>   <span class="cmt"># platform / creator assignment sync</span>
+│  └─ <span class="priv">show-performance.service.ts</span>  <span class="cmt"># performance correction workflow</span>
+├─ policies/
+│  └─ <span class="priv">show-transition.policy.ts</span>    <span class="cmt"># pure: is this edge allowed? role tier? reason?</span>
+├─ persistence/
+│  └─ <span class="priv">show.repository.ts</span>           <span class="cmt"># PRIVATE, deep: optimistic-locked + bulk writes</span>
+├─ http/
+│  ├─ <span class="priv">admin-show.controller.ts</span>     <span class="cmt"># same routes + guards as today</span>
+│  └─ <span class="priv">studio-show.controller.ts</span>
+└─ schema/
+   └─ <span class="priv">show.schema.ts</span>               <span class="cmt"># Zod contracts + payload types (unchanged)</span></pre>
+      </div>
+
+      <p class="read path-note" style="margin-top:1.2rem">The module exports exactly two things — the only surface other capabilities and runtimes may touch:</p>
+      <div class="card tick reveal" style="animation-delay:.08s; margin-top:.6rem">
+        <pre class="code"><span class="cmt">// write side — task-oriented methods, never CRUD verbs</span>
+class ShowOperationsService {
+  cancelShow(p): Promise&lt;Show&gt;
+  transitionStatus(p): Promise&lt;Show&gt;
+  createShow(p) · updateShow(p) · replaceAssignments(p) · correctPerformance(p)
+}
+<span class="cmt">// read side — one scoped query each, DTO-projected</span>
+class ShowQueries {
+  getShow(uid, scope) · listShows(filter) · getPublishImpacts(filter)
+  getShowForMcp(uid, membership)   <span class="cmt">// single scoped read, no second round-trip</span>
+}</pre>
+      </div>
+
+      <h3 class="read reveal" style="margin:2rem 0 .8rem; animation-delay:.1s">The same capability, two runtimes</h3>
+      <div class="trace-grid reveal" style="animation-delay:.12s">
+        <div class="card trace write tick">
+          <span class="trace-badge">REST · write · cancel a show</span>
+          <ol>
+            <li><span class="mono">PATCH /studios/:id/shows/:id/cancel</span> hits <span class="mono">StudioShowController</span>.</li>
+            <li>Guards run (Throttler → JwtAuth → StudioProtected); membership is validated and the UID is decoded to an internal id at the boundary.</li>
+            <li>Zod parses the body; the controller calls <span class="mono">showOperationsService.cancelShow()</span> and does nothing else.</li>
+            <li>The facade delegates to <span class="mono">showLifecycleService.transition()</span>, which owns the single <span class="mono">@Transactional()</span>.</li>
+            <li>In one transaction: load with <span class="mono">deletedAt:null</span>, run the pure transition policy, write the optimistic-locked status (version bump), write the Audit row.</li>
+            <li>The result maps back to a snake_case response carrying the UID; the internal id never leaves.</li>
+          </ol>
+          <div class="trace-foot"><b>Enforced right here</b> transaction boundary · soft delete · optimistic lock · UID boundary · audit — all at one seam, not scattered.</div>
+        </div>
+        <div class="card trace read tick">
+          <span class="trace-badge">MCP · read · fetch a show</span>
+          <ol>
+            <li>The <span class="mono">get_show</span> tool calls <span class="mono">showQueries.getShowForMcp(uid, membership)</span> — nothing else.</li>
+            <li>That's one scoped query returning a DTO. No second relation read.</li>
+            <li>The MCP runtime imports only <span class="mono">*Queries</span> providers + the auth policy — it never boots the write-heavy task and extraction modules.</li>
+            <li>Same visibility and scope rule as REST, because both go through the one capability owner.</li>
+          </ol>
+          <div class="trace-foot"><b>Why it matters</b> the 24-module MCP boot closure collapses to a handful, and REST and MCP cannot drift apart.</div>
+        </div>
+      </div>
+
+      <div class="callout reveal" style="animation-delay:.14s">
+        <span class="clab">This is the whole refactor, on one slice</span>
+        <p>The finished module <em>is</em> the ten responsibilities that today live in the 1,421-LOC <span class="mono">studio-show-management.service.ts</span>, redistributed into a facade + three internal services + queries + policy + repository. No endpoint, schema, or behavior changes. And the precedent already works: <span class="mono">task-orchestration.service.ts</span> is exactly this shape today. The refactor is "make each capability look like task-orchestration already does."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 WHY BETTER -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">06 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">Why it's better</span>
+          <h2>Locality, honest seams, and less to hold in your head</h2>
+          <p class="read">The wins are comprehension, test setup, and boundary safety — not raw latency. The guide is explicit: folder moves don't earn a performance claim.</p>
+        </div>
+      </div>
+      <div class="outcomes reveal" style="animation-delay:.05s">
+        <div class="card outcome tick"><span class="mk">→</span><span class="ot"><b>Find a rule by its domain term.</b> <span>A new engineer locates business logic from the route or capability name, without spelunking three trees.</span></span></div>
+        <div class="card outcome tick"><span class="mk">→</span><span class="ot"><b>No silent bypass.</b> <span>Invariants live behind a public API; no exported repository to route around.</span></span></div>
+        <div class="card outcome tick"><span class="mk">→</span><span class="ot"><b>Shallow CRUD sheds ceremony.</b> <span>Fewer modules, files, and mocks while the stable service API stays put.</span></span></div>
+        <div class="card outcome tick"><span class="mk">→</span><span class="ot"><b>Repositories become evidence-based.</b> <span>A seam exists because persistence is genuinely complex — not because a template said so.</span></span></div>
+        <div class="card outcome tick"><span class="mk">→</span><span class="ot"><b>Leaner runtimes.</b> <span>MCP boots only read-side capabilities; the 24-module closure shrinks materially.</span></span></div>
+        <div class="card outcome tick"><span class="mk">→</span><span class="ot"><b>Real rollback coverage.</b> <span>High-risk workflows gain characterization tests that unit mocks can't provide.</span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 CQRS -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">07 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">Why not a CQRS bus (yet)</span>
+          <h2>Move to level 2, stop there until the gates are met</h2>
+          <p class="read">CQRS is a spectrum, not a switch. The stated problem is <em>too many files and layers</em> — a command/handler/query/handler/event per operation makes that worse before it helps.</p>
+        </div>
+      </div>
+      <div class="card tick reveal" style="animation-delay:.05s">
+        <div class="ladder-scroll">
+          <div class="ladder">
+            <div class="rung here">
+              <span class="pin">We are here</span>
+              <div class="lv">LV 0–1</div>
+              <div class="lt">Semantic separation</div>
+              <div class="ld">Task-oriented writes, named query methods, same service &amp; DB.</div>
+            </div>
+            <div class="rung goal">
+              <span class="pin">Target</span>
+              <div class="lv">LV 2</div>
+              <div class="lt">Provider separation</div>
+              <div class="ld">Write use-case services + <span class="mono">*Queries</span> providers with DTO projections. Same DB.</div>
+            </div>
+            <div class="rung gate-rung">
+              <span class="pin">Gated</span>
+              <div class="lv">LV 3</div>
+              <div class="lt">Nest CQRS infra</div>
+              <div class="ld">Command / Query buses, handlers, optional sagas. Runtime dispatch indirection.</div>
+            </div>
+            <div class="rung later" style="opacity:.7">
+              <div class="lv">LV 4</div>
+              <div class="lt">Independent read model</div>
+              <div class="ld">Denormalized store, eventual consistency, an outbox to maintain.</div>
+            </div>
+          </div>
+        </div>
+        <p class="path-note" style="margin-top:1.1rem">Adopt <code>@nestjs/cqrs</code> for <em>one</em> capability only when <b>≥2 gates</b> hold: a command with multiple evolving consumers, a saga-shaped workflow, materially different read/write models, a reliable outbox, or defined handler ownership. None hold today.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 PERSISTENCE MATRIX -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">08 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">The new persistence rule</span>
+          <h2>Repositories become optional and evidence-based</h2>
+          <p class="read">This is the one rule that changes existing doctrine — so it only becomes canonical <em>after</em> the <span class="mono">ShowStatus</span> pilot, and its acceptance PR must reconcile every skill and doc that says "repository for all DB access."</p>
+        </div>
+      </div>
+      <div class="card tick reveal" style="animation-delay:.05s">
+        <div class="matrix">
+          <div class="mrow" style="border-bottom:1px solid var(--rule)">
+            <div class="cond">Simple single-model CRUD, one caller, no reusable query policy</div>
+            <div class="verdict-out out-direct">service → <b>tx.&lt;model&gt;</b> direct</div>
+          </div>
+          <div class="mrow" style="border-bottom:1px solid var(--rule)">
+            <div class="cond">Repeated complex filtering, projection, pagination, aggregation</div>
+            <div class="verdict-out out-query">private <b>*Queries</b> provider</div>
+          </div>
+          <div class="mrow" style="border-bottom:1px solid var(--rule)">
+            <div class="cond">Atomic conditional write, optimistic lock, raw SQL, advisory lock, bulk lifecycle</div>
+            <div class="verdict-out out-repo">private repository / <b>*Store</b></div>
+          </div>
+          <div class="mrow">
+            <div class="cond">Multiple persistence implementations or a real external adapter</div>
+            <div class="verdict-out out-port">port + adapters</div>
+          </div>
+        </div>
+      </div>
+      <p class="path-note read" style="margin-top:1rem">Every option still preserves the invariants that protect correctness: <code>deletedAt: null</code> on active reads, transaction visibility through <code>TransactionHost.tx</code>, scoped write predicates, UID-only contracts, and audit + optimistic-lock behavior. <strong>One adapter is a hypothetical seam; two adapters are a real seam</strong> — don't add an interface just to mock.</p>
+    </div>
+  </section>
+
+  <!-- 09 DECISIONS CORRECTED -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">09 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">Setting the record straight</span>
+          <h2>The earlier decisions this guide corrects</h2>
+          <p class="read">None of these were reckless — each was a reasonable default at the time. The guide reframes them because the codebase grew past the assumption. Tags mark whether it's a confirmed bug, doctrine that drifted from the code, a reframed convention, or a process improvement.</p>
+        </div>
+      </div>
+
+      <div class="reframe-list reveal" style="animation-delay:.05s">
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">reframed convention</span>
+          <div class="rf-was"><span>Was</span> A repository for every model — "repositories hide all DB access."</div>
+          <div class="rf-now"><span>Now</span> Optional and evidence-based: simple CRUD uses <span class="mono">tx.&lt;model&gt;</span> directly; a repository exists only for genuine persistence complexity.</div>
+          <div class="rf-why">Most repositories just mirror Prisma. <em>Proposed — becomes canonical only after the ShowStatus pilot.</em></div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">reframed axis</span>
+          <div class="rf-was"><span>Was</span> Organize by database table (one module per model) and by HTTP audience.</div>
+          <div class="rf-now"><span>Now</span> Organize by business capability; table and audience become attributes of a slice, not folders.</div>
+          <div class="rf-why">27 model modules and audience trees scatter one use case; 74/90 modules are ceremony.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag bug">confirmed bug</span>
+          <div class="rf-was"><span>Was</span> <span class="mono">BaseRepository</span> is a safe shared abstraction to build on.</div>
+          <div class="rf-now"><span>Now</span> Fix or retire it: its generic <span class="mono">restore()</span> can't restore a row, and inherited methods bind to the non-transactional client.</div>
+          <div class="rf-why">Dormant only because every real flow overrides it. A latent trap for the next author.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag drift">doctrine drift</span>
+          <div class="rf-was"><span>Was</span> Doctrine: "repositories are private module internals."</div>
+          <div class="rf-now"><span>Now</span> Reality: 6 are exported, so callers bypass model-service invariants. Close the leak — persistence stays private.</div>
+          <div class="rf-why">The written rule and the implementation had silently diverged.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">reframed convention</span>
+          <div class="rf-was"><span>Was</span> <span class="mono">UtilityService</span> is injected everywhere so it's testable.</div>
+          <div class="rf-now"><span>Now</span> Pure deterministic functions (UID, time-overlap) don't need DI to be tested; fold them into <span class="mono">shared/util</span>.</div>
+          <div class="rf-why">48 modules import it purely for two pure functions.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag reframe">refined guardrail</span>
+          <div class="rf-was"><span>Was</span> Many modules or a large file is automatically a smell to split.</div>
+          <div class="rf-now"><span>Now</span> Split by cohesion and co-change, not by LOC. A deep repository, a cohesive large file, or anemic reference data is not an anti-pattern.</div>
+          <div class="rf-why">Guards against over-correcting the cleanup into new churn.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag process">process fix</span>
+          <div class="rf-was"><span>Was</span> Architecture metrics written as prose that goes stale on the next PR.</div>
+          <div class="rf-now"><span>Now</span> <span class="mono">pnpm architecture:signals</span> regenerates every figure and self-stamps the commit; wired into pr-review and repository-health.</div>
+          <div class="rf-why">The guide's own first draft had already drifted — this closes that loop.</div>
+        </div>
+        <div class="card reframe tick">
+          <span class="reframe-tag process">process fix</span>
+          <div class="rf-was"><span>Was</span> Treat the reorg as a scheduled big-bang migration and this doc as a parallel backlog.</div>
+          <div class="rf-now"><span>Now</span> Trigger-gated phases executed through the <span class="mono">codebase-hardening-program</span> lifecycle — one PR per item, behavior-preserving.</div>
+          <div class="rf-why">Avoids a half-migrated tree and a second, competing process authority.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 THE PLAN -->
+  <section class="plate">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">10 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">How it actually ships</span>
+          <h2>Trigger-gated phases — not a scheduled big-bang migration</h2>
+          <p class="read">The destination map is fixed; the folder moves are not scheduled work. Correctness and the pilot ship first. The large show-operations reorg activates only when the roadmap needs it anyway.</p>
+        </div>
+      </div>
+      <div class="card tick reveal" style="animation-delay:.05s">
+        <div class="track-scroll">
+          <div class="track">
+            <div class="phase sched"><div class="pid">0a</div><div class="pname">Isolated real-DB safety harness</div></div>
+            <div class="phase sched"><div class="pid">0b</div><div class="pname">Signals + perf baselines</div></div>
+            <div class="phase sched"><div class="pid">1</div><div class="pname">Correctness &amp; low-risk cleanup</div></div>
+            <div class="phase sched"><div class="pid">2</div><div class="pname">ShowStatus repository pilot</div></div>
+            <div class="phase sched"><div class="pid">3</div><div class="pname">Consolidate show catalog</div></div>
+            <div class="gatemark" aria-hidden="true">⟢<span class="glabel">item 18 gate</span></div>
+            <div class="phase gated"><div class="pid">4</div><div class="pname">Show operations — on roadmap item 18</div></div>
+            <div class="phase gated"><div class="pid">5</div><div class="pname">Schedule publishing — on evidence</div></div>
+            <div class="phase later"><div class="pid">6</div><div class="pname">Narrow queries &amp; runtimes</div></div>
+            <div class="phase later"><div class="pid">7</div><div class="pname">Reassess advanced patterns</div></div>
+          </div>
+        </div>
+        <div class="track-legend">
+          <span><span class="lg-box" style="background:var(--target-tint);border:1px solid var(--target)"></span> scheduled now</span>
+          <span><span class="lg-box" style="background:var(--warn-tint);border:1px dashed var(--warn)"></span> trigger-gated</span>
+          <span><span class="lg-box" style="background:var(--surface-2);border:1px solid var(--rule)"></span> later / on evidence</span>
+        </div>
+        <div class="efftable-scroll">
+          <table class="efftable">
+            <thead>
+              <tr><th>Phase</th><th>Ships as</th><th>Effort (focused)</th><th>Starts</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="ph">0a</td><td>Isolated real-DB harness + characterization</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">now</td></tr>
+              <tr><td class="ph">0b</td><td>Signals baseline recorded (perf instrumentation deferred to pre-Phase-5)</td><td class="eff">~2–3 days</td><td class="when-now">now · parallel</td></tr>
+              <tr><td class="ph">1</td><td>Correctness + cleanup: MCP max, dup import, OpenAPI, StudioGuard, restore/delegate, UtilityService</td><td class="eff">~1–1.5 wk · 4–6 PRs</td><td class="when-now">now (indep.) / after 0a (gated)</td></tr>
+              <tr><td class="ph">2</td><td>ShowStatus pilot + persistence-matrix acceptance (7 doctrine files)</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">after 0a</td></tr>
+              <tr><td class="ph">3</td><td>Consolidate show catalog (4 reference models) into one module</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-now">after 2</td></tr>
+              <tr><td class="ph">4</td><td>Dissolve <span class="mono">studio-show-management</span> into show-operations, 4 slices</td><td class="eff">~3–5 wk · 4–6 PRs</td><td class="when-gate">on roadmap item 18</td></tr>
+              <tr><td class="ph">5</td><td>Decompose <span class="mono">publishing.service</span>, atomic boundary preserved</td><td class="eff">~2–4 wk · 3–5 PRs</td><td class="when-gate">on item 18 publish / perf evidence</td></tr>
+              <tr><td class="ph">6</td><td>ShowQueries/TaskQueries providers; MCP imports read-only</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-later">with / after 4</td></tr>
+              <tr><td class="ph">7</td><td>Reassess CQRS / workers / read models — decision checkpoint, not code</td><td class="eff">review only</td><td class="when-later">ongoing</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="path-note">Effort is focused engineering time for one maintainer plus AI agents, not calendar time. The <strong>scheduled foundation</strong> (0a→3) is roughly one quarter part-time; the <strong>gated capability work</strong> (4–6) lands opportunistically when item 18 ships — deliberately not dated, because forcing it early is the risk the plan avoids.</p>
+      </div>
+      <div class="callout reveal" style="animation-delay:.1s">
+        <span class="clab">The key scheduling insight</span>
+        <p><span class="mono">PHASE_5</span> roadmap <strong>item 18</strong> (the canonical show-status state machine) already has to consolidate the four status write paths. Phase 4 rides in on that work instead of being a standalone folder move — one motion satisfies both programs, and it never creates a fifth status writer. Start-now work is <strong>Phase 0a + the independent Phase 1 fixes</strong> (MCP hard-max, duplicate imports, StudioGuard typing) — those need no harness.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 CHALLENGES -->
+  <section class="plate" style="border-bottom:none">
+    <div class="wrap">
+      <div class="plate-head reveal">
+        <div class="idx">11 ▸</div>
+        <div class="htext">
+          <span class="eyebrow">What makes it hard</span>
+          <h2>The honest risks — and how the plan contains each</h2>
+          <p class="read">This repo is driven by AI agents that navigate via skills and hardcoded paths. A structural move has failure modes a human-only team wouldn't hit. Each is named with its mitigation.</p>
+        </div>
+      </div>
+      <div class="challenges reveal" style="animation-delay:.05s">
+        <div class="card chal sev-mid tick">
+          <span class="sev">coexistence</span>
+          <h3>Two layouts at once</h3>
+          <p><span class="mono">src/models/</span> and <span class="mono">src/capabilities/</span> live side by side for a long window, since paths move only when actively refactored.</p>
+          <div class="fix"><b>Contained by</b> Trigger-gating: nothing moves speculatively. Each slice is a small, reviewable PR with before/after parity.</div>
+        </div>
+        <div class="card chal sev-mid tick">
+          <span class="sev">agent doctrine</span>
+          <h3>Skills assume the old paths</h3>
+          <p>Pattern-authority skills and docs hardcode <span class="mono">repository/service/controller</span> paths and the "repository for all DB access" rule.</p>
+          <div class="fix"><b>Contained by</b> A per-phase knowledge-sync table + a matrix acceptance gate naming all 7 doctrine locations, enforced same-PR by <span class="mono">pr-ready</span>.</div>
+        </div>
+        <div class="card chal sev-high tick">
+          <span class="sev">no safety net</span>
+          <h3>Zero E2E coverage today</h3>
+          <p>Service tests mock repositories, so they can't prove real CLS rollback, soft-delete visibility, or module-boot closure before files move.</p>
+          <div class="fix"><b>Contained by</b> Phase 0a: an isolated real-DB harness (never the dev volume) gates every behavior-bearing change. It blocks the reorg, not the trivial fixes.</div>
+        </div>
+        <div class="card chal sev-high tick">
+          <span class="sev">latent bug</span>
+          <h3>BaseRepository.restore() is broken</h3>
+          <p>It adds <code>deletedAt: null</code> to the row it means to restore — it can't restore a soft-deleted row. Dormant only because every real flow overrides it.</p>
+          <div class="fix"><b>Contained by</b> A Phase 1 correctness item gated on the harness, closing the tracked residual and its lazy-delegate sibling in the same PR.</div>
+        </div>
+        <div class="card chal sev-mid tick">
+          <span class="sev">drift</span>
+          <h3>Numbers rot as the code moves</h3>
+          <p>A static snapshot in prose goes stale the moment a PR lands — exactly what happened to the first draft of this guide.</p>
+          <div class="fix"><b>Contained by</b> <code>pnpm architecture:signals</code> regenerates every figure and self-stamps the commit; wired into <span class="mono">pr-review</span> and <span class="mono">repository-health</span>.</div>
+        </div>
+        <div class="card chal sev-ok tick">
+          <span class="sev">resolved</span>
+          <h3>Roadmap collision</h3>
+          <p>Phases 4–5 target the same code as roadmap item 18 — the repo already closed #236–#240 for uncoordinated reach into it.</p>
+          <div class="fix"><b>Resolved by</b> Item 18 is the explicit activation trigger for Phase 4, cross-linked both ways between guide and roadmap.</div>
+        </div>
+      </div>
+
+      <div class="callout reveal" style="animation-delay:.1s">
+        <span class="clab">Bottom line for the team</span>
+        <p>The direction is settled and no alternative beat it on review. What you can act on now is small and safe: stand up the Phase 0a harness and take the independent Phase 1 correctness fixes. The big reorg stays parked behind real triggers — you'll never be asked to move a folder "because the architecture says so," only because a piece of real work already needs that boundary.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="mono">erify_api</span>
+    <span>·</span>
+    <span>Companion to <span class="mono">apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md</span></span>
+    <span>·</span>
+    <span>Signals snapshot regenerated via <span class="mono">pnpm architecture:signals</span> — figures reflect the PR source commit; rerun to refresh once the baseline moves</span>
+    <span>·</span>
+    <span>Status: proposed direction — patterns stay proposed until the pilot succeeds</span>
+  </div>
+</footer>
+
+<script>
+  // Stagger reveal by proximity to viewport without external libs.
+  (function () {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.style.animationPlayState = 'running'; io.unobserve(e.target); } });
+    }, { threshold: .12 });
+    document.querySelectorAll('.reveal').forEach((el) => { el.style.animationPlayState = 'paused'; io.observe(el); });
+  })();
+</script>
