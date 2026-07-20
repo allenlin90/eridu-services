@@ -658,6 +658,7 @@ The recommended answers are included so discussion can focus on the real tradeof
 - [Phase 5 Roadmap](../../../../docs/roadmap/PHASE_5.md)
 - [Read-Path Optimization](../READ_PATH_OPTIMIZATION.md)
 - [Architecture Direction — Visual Companion](./architecture-refactoring-visual.html)
+- [Architecture Refactoring — Implementation Roadmap](./ARCHITECTURE_REFACTORING_ROADMAP.md)
 - [NestJS Modules](https://docs.nestjs.com/modules)
 - [NestJS CQRS](https://docs.nestjs.com/recipes/cqrs)
 - [Prisma With NestJS](https://www.prisma.io/docs/guides/frameworks/nestjs)
