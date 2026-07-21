@@ -8,7 +8,7 @@ Apply these principles to all backend code: controllers, services, repositories,
 
 **A class should have one and only one reason to change.**
 
-- **Services**: One service per domain entity. Orchestration services coordinate multiple model services but do not own entity logic.
+- **Services**: A service owns one cohesive responsibility. For `erify_api`, [`erify-api-capability-refactoring`](../../erify-api-capability-refactoring/SKILL.md) is authoritative for placement — organize services by business capability/use case, not one service per Prisma-model entity (the legacy "one service per domain entity" default is superseded for placement). Orchestration services coordinate work but do not own entity logic.
 - **Controllers**: Handle HTTP concerns only (parsing, validation, status codes). Delegate all business logic to services.
 - **Repositories**: Encapsulate data access only. No business rules, no HTTP awareness.
 - **Functions**: Extract helpers when a function exceeds ~30 lines or handles more than one concern (e.g. validation **and** transformation).
@@ -199,7 +199,7 @@ interface UserWriter {
 
 - **NestJS DI**: Inject dependencies via constructor injection. Never instantiate dependencies with `new` inside a class.
 - **Tokens and Interfaces**: Use injection tokens or interfaces for cross-cutting concerns (loggers, config, external clients) so they can be swapped or mocked.
-- **Layer Isolation**: Controllers depend on service abstractions, services depend on repository abstractions — never the reverse.
+- **Layer Isolation**: Controllers depend on services, services depend on the persistence layer — never the reverse. For `erify_api` this repository-first layering stays canonical until the `ShowStatus` pilot (roadmap T11/T12); "abstractions" does not mean adding a speculative repository interface for a single Prisma implementation (`erify-api-capability-refactoring`: introduce an interface only when there are genuinely different adapters).
 - **Testability**: DIP enables easy mocking — every injected dependency can be replaced in tests.
 
 ```typescript

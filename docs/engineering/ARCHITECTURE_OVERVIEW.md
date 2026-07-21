@@ -4,6 +4,8 @@
 
 > Root-level reference for high-level architecture decisions and cross-app terminology. For backend implementation patterns, see the skills listed below and the `erify_api` implementation docs.
 
+> **Direction (2026-07):** new `erify_api` work follows capability-first *placement* (`erify-api-capability-refactoring`, per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)). The `Controller → Service → Repository → Database` layering and repository-first data access shown below remain **canonical for persistence** until the `ShowStatus` pilot proves the persistence-decision matrix and reconciles all repository-first doctrine in one PR (roadmap T11/T12). This overview describes the current canonical persistence layer; it is not reconciled to the pilot-gated matrix yet.
+
 ---
 
 ## Tech Stack
@@ -150,10 +152,11 @@ For detailed implementation patterns, see `.agents/skills/`:
 
 | Skill                                 | Covers                                                     |
 | ------------------------------------- | ---------------------------------------------------------- |
+| `erify-api-capability-refactoring`    | Capability/module placement (authoritative; persistence matrix pilot-gated) |
 | `backend-controller-pattern-nestjs`   | All controller types, base classes, response serialization |
-| `service-pattern-nestjs`              | Model services, ORM decoupling, error handling             |
-| `repository-pattern-nestjs`           | BaseRepository, filtering, optimistic locking              |
-| `orchestration-service-nestjs`        | Multi-service coordination, `@Transactional`, processors   |
+| `service-pattern-nestjs`              | Model services, ORM decoupling, error handling (superseded for placement)   |
+| `repository-pattern-nestjs`           | BaseRepository, filtering, optimistic locking (superseded for placement)    |
+| `orchestration-service-nestjs`        | Multi-service coordination, `@Transactional`, processors (superseded for placement) |
 | `authentication-authorization-nestjs` | JWT validation, token storage, protected routes            |
 | `erify-authorization`                 | AdminGuard, StudioProtected, role-based access             |
 | `database-patterns`                   | Soft delete, bulk ops, transactions, nested writes         |

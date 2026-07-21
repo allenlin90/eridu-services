@@ -1,9 +1,16 @@
 ---
 name: orchestration-service-nestjs
-description: Build NestJS orchestration services for workflows spanning multiple model services or domains.
+description: Legacy erify_api orchestration pattern. Capability skill wins on placement; workflow correctness rules here stay canonical until the ShowStatus pilot.
 ---
 
-# Orchestration Service Pattern - NestJS
+# Orchestration Service Pattern - NestJS (Superseded for placement)
+
+> **Superseded for architecture and placement selection.**
+> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
+> decides *where* a cross-model workflow lives — place it under the business capability
+> that owns the use case rather than a generic orchestration layer. **The workflow
+> correctness rules below (transactions, advisory locks, idempotency, race-safe writes,
+> persisted-JSON guards) stay canonical for new and refactored `erify_api` code.**
 
 Orchestration Services coordinate multiple Model Services for workflows spanning multiple domain models.
 

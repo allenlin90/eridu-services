@@ -1,9 +1,18 @@
 ---
 name: repository-pattern-nestjs
-description: Implement erify_api Prisma repositories with BaseRepository, delegates, typed payloads, and clear data-access boundaries.
+description: Legacy erify_api repository pattern. Capability skill wins on placement; repository-first persistence stays canonical until the ShowStatus pilot.
 ---
 
-# Repository Pattern - Prisma/NestJS
+# Repository Pattern - Prisma/NestJS (Superseded for placement)
+
+> **Superseded for architecture and placement selection.**
+> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
+> decides *whether* a capability needs a repository and *where* persistence lives.
+> **Repository-first persistence — `BaseRepository`, `BaseRepository.softDelete()`, and
+> the correctness rules below — stays canonical for new and refactored `erify_api` code
+> until the `ShowStatus` pilot (roadmap T11/T12).** A new soft-deletable capability uses
+> a capability-owned repository extending `BaseRepository`; the pilot-gated
+> direct-`txHost.tx` matrix is not yet the default.
 
 Implementation guide for NestJS Repositories using Prisma.
 

@@ -1,9 +1,18 @@
 ---
 name: service-pattern-nestjs
-description: Implement erify_api NestJS model services and business logic. Use orchestration for cross-model workflows.
+description: Legacy erify_api model-service pattern. Capability skill wins on placement; persistence and correctness rules here stay canonical until the ShowStatus pilot.
 ---
 
-# Service Pattern - NestJS
+# Service Pattern - NestJS (Superseded for placement)
+
+> **Superseded for architecture and placement selection.**
+> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
+> decides *where* a capability service, command/use case, or query provider lives.
+> **This skill stays canonical for *how* a model service is implemented until the
+> `ShowStatus` pilot (roadmap T11/T12):** the persistence path (`BaseModelService`,
+> repository-backed CRUD) and every correctness rule below still apply to new and
+> refactored `erify_api` code. Do not adopt the pilot-gated direct-`txHost.tx`
+> persistence matrix outside the pilot PR.
 
 Implementation guide for NestJS Services in Eridu.
 

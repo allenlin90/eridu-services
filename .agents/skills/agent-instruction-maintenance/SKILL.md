@@ -45,6 +45,19 @@ Verify: `.claude/CLAUDE.md` doesn't duplicate, shared guidance has not leaked in
 ### 5. Verify Parity
 Every skill in `.agents/skills/` is represented by a routing category. Every workspace is listed. Dev commands are current. Run `pnpm agents:validate` after any skill change.
 
+## Pattern or Direction Change Gate
+
+When a task changes an established pattern, convention, or architectural direction — deprecating or superseding a skill, flipping a default, changing a doctrine — the change is only complete when every artifact that asserts the old pattern is reconciled in the **same PR**. This is a *ready-to-start* precondition, not a cleanup afterthought: enumerate the reconciliation set before writing the change.
+
+1. **Enumerate.** Grep the pattern name and the owning skill across the instruction surface:
+   ```bash
+   grep -rln "<skill-name>\|<pattern-term>" .agents .claude docs apps/*/docs AGENTS.md
+   ```
+   Include `.claude/` — Claude-specific agents (`.claude/agents/`) and memory (`.claude/memory/`) can route work to the old pattern too.
+2. **Classify each hit** — reconcile now (asserts the superseded pattern as canonical), routing pointer (add a direction note), or intentionally deferred (record the gate — e.g. pilot-gated doctrine; never leave it silently stale).
+3. **Reconcile in the same PR.** A canonical skill or doc left asserting the superseded pattern is a blocking inconsistency, not a follow-up.
+4. **Keep scope honest.** If a direction is only partly accepted (e.g. placement now, persistence pilot-gated), the skills must state exactly which part is active and which is gated — never blanket-deprecate ahead of the gate.
+
 ## Content Quality Rules
 
 - **Actionable**: "Use `HttpError` utilities" not "Follow best practices"
@@ -55,6 +68,7 @@ Every skill in `.agents/skills/` is represented by a routing category. Every wor
 ## Checklist
 
 - [ ] Content in correct canonical location
+- [ ] Pattern/direction changes: every skill/doc asserting the old pattern reconciled in this PR, or deferred with a recorded gate
 - [ ] No duplication between `AGENTS.md` and `.claude/CLAUDE.md`
 - [ ] `.claude/CLAUDE.md` still ≤30 lines
 - [ ] Skill routing map complete

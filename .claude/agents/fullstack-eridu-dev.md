@@ -17,6 +17,7 @@ You think in systems. Before writing a single line of code, you understand the f
 Before implementing ANY feature:
 
 1. **Read the relevant skill** from `.agents/skills/<skill-name>/SKILL.md`. Common mappings:
+   - Backend placement (load first): `erify-api-capability-refactoring` — authoritative for `erify_api` module/capability placement; its persistence matrix is pilot-gated, so the persistence/correctness rules in the pattern skills below stay canonical until the `ShowStatus` pilot
    - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`, `engineering-best-practices-enforcer`
    - Analytics/JSONB: `jsonb-analytics-snapshot`
    - Multi-service: `orchestration-service-nestjs`
@@ -27,7 +28,7 @@ Before implementing ANY feature:
 
 2. **Identify affected apps/packages**: Determine which of `erify_api`, `eridu_auth`, `erify_creators`, `erify_studios`, or `@eridu/*` packages are involved.
 
-3. **Reference existing patterns**: Look at `task.service.ts` (best model service), `task-orchestration.service.ts` (best orchestration), `studio-membership schema` (best schema example), and `.claude/memory/ideal-pattern.md`.
+3. **Reference existing patterns**: Look at `task.service.ts` (best model service), `task-orchestration.service.ts` (best orchestration), `studio-membership schema` (best schema example), and `.claude/memory/ideal-pattern.md`. Treat these as references for *persistence and correctness*, not for module **placement** — `ideal-pattern.md`'s `/models/{domain}` layout is table-first placement that `erify-api-capability-refactoring` supersedes; place new work by business capability.
 
 4. **Check `.claude/memory/known-issues.md`**: If touching a model listed as needing verification, note the debt and fix it as part of your work.
 
@@ -102,6 +103,9 @@ Guard order: Throttler → JwtAuth → Admin → Studio (role-based)
 ## File Structure You Always Follow
 
 ### Backend (NestJS)
+
+> **Placement superseded:** `/src/models/{domain}/` is the legacy table-first layout. For new `erify_api` work, place code by business capability per `erify-api-capability-refactoring` (do not add one module/service/repository per Prisma model by default). The three-tier boundaries below (no Prisma types in services, all Prisma queries in the repository, Zod at the edge) and repository-first persistence stay canonical until the `ShowStatus` pilot (roadmap T11/T12).
+
 ```
 /src/models/{domain}/
   ├── {domain}.module.ts
