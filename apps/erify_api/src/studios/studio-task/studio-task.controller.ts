@@ -100,7 +100,7 @@ export class StudioTaskController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Get studio tasks review statistics' })
-  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.DESIGNER])
   @Get('review-stats')
   @ReadBurstThrottle()
   @ZodResponse(taskReviewStatsSchema)
@@ -115,7 +115,7 @@ export class StudioTaskController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'Get task details (including schema) for studio workflow actions' })
-  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.DESIGNER])
   @Get(':id')
   @ZodResponse(taskWithRelationsDto)
   async getTask(
@@ -135,7 +135,7 @@ export class StudioTaskController extends BaseStudioController {
   }
 
   @ApiOperation({ summary: 'List studio tasks with filters (review queue support)' })
-  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER, STUDIO_ROLE.DESIGNER])
   @Get()
   @ReadBurstThrottle()
   @ZodPaginatedResponse(taskWithRelationsDto)

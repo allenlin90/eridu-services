@@ -23,6 +23,7 @@ Studio membership had three roles (`admin`, `manager`, `member`) with no functio
 | Dashboard                    | ✅      | ✅        | ✅                  | ✅       | ✅              | ✅     |
 | My Tasks                     | ✅      | ✅        | ✅                  | ✅       | ✅              | ✅     |
 | My Shifts                    | ✅      | ✅        | ✅                  | ✅       | ✅              | ✅     |
+| Task Review QC (read-only)   | ❌      | ✅        | ❌                  | ✅       | ❌              | ✅     |
 | Tasks (assignment/ops)       | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
 | Shifts (management)          | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
 | Shows + creator mapping      | ❌      | ❌        | ❌                  | ✅       | ✅              | ✅     |
@@ -36,7 +37,7 @@ Studio membership had three roles (`admin`, `manager`, `member`) with no functio
 
 - `MANAGER` has the same access as `ADMIN` except for studio membership management.
 - `TALENT_MANAGER` scope is creator operations only — catalog, roster, availability, show assignment/removal.
-- `DESIGNER` and `MODERATION_MANAGER` have member-level access (own tasks and shifts only). Their role names exist to enable future feature gating without schema changes.
+- `DESIGNER` otherwise retains member-level access, with one narrow exception: read-only task-submission QC review. `MODERATION_MANAGER` retains member-level task execution plus its separately gated reporting access.
 - Roles live on `StudioMembership.role`; all enforcement uses `@StudioProtected([...roles])` guards — no separate permission table.
 
 ## Acceptance Record
@@ -45,3 +46,4 @@ Studio membership had three roles (`admin`, `manager`, `member`) with no functio
 - [x] `@StudioProtected([STUDIO_ROLE.TALENT_MANAGER])` restricts creator endpoints correctly
 - [x] `MANAGER` can access all studio features except membership management
 - [x] Roles assignable via admin API
+- [x] `DESIGNER` can inspect task-review QC evidence without receiving task mutation controls

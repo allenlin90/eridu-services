@@ -12,4 +12,11 @@ describe('studioRouteAccess', () => {
     expect(hasStudioRouteAccess(STUDIO_ROLE.MANAGER, 'taskSetup')).toBe(true);
     expect(hasStudioRouteAccess(STUDIO_ROLE.ADMIN, 'taskSetup')).toBe(true);
   });
+
+  it('grants designers the review queue without granting adjacent manager surfaces', () => {
+    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'reviewQueue')).toBe(true);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'taskSetup')).toBe(false);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'showRunReview')).toBe(false);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'costs')).toBe(false);
+  });
 });

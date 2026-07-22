@@ -19,8 +19,8 @@ export function useTaskReviewSummary({ studioId, dateRange }: UseTaskReviewSumma
 
   // Parallel query parameters (fetch base params)
   const summaryParams = useMemo(() => ({
-    due_date_from: effectiveRange.windowStart.toISOString(),
-    due_date_to: effectiveRange.windowEnd.toISOString(),
+    show_start_from: effectiveRange.windowStart.toISOString(),
+    show_start_to: effectiveRange.windowEnd.toISOString(),
   }), [effectiveRange]);
 
   const isViewingCurrentOperationalDay = useMemo(

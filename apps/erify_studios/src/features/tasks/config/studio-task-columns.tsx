@@ -2,7 +2,7 @@
 import { Link } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { AlertTriangle, Pencil } from 'lucide-react';
+import { AlertTriangle, Image, Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -28,8 +28,10 @@ import {
 import { cn } from '@eridu/ui/lib/utils';
 
 import { getExtractionStatus } from '../lib/extraction-warnings';
+import { getTaskQcEvidenceUrlsFromContent } from '../lib/task-qc-evidence';
 
 import { getTaskTypeLabel } from '@/lib/constants/task-type-labels';
+import * as m from '@/paraglide/messages';
 
 const STUDIO_REVIEW_ACTIONS: Partial<Record<TaskStatus, TaskAction[]>> = {
   [TASK_STATUS.PENDING]: [TASK_ACTION.START_WORK, TASK_ACTION.SUBMIT_FOR_REVIEW, TASK_ACTION.MARK_BLOCKED, TASK_ACTION.CLOSE_TASK],
@@ -217,8 +219,10 @@ export function getStudioTaskColumns(
   onRunAction: (task: TaskWithRelationsDto, action: TaskAction) => void,
   processingTaskId: string | null,
   onEditDueDate: (task: TaskWithRelationsDto) => void,
+  onOpenQcReview: (task: TaskWithRelationsDto) => void,
+  canManage: boolean,
 ): ColumnDef<TaskWithRelationsDto>[] {
-  return [
+  const columns: ColumnDef<TaskWithRelationsDto>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -242,6 +246,27 @@ export function getStudioTaskColumns(
       enableSorting: false,
       enableHiding: false,
       size: 40,
+    },
+    {
+      id: 'qc_evidence',
+      header: m.task_review_qc_column(),
+      cell: ({ row }) => {
+        const previewUrl = getTaskQcEvidenceUrlsFromContent(row.original.content)[0];
+        return (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto gap-2 p-1.5"
+            onClick={() => onOpenQcReview(row.original)}
+          >
+            {previewUrl
+              ? <img src={previewUrl} alt="" className="h-12 w-9 rounded border object-cover" />
+              : <span className="flex h-12 w-9 items-center justify-center rounded border bg-muted"><Image className="h-4 w-4 text-muted-foreground" /></span>}
+            <span className="text-xs font-medium">{m.task_review_qc_review_action()}</span>
+          </Button>
+        );
+      },
+      enableSorting: false,
     },
     {
       accessorKey: 'description',
@@ -336,16 +361,20 @@ export function getStudioTaskColumns(
             : (
                 <span className="text-sm text-muted-foreground">-</span>
               )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => onEditDueDate(row.original)}
-            aria-label="Edit due date"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
+          {canManage
+            ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => onEditDueDate(row.original)}
+                  aria-label="Edit due date"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )
+            : null}
         </div>
       ),
     },
@@ -369,8 +398,15 @@ export function getStudioTaskColumns(
       meta: { className: 'hidden' },
     },
     {
-      id: 'client_name',
-      accessorFn: (row) => row.show?.client_name ?? '',
+      id: 'client_id',
+      accessorFn: (row) => row.show?.client_id ?? '',
+      header: () => null,
+      cell: () => null,
+      meta: { className: 'hidden' },
+    },
+    {
+      id: 'platform_id',
+      accessorFn: (row) => row.show?.platforms.map((platform) => platform.uid).join(',') ?? '',
       header: () => null,
       cell: () => null,
       meta: { className: 'hidden' },
@@ -404,10 +440,15 @@ export function getStudioTaskColumns(
       meta: { className: 'hidden' },
     },
   ];
+
+  return canManage
+    ? columns
+    : columns.filter((column) => column.id !== 'select' && column.id !== 'actions');
 }
 
 export const studioTaskSearchableColumns = [
-  { id: 'client_name', title: 'Client', type: 'text' as const },
+  { id: 'client_id', title: 'Client', type: 'text' as const },
+  { id: 'platform_id', title: 'Platform', type: 'select' as const, options: [] },
   { id: 'assignee_name', title: 'User', type: 'text' as const },
   { id: 'show_name', title: 'Show', type: 'text' as const },
   {
@@ -428,7 +469,6 @@ export const studioTaskSearchableColumns = [
       { value: 'false', label: 'No' },
     ],
   },
-  { id: 'due_date', title: 'Due Date', type: 'date-range' as const },
   {
     id: 'status',
     title: 'Status',

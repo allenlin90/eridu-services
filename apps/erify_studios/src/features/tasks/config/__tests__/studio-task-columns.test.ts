@@ -4,6 +4,7 @@ import type { TaskWithRelationsDto } from '@eridu/api-types/task-management';
 
 import {
   getBulkApprovalBlockers,
+  getStudioTaskColumns,
   getTaskIssueDescription,
   getTaskIssues,
   getTaskPhase,
@@ -193,5 +194,20 @@ describe('getTaskPhase', () => {
 
   it('maps everything else to on-air', () => {
     expect(getTaskPhase('ROUTINE')).toBe('on-air');
+  });
+});
+
+describe('getStudioTaskColumns', () => {
+  const callbacks = [vi.fn(), null, vi.fn(), vi.fn()] as const;
+
+  it('keeps management controls for managers', () => {
+    const columns = getStudioTaskColumns('studio-1', callbacks[0], callbacks[1], callbacks[2], callbacks[3], true);
+    expect(columns.map((column) => column.id)).toEqual(expect.arrayContaining(['select', 'actions', 'qc_evidence']));
+  });
+
+  it('keeps QC review but removes mutations for read-only designers', () => {
+    const columns = getStudioTaskColumns('studio-1', callbacks[0], callbacks[1], callbacks[2], callbacks[3], false);
+    expect(columns.map((column) => column.id)).toContain('qc_evidence');
+    expect(columns.map((column) => column.id)).not.toEqual(expect.arrayContaining(['select', 'actions']));
   });
 });

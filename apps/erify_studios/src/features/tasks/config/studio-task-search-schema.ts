@@ -5,6 +5,8 @@ export const studioTaskSearchSchema = z.object({
   limit: z.coerce.number().int().min(10).max(100).catch(10),
   description: z.string().optional().catch(undefined),
   client_name: z.string().optional().catch(undefined),
+  client_id: z.string().optional().catch(undefined),
+  platform_id: z.string().optional().catch(undefined),
   assignee_name: z.string().optional().catch(undefined),
   show_name: z.string().optional().catch(undefined),
   has_assignee: z.string().optional().catch(undefined),
@@ -13,4 +15,6 @@ export const studioTaskSearchSchema = z.object({
   task_type: z.string().optional().catch(undefined),
   due_date_from: z.string().optional().catch(undefined),
   due_date_to: z.string().optional().catch(undefined),
+  show_start_from: z.string().optional().catch(undefined),
+  show_start_to: z.string().optional().catch(undefined),
 });

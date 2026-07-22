@@ -43,6 +43,7 @@ Each row is one workstream or deliverable. Items are numbered in execution order
 | 10  | [Import platform performance data](#10-import-platform-performance-data) — controlled manual export/upload flow before platform API integration; design doc first                                          | —                                         | 🔲 Planned     |
 | 11  | [Advisory planning readiness checklist](#11-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition                                    | 1, 2                                      | 🔲 Planned     |
 | 12  | [Post-production completion review checklist](#12-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records                        | 6, 9, 10                                  | 🔲 Planned     |
+| 22  | [Task submission QC review access](#22-task-submission-qc-review-access) — view-only `DESIGNER`-role access to `/task-review` submissions plus a dedicated screenshot/QC evidence viewer                    | —                                          | ✅ Done        |
 
 ### Operational Efficiency (Candidates)
 
@@ -291,6 +292,27 @@ Transitions stay manager-driven and **ungated**: readiness/completion conditions
 **Blocked** — the notification PRD defines the common channels, recipients, and timing principles; activate this policy only after item 18 owns state transitions and item 9 defines issue severity. Draft changes remain quiet, confirmed-show changes notify selected stakeholders, and near/on-air changes may escalate based on severity and reason.
 
 **Boundary**: issue-event notifications are item 15. This item is only for lifecycle state transitions.
+
+### 22. Task submission QC review access
+
+**Source**: Phase 5 review (July 2026) — scene designer stakeholder requirement
+
+Scene designers can now inspect completed task submissions and the QC screenshots operators upload as evidence from `/task-review`. The shared route policy and read endpoints admit `DESIGNER`, while all task mutations remain limited to `MANAGER` and `ADMIN`.
+
+Two additive changes, both view-only for the new role:
+
+1. **Role and guard extension**: `STUDIO_ROUTE_ACCESS.reviewQueue` and the `GET /review-stats`, `GET :id`, and `GET` list endpoints admit `STUDIO_ROLE.DESIGNER`. The mutation endpoints (`PATCH :id`, `PATCH :id/action`, `POST /bulk-approve`) remain `MANAGER`/`ADMIN`-only, and Designer rows expose no selection, task-action, or due-date-edit controls.
+2. **Dedicated QC image viewer**: each row exposes a compact evidence preview that opens a responsive, screenshot-first gallery. Desktop uses a large review sheet; mobile uses a drawer with previous/next and thumbnail navigation. Reviewers can toggle a layout-QC overlay and expand show/client/platform details plus submitted GMV/viewer/CTR/CTO values when present.
+3. **Review scope**: the primary date range filters by show start within the 06:00–05:59 operational window. Client uses the shared asynchronous combobox, platform remains a secondary select, and both values are server-filtered and URL-persisted.
+
+**Acceptance record**:
+
+- [x] Designer can open task review, list submissions, load review statistics, and fetch task evidence details.
+- [x] Designer cannot invoke approval, status, bulk-approval, or due-date mutations from the review UI or API.
+- [x] Real Cloudflare R2 image URL shapes (`.jpg`, `.jpeg`, `.webp`) render in compact and full evidence views.
+- [x] Desktop and mobile share the read-only evidence model without reserving UI for future comments or notes.
+
+**Scope boundary**: `DESIGNER` gains no access to `/costs` or `/task-setup` planning fields. This item is a single-route, view-only guard extension, not the granular RBAC decomposition Phase 5 scoped out (see Out of Scope table below) — it reuses an existing role value and touches no other surface's access rules.
 
 ---
 

@@ -12,6 +12,8 @@ import { requiresTaskActionSheet } from '@/features/tasks/lib/task-action-sheet'
 type UseStudioTasksPageControllerProps = {
   studioId: string;
   reviewTab?: TaskReviewActiveFilter;
+  canManage: boolean;
+  onOpenQcReview: (task: TaskWithRelationsDto) => void;
 };
 
 type ActionDraft = {
@@ -19,7 +21,7 @@ type ActionDraft = {
   action: TaskAction;
 };
 
-export function useStudioTasksPageController({ studioId, reviewTab }: UseStudioTasksPageControllerProps) {
+export function useStudioTasksPageController({ studioId, reviewTab, canManage, onOpenQcReview }: UseStudioTasksPageControllerProps) {
   const [actionDraft, setActionDraft] = useState<ActionDraft | null>(null);
   const [dueDateTask, setDueDateTask] = useState<TaskWithRelationsDto | null>(null);
 
@@ -119,8 +121,10 @@ export function useStudioTasksPageController({ studioId, reviewTab }: UseStudioT
       handleRunAction,
       isUpdatingStatus ? processingTaskId : null,
       openDueDateEditor,
+      onOpenQcReview,
+      canManage,
     ),
-    [studioId, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor],
+    [studioId, handleRunAction, isUpdatingStatus, processingTaskId, openDueDateEditor, onOpenQcReview, canManage],
   );
 
   const tablePagination = data?.meta

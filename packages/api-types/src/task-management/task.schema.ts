@@ -138,6 +138,7 @@ export const taskWithRelationsSchema = taskSchema.extend({
       startTime: z.date(),
       endTime: z.date(),
       client: z.object({
+        uid: z.string(),
         name: z.string(),
       }).nullable().optional(),
       studioRoom: z.object({
@@ -153,6 +154,7 @@ export const taskWithRelationsSchema = taskSchema.extend({
       showPlatforms: z.array(z.object({
         uid: z.string(),
         platform: z.object({
+          uid: z.string(),
           name: z.string(),
         }),
       })).optional(),
@@ -187,8 +189,13 @@ export const taskWithRelationsDto = taskWithRelationsSchema.transform((obj) => {
         start_time: s.startTime.toISOString(),
         end_time: s.endTime.toISOString(),
         client_name: s.client?.name ?? null,
+        client_id: s.client?.uid ?? null,
         studio_room_name: s.studioRoom?.name ?? null,
         creator_names: creatorEntries.map((c) => c.label),
+        platforms: (s.showPlatforms ?? []).map((item) => ({
+          uid: item.platform.uid,
+          label: item.platform.name,
+        })),
       };
       hydrationContext = {
         creators: creatorEntries,
@@ -476,6 +483,7 @@ export const listMyTasksQuerySchema = paginationBaseSchema
       .optional(),
     studio_id: z.string().optional(),
     client_id: z.string().optional(),
+    platform_id: z.string().optional(),
     review_tab: z
       .enum([
         'all',

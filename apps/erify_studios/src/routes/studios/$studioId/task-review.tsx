@@ -4,6 +4,7 @@ import { StudioRouteGuard } from '@/components/guards/studio-route-guard';
 import { fromLocalDateInput } from '@/features/studio-shifts/utils/shift-date.utils';
 import { studioTaskSearchSchema } from '@/features/tasks/config/studio-task-search-schema';
 import { operationalWindowToDayRange } from '@/lib/operational-day-range';
+import * as m from '@/paraglide/messages';
 
 function parseSearchParamDate(value: string | undefined, isEnd = false): Date | undefined {
   if (!value)
@@ -23,18 +24,23 @@ export const Route = createFileRoute('/studios/$studioId/task-review')({
   validateSearch: (search) => {
     const parsed = studioTaskSearchSchema.parse(search);
 
-    // Default to current operational day range only if BOTH boundaries are missing
-    if (!parsed.due_date_from && !parsed.due_date_to) {
+    const requestedFrom = parsed.show_start_from ?? parsed.due_date_from;
+    const requestedTo = parsed.show_start_to ?? parsed.due_date_to;
+
+    // Default to the current operational show-day only when both boundaries are missing.
+    if (!requestedFrom && !requestedTo) {
       const defaultRange = operationalWindowToDayRange(undefined);
       return {
         ...parsed,
-        due_date_from: defaultRange.windowStart.toISOString(),
-        due_date_to: defaultRange.windowEnd.toISOString(),
+        due_date_from: undefined,
+        due_date_to: undefined,
+        show_start_from: defaultRange.windowStart.toISOString(),
+        show_start_to: defaultRange.windowEnd.toISOString(),
       };
     }
 
-    const fromDate = parseSearchParamDate(parsed.due_date_from, false);
-    const toDate = parseSearchParamDate(parsed.due_date_to, true);
+    const fromDate = parseSearchParamDate(requestedFrom, false);
+    const toDate = parseSearchParamDate(requestedTo, true);
 
     // Normalize each boundary against its own window-edge semantics so already-
     // normalized ISO timestamps (e.g. windowEnd at 05:59:59) don't drift forward.
@@ -47,8 +53,10 @@ export const Route = createFileRoute('/studios/$studioId/task-review')({
 
     return {
       ...parsed,
-      due_date_from: normalizedFrom,
-      due_date_to: normalizedTo,
+      due_date_from: undefined,
+      due_date_to: undefined,
+      show_start_from: normalizedFrom,
+      show_start_to: normalizedTo,
     };
   },
 });
@@ -60,8 +68,8 @@ function StudioTaskReviewLayout() {
     <StudioRouteGuard
       studioId={studioId}
       routeKey="reviewQueue"
-      deniedTitle="Task Review Access Required"
-      deniedDescription="Only studio managers and admins can access task review."
+      deniedTitle={m.task_review_qc_access_title()}
+      deniedDescription={m.task_review_qc_access_description()}
     >
       <Outlet />
     </StudioRouteGuard>

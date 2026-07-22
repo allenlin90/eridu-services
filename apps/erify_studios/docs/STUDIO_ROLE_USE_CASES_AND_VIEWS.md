@@ -13,7 +13,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `ADMIN` | Full studio access except system management |
 | `MANAGER` | Same as ADMIN except studio membership management |
 | `TALENT_MANAGER` | Creator-focused: catalog, roster, availability, show creator assignment |
-| `DESIGNER` | Member-level — own tasks and shifts only |
+| `DESIGNER` | Own tasks and shifts, plus read-only submitted-task QC review |
 | `MODERATION_MANAGER` | Member-level — own tasks and shifts only |
 | `MEMBER` | Own tasks and shifts only |
 
@@ -22,7 +22,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 1. **Dashboard is shared visibility**: all studio roles can check today's shows and duty-manager coverage.
 2. **ADMIN and MANAGER are operationally equivalent**: both can manage shifts, shows, tasks, templates. ADMIN owns studio membership writes; MANAGER can read the roster and review member compensations.
 3. **TALENT_MANAGER has a focused scope**: creator catalog/roster reads and show creator assignment. No task ops, shift ops, or template access.
-4. **DESIGNER and MODERATION_MANAGER are member-level**: access is limited to their own tasks and shifts.
+4. **Specialized access stays narrow**: DESIGNER adds read-only submitted-task QC review to member-level access; MODERATION_MANAGER adds its separately gated reporting tools.
 5. **Single-purpose routes**: task-setup route = task ops only; creator-mapping route = creator assignment only.
 
 ## Route Access Matrix
@@ -32,7 +32,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/dashboard` | View | View | View | View | View | View |
 | `/studios/:studioId/my-tasks` | View/Execute | View/Execute | View/Execute | View/Execute | View/Execute | View/Execute |
 | `/studios/:studioId/my-shifts` | View | View | View | View | View | View |
-| `/studios/:studioId/task-review` | View/Review | View/Review | No access | No access | No access | No access |
+| `/studios/:studioId/task-review` | View/Review | View/Review | No access | View QC only | No access | No access |
 | `/studios/:studioId/shifts` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-setup` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/shows/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
@@ -50,7 +50,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 |---------|----------|
 | My Workspace (Dashboard, My Tasks, My Shifts) | All roles |
 | Planning (Shift Schedule, Shows, Creator Mapping; future Schedules) | ADMIN, MANAGER, TALENT_MANAGER |
-| Tasks (Task Setup, Task Review, Task Reports) | ADMIN, MANAGER, MODERATION_MANAGER |
+| Tasks (role-filtered entries) | ADMIN, MANAGER; DESIGNER sees Task Review only; MODERATION_MANAGER sees Task Reports only |
 | People (Members, Creators) | Members: ADMIN, MANAGER. Creators: ADMIN, MANAGER, TALENT_MANAGER |
 | Studio Settings (Shared Fields, Task Templates) | ADMIN, MANAGER |
 

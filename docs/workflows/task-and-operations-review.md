@@ -11,6 +11,7 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
 | Operator (Host/Producer) | All | Executes check-lists, fills out forms, auto-saves input, and submits tasks. |
 | Studio Manager | `MANAGER` | Reviews submissions, bulk-approves tasks, reviews compiled daily facts, and exports filtered operational rows. |
 | Studio Admin | `ADMIN` | Same as Manager, plus template creation and task configuration. |
+| Scene Designer | `DESIGNER` | Reviews submitted screenshots and layout QC evidence without approving or modifying tasks. |
 
 ---
 
@@ -51,13 +52,15 @@ When shows are scheduled, tasks are instantiated from these templates:
 * **Runbook**: [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](../../apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)
 
 ### 3. Pre-Confirmation Review (`/task-review`)
-Studio managers review submitted operator task checklists for the operational day (06:00–05:59 local window) at `/studios/:studioId/task-review`:
+Studio managers and scene designers review submitted operator task checklists for the show's operational day (06:00–05:59 local window) at `/studios/:studioId/task-review`:
+* **Screenshot-first QC**: Every row exposes a compact evidence preview. The responsive review surface provides a large image, phone-friendly navigation, an optional safe-area/host-focus/product-zone overlay, and collapsed show/performance context.
+* **Read-only Designer boundary**: Designer can list submissions and open QC evidence but cannot select rows, edit due dates, approve, reject, block, close, or bulk-approve tasks.
 * **Visual Summary Panel & State Filtering**: The summary panel splits Setup, Active/Routine, and Closure phases with quick-action metrics. In addition to primary **Needs Attention** highlights, managers can tap interactive **Ready** and **Done** visual filters underneath each card:
   - **Pre-Prod (SETUP)**: Ready and Done task filters.
   - **On-Air (ACTIVE/ROUTINE)**: Ready and Done task filters.
   - **Post-Prod (CLOSURE)**: Ready and Done task filters.
 * **Unified Workspace Queues**: All tabs draw from a single merged pool of dated and undated tasks, with local URL-state paginators automatically updated to reflect the active subset.
-* **Triage & Search Filters**: To navigate dense queues efficiently, the Client, User (Assignee), and Show filters are fully asynchronous comboboxes. They query the API as the manager types, with robust label preservation even if an active search query falls outside the initial results page.
+* **Triage & Search Filters**: Show date is the primary range. Client, User (Assignee), and Show use asynchronous comboboxes; Platform is a secondary select. The API receives UID filters while the controls preserve readable labels.
 * **Needs Attention Tab**: Isolates task anomalies, strictly defined as tasks that are **Unassigned** or **Unsubmitted and Overdue** (`PENDING`, `IN_PROGRESS`, or `BLOCKED` status past their due date).
 * *Note: A task in `REVIEW` status is never flagged as "Overdue" or placed in "Needs Attention" just because the due date has passed. The operator completed their role on time; it is simply waiting for the manager.*
 
