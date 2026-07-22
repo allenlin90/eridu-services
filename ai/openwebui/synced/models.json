@@ -548,7 +548,7 @@
             "capabilities": {
                 "file_context": true,
                 "vision": false,
-                "file_upload": false,
+                "file_upload": true,
                 "web_search": false,
                 "image_generation": false,
                 "code_interpreter": false,
@@ -570,17 +570,17 @@
         },
         "access_grants": [
             {
-                "id": "795dd5eb-ebb6-45df-ac4d-e5bf0cc25220",
+                "id": "0b518169-fc9b-4fc3-b8ad-352a905bd832",
                 "resource_type": "model",
                 "resource_id": "eridu-general",
                 "principal_type": "user",
                 "principal_id": "*",
                 "permission": "read",
-                "created_at": 1784116845
+                "created_at": 1784603211
             }
         ],
         "is_active": true,
-        "updated_at": 1784116844,
+        "updated_at": 1784603211,
         "created_at": 1783664407
     },
     {
@@ -711,26 +711,35 @@
         },
         "access_grants": [
             {
-                "id": "d86f8cfa-9bdb-4241-998c-290a392a5e8c",
+                "id": "c5427ca4-37fc-4a29-9465-b325e9a7b1c5",
                 "resource_type": "model",
                 "resource_id": "eridu-management-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1784303380
+                "created_at": 1784649049
             },
             {
-                "id": "86442feb-36f5-4746-b2da-1394ec8866e8",
+                "id": "620d1e10-e002-4ed0-be4d-2465fa3f4f22",
                 "resource_type": "model",
                 "resource_id": "eridu-management-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "write",
-                "created_at": 1784303380
+                "created_at": 1784649049
+            },
+            {
+                "id": "03dfe1cd-8c80-45d3-89d7-de7093aab945",
+                "resource_type": "model",
+                "resource_id": "eridu-management-assistant",
+                "principal_type": "group",
+                "principal_id": "ac8a3e5d-76d0-486b-9c9a-576e6c587b1b",
+                "permission": "read",
+                "created_at": 1784649049
             }
         ],
         "is_active": true,
-        "updated_at": 1784303380,
+        "updated_at": 1784649049,
         "created_at": 1784138161
     },
     {

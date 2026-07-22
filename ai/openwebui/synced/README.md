@@ -9,7 +9,7 @@ This directory is the durable, git-tracked record of **what's actually configure
 | File | Source endpoint | Contents |
 |---|---|---|
 | `models.json` | `GET /api/v1/models/export` | All 13 Workspace Models (assistants) as configured live, including `skillIds`, `toolIds`, `knowledge`, and `access_grants` (group UUIDs) |
-| `groups.json` | `GET /api/v1/groups/` | All 13 groups with full `permissions` objects |
+| `groups.json` | `GET /api/v1/groups/` | All 11 groups with full `permissions` objects (migrated from the old 13-group Manager/Team-Lead/Member roster to a function-based structure — see Groups roster below) |
 | `tool-servers.json` | `GET /api/v1/configs/tool_servers` | The single registered MCP tool-server connection (`eridu_mcp`) and its group access grants |
 | `default-permissions.json` | `GET /api/v1/users/default/permissions` | Instance-wide default `UserPermissions` baseline |
 | `skills/*.md` | `GET /api/v1/skills/export` | Full content of 25 of the 26 live Open WebUI Skills (the "Eridu Brain"), one file per skill ID, verbatim including YAML frontmatter. The 26th, `citation-escalation-contract`, is tracked separately in `../skills/citation-escalation-contract.md` (repo-authored adapter, not duplicated here). |
@@ -19,45 +19,51 @@ This directory is the durable, git-tracked record of **what's actually configure
 
 ## Groups roster (id → name)
 
+**Migrated 2026-07-17/18** from the old 13-group Manager/Team-Lead/Member-per-pillar roster to an 11-group, function-based structure driven by the `ERIQ_design.xlsx` "Group-Skills-revised17/7" design sheet. The old group IDs below no longer exist live.
+
 | Group ID | Name |
 |---|---|
-| `7b35c753-4d87-46c3-896c-d43fb188da9f` | Commerce - Manager |
-| `8a37f184-4ac5-4226-9852-50b88029b181` | Erify - Member |
-| `5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85` | Commerce - Team-Lead |
-| `06a13d90-8f63-40ac-9371-b202eefd1f22` | Erify - Team-Lead |
-| `4c0e8df2-0dc7-44ef-a7ed-a7abae84956f` | Erify - Manager |
-| `b62ac290-77f4-4eef-921d-b5f4341f7528` | Finance - Manager |
-| `072d90e6-b38c-4a75-ac28-ef7c69a7535c` | HR - Manager |
-| `4fb7717c-fb34-44ee-bf67-a14033664ec8` | Erisa - Team-Lead |
-| `02ec2465-b5f3-4e9f-93b5-ca87b46f0936` | Erisa - Member |
-| `d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81` | Erisa - Manager |
-| `fdfc0f31-8adf-4fa3-8d69-e907c5541894` | Commerce - Member |
-| `3728dd04-6c44-41d0-9836-49c70593af45` | Org - General |
 | `17e06578-d8e0-4134-81e3-a859c5f158b1` | Admins |
+| `414dfc1d-7fe3-48cd-b148-8497bd695b73` | Org - General |
+| `e5867280-ba3e-4463-bba4-bdae77469876` | Commerce - Sales |
+| `50e407d9-4756-4aeb-9ac9-3f99d275e3b7` | Commerce - Operation |
+| `768416a7-4602-4471-af88-2aa36e43b5b1` | Erify - Offset |
+| `9c912c64-6bfe-4c0d-a8e5-f416d8e5fe56` | Erify - Onset |
+| `a0c6d928-ed7a-4528-95dd-887a82a97752` | Erisa - Creator |
+| `a56a6a87-6942-4b4a-a7d0-eb86f9862859` | Erisa - Campaign |
+| `0309e329-3af8-44e6-a666-994e08b816c8` | Finance - Manager |
+| `13b52c81-eff3-47e4-80a8-10c665e37784` | HR - Manager |
+| `ac8a3e5d-76d0-486b-9c9a-576e6c587b1b` | Management team |
+
+Real membership: only 3 of the 18 live users are group-assigned today — `Allen`/`Levi` in `Admins`, and `Kuntapol Cholaweksuwan` (`hr.os@eridu.co.th`) in `HR - Manager` (added 2026-07-17, before this migration commit). Every other user has no group. **`GET /api/v1/users/all`'s `groups` field is broken** — it returns `[]` for every user regardless of real membership; use `GET /api/v1/users/{id}` (per-user) for accurate group data, and see known-gaps below.
 
 ## Assistants (Workspace Models) roster
 
+Model access grants were cross-checked against the `Group-Skills-revised17/7` sheet's per-group skill grants (a group should only read a model whose bound skills it already holds) — see `ERIQ_design.xlsx` sheets `Group-Skills-revised177`/`Group-Models`/`Skill-Models`. `Org - General` and `Admins` are treated as intentional broad-access baselines exempt from that check (kept as configured live, not narrowed).
+
 | Assistant ID | Display name | Skill IDs | Groups granted access |
 |---|---|---|---|
-| `production-assistant` | Erify - Production Assistant | core-principles, content-management, governance-ops, eu-essentials | Erify - Team-Lead, Admins, Org - General, Erify - Manager, Erify - Member |
-| `management-assistant` | Eridu - Finance Assistant | core-principles, org-chart, financial-guardrails, finance-ops, governance-ops, eu-essentials, 0002 | Admins, Org - General, Finance - Manager |
-| `performance-assistant` | Erify - Performance Assistant | core-principles, 0002, content-management, governance-ops, eu-essentials | Erify - Team-Lead, Admins, Org - General, Erify - Manager, Erify - Member |
-| `commerce-assistant` | Commerce - Operations Assistant | core-principles, commerce, governance-ops, affiliate-management, loreal-brand-case, eu-essentials, creator-management, affiliate-management-, adp-analysis, content-management | Admins, Org - General, Commerce - Team-Lead, Commerce - Manager, Commerce - Member |
-| `eridu-hr-assistant` | Eridu - HR Assistant | core-principles, org-chart, talent-development-framework, governance-ops, eu-essentials, communication-protocol, hr-ops, legal-process | HR - Manager, Admins, Org - General |
-| `scheduling-assistant` | Erify - Scheduling Assistant | core-principles, content-management, governance-ops, eu-essentials | Erify - Team-Lead, Admins, Org - General, Erify - Manager, Erify - Member |
-| `erisa-adp-assistant` | Erisa - ADP Assistant | core-principles, creator-management, affiliate-management-, governance-ops, adp-analysis, eu-essentials | Erisa - Member, Admins, Org - General, Erisa - Team-Lead, Erisa - Manager |
-| `creator-service-assistant` | Erisa - Creator Service Assistant | core-principles, creator-management, governance-ops, eu-essentials, affiliate-management- | Erisa - Member, Admins, Org - General, Erisa - Team-Lead, Erisa - Manager |
-| `commerce-sales-assistant` | Commerce - Sales Assistant | core-principles, governance-ops, commerce, sales, eu-essentials, sales-training | Admins, Org - General, Commerce - Team-Lead, Commerce - Manager, Commerce - Member |
-| `eridu-brain` | Eridu Brain | org-chart, 00010, sales, legal-process, hr-ops, governance-ops, financial-guardrails, finance-ops, 0002, decisionlog, creator-management, core-principles, content-management, commerce, talent-development-framework, openwebui-litellm-railway-integration-guide, affiliate-management- | Admins, Org - General |
-| `eridu-management-assistant` | Eridu - Management Assistant | core-principles, governance-ops, eu-essentials, 0002, talent-development-framework, org-chart, financial-guardrails, creator-management, commerce, content-management, finance-ops, hr-ops, legal-process, sales | Admins, Org - General, Commerce - Manager, Erify - Manager, Erisa - Manager, Finance - Manager, HR - Manager |
-| `eridu-general` | Eridu General | eu-essentials, 0002, communication-protocol, talent-development-framework, org-chart, financial-guardrails | public (`principal_type: user`, `principal_id: "*"`) — pre-existing, unrelated to the wiki work, not investigated further |
+| `commerce-assistant` | Commerce - Operations Assistant | core-principles, commerce, governance-ops, affiliate-management, loreal-brand-case, eu-essentials, creator-management, affiliate-management-, adp-analysis, content-management | Admins, Commerce - Operation, Org - General |
+| `commerce-sales-assistant` | Commerce - Sales Assistant | core-principles, governance-ops, commerce, sales, eu-essentials, sales-training | Admins, Commerce - Sales, Org - General |
+| `creator-service-assistant` | Erisa - Creator Service Assistant | core-principles, creator-management, governance-ops, eu-essentials, affiliate-management- | Admins, Erisa - Creator, Org - General |
+| `eridu-brain` | Eridu Brain | org-chart, 00010, sales, legal-process, hr-ops, governance-ops, financial-guardrails, finance-ops, 0002, decisionlog, creator-management, core-principles, content-management, commerce, talent-development-framework, openwebui-litellm-railway-integration-guide, affiliate-management- | Admins, Org - General, Finance - Manager, HR - Manager, Management team |
+| `eridu-hr-assistant` | Eridu - HR Assistant | core-principles, org-chart, talent-development-framework, governance-ops, eu-essentials, communication-protocol, hr-ops, legal-process | Admins, HR - Manager, Org - General |
+| `eridu-management-assistant` | Eridu - Management Assistant | core-principles, governance-ops, eu-essentials, 0002, talent-development-framework, org-chart, financial-guardrails, creator-management, commerce, content-management, finance-ops, hr-ops, legal-process, sales | Admins, Management team (added 2026-07-21 — previously Admins-only despite fully qualifying under the skill cross-check) |
+| `erisa-adp-assistant` | Erisa - ADP Assistant | core-principles, creator-management, affiliate-management-, governance-ops, adp-analysis, eu-essentials | Admins, Erisa - Campaign, Org - General |
+| `management-assistant` | Eridu - Finance Assistant | core-principles, org-chart, financial-guardrails, finance-ops, governance-ops, eu-essentials, 0002 | Admins, Finance - Manager, Org - General |
+| `performance-assistant` | Erify - Performance Assistant | core-principles, 0002, content-management, governance-ops, eu-essentials | Admins, Erify - Offset, Erify - Onset, Org - General |
+| `production-assistant` | Erify - Production Assistant | core-principles, content-management, governance-ops, eu-essentials | Admins, Erify - Offset, Erify - Onset, Org - General |
+| `scheduling-assistant` | Erify - Scheduling Assistant | core-principles, content-management, governance-ops, eu-essentials | Admins, Erify - Offset, Erify - Onset, Org - General |
+| `eridu-general` | Eridu General | eu-essentials, 0002, communication-protocol, talent-development-framework, org-chart, financial-guardrails | public (`principal_type: user`, `principal_id: "*"`) — this is the "Org - general" row of `Skill-Models`; all six of its skills also carry their own public read grant at the skill level (see known-gaps) |
 | `company-wiki-pilot` | Company Wiki (Pilot) | citation-escalation-contract | none yet — private to the creating admin. Phase 2 pilot: knowledge attached is the real "Company Wiki" collection; base model `MiniMax-M3` (the `company-*` LiteLLM aliases referenced elsewhere in this repo's skills do not exist live — verified via `GET /v1/models` on LiteLLM, only raw provider/model names exist). Widening access is a pending decision, not yet made. **Recreated once** after a real bug: the first version's knowledge entry was missing `type: "collection"`, causing every question to falsely report "no documents were available" — see known-gaps below. |
+
+Erify - Offset and Erify - Onset currently hold identical skill grants (`eu-essentials` + `content-management` only) and therefore identical assistant access. `ERIQ_design.xlsx`'s org-structure legend implies Offset ≈ Schedule/MC/LoS and Onset ≈ Production/Performance — if that split is wanted at the model-access level, the two groups' skill grants need to diverge first (no data currently distinguishes them).
 
 ## Notes for cross-checking `../skills-import-test-plan.md`
 
 - All assistant IDs referenced in the test plan (`commerce-assistant`, `commerce-sales-assistant`, `performance-assistant`, `production-assistant`, `scheduling-assistant`, `erisa-adp-assistant`) exist live and match this roster.
-- The org is three pillars — **Commerce**, **Erify**, **Erisa** — each with Manager/Team-Lead/Member groups, plus cross-cutting `Finance - Manager`, `HR - Manager`, `Org - General`, and `Admins`. This matches the test plan's "Business Unit Managers" framing.
-- `ai/openwebui/README.md`, `workspace-models.example.json`, and `tool-access.example.json` describe a *generic* 3-assistant example and do not yet reflect this live 9-assistant / 3-pillar structure — treat those as stale templates until someone folds this real structure back into canonical docs (a decision for the user, not made here).
+- The org is three pillars — **Commerce**, **Erify**, **Erisa** — each now split by function rather than by Manager/Team-Lead/Member tier (Sales/Operation, Offset/Onset, Creator/Campaign), plus cross-cutting `Finance - Manager`, `HR - Manager`, `Org - General`, `Management team`, and `Admins`. This supersedes the tier-based "Business Unit Managers" framing the test plan describes — re-validate that plan's group assumptions before relying on it.
+- `ai/openwebui/README.md`, `workspace-models.example.json`, and `tool-access.example.json` describe a *generic* 3-assistant example and do not yet reflect this live 13-assistant / function-based structure — treat those as stale templates until someone folds this real structure back into canonical docs (a decision for the user, not made here).
 
 ## Known live-config gaps (found during review)
 
@@ -73,6 +79,9 @@ These are discrepancies in the **live** Open WebUI/MCP config itself, observed w
 - **Resolved via `/api/v1/models/import`, not `/model/update`.** `POST /api/v1/models/model/update` still returns a bare `500` on this instance (re-confirmed live). `POST /api/v1/models/import` with body `{"models": [...full model object incl. id...]}` upserts cleanly instead — no delete step needed, and `access_grants` survive the round-trip unchanged (new grant `id`/`created_at`, same `principal_id`/`permission` set). Used this path to align skills across the role-specific assistants — added `eu-essentials` broadly, plus per-assistant additions (see roster table above). `eridu-brain` needed no change because it already had every required skill. The Management Assistant is represented by `eridu-management-assistant`.
 - **Still open, surfaced not resolved.** `commerce-assistant` already referenced skill id `affiliate-management` (no trailing hyphen, display name "Affiliate Management") before this pass; the CSV explicitly specified `affiliate-management-` (trailing hyphen, display name "Affiliate management ") for the same cell. Both IDs are real, distinct, live skills. Added the hyphenated one alongside the existing one rather than guessing which was the typo — `commerce-assistant` now carries both. Needs a human call on whether one is stale content that should be deleted, or whether the two are genuinely meant to coexist.
 - **Skill id `affiliate-management-` carries a trailing hyphen** (and its display name `Affiliate management ` a trailing space) at the source. `erisa-adp-assistant` and `eridu-brain` both reference the id exactly as `affiliate-management-`, so the synced file is named `skills/affiliate-management-.md` to match byte-for-byte — don't "clean up" the filename without also fixing the id in Open WebUI, or the assistant's `skillIds` reference breaks.
+- **Resolved.** Closed two single-skill gaps between a group's `Group-Skills-revised177` grants and an assistant it already had access to: added `Commerce - Operation` as a read grantee on the `adp-analysis` skill (matches its existing `commerce-assistant` access), and added `Finance - Manager` as a read grantee on the `0002` skill (matches its existing `management-assistant`/Finance Assistant access). Also added `Management team` as a read grantee on `eridu-management-assistant`, which previously had no group access besides `Admins` despite fully qualifying under the skill cross-check. `ERIQ_design.xlsx` updated to match (`Group-Skills-revised177` and `Group-Models` sheets).
+- **Still open, found not fixed.** `skills/talent-development-framework.md`'s live content has unrendered/squashed markdown tables (pipe-table syntax collapsed to run-on text) — this undoes what a prior commit's message describes as "restore markdown tables," implying that fix only edited this repo's local copy without pushing the corrected content back to the live skill via `POST /api/v1/skills/id/talent-development-framework/update`. The two have been out of sync since at least 2026-07-17. Needs a decision: re-push the corrected markdown to the live skill, or accept the squashed version as current truth.
+- **Still open, platform bug.** `GET /api/v1/users/all` returns `groups: []` for every user regardless of actual membership — confirmed by cross-checking against `GET /api/v1/users/{id}` (per-user), which correctly returns e.g. `Kuntapol Cholaweksuwan` (`hr.os@eridu.co.th`) as a real `HR - Manager` member even though the bulk endpoint hid it. Don't trust the bulk endpoint's `groups` field for membership audits; use the per-user endpoint instead.
 
 ## Handling
 - **Committed to git as the design/config/setup knowledge base for Open WebUI + LiteLLM.** This includes live internal group UUIDs and the full text of company operating docs (finance guardrails, HR policy, sales playbook, etc.) pulled from the "Eridu Brain" skills — kept intentionally, by decision, rather than redacted or excluded.
