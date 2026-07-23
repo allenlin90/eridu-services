@@ -32,7 +32,8 @@ Define what each studio role can see and do across all studio-scoped routes.
 | `/studios/:studioId/dashboard` | View | View | View | View | View | View |
 | `/studios/:studioId/my-tasks` | View/Execute | View/Execute | View/Execute | View/Execute | View/Execute | View/Execute |
 | `/studios/:studioId/my-shifts` | View | View | View | View | View | View |
-| `/studios/:studioId/task-review` | View/Review | View/Review | No access | View QC only | No access | No access |
+| `/studios/:studioId/task-review` | View/Review | View/Review | No access | No access | No access | No access |
+| `/studios/:studioId/scene-review` | View | View | No access | View | No access | No access |
 | `/studios/:studioId/shifts` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/task-setup` | View + Manage | View + Manage | No access | No access | No access | No access |
 | `/studios/:studioId/shows/:showId/tasks` | View + Manage | View + Manage | No access | No access | No access | No access |
@@ -50,7 +51,7 @@ Define what each studio role can see and do across all studio-scoped routes.
 |---------|----------|
 | My Workspace (Dashboard, My Tasks, My Shifts) | All roles |
 | Planning (Shift Schedule, Shows, Creator Mapping; future Schedules) | ADMIN, MANAGER, TALENT_MANAGER |
-| Tasks (role-filtered entries) | ADMIN, MANAGER; DESIGNER sees Task Review only; MODERATION_MANAGER sees Task Reports only |
+| Tasks (role-filtered entries) | ADMIN, MANAGER; DESIGNER sees Scene Review only; MODERATION_MANAGER sees Task Reports only |
 | People (Members, Creators) | Members: ADMIN, MANAGER. Creators: ADMIN, MANAGER, TALENT_MANAGER |
 | Studio Settings (Shared Fields, Task Templates) | ADMIN, MANAGER |
 

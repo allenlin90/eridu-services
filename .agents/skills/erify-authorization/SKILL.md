@@ -33,7 +33,7 @@ Current authorization implementation patterns for erify_api.
 | `ADMIN` | Full access + membership management | ✅ |
 | `MANAGER` | Full access (no membership management) | ❌ |
 | `TALENT_MANAGER` | Creator mapping, catalog, roster, availability | ❌ |
-| `DESIGNER` | Dashboard, own tasks, own shifts, read-only task-review QC evidence | ❌ |
+| `DESIGNER` | Dashboard, own tasks, own shifts, read-only Scene Review evidence | ❌ |
 | `MODERATION_MANAGER` | Dashboard, own tasks, own shifts | ❌ |
 | `MEMBER` | Dashboard, own tasks, own shifts | ❌ |
 | `ACCOUNT_MANAGER` | Client mechanic catalog (write, client-linked only); read-only on task templates, shows, creator mapping with money redacted | ❌ (only `ADMIN` can grant it) |
@@ -54,7 +54,7 @@ Current authorization implementation patterns for erify_api.
 @StudioProtected([STUDIO_ROLE.ADMIN])                        // Admin-only
 ```
 
-Keep task-review reads and writes separately guarded: `DESIGNER` may access the list, review stats, and task detail endpoints for QC evidence, while update, action, and bulk-approval endpoints remain `ADMIN`/`MANAGER` only. Frontend route access and sidebar visibility must use the same `STUDIO_ROUTE_ACCESS.reviewQueue` policy.
+Keep review purposes separately guarded. Task Review list/detail/statistics and every task mutation remain `ADMIN`/`MANAGER` only. The dedicated Scene Review list/detail endpoints are read-only and admit `DESIGNER`, `ADMIN`, and `MANAGER`. Frontend route access and sidebar visibility must use `STUDIO_ROUTE_ACCESS.reviewQueue` for Task Review and `STUDIO_ROUTE_ACCESS.sceneReview` for Scene Review.
 
 > `getAllAndOverride` means method-level `@StudioProtected` always wins over class-level.
 
