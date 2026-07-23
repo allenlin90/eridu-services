@@ -13,8 +13,9 @@ describe('studioRouteAccess', () => {
     expect(hasStudioRouteAccess(STUDIO_ROLE.ADMIN, 'taskSetup')).toBe(true);
   });
 
-  it('grants designers the review queue without granting adjacent manager surfaces', () => {
-    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'reviewQueue')).toBe(true);
+  it('grants designers Scene Review without granting Task Review or adjacent manager surfaces', () => {
+    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'sceneReview')).toBe(true);
+    expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'reviewQueue')).toBe(false);
     expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'taskSetup')).toBe(false);
     expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'showRunReview')).toBe(false);
     expect(hasStudioRouteAccess(STUDIO_ROLE.DESIGNER, 'costs')).toBe(false);

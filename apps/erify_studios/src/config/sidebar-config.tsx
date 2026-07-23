@@ -13,6 +13,7 @@ import {
   MonitorPlay,
   Receipt,
   Ruler,
+  ScanLine,
   Settings,
   Shapes,
   ShieldCheck,
@@ -230,6 +231,14 @@ function getStudioOperationsItems(
       title: 'Task Review',
       url: `/studios/${studioId}/task-review`,
       icon: ClipboardCheck,
+    });
+  }
+
+  if (hasStudioRouteAccess(role as StudioRole, 'sceneReview')) {
+    operationsItems.push({
+      title: m.scene_review_title(),
+      url: `/studios/${studioId}/scene-review`,
+      icon: ScanLine,
     });
   }
 

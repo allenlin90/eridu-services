@@ -18,6 +18,7 @@ vi.mock('lucide-react', () => ({
   MonitorPlay: vi.fn(),
   Receipt: vi.fn(),
   Ruler: vi.fn(),
+  ScanLine: vi.fn(),
   Settings: vi.fn(),
   ShieldCheck: vi.fn(),
   TrendingUp: vi.fn(),
@@ -237,6 +238,10 @@ describe('useSidebarConfig', () => {
         expect.objectContaining({
           title: 'Task Review',
           url: '/studios/studio-1/task-review',
+        }),
+        expect.objectContaining({
+          title: 'Scene Review',
+          url: '/studios/studio-1/scene-review',
         }),
         expect.objectContaining({
           title: 'Task Reports',

@@ -38,6 +38,7 @@ import { Route as StudiosStudioIdShowRunReviewRouteImport } from './routes/studi
 import { Route as StudiosStudioIdShiftsRouteImport } from './routes/studios/$studioId/shifts'
 import { Route as StudiosStudioIdSharedFieldsRouteImport } from './routes/studios/$studioId/shared-fields'
 import { Route as StudiosStudioIdSchedulePublishImpactsRouteImport } from './routes/studios/$studioId/schedule-publish-impacts'
+import { Route as StudiosStudioIdSceneReviewRouteImport } from './routes/studios/$studioId/scene-review'
 import { Route as StudiosStudioIdPerformanceRouteImport } from './routes/studios/$studioId/performance'
 import { Route as StudiosStudioIdMyTasksRouteImport } from './routes/studios/$studioId/my-tasks'
 import { Route as StudiosStudioIdMyShiftsRouteImport } from './routes/studios/$studioId/my-shifts'
@@ -237,6 +238,12 @@ const StudiosStudioIdSchedulePublishImpactsRoute =
   StudiosStudioIdSchedulePublishImpactsRouteImport.update({
     id: '/schedule-publish-impacts',
     path: '/schedule-publish-impacts',
+    getParentRoute: () => StudiosStudioIdRouteRoute,
+  } as any)
+const StudiosStudioIdSceneReviewRoute =
+  StudiosStudioIdSceneReviewRouteImport.update({
+    id: '/scene-review',
+    path: '/scene-review',
     getParentRoute: () => StudiosStudioIdRouteRoute,
   } as any)
 const StudiosStudioIdPerformanceRoute =
@@ -521,6 +528,7 @@ export interface FileRoutesByFullPath {
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/performance': typeof StudiosStudioIdPerformanceRoute
+  '/studios/$studioId/scene-review': typeof StudiosStudioIdSceneReviewRoute
   '/studios/$studioId/schedule-publish-impacts': typeof StudiosStudioIdSchedulePublishImpactsRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
@@ -593,6 +601,7 @@ export interface FileRoutesByTo {
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/performance': typeof StudiosStudioIdPerformanceRoute
+  '/studios/$studioId/scene-review': typeof StudiosStudioIdSceneReviewRoute
   '/studios/$studioId/schedule-publish-impacts': typeof StudiosStudioIdSchedulePublishImpactsRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/studios/$studioId/show-run-review': typeof StudiosStudioIdShowRunReviewRoute
@@ -660,6 +669,7 @@ export interface FileRoutesById {
   '/studios/$studioId/my-shifts': typeof StudiosStudioIdMyShiftsRoute
   '/studios/$studioId/my-tasks': typeof StudiosStudioIdMyTasksRoute
   '/studios/$studioId/performance': typeof StudiosStudioIdPerformanceRoute
+  '/studios/$studioId/scene-review': typeof StudiosStudioIdSceneReviewRoute
   '/studios/$studioId/schedule-publish-impacts': typeof StudiosStudioIdSchedulePublishImpactsRoute
   '/studios/$studioId/shared-fields': typeof StudiosStudioIdSharedFieldsRoute
   '/studios/$studioId/shifts': typeof StudiosStudioIdShiftsRouteWithChildren
@@ -738,6 +748,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/performance'
+    | '/studios/$studioId/scene-review'
     | '/studios/$studioId/schedule-publish-impacts'
     | '/studios/$studioId/shared-fields'
     | '/studios/$studioId/shifts'
@@ -810,6 +821,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/performance'
+    | '/studios/$studioId/scene-review'
     | '/studios/$studioId/schedule-publish-impacts'
     | '/studios/$studioId/shared-fields'
     | '/studios/$studioId/show-run-review'
@@ -876,6 +888,7 @@ export interface FileRouteTypes {
     | '/studios/$studioId/my-shifts'
     | '/studios/$studioId/my-tasks'
     | '/studios/$studioId/performance'
+    | '/studios/$studioId/scene-review'
     | '/studios/$studioId/schedule-publish-impacts'
     | '/studios/$studioId/shared-fields'
     | '/studios/$studioId/shifts'
@@ -1147,6 +1160,13 @@ declare module '@tanstack/react-router' {
       path: '/schedule-publish-impacts'
       fullPath: '/studios/$studioId/schedule-publish-impacts'
       preLoaderRoute: typeof StudiosStudioIdSchedulePublishImpactsRouteImport
+      parentRoute: typeof StudiosStudioIdRouteRoute
+    }
+    '/studios/$studioId/scene-review': {
+      id: '/studios/$studioId/scene-review'
+      path: '/scene-review'
+      fullPath: '/studios/$studioId/scene-review'
+      preLoaderRoute: typeof StudiosStudioIdSceneReviewRouteImport
       parentRoute: typeof StudiosStudioIdRouteRoute
     }
     '/studios/$studioId/performance': {
@@ -1728,6 +1748,7 @@ interface StudiosStudioIdRouteRouteChildren {
   StudiosStudioIdMyShiftsRoute: typeof StudiosStudioIdMyShiftsRoute
   StudiosStudioIdMyTasksRoute: typeof StudiosStudioIdMyTasksRoute
   StudiosStudioIdPerformanceRoute: typeof StudiosStudioIdPerformanceRoute
+  StudiosStudioIdSceneReviewRoute: typeof StudiosStudioIdSceneReviewRoute
   StudiosStudioIdSchedulePublishImpactsRoute: typeof StudiosStudioIdSchedulePublishImpactsRoute
   StudiosStudioIdSharedFieldsRoute: typeof StudiosStudioIdSharedFieldsRoute
   StudiosStudioIdShiftsRoute: typeof StudiosStudioIdShiftsRouteWithChildren
@@ -1752,6 +1773,7 @@ const StudiosStudioIdRouteRouteChildren: StudiosStudioIdRouteRouteChildren = {
   StudiosStudioIdMyShiftsRoute: StudiosStudioIdMyShiftsRoute,
   StudiosStudioIdMyTasksRoute: StudiosStudioIdMyTasksRoute,
   StudiosStudioIdPerformanceRoute: StudiosStudioIdPerformanceRoute,
+  StudiosStudioIdSceneReviewRoute: StudiosStudioIdSceneReviewRoute,
   StudiosStudioIdSchedulePublishImpactsRoute:
     StudiosStudioIdSchedulePublishImpactsRoute,
   StudiosStudioIdSharedFieldsRoute: StudiosStudioIdSharedFieldsRoute,
