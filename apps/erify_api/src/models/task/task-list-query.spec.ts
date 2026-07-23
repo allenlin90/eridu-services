@@ -1,6 +1,33 @@
 import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
 
-import { buildReviewStatsTabCriteria, type ReviewStatsTab } from './task-list-query';
+import { buildReviewStatsTabCriteria, buildTaskListWhere, type ReviewStatsTab } from './task-list-query';
+
+describe('buildTaskListWhere', () => {
+  it('filters tasks by show platform UID', () => {
+    const where = buildTaskListWhere({
+      page: 1,
+      limit: 10,
+      platform_id: 'plt_shopee',
+    } as unknown as ListMyTasksQueryTransformed);
+
+    expect(where.AND).toContainEqual({
+      targets: {
+        some: {
+          targetType: 'SHOW',
+          deletedAt: null,
+          show: {
+            showPlatforms: {
+              some: {
+                deletedAt: null,
+                platform: { uid: 'plt_shopee' },
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+});
 
 /**
  * Direct characterization of the review-stats tab criteria builder extracted
@@ -106,5 +133,27 @@ describe('buildReviewStatsTabCriteria', () => {
       (x) => Array.isArray(x?.OR) && x.OR.some((b: any) => b?.dueDate === null),
     );
     expect(scope).toBeUndefined();
+  });
+
+  it('scopes stats directly by show start when show-date bounds are provided', () => {
+    const c = buildReviewStatsTabCriteria({
+      page: 1,
+      limit: 10,
+      show_start_from: '2026-07-20T23:00:00.000Z',
+      show_start_to: '2026-07-21T22:59:59.999Z',
+    } as unknown as ListMyTasksQueryTransformed);
+
+    expect(c.total.targets).toEqual({
+      some: {
+        targetType: 'SHOW',
+        deletedAt: null,
+        show: {
+          startTime: {
+            gte: new Date('2026-07-20T23:00:00.000Z'),
+            lte: new Date('2026-07-21T22:59:59.999Z'),
+          },
+        },
+      },
+    });
   });
 });

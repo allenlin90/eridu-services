@@ -43,6 +43,7 @@ Each row is one workstream or deliverable. Items are numbered in execution order
 | 10  | [Import platform performance data](#10-import-platform-performance-data) — controlled manual export/upload flow before platform API integration; design doc first                                          | —                                         | 🔲 Planned     |
 | 11  | [Advisory planning readiness checklist](#11-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition                                    | 1, 2                                      | 🔲 Planned     |
 | 12  | [Post-production completion review checklist](#12-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records                        | 6, 9, 10                                  | 🔲 Planned     |
+| 22  | [Scene Review workspace](#22-scene-review-workspace) — dedicated read-only screenshot analysis and advisory QC inbox for `DESIGNER`, `MANAGER`, and `ADMIN`                                               | —                                          | ✅ Done        |
 
 ### Operational Efficiency (Candidates)
 
@@ -291,6 +292,30 @@ Transitions stay manager-driven and **ungated**: readiness/completion conditions
 **Blocked** — the notification PRD defines the common channels, recipients, and timing principles; activate this policy only after item 18 owns state transitions and item 9 defines issue severity. Draft changes remain quiet, confirmed-show changes notify selected stakeholders, and near/on-air changes may escalate based on severity and reason.
 
 **Boundary**: issue-event notifications are item 15. This item is only for lifecycle state transitions.
+
+### 22. Scene Review workspace
+
+**Source**: Phase 5 review (July 2026) — scene designer stakeholder requirement
+
+Scene designers can inspect submitted screenshots without entering the manager approval workflow. `/scene-review` is a dedicated screenshot-first route for `DESIGNER`, `MANAGER`, and `ADMIN`; `/task-review` and all task mutations remain limited to `MANAGER` and `ADMIN`.
+
+The delivered boundary is:
+
+1. **Separate intent and policy**: Analysis supports closer scene/performance inspection; QC Inbox highlights evidence awaiting operational confirmation. Both modes are read-only and URL-addressable. `STUDIO_ROUTE_ACCESS.sceneReview` admits `DESIGNER`, `MANAGER`, and `ADMIN`; `STUDIO_ROUTE_ACCESS.reviewQueue` remains `MANAGER`/`ADMIN`.
+2. **Dedicated evidence read model**: bounded list/detail endpoints return screenshot evidence and supporting show, client, platform, submission, and available metric context. They expose no approval or state-transition operation.
+3. **Responsive screenshot workspace**: desktop pairs a compact queue with a persistent large viewer. Mobile opens a full-height drawer with previous/next and thumbnail navigation. Layout QC overlays generic safe-area, host-focus, and product-zone guides.
+4. **Review scope**: the primary date range filters by show start within the 06:00–05:59 operational window. Client uses the shared asynchronous combobox; platform remains a secondary select. Range, mode, filters, search, selection, and pagination persist in the URL.
+5. **Reference honesty**: the surface states when no scene reference is configured. Scene-material upload, reference-version comparison, comments/notes, AI triage, persisted QC outcomes, and task-state gates remain later additive work.
+
+**Acceptance record**:
+
+- [x] Designer can open Scene Review, list screenshot evidence, and load evidence details without access to Task Review.
+- [x] Scene Review cannot invoke approval, status, bulk-approval, or due-date mutations from the UI or API.
+- [x] Analysis and QC Inbox share one evidence model while preserving distinct URL state and intent.
+- [x] Desktop and mobile provide screenshot-first layouts with Layout QC and honest missing-reference context.
+- [x] Client search uses the shared asynchronous combobox; platform and date range are server-filtered and URL-persisted.
+
+**Scope boundary**: `DESIGNER` gains no access to `/task-review`, `/costs`, or `/task-setup`. QC Inbox is advisory and is not a state-machine gate in Phase 5. The current implementation reuses the existing role value and changes no other surface's access rules.
 
 ---
 

@@ -2,8 +2,11 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { TaskStatus } from '@prisma/client';
 
+import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+
 import { StudioTaskController } from './studio-task.controller';
 
+import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import type { AssignShowsDto, GenerateTasksDto, ReassignTaskDto } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
@@ -38,6 +41,25 @@ describe('studioTaskController', () => {
     controller = module.get<StudioTaskController>(StudioTaskController);
     service = module.get(TaskOrchestrationService);
     taskService = module.get(TaskService);
+  });
+
+  it('keeps task-review reads and mutations limited to managers and admins', () => {
+    const readMethods = ['getReviewStats', 'getTask', 'listTasks'] as const;
+    const mutationMethods = ['updateTask', 'runTaskAction', 'bulkApprove'] as const;
+
+    for (const method of readMethods) {
+      expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioTaskController.prototype[method])).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+      ]);
+    }
+
+    for (const method of mutationMethods) {
+      expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioTaskController.prototype[method])).toEqual([
+        STUDIO_ROLE.ADMIN,
+        STUDIO_ROLE.MANAGER,
+      ]);
+    }
   });
 
   describe('generate', () => {

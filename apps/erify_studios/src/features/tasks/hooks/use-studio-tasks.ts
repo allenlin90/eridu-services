@@ -44,17 +44,21 @@ export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
   } = useTableUrlState({
     from: '/studios/$studioId/task-review',
     searchColumnId: 'description',
-    dateColumnId: 'due_date',
+    dateColumnId: 'show_start',
     paramNames: {
       search: 'description',
-      startDate: 'due_date_from',
-      endDate: 'due_date_to',
+      startDate: 'show_start_from',
+      endDate: 'show_start_to',
     },
   });
 
   const search = columnFilters.find((filter) => filter.id === 'description')
     ?.value as string | undefined;
   const clientName = columnFilters.find((filter) => filter.id === 'client_name')
+    ?.value as string | undefined;
+  const clientId = columnFilters.find((filter) => filter.id === 'client_id')
+    ?.value as string | undefined;
+  const platformId = columnFilters.find((filter) => filter.id === 'platform_id')
     ?.value as string | undefined;
   const assigneeName = columnFilters.find((filter) => filter.id === 'assignee_name')
     ?.value as string | undefined;
@@ -64,13 +68,13 @@ export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
     ?.value as string | undefined;
   const hasDueDateValue = columnFilters.find((filter) => filter.id === 'has_due_date')
     ?.value as string | undefined;
-  const dueDateWindow = columnFilters.find((filter) => filter.id === 'due_date')
+  const showDateWindow = columnFilters.find((filter) => filter.id === 'show_start')
     ?.value as DateRange | undefined;
   const effectiveOperationalDayRange = useMemo(
-    () => operationalWindowToDayRange(dueDateWindow),
-    [dueDateWindow],
+    () => operationalWindowToDayRange(showDateWindow),
+    [showDateWindow],
   );
-  const dueDateRange = useMemo(
+  const showDateRange = useMemo(
     () => operationalDayRangeToPickerDates(effectiveOperationalDayRange),
     [effectiveOperationalDayRange],
   );
@@ -102,12 +106,14 @@ export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
     limit: pagination.pageSize,
     search,
     client_name: clientName,
+    client_id: clientId,
+    platform_id: platformId,
     assignee_name: assigneeName,
     show_name: showName,
     has_assignee: hasAssignee,
     has_due_date: hasDueDate,
-    due_date_from: effectiveOperationalDayRange.windowStart.toISOString(),
-    due_date_to: effectiveOperationalDayRange.windowEnd.toISOString(),
+    show_start_from: effectiveOperationalDayRange.windowStart.toISOString(),
+    show_start_to: effectiveOperationalDayRange.windowEnd.toISOString(),
     status,
     task_type: taskType,
     sort: 'due_date:asc',
@@ -137,9 +143,9 @@ export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
   };
   const handleDueDateRangeChange = useCallback((nextRange: DateRange | undefined) => {
     onColumnFiltersChange((previousFilters) => [
-      ...previousFilters.filter((filter) => filter.id !== 'due_date'),
+      ...previousFilters.filter((filter) => filter.id !== 'show_start'),
       {
-        id: 'due_date',
+        id: 'show_start',
         value: nextRange
           ? {
               from: nextRange.from,
@@ -152,9 +158,9 @@ export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
   const handleResetDueDateRange = useCallback(() => {
     const freshRange = buildOperationalDayRangeFromPickerDates(undefined, undefined);
     onColumnFiltersChange((previousFilters) => [
-      ...previousFilters.filter((filter) => filter.id !== 'due_date'),
+      ...previousFilters.filter((filter) => filter.id !== 'show_start'),
       {
-        id: 'due_date',
+        id: 'show_start',
         value: {
           from: freshRange.windowStart,
           to: freshRange.windowEnd,
@@ -172,7 +178,7 @@ export function useStudioTasks({ studioId, reviewTab }: UseStudioTasksProps) {
     setPageCount,
     columnFilters,
     onColumnFiltersChange,
-    dueDateRange,
+    dueDateRange: showDateRange,
     onDueDateRangeChange: handleDueDateRangeChange,
     onDueDateRangeReset: handleResetDueDateRange,
     handleRefresh,

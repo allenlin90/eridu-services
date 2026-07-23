@@ -18,6 +18,7 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 - **Operational-day window math**: [`lib/operational-day-range.ts`](../../../apps/erify_studios/src/lib/operational-day-range.ts) + [`features/show-run-review/lib/show-run-review-date-range.ts`](../../../apps/erify_studios/src/features/show-run-review/lib/show-run-review-date-range.ts)
 - **Summary vs paginated sub-resource queries**: [`features/shows/api/get-show-run-review-summary.ts`](../../../apps/erify_studios/src/features/shows/api/get-show-run-review-summary.ts) + [`get-show-run-review-paginated.ts`](../../../apps/erify_studios/src/features/shows/api/get-show-run-review-paginated.ts)
 - **Merged-dataset review reference**: [`routes/studios/$studioId/task-review/index.tsx`](../../../apps/erify_studios/src/routes/studios/$studioId/task-review/index.tsx)
+- **Task QC evidence viewer**: [`features/tasks/components/task-qc-review-sheet.tsx`](../../../apps/erify_studios/src/features/tasks/components/task-qc-review-sheet.tsx)
 - **Backend split + guard rails**: [`api-performance-optimization` skill §8](../api-performance-optimization/SKILL.md)
 
 ## When to use / not use
@@ -123,6 +124,8 @@ Each tab's Export action exports **every matching row across the filter, not the
 
 These surfaces **report** the state of already-extracted `Show` / `ShowCreator` / `ShowPlatform` / `ShowPlatformViolation` columns. They never write them — actuals are populated upstream by the extraction pipeline on task approval. A review screen that mutates an actual is a layering violation (PR 12 §G). Corrections flow through resubmitted tasks (12.4.6), not through the review DataTable.
 
+Task Review exposes pre-confirmation task reads and actions only to `ADMIN`/`MANAGER`. Designer screenshot inspection belongs on the dedicated `/scene-review` route and read model, whose list/detail endpoints admit `DESIGNER`, `ADMIN`, and `MANAGER`. Scene Review stays read-only: selection, due-date edits, status actions, and bulk approval remain absent in the UI and guarded to `ADMIN`/`MANAGER` in the task API. Evidence review should remain screenshot-first and responsive; add future collaboration tools beside the evidence component rather than coupling them to image navigation.
+
 ## Checklist
 
 - [ ] Read model is **lean summary + per-tab lazy paginated sub-resource**, not one nested payload
@@ -142,6 +145,7 @@ These surfaces **report** the state of already-extracted `Show` / `ShowCreator` 
 - [ ] Role/enum filter options send the **persisted** value (lowercase `STUDIO_ROLE`, stored enum), not the UI label; a selector spanning two concepts (role vs `isDutyManager`) maps each via a co-located, unit-tested `to<Filter>QueryParams` translator
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils
 - [ ] No write to any actuals column from the review surface
+- [ ] Read-only review roles use the dedicated Scene Review evidence/detail endpoints without Task Review or mutation access
 
 ## Related skills
 

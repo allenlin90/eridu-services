@@ -41,6 +41,69 @@ describe('taskRepository', () => {
     repository = new TaskRepository(prisma, txHost);
   });
 
+  describe('scene review reads', () => {
+    it('builds a bounded QC Inbox query without pre-evidence pagination', async () => {
+      txTaskDelegate.findMany.mockResolvedValueOnce([]);
+
+      await repository.findSceneReviewCandidates('studio_abc123', {
+        mode: 'qc-inbox',
+        show_start_from: '2026-07-01T23:00:00.000Z',
+        show_start_to: '2026-07-02T22:59:59.999Z',
+        client_id: 'client_abc123',
+        platform_id: 'plt_abc123',
+        search: 'morning',
+        page: 2,
+        limit: 20,
+        skip: 20,
+        take: 20,
+        sort: undefined,
+      });
+
+      const call = txTaskDelegate.findMany.mock.calls[0]?.[0];
+      expect(call).toEqual(expect.objectContaining({
+        where: expect.objectContaining({
+          deletedAt: null,
+          status: 'REVIEW',
+          studio: { uid: 'studio_abc123' },
+        }),
+      }));
+      expect(call).not.toHaveProperty('skip');
+      expect(call).not.toHaveProperty('take');
+      expect(call.where.AND[0].targets.some.show).toEqual(expect.objectContaining({
+        deletedAt: null,
+        client: { uid: 'client_abc123' },
+        showPlatforms: {
+          some: {
+            deletedAt: null,
+            platform: { uid: 'plt_abc123' },
+          },
+        },
+      }));
+      expect(call.where.AND[1].OR).toHaveLength(2);
+    });
+
+    it('scopes detail by studio, task UID, active show target, and soft delete', async () => {
+      txTaskDelegate.findFirst.mockResolvedValueOnce(null);
+
+      await repository.findSceneReviewCandidate('studio_abc123', 'task_abc123');
+
+      expect(txTaskDelegate.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: {
+          uid: 'task_abc123',
+          deletedAt: null,
+          studio: { uid: 'studio_abc123' },
+          targets: {
+            some: {
+              targetType: 'SHOW',
+              deletedAt: null,
+              show: { deletedAt: null },
+            },
+          },
+        },
+      }));
+    });
+  });
+
   describe('update', () => {
     it('routes writes through the transactional client', async () => {
       txTaskDelegate.update.mockResolvedValueOnce({

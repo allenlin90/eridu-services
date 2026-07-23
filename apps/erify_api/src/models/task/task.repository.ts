@@ -3,8 +3,12 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, Task, TaskStatus, TaskType } from '@prisma/client';
 
-import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
+import type {
+  ListMyTasksQueryTransformed,
+  SceneReviewQueryTransformed,
+} from '@eridu/api-types/task-management';
 
+import { buildSceneReviewCandidateWhere } from './scene-review-query';
 import {
   buildReviewStatsTabCriteria,
   buildTaskListOrderBy,
@@ -18,6 +22,7 @@ import type {
   TaskWithSnapshotTargets,
 } from './task-relation-query';
 import {
+  sceneReviewCandidateInclude,
   taskRelationInclude,
   taskSnapshotTargetInclude,
 } from './task-relation-query';
@@ -341,6 +346,40 @@ export class TaskRepository extends BaseRepository<
     ]);
 
     return { items, total };
+  }
+
+  async findSceneReviewCandidates(
+    studioUid: string,
+    query: SceneReviewQueryTransformed,
+  ) {
+    // Engineering decision: the candidate query must hydrate snapshot schema and show
+    // relations before the service can perform schema-aware image-evidence filtering,
+    // so the generic repository findMany shape cannot safely paginate this read model.
+    return this.delegate.findMany({
+      where: buildSceneReviewCandidateWhere(studioUid, query),
+      include: sceneReviewCandidateInclude,
+      orderBy: [{ updatedAt: 'desc' }, { uid: 'asc' }],
+    });
+  }
+
+  // Engineering decision: detail reads use the same deep evidence include and enforce
+  // studio/show-target scope atomically; the generic UID lookup cannot express either.
+  async findSceneReviewCandidate(studioUid: string, taskUid: string) {
+    return this.delegate.findFirst({
+      where: {
+        uid: taskUid,
+        deletedAt: null,
+        studio: { uid: studioUid },
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: { deletedAt: null },
+          },
+        },
+      },
+      include: sceneReviewCandidateInclude,
+    });
   }
 
   async reserveMaterialAssetUploadVersion(taskUid: string, fieldKey: string): Promise<number> {

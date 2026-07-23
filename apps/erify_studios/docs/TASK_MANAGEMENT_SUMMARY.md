@@ -12,6 +12,7 @@
 | ------------------------ | -------------------------------------------- | -------------------------------- | --------------------------------------------- |
 | **Sarah** (Studio Admin) | Plans shows, manages templates, assigns work | Desk-based, multi-tasking        | Overview, bulk actions, review queue          |
 | **Marcus** (Operator)    | Executes checklists, updates status          | Mobile-first, floor/control room | Today's tasks, quick status, offline (future) |
+| **Dara** (Designer)      | Reviews visual submission quality            | Desktop and mobile               | Screenshot evidence, layout QC, show context  |
 
 ---
 
@@ -27,7 +28,7 @@
 | 3.3.3 | Show Detail / Tasks    | `/studios/$studioId/task-setup/$showUid/tasks` | Admin        | ✅       |
 | 3.4   | My Tasks               | `/studios/$studioId/my-tasks`             | All          | ✅       |
 | 3.5   | Task Execution Sheet   | Sheet overlay                             | Operator     | ✅       |
-| 3.6   | Task Review            | `/studios/$studioId/task-review`          | Admin/Manager| ✅       |
+| 3.6   | Task Review            | `/studios/$studioId/task-review`          | Admin/Manager | ✅       |
 | 3.7   | All Tasks Dashboard    | Studio-scoped                             | Admin        | Planned |
 | 3.8   | System Tasks           | `/system/tasks`                           | System Admin | ✅       |
 | 3.9   | System Show Statuses   | `/system/show-statuses`                   | System Admin | ✅      |
@@ -36,6 +37,7 @@
 | 3.12  | Task Report Builder    | `/studios/$studioId/task-reports/builder` | Admin/Manager/ModerationManager | ✅ |
 | 3.13  | Task Report Results    | `/studios/$studioId/task-reports/results` | Admin/Manager/ModerationManager | ✅ |
 | 3.14  | Show Run Review        | `/studios/$studioId/show-run-review`      | Admin/Manager | Planned |
+| 3.15  | Scene Review           | `/studios/$studioId/scene-review`         | Admin/Manager/Designer | ✅ |
 
 ---
 
@@ -54,7 +56,7 @@ Show detail → inline assignee dropdown on task card → PATCH `/tasks/:taskUid
 My Tasks → tap card → Task Execution Sheet (JsonForm) → auto-save on field change (300ms debounce) → status actions (`Start Task` / `Submit for Review` / `Report Blocker`)
 
 ### 5. Task Review (Admin/Manager)
-Task Review → row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, Block. Approving a submitted task is the extraction gate for system fact bindings; `REVIEW` submissions are not yet trusted operational facts. Binding drift and zero-fact extraction warnings are advisory review signals, not hard blockers for approval.
+Task Review → inspect submitted tasks and run row actions: Approve (`→ COMPLETED`), Reject (with note, `→ IN_PROGRESS`), Close, or Block. Approving a submitted task is the extraction gate for system fact bindings; `REVIEW` submissions are not yet trusted operational facts.
 
 ### 6. Moderation Loop Execution (Moderator)
 My Tasks → tap moderation task → Task Execution Sheet with **Loop Progress block** → navigate loops via Previous/Next → auto-save per field → Submit for Review when done. See [MODERATION_WORKFLOW.md](./MODERATION_WORKFLOW.md) for full data contract and business rules.
@@ -73,7 +75,7 @@ The `Issues` filter uses the same datetime window and same in-scope show set as 
 Readiness scope totals should be refreshed by query-key changes (for example `refreshSignal`) and not duplicated with extra effect-level `refetch()` for the same query key.
 
 ### 9. Task Review (Admin/Manager)
-Task Review → choose operational day range → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Submitted, assigned rows can be selected for bulk approval into `COMPLETED`; extraction warnings remain visible for reviewer context.
+Task Review → choose the show operational-day range → review submitted tasks waiting for confirmation, late/missing creators with reasons, violations submitted through tasks, stale bindings, and missing inputs. Admin/Manager can select submitted, assigned rows for bulk approval into `COMPLETED`.
 
 **Parallel query architecture**: `useTaskReviewSummary` runs one `useQuery` that internally fans out across all pages of two complementary queries — dated (`due_date_from/to`) and undated (`has_due_date=false` scoped by `show_start_from/to`) — using a worker-pool helper capped at `PAGE_FETCH_CONCURRENCY = 5`. The results are merged into a single flat dataset used for client-side filtering.
 
@@ -84,7 +86,10 @@ Task Review → choose operational day range → review submitted tasks waiting 
 ### 10. Show Run Review (Admin/Manager)
 Show Run Review → choose operational day range → review submitted show records after task approval and export filtered operational rows. The page focuses on manager-friendly checks: shows happened, creators showed up, and streams stayed clean.
 
-The default operational day is 06:00-05:59 local time for PR 12.4. Task Review applies that window to `due_date_from` / `due_date_to` and silently refetches every 5 minutes for the current operational day; historical ranges use the table refresh action. Show Run Review exposes only the range picker until summary queries ship in 12.4.4.
+The default operational day is 06:00-05:59 local time. Task Review applies that window to `show_start_from` / `show_start_to` and silently refetches every 5 minutes for the current operational day; historical ranges use the table refresh action.
+
+### 10.1 Scene Review (Admin/Manager/Designer)
+Scene Review → choose a show operational-day range → inspect submitted screenshot evidence in either Analysis or advisory QC Inbox mode. Client uses the shared asynchronous combobox; Platform is a secondary filter. Desktop pairs a compact queue with a persistent large viewer, while mobile opens a full-height evidence drawer. Layout QC, collapsed show context, and available performance metrics are read-only. See [Scene Review](./SCENE_REVIEW.md).
 
 ### 11. Bulk Submitted-Task Approval (Admin/Manager)
 Task Review → select one or more eligible `REVIEW` rows → click `Approve Selected` → triggers API bulk approve request. Selection eligibility is intentionally narrower than the issue badges: hard blockers include non-`REVIEW` state and missing assignee, while binding drift, zero-fact, and no-binding extraction warnings remain advisory because single approval follows the same backend transition and extraction path.
@@ -99,9 +104,9 @@ Task Review → select one or more eligible `REVIEW` rows → click `Approve Sel
 ## Navigation & Studio Context
 
 - **Studio Switcher**: `TeamSwitcher` from `@eridu/ui` — maps `studio_memberships` from `/me/profile`
-- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Task Setup, Task Review, Show Run Review, and Task Reports; Studio Settings contains Task Templates.
+- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Task Setup, Task Review, Scene Review, Show Run Review, and Task Reports; Studio Settings contains Task Templates.
 - **Active Studio**: persisted in `localStorage`, auto-initializes, invalidates queries on switch
-- **Role-Based Access**: admin/manager task operators see the Tasks and Task Templates entries; non-admin task executors see My Workspace only.
+- **Role-Based Access**: admin/manager task operators see Task Review and Scene Review; Designer sees only the read-only Scene Review entry; other task executors see only their separately authorized workspace/report entries.
 
 ---
 

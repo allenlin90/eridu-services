@@ -38,6 +38,11 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
+  sceneReview: [
+    STUDIO_ROLE.DESIGNER,
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
   showRunReview: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,

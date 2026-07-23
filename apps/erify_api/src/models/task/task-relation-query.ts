@@ -7,7 +7,7 @@ export type TaskShowCreatorTarget = {
 
 export type TaskShowPlatformTarget = {
   uid: string;
-  platform: { name: string };
+  platform: { uid: string; name: string };
 };
 
 export type TaskWithSnapshotTargets = Task & {
@@ -21,7 +21,7 @@ export type TaskWithSnapshotTargets = Task & {
       studioId: bigint | null;
       startTime: Date;
       endTime: Date;
-      client: { name: string } | null;
+      client: { uid: string; name: string } | null;
       showCreators: TaskShowCreatorTarget[];
       showPlatforms: TaskShowPlatformTarget[];
     } | null;
@@ -38,7 +38,7 @@ export type TaskWithRelations = Task & {
       name: string;
       startTime: Date;
       endTime: Date;
-      client: { name: string } | null;
+      client: { uid: string; name: string } | null;
       studioRoom: { name: string } | null;
       showCreators: TaskShowCreatorTarget[];
       showPlatforms: TaskShowPlatformTarget[];
@@ -65,12 +65,40 @@ const showHydrationTargetSelect = {
       uid: true,
       platform: {
         select: {
+          uid: true,
           name: true,
         },
       },
     },
   },
 } as const;
+
+export const sceneReviewCandidateInclude = {
+  snapshot: {
+    select: {
+      schema: true,
+    },
+  },
+  targets: {
+    where: { targetType: 'SHOW', deletedAt: null },
+    include: {
+      show: {
+        select: {
+          uid: true,
+          name: true,
+          startTime: true,
+          client: {
+            select: {
+              uid: true,
+              name: true,
+            },
+          },
+          ...showHydrationTargetSelect,
+        },
+      },
+    },
+  },
+} satisfies Prisma.TaskInclude;
 
 export const taskSnapshotTargetInclude = {
   template: {
@@ -93,6 +121,7 @@ export const taskSnapshotTargetInclude = {
           endTime: true,
           client: {
             select: {
+              uid: true,
               name: true,
             },
           },
@@ -119,6 +148,7 @@ export const taskRelationInclude = {
         include: {
           client: {
             select: {
+              uid: true,
               name: true,
             },
           },

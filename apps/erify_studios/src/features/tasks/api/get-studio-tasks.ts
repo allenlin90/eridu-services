@@ -27,6 +27,7 @@ export type GetStudioTasksParams = Pick<
   | 'search'
   | 'sort'
   | 'client_id'
+  | 'platform_id'
   | 'review_tab'
 >;
 

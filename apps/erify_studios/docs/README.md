@@ -26,6 +26,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 14. [Frontend Tech Debt Register](./FRONTEND_TECH_DEBT.md)
 15. [Entity Detail Routes (PR 14)](./ENTITY_DETAIL_ROUTES.md) — entity edit dialogs → dedicated routes; 14a creator, 14b member, and 14d shift detail shipped (14c show planned)
 16. [Client Mechanics Management](./CLIENT_MECHANICS_MANAGEMENT.md) — client-owned mechanics catalog, Loop × Mechanic matrix, mechanic↔show coverage (PR 20.1–20.8)
+17. [Scene Review](./SCENE_REVIEW.md) — screenshot-first Designer/Manager/Admin review with Analysis and advisory QC Inbox modes
 
 ## Design Docs
 

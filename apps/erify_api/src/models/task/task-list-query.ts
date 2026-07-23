@@ -22,6 +22,7 @@ export const taskListInclude = {
         include: {
           client: {
             select: {
+              uid: true,
               name: true,
             },
           },
@@ -47,6 +48,7 @@ export const taskListInclude = {
               uid: true,
               platform: {
                 select: {
+                  uid: true,
                   name: true,
                 },
               },
@@ -144,6 +146,7 @@ export function buildTaskListWhere(
     reference_id,
     studio_id,
     client_id,
+    platform_id,
     review_tab,
   } = query;
 
@@ -259,6 +262,25 @@ export function buildTaskListWhere(
           show: {
             client: {
               uid: client_id,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  if (platform_id) {
+    appendAndFilter(where, {
+      targets: {
+        some: {
+          targetType: 'SHOW',
+          deletedAt: null,
+          show: {
+            showPlatforms: {
+              some: {
+                deletedAt: null,
+                platform: { uid: platform_id },
+              },
             },
           },
         },

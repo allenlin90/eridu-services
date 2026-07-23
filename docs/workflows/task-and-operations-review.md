@@ -11,6 +11,7 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
 | Operator (Host/Producer) | All | Executes check-lists, fills out forms, auto-saves input, and submits tasks. |
 | Studio Manager | `MANAGER` | Reviews submissions, bulk-approves tasks, reviews compiled daily facts, and exports filtered operational rows. |
 | Studio Admin | `ADMIN` | Same as Manager, plus template creation and task configuration. |
+| Scene Designer | `DESIGNER` | Reviews submitted screenshots and layout QC evidence without approving or modifying tasks. |
 
 ---
 
@@ -23,15 +24,17 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
        ↓
 3. Operator fills out JsonForm checklists, auto-saves, and SUBMITS for review
        ↓
-4. Manager triages Task Review queues (/task-review), checking boxes on ready items
+4. Designer optionally inspects screenshot evidence in Scene Review (/scene-review)
        ↓
-5. Manager clicks "Approve Selected" in the floating selection bar
+5. Manager triages Task Review queues (/task-review), checking boxes on ready items
+       ↓
+6. Manager clicks "Approve Selected" in the floating selection bar
        ↓  ◄── Ingestion & Fact Extraction (Atomic transactions walk task content)
-6. Confirmed operational facts populate target tables (Show, ShowCreator, ShowPlatform)
+7. Confirmed operational facts populate target tables (Show, ShowCreator, ShowPlatform)
        ↓
-7. Manager reviews consolidated daily outcomes in Show Run Review (/show-run-review)
+8. Manager reviews consolidated daily outcomes in Show Run Review (/show-run-review)
        ↓
-8. Manager exports filtered operational rows when reporting is needed
+9. Manager exports filtered operational rows when reporting is needed
 ```
 
 ---
@@ -50,38 +53,45 @@ When shows are scheduled, tasks are instantiated from these templates:
 3. When the checklist is complete, the operator taps **`Submit for Review`**, transitioning the task status `→ REVIEW`.
 * **Runbook**: [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](../../apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)
 
-### 3. Pre-Confirmation Review (`/task-review`)
-Studio managers review submitted operator task checklists for the operational day (06:00–05:59 local window) at `/studios/:studioId/task-review`:
+### 3. Scene Review (`/scene-review`)
+Scene Designers can inspect submitted screenshots for the show's operational day (06:00–05:59 local window) without entering the task approval workflow:
+* **Screenshot-first QC**: A compact queue opens a large responsive viewer with phone-friendly navigation, an optional safe-area/host-focus/product-zone overlay, and collapsed show/performance context.
+* **Read-only boundary**: Scene Review cannot select tasks, edit due dates, approve, reject, block, close, or bulk-approve tasks. QC Inbox is advisory and does not gate a task transition.
+* **Independent analysis**: Analysis mode also supports closer inspection outside manager triage while keeping the screenshot primary and performance metrics secondary.
+* **Filters**: Show date is primary. Client uses the shared asynchronous combobox, and Platform remains secondary.
+
+### 4. Pre-Confirmation Task Review (`/task-review`)
+Studio managers review submitted operator task checklists before confirming operational facts:
 * **Visual Summary Panel & State Filtering**: The summary panel splits Setup, Active/Routine, and Closure phases with quick-action metrics. In addition to primary **Needs Attention** highlights, managers can tap interactive **Ready** and **Done** visual filters underneath each card:
   - **Pre-Prod (SETUP)**: Ready and Done task filters.
   - **On-Air (ACTIVE/ROUTINE)**: Ready and Done task filters.
   - **Post-Prod (CLOSURE)**: Ready and Done task filters.
 * **Unified Workspace Queues**: All tabs draw from a single merged pool of dated and undated tasks, with local URL-state paginators automatically updated to reflect the active subset.
-* **Triage & Search Filters**: To navigate dense queues efficiently, the Client, User (Assignee), and Show filters are fully asynchronous comboboxes. They query the API as the manager types, with robust label preservation even if an active search query falls outside the initial results page.
+* **Triage & Search Filters**: Show date is the primary range. Client, User (Assignee), and Show use asynchronous comboboxes; Platform is a secondary select. The API receives UID filters while the controls preserve readable labels.
 * **Needs Attention Tab**: Isolates task anomalies, strictly defined as tasks that are **Unassigned** or **Unsubmitted and Overdue** (`PENDING`, `IN_PROGRESS`, or `BLOCKED` status past their due date).
 * *Note: A task in `REVIEW` status is never flagged as "Overdue" or placed in "Needs Attention" just because the due date has passed. The operator completed their role on time; it is simply waiting for the manager.*
 
-### 4. Multi-Selection and Bulk Approval
+### 5. Multi-Selection and Bulk Approval
 Managers use individual row checkboxes (or the table header toggle to select all eligible rows) to select tasks they wish to confirm:
 * **Selection Eligibility**: A row is selectable only when it clears the *hard* bulk-approval blockers — it must be in `REVIEW` status and have an assignee. Advisory issue badges (Binding Drift, Zero Facts, No Fact Bindings) remain visible for reviewer context but do **not** block selection, because single approval follows the same backend transition and extraction path.
 * **Floating Selection Bar**: Checking one or more rows causes a bottom toolbar to slide up, showing the selected count.
 * **Trigger Bulk Approval**: Clicking `Approve Selected` triggers `POST /studios/:studioId/tasks/bulk-approve` carrying the task UIDs.
 * **Error Isolation**: The loop processes each task inside its own transaction. If one task fails (validation issues or concurrency conflicts), its diagnostic error is preserved while adjacent clean tasks successfully commit and complete.
 
-### 5. Fact Extraction Pipeline (Ingestion Core)
+### 6. Fact Extraction Pipeline (Ingestion Core)
 For each successfully approved task (`REVIEW` → `COMPLETED`):
 1. The backend walks the task's `content` and routes bound field values through registered `Extractor` modules.
 2. Actual times, late/missing reasons, and stream violation records are extracted and written to primary database columns.
 3. **Priority Resolver**: Resolves conflicting sources atomically (`MANAGER` > `PLATFORM` > `OPERATOR` > `PLANNED`).
 4. **Collision Guard**: Prevents overwriting already established higher-priority records, logging skipped rows as `skipped_lower_priority` in `Audit` history.
 
-### 6. Post-Confirmation Show Run Review (`/show-run-review`)
+### 7. Post-Confirmation Show Run Review (`/show-run-review`)
 Once tasks are bulk-approved and facts are populated in the database, the manager opens `/studios/:studioId/show-run-review` to inspect the consolidated operational day metrics:
 * Show start status (started vs. not started), late-start count, and missing duration (lost time from late starts); actual end-time recording is shown as secondary detail.
 * Creator attendance reports with submitted reasons.
 * Active platform violation lists.
 
-### 7. Filtered Export
+### 8. Filtered Export
 Once daily outcomes are reviewed, the manager can export each Show Run Review tab to CSV. Exports refetch the full filtered set for the selected operational range rather than only the visible page.
 
 ---
