@@ -6,6 +6,7 @@ import { TaskTargetModule } from '../task-target/task-target.module';
 import { TaskTemplateModule } from '../task-template/task-template.module';
 
 import { TaskRepository } from './task.repository';
+import { SceneReviewService } from './scene-review.service';
 import { TaskService } from './task.service';
 import { TaskValidationService } from './task-validation.service';
 
@@ -21,7 +22,7 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowModule,
     MembershipModule,
   ],
-  providers: [TaskService, TaskValidationService, TaskRepository],
-  exports: [TaskService, TaskValidationService],
+  providers: [TaskService, TaskValidationService, TaskRepository, SceneReviewService],
+  exports: [TaskService, TaskValidationService, SceneReviewService],
 })
 export class TaskModule {}

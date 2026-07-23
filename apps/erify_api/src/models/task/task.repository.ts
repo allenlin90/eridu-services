@@ -3,7 +3,11 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, Task, TaskStatus, TaskType } from '@prisma/client';
 
-import type { ListMyTasksQueryTransformed } from '@eridu/api-types/task-management';
+import {
+  SCENE_REVIEW_MODE,
+  type ListMyTasksQueryTransformed,
+  type SceneReviewQueryTransformed,
+} from '@eridu/api-types/task-management';
 
 import {
   buildReviewStatsTabCriteria,
@@ -18,6 +22,7 @@ import type {
   TaskWithSnapshotTargets,
 } from './task-relation-query';
 import {
+  sceneReviewCandidateInclude,
   taskRelationInclude,
   taskSnapshotTargetInclude,
 } from './task-relation-query';
@@ -341,6 +346,86 @@ export class TaskRepository extends BaseRepository<
     ]);
 
     return { items, total };
+  }
+
+  async findSceneReviewCandidates(
+    studioUid: string,
+    query: SceneReviewQueryTransformed,
+  ) {
+    const showCriteria: Prisma.ShowWhereInput = {
+      deletedAt: null,
+      startTime: {
+        gte: new Date(query.show_start_from),
+        lte: new Date(query.show_start_to),
+      },
+      ...(query.client_id ? { client: { uid: query.client_id } } : {}),
+      ...(query.platform_id
+        ? {
+            showPlatforms: {
+              some: {
+                deletedAt: null,
+                platform: { uid: query.platform_id },
+              },
+            },
+          }
+        : {}),
+    };
+    const where: Prisma.TaskWhereInput = {
+      deletedAt: null,
+      studio: { uid: studioUid },
+      ...(query.mode === SCENE_REVIEW_MODE.QC_INBOX ? { status: TaskStatus.REVIEW } : {}),
+      AND: [
+        {
+          targets: {
+            some: {
+              targetType: 'SHOW',
+              deletedAt: null,
+              show: showCriteria,
+            },
+          },
+        },
+        ...(query.search
+          ? [{
+              OR: [
+                { description: { contains: query.search, mode: 'insensitive' as const } },
+                {
+                  targets: {
+                    some: {
+                      targetType: 'SHOW',
+                      deletedAt: null,
+                      show: { name: { contains: query.search, mode: 'insensitive' as const } },
+                    },
+                  },
+                },
+              ],
+            }]
+          : []),
+      ],
+    };
+
+    return this.delegate.findMany({
+      where,
+      include: sceneReviewCandidateInclude,
+      orderBy: [{ updatedAt: 'desc' }, { uid: 'asc' }],
+    });
+  }
+
+  async findSceneReviewCandidate(studioUid: string, taskUid: string) {
+    return this.delegate.findFirst({
+      where: {
+        uid: taskUid,
+        deletedAt: null,
+        studio: { uid: studioUid },
+        targets: {
+          some: {
+            targetType: 'SHOW',
+            deletedAt: null,
+            show: { deletedAt: null },
+          },
+        },
+      },
+      include: sceneReviewCandidateInclude,
+    });
   }
 
   async reserveMaterialAssetUploadVersion(taskUid: string, fieldKey: string): Promise<number> {
