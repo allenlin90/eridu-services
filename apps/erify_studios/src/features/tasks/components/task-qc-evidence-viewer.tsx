@@ -14,8 +14,10 @@ type TaskQcEvidenceViewerProps = {
 
 /** Presents submitted screenshots as the primary QC artifact with phone-friendly navigation. */
 export function TaskQcEvidenceViewer({ evidence, showLayoutQc }: TaskQcEvidenceViewerProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeKey, setActiveKey] = useState<string>();
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
+  const selectedIndex = evidence.findIndex((item) => item.key === activeKey);
+  const activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const activeEvidence = evidence[activeIndex];
 
   if (!activeEvidence) {
@@ -31,7 +33,7 @@ export function TaskQcEvidenceViewer({ evidence, showLayoutQc }: TaskQcEvidenceV
   }
 
   const goTo = (index: number) => {
-    setActiveIndex((index + evidence.length) % evidence.length);
+    setActiveKey(evidence[(index + evidence.length) % evidence.length]?.key);
   };
   const hasFailed = failedUrls.has(activeEvidence.url);
 
@@ -103,7 +105,7 @@ export function TaskQcEvidenceViewer({ evidence, showLayoutQc }: TaskQcEvidenceV
                   key={item.key}
                   type="button"
                   className={cn('h-16 w-12 shrink-0 overflow-hidden rounded border-2 bg-muted', index === activeIndex ? 'border-primary' : 'border-transparent')}
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => setActiveKey(item.key)}
                   aria-label={m.task_review_qc_view_screenshot({ label: item.label })}
                 >
                   <img src={item.url} alt="" className="h-full w-full object-cover" />
