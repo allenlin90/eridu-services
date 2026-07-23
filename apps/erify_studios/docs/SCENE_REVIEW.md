@@ -32,6 +32,10 @@ The read model includes only tasks containing image evidence. The compact previe
 
 Show, client, platform, task, submission activity, and available GMV/viewer/CTR/CTO values appear as supporting context. A missing scene reference is shown honestly; reference material upload and reference-version comparison are not implemented.
 
+## Backend query decision
+
+Scene Review uses named repository candidate and detail queries because both must enforce studio/show-target scope and hydrate the snapshot schema plus show relations before schema-aware image-evidence extraction. The list cannot use generic database pagination before that extraction: doing so would produce partially filled pages and incorrect totals when non-image submissions occupy candidate rows. The service filters and maps the bounded candidate set, then paginates the evidence read model.
+
 ## Extension boundary
 
 The current surface is read-only. Future comments, notes, AI-assisted QC, persisted QC outcomes, and task-state gates must be additive capabilities beside the evidence viewer. Any future gate must define its own persisted result, override permissions, audit history, reference-version pinning, stale-result handling, and low-confidence behavior instead of coupling task transitions to the current UI state.
@@ -44,4 +48,4 @@ The current surface is read-only. Future comments, notes, AI-assisted QC, persis
 - API integration: `src/features/scene-review/api/get-scene-review.ts`
 - Shared evidence viewer: `src/features/tasks/components/task-qc-evidence-viewer.tsx`
 - API contract: `packages/api-types/src/task-management/scene-review.schema.ts`
-- Backend controller: `apps/erify_api/src/controllers/studio/task/scene-review.controller.ts`
+- Backend controller: `apps/erify_api/src/studios/studio-task/studio-scene-review.controller.ts`

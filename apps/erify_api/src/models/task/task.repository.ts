@@ -3,12 +3,12 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, Task, TaskStatus, TaskType } from '@prisma/client';
 
-import {
-  type ListMyTasksQueryTransformed,
-  SCENE_REVIEW_MODE,
-  type SceneReviewQueryTransformed,
+import type {
+  ListMyTasksQueryTransformed,
+  SceneReviewQueryTransformed,
 } from '@eridu/api-types/task-management';
 
+import { buildSceneReviewCandidateWhere } from './scene-review-query';
 import {
   buildReviewStatsTabCriteria,
   buildTaskListOrderBy,
@@ -352,64 +352,18 @@ export class TaskRepository extends BaseRepository<
     studioUid: string,
     query: SceneReviewQueryTransformed,
   ) {
-    const showCriteria: Prisma.ShowWhereInput = {
-      deletedAt: null,
-      startTime: {
-        gte: new Date(query.show_start_from),
-        lte: new Date(query.show_start_to),
-      },
-      ...(query.client_id ? { client: { uid: query.client_id } } : {}),
-      ...(query.platform_id
-        ? {
-            showPlatforms: {
-              some: {
-                deletedAt: null,
-                platform: { uid: query.platform_id },
-              },
-            },
-          }
-        : {}),
-    };
-    const where: Prisma.TaskWhereInput = {
-      deletedAt: null,
-      studio: { uid: studioUid },
-      ...(query.mode === SCENE_REVIEW_MODE.QC_INBOX ? { status: TaskStatus.REVIEW } : {}),
-      AND: [
-        {
-          targets: {
-            some: {
-              targetType: 'SHOW',
-              deletedAt: null,
-              show: showCriteria,
-            },
-          },
-        },
-        ...(query.search
-          ? [{
-              OR: [
-                { description: { contains: query.search, mode: 'insensitive' as const } },
-                {
-                  targets: {
-                    some: {
-                      targetType: 'SHOW',
-                      deletedAt: null,
-                      show: { name: { contains: query.search, mode: 'insensitive' as const } },
-                    },
-                  },
-                },
-              ],
-            }]
-          : []),
-      ],
-    };
-
+    // Engineering decision: the candidate query must hydrate snapshot schema and show
+    // relations before the service can perform schema-aware image-evidence filtering,
+    // so the generic repository findMany shape cannot safely paginate this read model.
     return this.delegate.findMany({
-      where,
+      where: buildSceneReviewCandidateWhere(studioUid, query),
       include: sceneReviewCandidateInclude,
       orderBy: [{ updatedAt: 'desc' }, { uid: 'asc' }],
     });
   }
 
+  // Engineering decision: detail reads use the same deep evidence include and enforce
+  // studio/show-target scope atomically; the generic UID lookup cannot express either.
   async findSceneReviewCandidate(studioUid: string, taskUid: string) {
     return this.delegate.findFirst({
       where: {
