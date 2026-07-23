@@ -43,7 +43,7 @@ describe('studioTaskController', () => {
     taskService = module.get(TaskService);
   });
 
-  it('grants designers only the task-review read endpoints', () => {
+  it('keeps task-review reads and mutations limited to managers and admins', () => {
     const readMethods = ['getReviewStats', 'getTask', 'listTasks'] as const;
     const mutationMethods = ['updateTask', 'runTaskAction', 'bulkApprove'] as const;
 
@@ -51,7 +51,6 @@ describe('studioTaskController', () => {
       expect(Reflect.getMetadata(STUDIO_ROLES_KEY, StudioTaskController.prototype[method])).toEqual([
         STUDIO_ROLE.ADMIN,
         STUDIO_ROLE.MANAGER,
-        STUDIO_ROLE.DESIGNER,
       ]);
     }
 
