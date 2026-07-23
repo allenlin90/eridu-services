@@ -5,8 +5,8 @@ import { ShowModule } from '../show/show.module';
 import { TaskTargetModule } from '../task-target/task-target.module';
 import { TaskTemplateModule } from '../task-template/task-template.module';
 
-import { TaskRepository } from './task.repository';
 import { SceneReviewService } from './scene-review.service';
+import { TaskRepository } from './task.repository';
 import { TaskService } from './task.service';
 import { TaskValidationService } from './task-validation.service';
 
