@@ -1,0 +1,79 @@
+# Creator Services Knowledge — TikTok Shop (Thailand)
+
+Git-authored source knowledge for the **Erisa Creator Service Assistant**
+(`creator-service-assistant`) in Open WebUI. Thai-primary content (creators ask
+in Thai) with English question translations and bilingual headers for retrieval.
+
+Generated from `CS_TikTok_Shop__Knowledge_Base.xlsx` (Phase 1 one-time snapshot —
+no TikTok Academy scraping yet) via
+[`../../../../scripts/ai/creator-kb/generate_kb.py`](../../../../scripts/ai/creator-kb/generate_kb.py).
+The source Excel is **not** committed (see Confidentiality below).
+
+## Contents (28 files, 348 entries)
+
+| Path | What it holds |
+|---|---|
+| `00-escalation-guide.md` | Topics the assistant must never self-answer — always route to admin |
+| `faq/` (18 files) | Core creator FAQ, one file per sub-category (account setup, products, payments, troubleshooting, policies, campaigns) |
+| `policy/` (7 files) | Q1/2025 creator policy Q&A by topic (RS Tier, rebates, SV/LS Challenge, ACA, Live Base, …) |
+| `violations/common-violations.md` | Violation types, appeal evidence, prevention, penalties |
+| `terminology/glossary.md` | EN/TH glossary of creator tiers and platform jargon |
+
+Answer types inside the FAQ: **108 full answers**, **88 link references** (source
+Excel pointed to a TikTok Shop Academy article without inlining it — Phase 2 will
+scrape and inline these), **6 escalations** (mirrored in `00-escalation-guide.md`).
+
+## Open WebUI deployment
+
+- **Collection:** `creator-services-tiktok-shop` (live id `8fa78477-cf8a-4fbb-b9d3-fb86a0bc24fb`).
+- **Model attachment:** attach the collection to `creator-service-assistant` on
+  **Focused Retrieval** (default). ALSO attach `00-escalation-guide.md` as a
+  standalone item in **Full Context** mode so escalation rules are always injected
+  and never depend on the model choosing to retrieve them.
+- **Retrieval settings (global, Admin → Settings → Documents):** `Top K = 10`,
+  **Hybrid Search on** with reranker `BAAI/bge-reranker-v2-m3`, relevance
+  threshold `0`. Hybrid Search is required so the exact-heading match in
+  `faq/05` (the day-8 commission settlement rule) out-ranks the adjacent `faq/07`
+  payout chunks; pure semantic search at low Top K misses it.
+
+## Sync pipeline
+
+- **Bootstrap / PoC:** [`../../../../scripts/ai/creator-kb/upload_kb.py`](../../../../scripts/ai/creator-kb/upload_kb.py)
+  creates the collection and uploads every file. This copy is **reconciled for the
+  deployed Open WebUI `0.10.x`**: the list endpoint returns `{"items": [...]}`
+  (not a bare list), it reads `OPEN_WEBUI_HOST` / `OPEN_WEBUI_API_KEY` from
+  `ai/openwebui/.env`, and it skips hidden dirs / `site-packages`. It is
+  idempotent (skips files already in the collection).
+- **Long-term:** move sync to the repo's knowledge Sync Pipe (or `oikb`) pointed
+  at this directory, matching how `company-wiki/` is kept in sync.
+
+## Regenerating
+
+```bash
+python3 scripts/ai/creator-kb/generate_kb.py <new-excel>.xlsx ai/openwebui/knowledge/creator-services
+```
+
+Knowledge `.md` files are **generated artifacts** — do not hand-edit content here;
+change the source Excel and regenerate. After regenerating changed content, remove
+the stale files from the collection before re-uploading (the uploader skips files
+whose names already exist).
+
+## Validation questions
+
+Known-answer checks for the assistant (see the package `README.md` for full detail):
+
+1. `ถอนเงินค่าคอมได้เมื่อไหร่` → day-8 settlement rule (`faq/05`)
+2. `ขอตัวอย่างฟรียังไง` → 4-step flow + posting deadlines (`faq/02`)
+3. `โดนแบนถาวรแต่ไม่ได้ทำผิด ทำไงดี` → must **escalate** (`00-escalation-guide.md`)
+4. `RS Tier ตัดยอดวันไหน` → 26th-of-prior-month cutoff (`policy/01-rs-tier`)
+5. `SKA คืออะไร` → creator with sales >600K (`terminology/glossary`)
+
+## Confidentiality
+
+Per the platform-confidentiality rule in
+[`../../synced/skills/creator-management.md`](../../synced/skills/creator-management.md),
+the source Excel (`CS_TikTok_Shop__Knowledge_Base.xlsx`) is not committed. If it
+must be versioned, keep it in restricted storage and record its location +
+snapshot date in the PR description. Phase 2 scraped TikTok Academy content is
+TikTok's published material and belongs in a **separate** collection
+(`tiktok-academy-articles`), not this one.
