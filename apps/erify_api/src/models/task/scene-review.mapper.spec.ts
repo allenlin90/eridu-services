@@ -47,7 +47,17 @@ function createCandidate(overrides: Partial<TaskSceneReviewCandidate> = {}): Tas
 
 describe('scene review mapper', () => {
   it('maps de-duplicated image evidence, metrics, and external context', () => {
-    const result = mapSceneReviewDetail(createCandidate());
+    const result = mapSceneReviewDetail(createCandidate({
+      content: {
+        screenshot: 'https://assets.example.com/final.webp?version=2',
+        duplicate: 'https://assets.example.com/final.webp?version=2',
+        gmv: 12500,
+        viewers: 4800,
+        ctr: '4.2%',
+        cto: '1.1%',
+        private_notes: 'Do not expose this task answer to Designers',
+      },
+    }));
 
     expect(result).toEqual(expect.objectContaining({
       task_id: 'task_abc123',
@@ -61,6 +71,9 @@ describe('scene review mapper', () => {
       label: 'Final screenshot',
       url: 'https://assets.example.com/final.webp?version=2',
     }]);
+    expect(result).not.toHaveProperty('schema');
+    expect(result).not.toHaveProperty('content');
+    expect(result).not.toHaveProperty('hydration_context');
   });
 
   it('uses recursive image discovery only without a valid frozen schema', () => {

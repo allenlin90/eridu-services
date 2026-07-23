@@ -32,6 +32,8 @@ The read model includes only tasks containing image evidence. The compact previe
 
 Show, client, platform, task, submission activity, and available GMV/viewer/CTR/CTO values appear as supporting context. A missing scene reference is shown honestly; reference material upload and reference-version comparison are not implemented.
 
+The detail response is an evidence-specific projection. It does not return the frozen task schema, raw submission content, hydration context, notes, or other form answers to Designer-accessible clients.
+
 ## Backend query decision
 
 Scene Review uses named repository candidate and detail queries because both must enforce studio/show-target scope and hydrate the snapshot schema plus show relations before schema-aware image-evidence extraction. The list cannot use generic database pagination before that extraction: doing so would produce partially filled pages and incorrect totals when non-image submissions occupy candidate rows. The service filters and maps the bounded candidate set, then paginates the evidence read model.

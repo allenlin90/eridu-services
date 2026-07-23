@@ -224,9 +224,6 @@ export function mapSceneReviewDetail(task: TaskSceneReviewCandidate): SceneRevie
     })),
     metrics: extractMetrics(schema, content),
     evidence,
-    schema: task.snapshot?.schema ?? null,
-    content: Object.keys(content).length > 0 ? content : null,
-    hydration_context: hydrationContext,
     reference: null,
   };
 }

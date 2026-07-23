@@ -104,12 +104,6 @@ export type SceneReviewListItem = z.infer<typeof sceneReviewListItemSchema>;
 
 export const sceneReviewDetailSchema = sceneReviewItemBaseSchema.extend({
   evidence: z.array(sceneReviewEvidenceSchema).min(1),
-  schema: z.unknown().nullable(),
-  content: z.record(z.string(), z.unknown()).nullable(),
-  hydration_context: z.object({
-    creators: z.array(z.object({ uid: z.string(), label: z.string() })),
-    platforms: z.array(z.object({ uid: z.string(), label: z.string() })),
-  }),
   reference: z.null(),
 });
 
