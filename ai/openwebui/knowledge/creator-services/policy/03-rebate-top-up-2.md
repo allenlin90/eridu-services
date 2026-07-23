@@ -1,3 +1,15 @@
+---
+id: creator-services.policy.rebate-top-up-2
+title: Creator Policy Q1/2025 — ปัญหา Rebate Top up 2% (รางวัล RS Tier S, A)
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # นโยบายครีเอเตอร์ Q1/2025 — ปัญหา Rebate Top up 2% (รางวัล RS Tier S, A)
 
 > Q&A นโยบายครีเอเตอร์ TikTok Shop ไตรมาส 1/2025 หมวด: ปัญหา Rebate Top up 2% (รางวัล RS Tier S, A)

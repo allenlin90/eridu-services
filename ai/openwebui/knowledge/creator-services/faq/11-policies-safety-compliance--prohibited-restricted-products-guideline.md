@@ -1,3 +1,15 @@
+---
+id: creator-services.faq.policies-safety-compliance--prohibited-restricted-products-guideline
+title: Policies, Safety & Compliance — Prohibited & Restricted Products Guidelines
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # Policies, Safety & Compliance — Prohibited & Restricted Products Guidelines
 
 > ฐานความรู้สำหรับผู้ช่วย Creator Services (ERISA) | หมวด: Policies, Safety & Compliance / Prohibited & Restricted Products Guidelines

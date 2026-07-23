@@ -1,3 +1,15 @@
+---
+id: creator-services.violations.common-violations
+title: Common Creator Violations
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # การละเมิดที่พบบ่อยของครีเอเตอร์ TikTok Shop — Common Creator Violations
 
 > ฐานความรู้: ประเภทการละเมิด หลักฐานที่ต้องใช้ในการอุทธรณ์ วิธีป้องกัน และบทลงโทษ

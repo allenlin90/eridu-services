@@ -1,3 +1,15 @@
+---
+id: creator-services.faq.account-shop-setup--creating-your-tiktok-shop-account
+title: Account & Shop Setup — Creating Your TikTok Shop Account (Seller setup vs. Creator feature enablement)
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # Account & Shop Setup — Creating Your TikTok Shop Account (Seller setup vs. Creator feature enablement)
 
 > ฐานความรู้สำหรับผู้ช่วย Creator Services (ERISA) | หมวด: Account & Shop Setup / Creating Your TikTok Shop Account (Seller setup vs. Creator feature enablement)

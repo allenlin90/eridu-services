@@ -15,9 +15,19 @@ Output: one .md per FAQ sub-category, plus violations / policy / terminology /
 escalation-guide files. Thai-primary with bilingual headers. Link-only answers
 are kept as official-link references (Phase 1: no TikTok Academy scraping).
 
-Suggested repo home: scripts/ai/generate_kb.py, with output synced to
-ai/openwebui/synced/knowledge/creator-services/.
+Every generated content file (not the directory READMEs) carries governance
+frontmatter (id/title/audiences/owner/sensitivity/status/source_refs/
+reviewed_at/review_by) per the Content Contract in
+ai/architecture/llm-knowledge-base-plan.md, so it can be published with a
+validated collection/group mapping instead of an unclassified upload. This
+collection maps to that plan's roadmapped `wiki-erisa` slot (Erisa groups /
+creator & affiliate workflows), reached early via this lighter bootstrap
+pipeline instead of the full company-wiki validator/Sync Pipe.
+
+Repo home: scripts/ai/creator-kb/generate_kb.py, with output synced to
+ai/openwebui/knowledge/creator-services/.
 """
+import datetime
 import os
 import re
 import sys
@@ -27,6 +37,33 @@ from collections import OrderedDict
 from openpyxl import load_workbook
 
 LINK_RE = re.compile(r"https?://\S+")
+
+GOVERNANCE = {
+    "owner": "erisa-creator-services",
+    "audiences": ["erisa-creator-services"],
+    "sensitivity": "department",
+    "source_ref": "CS_TikTok_Shop__Knowledge_Base.xlsx",
+}
+REVIEW_CADENCE_DAYS = 90
+
+
+def frontmatter(id_, title):
+    today = datetime.date.today()
+    review_by = today + datetime.timedelta(days=REVIEW_CADENCE_DAYS)
+    return [
+        "---",
+        f"id: {id_}",
+        f"title: {title}",
+        f"audiences: [{', '.join(GOVERNANCE['audiences'])}]",
+        f"owner: {GOVERNANCE['owner']}",
+        f"sensitivity: {GOVERNANCE['sensitivity']}",
+        "status: active",
+        f"source_refs: [{GOVERNANCE['source_ref']}]",
+        f"reviewed_at: {today.isoformat()}",
+        f"review_by: {review_by.isoformat()}",
+        "---",
+        "",
+    ]
 
 
 def clean(v):
@@ -171,8 +208,10 @@ def generate(records, vio, pol, term, out_dir):
     faq_dir = os.path.join(out_dir, "faq")
     os.makedirs(faq_dir, exist_ok=True)
     for gi, ((main, sub), items) in enumerate(groups.items(), start=1):
-        fname = f"{gi:02d}-{slugify(main, 30)}--{slugify(sub, 40)}.md"
-        lines = [
+        slug_id = f"{slugify(main, 30)}--{slugify(sub, 40)}"
+        fname = f"{gi:02d}-{slug_id}.md"
+        title = f"{main} — {sub}"
+        lines = frontmatter(f"creator-services.faq.{slug_id}", title) + [
             f"# {main} — {sub}", "",
             f"> ฐานความรู้สำหรับผู้ช่วย Creator Services (ERISA) | หมวด: {main} / {sub}",
             f"> Knowledge base for the ERISA creator-service assistant. Category: {main} / {sub}.",
@@ -197,7 +236,8 @@ def generate(records, vio, pol, term, out_dir):
         written.append(("faq/" + fname, len(items)))
 
     # --- Violations ---
-    vl = [
+    vl = frontmatter("creator-services.violations.common-violations",
+                      "Common Creator Violations") + [
         "# การละเมิดที่พบบ่อยของครีเอเตอร์ TikTok Shop — Common Creator Violations", "",
         "> ฐานความรู้: ประเภทการละเมิด หลักฐานที่ต้องใช้ในการอุทธรณ์ วิธีป้องกัน และบทลงโทษ",
         "> Violation types, appeal evidence requirements, prevention guidance, and penalties.", "",
@@ -229,8 +269,10 @@ def generate(records, vio, pol, term, out_dir):
     os.makedirs(pdir, exist_ok=True)
     for pi, (cat, items) in enumerate(pol_groups.items(), start=1):
         slug = slugify(cat, 40)
-        fname = f"{pi:02d}-{slug}.md" if (slug != "misc" and re.search(r"[a-z]", slug)) else f"{pi:02d}-policy.md"
-        lines = [
+        slug_id = slug if (slug != "misc" and re.search(r"[a-z]", slug)) else "policy"
+        fname = f"{pi:02d}-{slug_id}.md"
+        lines = frontmatter(f"creator-services.policy.{slug_id}",
+                             f"Creator Policy Q1/2025 — {cat}") + [
             f"# นโยบายครีเอเตอร์ Q1/2025 — {cat}", "",
             f"> Q&A นโยบายครีเอเตอร์ TikTok Shop ไตรมาส 1/2025 หมวด: {cat}",
             f"> TikTok Shop creator policy Q&A (Q1/2025). Category: {cat}", "",
@@ -248,7 +290,8 @@ def generate(records, vio, pol, term, out_dir):
     # --- Terminology ---
     tdir = os.path.join(out_dir, "terminology")
     os.makedirs(tdir, exist_ok=True)
-    tl = [
+    tl = frontmatter("creator-services.terminology.glossary",
+                      "Terminology Glossary") + [
         "# อภิธานศัพท์ TikTok Shop / ERISA — Terminology Glossary", "",
         "> คำศัพท์เฉพาะทางที่ใช้ในงาน Creator Services และ TikTok Shop",
         "> Terms used in creator services and TikTok Shop operations.", "",
@@ -269,7 +312,7 @@ def generate(records, vio, pol, term, out_dir):
 
     # --- Escalation guide ---
     esc = [r for r in records if r["type"] == "escalation"]
-    el = [
+    el = frontmatter("creator-services.escalation-guide", "Escalation Guide") + [
         "# แนวทางการส่งต่อเรื่องให้แอดมิน — Escalation Guide", "",
         "> กติกาสำหรับผู้ช่วย AI: หัวข้อต่อไปนี้ **ห้ามตอบเอง** ต้องส่งต่อให้แอดมิน/ทีม Creator Services เสมอ",
         "> Rules for the AI assistant: the following topics MUST be escalated to admin / Creator Services.",

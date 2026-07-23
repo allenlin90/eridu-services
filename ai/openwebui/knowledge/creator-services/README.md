@@ -4,6 +4,20 @@ Git-authored source knowledge for the **Erisa Creator Service Assistant**
 (`creator-service-assistant`) in Open WebUI. Thai-primary content (creators ask
 in Thai) with English question translations and bilingual headers for retrieval.
 
+This collection is the early, bootstrap realization of the `wiki-erisa` slot
+in [`ai/architecture/llm-knowledge-base-plan.md`](../../../architecture/llm-knowledge-base-plan.md)'s
+roadmap ("Erisa groups — Creator and affiliate workflows"), reached via this
+directory's lighter pipeline instead of the full `company-wiki/` validator +
+Sync Pipe. Every content file (not this README) carries that plan's Content
+Contract frontmatter — `id`, `audiences: [erisa-creator-services]`,
+`owner: erisa-creator-services`, `sensitivity: department`, `status`,
+`source_refs`, `reviewed_at`, `review_by` — so it publishes with a classified
+audience/sensitivity instead of unclassified metadata. It is **not yet**
+validated by `company-wiki/tools/validate-wiki` (that tool is scoped to
+`company-wiki/content/`); folding this collection onto that validator, or
+building an equivalent one, is the remaining gap before this counts as fully
+governed per the plan.
+
 Generated from `CS_TikTok_Shop__Knowledge_Base.xlsx` (Phase 1 one-time snapshot —
 no TikTok Academy scraping yet) via
 [`../../../../scripts/ai/creator-kb/generate_kb.py`](../../../../scripts/ai/creator-kb/generate_kb.py).

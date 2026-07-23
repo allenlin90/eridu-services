@@ -1,3 +1,15 @@
+---
+id: creator-services.faq.platform-features-updates--using-tiktok-shop-mobile-app-vs-desktop
+title: Platform Features & Updates — Using TikTok Shop Mobile App vs. Desktop
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # Platform Features & Updates — Using TikTok Shop Mobile App vs. Desktop
 
 > ฐานความรู้สำหรับผู้ช่วย Creator Services (ERISA) | หมวด: Platform Features & Updates / Using TikTok Shop Mobile App vs. Desktop

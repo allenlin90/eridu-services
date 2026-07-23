@@ -1,3 +1,15 @@
+---
+id: creator-services.terminology.glossary
+title: Terminology Glossary
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # อภิธานศัพท์ TikTok Shop / ERISA — Terminology Glossary
 
 > คำศัพท์เฉพาะทางที่ใช้ในงาน Creator Services และ TikTok Shop

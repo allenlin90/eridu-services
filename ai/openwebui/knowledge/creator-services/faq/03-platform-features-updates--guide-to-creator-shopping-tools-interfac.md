@@ -1,3 +1,15 @@
+---
+id: creator-services.faq.platform-features-updates--guide-to-creator-shopping-tools-interfac
+title: Platform Features & Updates — Guide to Creator Shopping Tools Interface (within TikTok app)
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # Platform Features & Updates — Guide to Creator Shopping Tools Interface (within TikTok app)
 
 > ฐานความรู้สำหรับผู้ช่วย Creator Services (ERISA) | หมวด: Platform Features & Updates / Guide to Creator Shopping Tools Interface (within TikTok app)

@@ -1,3 +1,15 @@
+---
+id: creator-services.faq.official-programs-campaigns-in--eligibility-criteria-registration-for-pr
+title: Official Programs, Campaigns & Incentives — Eligibility Criteria & Registration for Programs/Campaigns
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # Official Programs, Campaigns & Incentives — Eligibility Criteria & Registration for Programs/Campaigns
 
 > ฐานความรู้สำหรับผู้ช่วย Creator Services (ERISA) | หมวด: Official Programs, Campaigns & Incentives / Eligibility Criteria & Registration for Programs/Campaigns

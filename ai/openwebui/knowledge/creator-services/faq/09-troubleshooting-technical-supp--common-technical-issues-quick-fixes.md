@@ -1,3 +1,15 @@
+---
+id: creator-services.faq.troubleshooting-technical-supp--common-technical-issues-quick-fixes
+title: Troubleshooting & Technical Support — Common Technical Issues & Quick Fixes
+audiences: [erisa-creator-services]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
 # Troubleshooting & Technical Support — Common Technical Issues & Quick Fixes
 
 > ฐานความรู้สำหรับผู้ช่วย Creator Services (ERISA) | หมวด: Troubleshooting & Technical Support / Common Technical Issues & Quick Fixes

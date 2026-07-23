@@ -59,3 +59,8 @@ yarn-error.log*
 
 # Company wiki generated manifests (derived, regenerate via validate-wiki --write-manifest)
 ai/openwebui/knowledge/company-wiki/generated/*
+
+# creator-kb scraper session/state (auth_state.json is a live login session — never commit it)
+scripts/ai/creator-kb/auth_state.json
+scripts/ai/creator-kb/state.json
+scripts/ai/creator-kb/scraped/
