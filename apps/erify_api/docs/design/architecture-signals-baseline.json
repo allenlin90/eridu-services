@@ -1,0 +1,36 @@
+{
+  "snapshot_commit": "f677b627d9e93574db069594ff78aec699d52a8e",
+  "method": {
+    "files": "apps/erify_api/src/**/*.ts",
+    "lines": "physical lines including blanks and comments",
+    "module_edges": "unique directed static imports from one *.module.ts file to another local *.module.ts file",
+    "cycles": "depth-first search over the static local module graph",
+    "mcp_closure": "McpAppModule plus every module reachable through static local module imports"
+  },
+  "signals": {
+    "typescript_files": 539,
+    "nest_modules": 90,
+    "static_local_module_edges": 293,
+    "static_module_cycles": 0,
+    "module_cycles": [],
+    "module_lines_total": 1800,
+    "module_lines_median": 14,
+    "modules_at_or_below_20_lines": 74,
+    "model_modules": 27,
+    "production_services": 68,
+    "repositories": 30,
+    "exported_repositories": [
+      "CreatorRepository",
+      "PlatformRepository",
+      "ShowCreatorRepository",
+      "ShowPlatformRepository",
+      "ShowRepository",
+      "StudioCreatorRepository"
+    ],
+    "controllers": 53,
+    "specs": 156,
+    "e2e_specs": 0,
+    "utility_module_importers": 48,
+    "mcp_reachable_modules": 24
+  }
+}
