@@ -416,7 +416,7 @@
 <header class="hero">
   <div class="hero-grid" aria-hidden="true"></div>
   <div class="wrap">
-    <span class="kicker"><span class="dot"></span> erify_api · architecture decision · proposed direction</span>
+    <span class="kicker"><span class="dot"></span> erify_api · architecture decision · accepted direction</span>
     <h1>From table-first modules to capability-first ownership</h1>
     <p class="lede read">Why the refactor points this way, how it differs from what we have, the framework philosophy underneath it, a worked example of one capability end to end, the earlier decisions it corrects, a sized roadmap, and why it comes out better. A visual companion to <span class="mono">ARCHITECTURE_REFACTORING_GUIDE.md</span> — every number here is reproducible with <code>pnpm architecture:signals</code>.</p>
     <div class="verdict-row">
@@ -859,7 +859,7 @@ class ShowQueries {
         <div class="htext">
           <span class="eyebrow">The new persistence rule</span>
           <h2>Repositories become optional and evidence-based</h2>
-          <p class="read">This is the one rule that changes existing doctrine — so it only becomes canonical <em>after</em> the <span class="mono">ShowStatus</span> pilot, and its acceptance PR must reconcile every skill and doc that says "repository for all DB access."</p>
+          <p class="read">This rule became canonical after the <span class="mono">ShowStatus</span> pilot passed and T12 reconciled every skill, agent, memory, and doc that had required "repository for all DB access."</p>
         </div>
       </div>
       <div class="card tick reveal" style="animation-delay:.05s">
@@ -903,7 +903,7 @@ class ShowQueries {
           <span class="reframe-tag reframe">reframed convention</span>
           <div class="rf-was"><span>Was</span> A repository for every model — "repositories hide all DB access."</div>
           <div class="rf-now"><span>Now</span> Optional and evidence-based: simple CRUD uses <span class="mono">tx.&lt;model&gt;</span> directly; a repository exists only for genuine persistence complexity.</div>
-          <div class="rf-why">Most repositories just mirror Prisma. <em>Proposed — becomes canonical only after the ShowStatus pilot.</em></div>
+          <div class="rf-why">Most repositories just mirror Prisma. <em>Accepted after the ShowStatus pilot; keep repositories when complexity earns the seam.</em></div>
         </div>
         <div class="card reframe tick">
           <span class="reframe-tag reframe">reframed axis</span>
@@ -991,7 +991,7 @@ class ShowQueries {
               <tr><td class="ph">0a</td><td>Isolated real-DB harness + characterization</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">now</td></tr>
               <tr><td class="ph">0b</td><td>Signals baseline recorded (perf instrumentation deferred to pre-Phase-5)</td><td class="eff">~2–3 days</td><td class="when-now">now · parallel</td></tr>
               <tr><td class="ph">1</td><td>Correctness + cleanup: MCP max, dup import, OpenAPI, StudioGuard, restore/delegate, UtilityService</td><td class="eff">~1–1.5 wk · 4–6 PRs</td><td class="when-now">now (indep.) / after 0a (gated)</td></tr>
-              <tr><td class="ph">2</td><td>ShowStatus pilot + persistence-matrix acceptance (7 doctrine files)</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">after 0a</td></tr>
+              <tr><td class="ph">2</td><td>ShowStatus pilot + persistence-matrix acceptance (all doctrine surfaces reconciled)</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">done</td></tr>
               <tr><td class="ph">3</td><td>Consolidate show catalog (4 reference models) into one module</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-now">after 2</td></tr>
               <tr><td class="ph">4</td><td>Dissolve <span class="mono">studio-show-management</span> into show-operations, 4 slices</td><td class="eff">~3–5 wk · 4–6 PRs</td><td class="when-gate">on roadmap item 18</td></tr>
               <tr><td class="ph">5</td><td>Decompose <span class="mono">publishing.service</span>, atomic boundary preserved</td><td class="eff">~2–4 wk · 3–5 PRs</td><td class="when-gate">on item 18 publish / perf evidence</td></tr>
@@ -1030,7 +1030,7 @@ class ShowQueries {
         <div class="card chal sev-mid tick">
           <span class="sev">agent doctrine</span>
           <h3>Skills assume the old paths</h3>
-          <p>Pattern-authority skills and docs hardcode <span class="mono">repository/service/controller</span> paths and the "repository for all DB access" rule.</p>
+          <p>At the source snapshot, pattern-authority skills and docs hardcoded <span class="mono">repository/service/controller</span> paths and the "repository for all DB access" rule; T12 reconciled them.</p>
           <div class="fix"><b>Contained by</b> A per-phase knowledge-sync table + a matrix acceptance gate naming all 7 doctrine locations, enforced same-PR by <span class="mono">pr-ready</span>.</div>
         </div>
         <div class="card chal sev-high tick">
@@ -1075,7 +1075,7 @@ class ShowQueries {
     <span>·</span>
     <span>Signals snapshot regenerated via <span class="mono">pnpm architecture:signals</span> — figures reflect the PR source commit; rerun to refresh once the baseline moves</span>
     <span>·</span>
-    <span>Status: proposed direction — patterns stay proposed until the pilot succeeds</span>
+    <span>Status: accepted direction — persistence matrix proven by the pilot and reconciled in T12</span>
   </div>
 </footer>
 

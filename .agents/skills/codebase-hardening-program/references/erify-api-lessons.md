@@ -29,7 +29,9 @@ The first application of `codebase-hardening-program` ran on `apps/erify_api` (b
 
 ## Decision-handling pattern
 
-- **Lock direction; defer detail.** e.g. "analytics services get a repository layer" was locked; the repo shape was decided in-ticket.
+- **Lock direction; defer detail.** For example, decide that analytics needs a
+  private read boundary, then select a query provider/repository shape in the
+  implementation ticket.
 - **Frame decisions user-flow-first.** Lead with the concrete end-to-end flow + plain "why", then the one real fork — not an abstract A/B/C matrix. (`decision-framing-user-flow-first` memory.)
 - **Resolved erify_api decisions, for reference:** accept-the-race on upload counter (D1); analytics repositories (D2); split review/compensation out of orchestration (D3); publish bumps `version` (D5); hard-delete immutable snapshots (D6); blank-numeric → null (D9); delete the soft-delete-bypassing override (D10); datetime actuals race won't-fix (D8/D12). Still open: domain-`Money` (D4), Sheets service-account identity (D7), `studioId`→`studioUid` rename (D11).
 

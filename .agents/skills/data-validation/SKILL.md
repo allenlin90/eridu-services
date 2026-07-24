@@ -50,7 +50,7 @@ Validate at API boundary, transform format:
 When adding a request field, trace it through every layer before calling the work done:
 
 ```text
-schema/API type -> controller DTO/destructure -> service payload -> repository/write -> response DTO -> frontend form/mutation
+schema/API type -> controller DTO/destructure -> service payload -> selected persistence boundary -> response DTO -> frontend form/mutation
 ```
 
 The dangerous failure mode is a field that validates and renders in the UI but is silently dropped by a controller payload or service mapper. Add a controller or integration test at the boundary that asserts the new field is forwarded, not only a schema parse test.

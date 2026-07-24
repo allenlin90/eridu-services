@@ -8,9 +8,9 @@ Canonical guidance lives in `AGENTS.md` §§ Core Patterns, Backend API Patterns
 
 ## Skills to Load
 
-- `erify-api-capability-refactoring` — **load first** for module/capability placement (which capability owns a use case, where a workflow lives). Authoritative for placement; its persistence-decision matrix is pilot-gated, so the persistence and correctness rules in the skills below stay canonical until the `ShowStatus` pilot.
-- `service-pattern-nestjs` — service layer patterns, payload types, UID generation (persistence/correctness canonical; superseded for placement)
-- `repository-pattern-nestjs` — BaseRepository, soft delete, query building (persistence/correctness canonical; superseded for placement)
+- `erify-api-capability-refactoring` — **load first** for module/capability placement and persistence selection. Its evidence-based persistence matrix is canonical.
+- `service-pattern-nestjs` — service APIs, payload types, UID generation, direct or provider-backed persistence
+- `repository-pattern-nestjs` — selective private repositories, BaseRepository, soft delete, complex query building
 - `backend-controller-pattern-nestjs` — controller decorators, UID validation, response shaping
 - `database-patterns` — transactions, bulk ops, Prisma patterns
 - `data-validation` — Zod schemas, DTO transformations, ID management

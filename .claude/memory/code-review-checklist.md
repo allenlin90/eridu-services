@@ -2,6 +2,12 @@
 
 Use this checklist before committing code or reviewing PRs.
 
+> **`erify_api` persistence direction (2026-07):** use the capability
+> persistence matrix. Shallow bounded CRUD may live in a service through
+> `TransactionHost.tx`; complex/reused persistence belongs in a private named
+> provider. Repository-specific checks below apply only when the matrix selects
+> a repository.
+
 ## 🔍 General Code Quality
 
 ### Imports & Dependencies
@@ -53,11 +59,12 @@ async create(data: Prisma.TaskCreateInput): Promise<Task>
 - [ ] Transformation schemas use `.pipe()` for validation
 - [ ] Assert helpers exist for runtime validation
 
-#### ✅ Repository Layer
-- [ ] All Prisma queries in repository, **NEVER** in service
+#### ✅ Persistence Boundary
+- [ ] Direct service persistence is shallow, bounded, transaction-aware, and private
+- [ ] Complex/reused persistence is in a justified private provider
 - [ ] Query building methods are private in repository
 - [ ] Repository accepts domain filter types, not Prisma types
-- [ ] Extends `BaseRepository` with proper wrapper
+- [ ] `BaseRepository` is used only when its shared contract helps
 
 #### ✅ Controller Layer
 - [ ] Uses DTOs for input validation
@@ -269,7 +276,7 @@ Before running `git commit`:
 ## 🚨 Red Flags (Never Commit)
 
 - ❌ `Prisma.*` types in service method signatures
-- ❌ Prisma queries in service layer
+- ❌ Public Prisma query types or unbounded direct service queries
 - ❌ `any` types without explicit justification
 - ❌ Hardcoded credentials or secrets
 - ❌ BigInt IDs in API responses
@@ -294,9 +301,9 @@ Is it a relation/join table?      → Create model, no service
 
 ### "Where does this query logic go?"
 ```
-Simple CRUD by ID/UID?           → BaseRepository methods
+Simple bounded CRUD by ID/UID?  → Capability service + txHost.tx
                                   ↓
-Complex filtering?               → Custom repository method
+Complex/reused filtering?        → Private query provider/repository
                                   ↓
 Business logic (pricing, etc)?  → Service layer
                                   ↓

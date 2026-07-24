@@ -130,7 +130,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
 | T11 | Phase 2: `ShowStatus` persistence pilot | M | T1 · T9 | ✅ |
-| T12 | Persistence-matrix acceptance (doctrine reconciliation) | M | T11 passes | 🔲 |
+| T12 | Persistence-matrix acceptance (doctrine reconciliation) | M | T11 passes | ✅ |
 
 ### T11 — Phase 2: `ShowStatus` persistence pilot
 
@@ -143,8 +143,8 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
   schema-local record alias follows the generated Prisma output type, while the
   bounded `systemKey` filter remains deliberately persistence-shaped. Focused
   caller specs and the real-PostgreSQL harness preserve CRUD, soft-delete,
-  transaction visibility, and rollback behavior. T12 remains the separate
-  acceptance and doctrine gate.
+  transaction visibility, and rollback behavior. T12 accepted this result in
+  the separate doctrine change below.
 
 ### T12 — Persistence-matrix acceptance (doctrine reconciliation)
 
@@ -158,12 +158,17 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
   Key Decision 6 plus its layer diagram.
 - **Gate**: T11 passes.
 - **Skills**: `repository-pattern-nestjs`, `service-pattern-nestjs`, `design-patterns`.
+- **Result**: accepted. Capability services may use direct
+  `TransactionHost.tx` for shallow bounded CRUD; complex or reusable persistence
+  remains private behind a repository, store, or query provider. Canonical
+  instructions, architecture docs, review agents, and supplementary memories
+  were reconciled in the same change.
 
 ## Wave 3 — first capability consolidation
 
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
-| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | ⏸ |
+| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | 🔲 |
 
 ### T13 — Phase 3: consolidate the show catalog
 

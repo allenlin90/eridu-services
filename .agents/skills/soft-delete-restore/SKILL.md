@@ -5,7 +5,8 @@ description: Restore soft-deleted erify_api records with correct permissions, op
 
 # Soft Delete Restore Pattern
 
-Full contract for restoring soft-deleted records: repository, service, controller, authorization, and version behavior.
+Full contract for restoring soft-deleted records: persistence, service,
+controller, authorization, and version behavior.
 
 **Builds on**: `database-patterns` (soft delete, optimistic locking).
 
@@ -18,10 +19,12 @@ Sets `deletedAt = null` on a soft-deleted record. Key invariants:
 
 ## Layer Pattern
 
-### Repository
+### Persistence
 `BaseRepository.restore()` already targets `deletedAt: { not: null }` and can
 be inherited by unversioned models. Versioned repositories must override it to
-also apply `version: { increment: 1 }`. Scope by studio when applicable.
+also apply `version: { increment: 1 }`. A shallow direct-persistence service
+performs the equivalent scoped `txHost.tx.<model>.update`. Scope by studio when
+applicable.
 
 ### Service
 Convert `PrismaClientKnownRequestError` (P2025) to `HttpError.notFound` at service boundary. Check dependency/policy constraints before restoring (uniqueness conflicts, dependency state, role constraints).
@@ -50,7 +53,7 @@ Add `includeDeleted` param to list endpoint. Expose `deleted_at` in API response
 
 ## Checklist
 
-- [ ] Repository targets `deletedAt: { not: null }` records only
+- [ ] Selected persistence boundary targets `deletedAt: { not: null }` records only
 - [ ] Version incremented on restore when the model is versioned
 - [ ] `POST /:id/restore` endpoint (not PATCH)
 - [ ] Role guards same as or stricter than delete
