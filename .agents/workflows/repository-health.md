@@ -44,6 +44,11 @@ Record a lightweight architecture snapshot in the review report or PR descriptio
 - REST, MCP, and worker runtime import closures;
 - public service signatures that expose ORM query types.
 
+For `erify_api`, use the committed
+[`architecture-signals-baseline.json`](../../apps/erify_api/docs/design/architecture-signals-baseline.json)
+for the program-level trend and the most recent repository-health report or PR
+base for current drift.
+
 If a signal is not mechanically measurable yet, record the sampled files and manual evidence. Do not invent precision.
 
 ## Step 2 — Audit the implementation

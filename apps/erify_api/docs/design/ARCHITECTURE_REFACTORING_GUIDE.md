@@ -88,7 +88,14 @@ Admin, studio, me, integration, and MCP remain authorization and transport conce
 
 ## Repository-Grounded Findings
 
-The following is a static architecture snapshot, not a runtime performance benchmark. Run `pnpm architecture:signals` to reproduce it. The command scans `apps/erify_api/src/**/*.ts`, counts physical lines including blanks and comments, treats each unique static import between local `*.module.ts` files as one directed edge, detects cycles with depth-first search, and calculates the MCP closure from `McpAppModule` including the entry module.
+The following is a static architecture snapshot, not a runtime performance
+benchmark. The exact output from source snapshot `f677b627` is committed as
+[`architecture-signals-baseline.json`](./architecture-signals-baseline.json).
+Run `pnpm architecture:signals` to produce a current comparison. The command
+scans `apps/erify_api/src/**/*.ts`, counts physical lines including blanks and
+comments, treats each unique static import between local `*.module.ts` files as
+one directed edge, detects cycles with depth-first search, and calculates the
+MCP closure from `McpAppModule` including the entry module.
 
 | Signal | Current evidence | Interpretation |
 | --- | ---: | --- |
