@@ -37,7 +37,10 @@ When a user is both active Duty Manager and Admin/Manager, the active Duty Manag
 | `POST` | `/studios/:studioId/shows/:showId/resolve-cancellation` | Admin/Manager signs off a pending cancellation. |
 | `GET` | `/studios/:studioId/shows/:showId/cancellation-status` | Reads pending status, allowed outcomes, and cancellation history. |
 
-The generic studio show-edit endpoint does not own these transitions. Studio show status lookups exclude `CANCELLED` and `CANCELLED_PENDING_RESOLUTION` so users do not select gate-owned statuses from the normal edit form.
+Generic studio and admin show-edit endpoints do not own these transitions. A
+shared server-side policy rejects entering or leaving `CANCELLED` and
+`CANCELLED_PENDING_RESOLUTION`, and both status lookup lists exclude those
+statuses so users do not select gate-owned destinations from normal edit forms.
 
 ## Gate Rules
 

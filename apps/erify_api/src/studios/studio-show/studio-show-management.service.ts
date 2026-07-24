@@ -44,6 +44,7 @@ import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { UserService } from '@/models/user/user.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
+import { assertGenericShowStatusChangeAllowed } from '@/show-orchestration/show-status-write-policy';
 
 type ShowCreateData = Omit<Parameters<ShowRepository['create']>[0], 'uid'>;
 type ShowUpdateData = Parameters<ShowRepository['update']>[1];
@@ -147,9 +148,6 @@ export class StudioShowManagementService {
   async updateShow(studioUid: string, showUid: string, dto: UpdateStudioShowDto) {
     const existingShow = await this.findStudioShowOrThrow(studioUid, showUid);
     if (dto.showStatusId !== undefined) {
-      if (existingShow.showStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
-        throw HttpError.badRequest('SHOW_STATUS_LOCKED_BY_PENDING_CANCELLATION');
-      }
       // Block entering the pending-resolution or cancelled state through the
       // generic edit form too — not just leaving it. Setting show_status_id
       // directly here would skip the gate's active-task guard and Audit
@@ -157,12 +155,10 @@ export class StudioShowManagementService {
       // / requestCancellationResolution / resolveShowCancellation) may move
       // a show into either state.
       const targetStatus = await this.showStatusService.getShowStatusById(dto.showStatusId);
-      if (targetStatus?.systemKey === 'CANCELLED_PENDING_RESOLUTION') {
-        throw HttpError.badRequest('SHOW_STATUS_PENDING_RESOLUTION_REQUIRES_GATE');
-      }
-      if (targetStatus?.systemKey === 'CANCELLED') {
-        throw HttpError.badRequest('SHOW_STATUS_CANCELLATION_REQUIRES_GATE');
-      }
+      assertGenericShowStatusChangeAllowed(
+        existingShow.showStatus?.systemKey,
+        targetStatus?.systemKey,
+      );
     }
     await this.ensureStudioRoomBelongsToStudio(studioUid, dto.studioRoomId);
     // When clientId changes but scheduleId is not explicitly provided, validate the

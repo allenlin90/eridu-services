@@ -14,6 +14,7 @@ import type {
 } from './show-creator-assignment.service';
 import { ShowCreatorAssignmentService } from './show-creator-assignment.service';
 import { ShowPlatformAssignmentService } from './show-platform-assignment.service';
+import { assertGenericShowStatusChangeAllowed } from './show-status-write-policy';
 
 import type { ShowInclude, ShowWithPayload } from '@/models/show/schemas/show.schema';
 import { ListShowsQueryDto } from '@/models/show/schemas/show.schema';
@@ -23,6 +24,7 @@ import { ShowCreatorRepository } from '@/models/show-creator/show-creator.reposi
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformRepository } from '@/models/show-platform/show-platform.repository';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 
@@ -46,6 +48,7 @@ export class ShowOrchestrationService {
     private readonly taskTargetService: TaskTargetService,
     private readonly showCreatorAssignmentService: ShowCreatorAssignmentService,
     private readonly showPlatformAssignmentService: ShowPlatformAssignmentService,
+    private readonly showStatusService: ShowStatusService,
   ) {}
 
   async createShowWithAssignments(
@@ -98,8 +101,19 @@ export class ShowOrchestrationService {
     const defaultInclude = include || this.getDefaultIncludes();
 
     // Pre-validate existence (throws 404 if not found)
-    const existingShow = await this.showService.getShowById(uid);
+    const existingShow = await this.showService.getShowById(uid, {
+      showStatus: { select: { systemKey: true } },
+    });
     const showId = existingShow.id;
+
+    if (dto.showStatusId !== undefined) {
+      const targetStatus
+        = await this.showStatusService.getShowStatusById(dto.showStatusId);
+      assertGenericShowStatusChangeAllowed(
+        existingShow.showStatus?.systemKey,
+        targetStatus?.systemKey,
+      );
+    }
 
     this.showService.ensureValidActualTimeRange(
       existingShow.actualStartTime,
