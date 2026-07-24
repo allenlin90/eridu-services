@@ -1,4 +1,4 @@
-# PRD: Studio Creator Profile Editing
+# Studio Creator Profile Editing
 
 > **Status**: Deferred
 > **Phase**: 6 candidate (Studio Autonomy track)

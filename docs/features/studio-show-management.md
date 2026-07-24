@@ -3,7 +3,7 @@
 > **Status**: ✅ Implemented — Phase 4 Wave 1+
 > **Workstream**: Studio self-service — show lifecycle management
 > **Depends on**: None (no prerequisite features required)
-> **Blocks**: Page-local exports (PR 1-2 in [PHASE_4.md](../roadmap/PHASE_4.md)); full studio autonomy (Studio Schedule Management was deferred on 2026-04-22 — see [future PRD](../prd/future/studio-schedule-management.md))
+> **Blocks**: Page-local exports (PR 1-2 in [PHASE_4.md](../roadmap/PHASE_4.md)); full studio autonomy (Studio Schedule Management was deferred on 2026-04-22 — see [ideation](../ideation/studio-schedule-management.md))
 > **Implementation refs**: [BE canonical doc](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md), [BE controller](../../apps/erify_api/src/studios/studio-show/studio-show.controller.ts), [FE canonical](../../apps/erify_studios/docs/STUDIO_SHOW_MANAGEMENT.md)
 
 ## Problem
@@ -76,5 +76,5 @@ Studios could assign creators to shows and read show details, but could not cont
 ## Forward References
 
 - Backend canonical doc: [STUDIO_SHOW_MANAGEMENT.md](../../apps/erify_api/docs/STUDIO_SHOW_MANAGEMENT.md)
-- Related feature: [Studio Schedule Management](../prd/future/studio-schedule-management.md) (⏸️ deferred 2026-04-22 — Google Sheets flow remains the schedule creation path)
+- Related idea: [Studio Schedule Management](../ideation/studio-schedule-management.md) (⏸️ deferred 2026-04-22 — Google Sheets flow remains the schedule creation path)
 - Related feature: [Page-local exports (PR 1-2)](../roadmap/PHASE_4.md) — studio-owned shows feed into `/task-setup` export

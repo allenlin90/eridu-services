@@ -12,7 +12,7 @@ Schedule continuity across `erify_api`, `erify_studios`, and Google Sheets integ
 1. `apps/erify_api/docs/SCHEDULE_CONTINUITY.md`
 2. `apps/erify_api/docs/SCHEDULE_PLANNING.md`
 3. `docs/features/studio-show-management.md`
-4. `docs/prd/future/studio-schedule-management.md`
+4. `docs/ideation/studio-schedule-management.md`
 
 ## Baseline Behavior
 
