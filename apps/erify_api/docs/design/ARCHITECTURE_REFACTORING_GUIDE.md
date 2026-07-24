@@ -1,6 +1,6 @@
 # `erify_api` Architecture Refactoring Guide
 
-> **Status**: Accepted direction — capability-first placement is the default for new `erify_api` work as of the merge of this guide. The persistence-matrix rule (a simple capability service using `TransactionHost.tx` directly instead of a repository) stays pilot-gated: repository-first data-access remains canonical until the `ShowStatus` pilot proves the matrix and reconciles all repository-first doctrine in the same PR.
+> **Status**: Accepted direction — capability-first placement is the default for new `erify_api` work as of the merge of this guide. The `ShowStatus` implementation pilot has passed its behavior, rollback, and reviewability gates. The persistence matrix is still not canonical until T12 reconciles all repository-first doctrine in one change.
 > **Source snapshot**: `f677b627` (PR base; `apps/erify_api/src` is unchanged through current `master`)
 > **Scope**: Structure, module ownership, service and persistence boundaries, DDD, CQRS, runtime composition, testing, and performance guardrails
 > **Visual companion**: [`architecture-refactoring-visual.html`](./architecture-refactoring-visual.html) — a diagrammed walkthrough of the problem, the NestJS-vs-Rails philosophy, Nest conventions, the phased plan, and the risks. Open it in a browser.
@@ -372,7 +372,14 @@ Every option must preserve:
 - audit and optimistic-lock behavior;
 - bounded list and bulk inputs.
 
-If the team accepts this matrix, the same pilot PR must reconcile every instruction or architecture document that asserts “repository for all DB access.” This includes `AGENTS.md`, `repository-pattern-nestjs`, `service-pattern-nestjs`, `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in `database-patterns`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md`. Until then, the current repository-first rules remain canonical.
+The implementation pilot proves this matrix only for `ShowStatus`; it does not
+change repository doctrine. If the team accepts the result, the separate T12
+acceptance PR must reconcile in one change every instruction or architecture
+document that asserts “repository for all DB access.” This includes `AGENTS.md`,
+`repository-pattern-nestjs`, `service-pattern-nestjs`,
+`orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in
+`database-patterns`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md`. Until T12
+lands, the current repository-first rules remain canonical outside the pilot.
 
 ## CQRS: What It Is And Why Not Yet
 
@@ -456,7 +463,10 @@ findings without implementing refactors or creating a parallel backlog.
 
 The scheduled scan should discover and compare signals. Human review decides whether evidence warrants implementation. Performance gates should use runtime measurements and observability rather than source counts.
 
-Capability-first placement is accepted for new work. The persistence matrix remains proposed until the pilot succeeds: repository-first data access stays canonical in the meantime. The generic trigger-audit process applies to both the accepted placement rule and any pilot-gated pattern.
+Capability-first placement is accepted for new work. The persistence matrix
+passed its `ShowStatus` implementation pilot but remains non-canonical until T12
+reconciles repository-first doctrine in one change. The generic trigger-audit
+process applies to both the accepted placement rule and any pilot-gated pattern.
 
 ## Phased Refactoring Plan
 
@@ -522,6 +532,15 @@ Evaluate:
 - whether direct Prisma types leaked into the public service contract.
 
 Do not generalize until the pilot passes behavior, rollback, and reviewability checks.
+
+**Pilot result (2026-07-24): passed.** Folding persistence into
+`ShowStatusService` removed one production file, one Nest provider registration,
+and the repository mock seam. The service keeps its caller-facing methods,
+builds only the bounded filter shapes its callers use, and exposes
+schema-defined types rather than `Prisma.*` signatures. Focused caller tests and
+the isolated PostgreSQL harness preserved active-row filtering, soft delete,
+transaction visibility, and rollback. This result unlocks T12; it does not
+change persistence doctrine by itself.
 
 ### Phase 3 — Consolidate The Show Catalog Capability
 

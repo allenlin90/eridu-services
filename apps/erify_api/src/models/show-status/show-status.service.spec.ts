@@ -1,287 +1,203 @@
-import { ShowStatusRepository } from './show-status.repository';
+import type { TransactionHost } from '@nestjs-cls/transactional';
+import type { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+
 import { ShowStatusService } from './show-status.service';
 
-import {
-  createMockRepository,
-  createMockUtilityService,
-  createModelServiceTestModule,
-} from '@/testing/model-service-test.helper';
-import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import { UtilityService } from '@/utility/utility.service';
+import type { UtilityService } from '@/utility/utility.service';
 
-jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
+function createShowStatusDelegateMock() {
+  return {
+    create: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    count: jest.fn(),
+    update: jest.fn(),
+  };
+}
+
+function createShowStatus(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1n,
+    uid: 'shst_test123',
+    systemKey: null,
+    name: 'Draft',
+    metadata: {},
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    deletedAt: null,
+    ...overrides,
+  };
+}
 
 describe('showStatusService', () => {
   let service: ShowStatusService;
-  let showStatusRepository: ShowStatusRepository;
-  let utilityService: UtilityService;
+  let delegate: ReturnType<typeof createShowStatusDelegateMock>;
+  let utilityService: jest.Mocked<Pick<UtilityService, 'generateBrandedId'>>;
 
-  beforeEach(async () => {
-    const showStatusRepositoryMock = createMockRepository<ShowStatusRepository>({
-      findPaginated: jest.fn(),
-    });
-    const utilityMock = createMockUtilityService('shst_test123');
+  beforeEach(() => {
+    delegate = createShowStatusDelegateMock();
+    utilityService = {
+      generateBrandedId: jest.fn().mockReturnValue('shst_test123'),
+    };
+    const txHost = {
+      tx: { showStatus: delegate },
+    } as unknown as TransactionHost<TransactionalAdapterPrisma>;
 
-    const module = await createModelServiceTestModule({
-      serviceClass: ShowStatusService,
-      repositoryClass: ShowStatusRepository,
-      repositoryMock: showStatusRepositoryMock,
-      utilityMock,
-    });
-
-    service = module.get<ShowStatusService>(ShowStatusService);
-    showStatusRepository
-      = module.get<ShowStatusRepository>(ShowStatusRepository);
-    utilityService = module.get<UtilityService>(UtilityService);
+    service = new ShowStatusService(
+      txHost,
+      utilityService as unknown as UtilityService,
+    );
   });
 
-  it('should be defined', () => {
+  it('is defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe('createShowStatus', () => {
-    it('should create a show status with generated uid', async () => {
-      const showStatusData = {
-        name: 'Draft',
-        metadata: { description: 'Show is in draft status' },
-      };
+  it('creates a show status with a generated UID', async () => {
+    const payload = {
+      name: 'Draft',
+      metadata: { description: 'Show is in draft status' },
+    };
+    const expected = createShowStatus({ metadata: payload.metadata });
+    delegate.create.mockResolvedValue(expected);
 
-      const expectedResult = {
-        id: 1n,
-        uid: 'shs_00000001',
-        systemKey: null,
-        name: 'Draft',
-        metadata: { description: 'Show is in draft status' },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      };
+    await expect(service.createShowStatus(payload)).resolves.toEqual(expected);
 
-      jest
-        .spyOn(showStatusRepository, 'create')
-        .mockResolvedValue(expectedResult);
-
-      const result = await service.createShowStatus(showStatusData);
-
-      expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
-        'shst',
-        undefined,
-      );
-      expect(showStatusRepository.create).toHaveBeenCalledWith({
-        ...showStatusData,
-        uid: 'shst_test123',
-      });
-      expect(result).toEqual(expectedResult);
-    });
-
-    it('should map P2002 to Conflict', async () => {
-      const showStatusData = {
-        name: 'Draft',
-        metadata: {},
-      };
-
-      const error = createMockUniqueConstraintError(['name']);
-      jest.spyOn(showStatusRepository, 'create').mockRejectedValue(error);
-
-      await expect(service.createShowStatus(showStatusData)).rejects.toThrow(
-        error,
-      );
+    expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+      'shst',
+      undefined,
+    );
+    expect(delegate.create).toHaveBeenCalledWith({
+      data: { ...payload, uid: 'shst_test123' },
     });
   });
 
-  describe('getShowStatusById', () => {
-    it('should return show status when found', async () => {
-      const uid = 'shs_00000001';
-      const expectedResult = {
-        id: 1n,
-        uid,
-        systemKey: null,
-        name: 'Draft',
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      };
+  it('propagates persistence conflicts when creation fails', async () => {
+    const error = new Error('unique constraint');
+    delegate.create.mockRejectedValue(error);
 
-      jest
-        .spyOn(showStatusRepository, 'findByUid')
-        .mockResolvedValue(expectedResult);
+    await expect(
+      service.createShowStatus({ name: 'Draft', metadata: {} }),
+    ).rejects.toBe(error);
+  });
 
-      const result = await service.getShowStatusById(uid);
+  it('reads an active show status by UID', async () => {
+    const expected = createShowStatus();
+    delegate.findFirst.mockResolvedValue(expected);
 
-      expect(showStatusRepository.findByUid).toHaveBeenCalledWith(uid);
-      expect(result).toEqual(expectedResult);
-    });
-
-    it('should return null when not found', async () => {
-      const uid = 'shs_404';
-
-      jest.spyOn(showStatusRepository, 'findByUid').mockResolvedValue(null);
-
-      const result = await service.getShowStatusById(uid);
-
-      expect(showStatusRepository.findByUid).toHaveBeenCalledWith(uid);
-      expect(result).toBeNull();
+    await expect(
+      service.getShowStatusById('shst_test123'),
+    ).resolves.toEqual(expected);
+    expect(delegate.findFirst).toHaveBeenCalledWith({
+      where: { uid: 'shst_test123', deletedAt: null },
     });
   });
 
-  describe('getShowStatuses', () => {
-    it('should return show statuses with pagination', async () => {
-      const params = {
-        skip: 0,
+  it('returns null when an active show status is not found', async () => {
+    delegate.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.getShowStatusById('shst_missing'),
+    ).resolves.toBeNull();
+  });
+
+  it('reads an active show status by system key', async () => {
+    const expected = createShowStatus({
+      systemKey: 'CANCELLED_PENDING_RESOLUTION',
+    });
+    delegate.findFirst.mockResolvedValue(expected);
+
+    await expect(
+      service.getShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION'),
+    ).resolves.toEqual(expected);
+    expect(delegate.findFirst).toHaveBeenCalledWith({
+      where: {
+        systemKey: 'CANCELLED_PENDING_RESOLUTION',
+        deletedAt: null,
+      },
+    });
+  });
+
+  it('returns null when an active system key is not found', async () => {
+    delegate.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.getShowStatusBySystemKey('NOT_A_REAL_KEY'),
+    ).resolves.toBeNull();
+  });
+
+  it('lists and counts active show statuses with bounded filters', async () => {
+    const data = [createShowStatus()];
+    delegate.findMany.mockResolvedValue(data);
+    delegate.count.mockResolvedValue(1);
+
+    await expect(
+      service.getShowStatuses({
+        skip: 5,
         take: 10,
-        orderBy: 'asc' as const,
-      };
+        orderBy: 'asc',
+        where: { systemKey: { notIn: ['CANCELLED'] } },
+      }),
+    ).resolves.toEqual({ data, total: 1 });
 
-      const showStatuses = [
-        {
-          id: 1n,
-          uid: 'shs_00000001',
-          systemKey: null,
-          name: 'Draft',
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-        {
-          id: 2n,
-          uid: 'shs_00000002',
-          systemKey: null,
-          name: 'Confirmed',
-          metadata: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          deletedAt: null,
-        },
-      ];
+    const where = {
+      systemKey: { notIn: ['CANCELLED'] },
+      deletedAt: null,
+    };
+    expect(delegate.findMany).toHaveBeenCalledWith({
+      skip: 5,
+      take: 10,
+      where,
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(delegate.count).toHaveBeenCalledWith({ where });
+  });
 
-      jest
-        .spyOn(showStatusRepository, 'findPaginated')
-        .mockResolvedValue({ data: showStatuses, total: 2 });
+  it('counts only active show statuses', async () => {
+    delegate.count.mockResolvedValue(5);
 
-      const result = await service.getShowStatuses(params);
-
-      expect(showStatusRepository.findPaginated).toHaveBeenCalledWith(params);
-      expect(result).toEqual({ data: showStatuses, total: 2 });
+    await expect(service.countShowStatuses({})).resolves.toBe(5);
+    expect(delegate.count).toHaveBeenCalledWith({
+      where: { deletedAt: null },
     });
   });
 
-  describe('updateShowStatus', () => {
-    it('should update show status successfully', async () => {
-      const uid = 'shs_00000001';
-      const updateData = {
-        name: 'Updated Status',
-        metadata: { description: 'Updated description' },
-      };
+  it('updates only an active show status', async () => {
+    const payload = {
+      name: 'Updated Status',
+      metadata: { description: 'Updated description' },
+    };
+    const expected = createShowStatus(payload);
+    delegate.update.mockResolvedValue(expected);
 
-      const expectedResult = {
-        id: 1n,
-        uid,
-        systemKey: null,
-        name: 'Updated Status',
-        metadata: { description: 'Updated description' },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-      };
-
-      jest
-        .spyOn(showStatusRepository, 'update')
-        .mockResolvedValue(expectedResult);
-
-      const result = await service.updateShowStatus(uid, updateData);
-
-      expect(showStatusRepository.update).toHaveBeenCalledWith(
-        { uid },
-        updateData,
-      );
-      expect(result).toEqual(expectedResult);
-    });
-
-    it('should map P2002 to Conflict', async () => {
-      const uid = 'shs_00000001';
-      const updateData = {
-        name: 'Duplicate Status',
-      };
-
-      const error = createMockUniqueConstraintError(['name']);
-      jest.spyOn(showStatusRepository, 'update').mockRejectedValue(error);
-
-      await expect(service.updateShowStatus(uid, updateData)).rejects.toThrow(
-        error,
-      );
+    await expect(
+      service.updateShowStatus('shst_test123', payload),
+    ).resolves.toEqual(expected);
+    expect(delegate.update).toHaveBeenCalledWith({
+      where: { uid: 'shst_test123', deletedAt: null },
+      data: payload,
     });
   });
 
-  describe('deleteShowStatus', () => {
-    it('should soft delete show status successfully', async () => {
-      const uid = 'shs_00000001';
-      const expectedResult = {
-        id: 1n,
-        uid,
-        systemKey: null,
-        name: 'Draft',
-        metadata: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: new Date(),
-      };
+  it('propagates persistence conflicts when an update fails', async () => {
+    const error = new Error('unique constraint');
+    delegate.update.mockRejectedValue(error);
 
-      jest
-        .spyOn(showStatusRepository, 'softDelete')
-        .mockResolvedValue(expectedResult);
-
-      const result = await service.deleteShowStatus({ uid });
-
-      expect(showStatusRepository.softDelete).toHaveBeenCalledWith({ uid });
-      expect(result).toEqual(expectedResult);
-    });
+    await expect(
+      service.updateShowStatus('shst_test123', { name: 'Draft' }),
+    ).rejects.toBe(error);
   });
 
-  describe('countShowStatuses', () => {
-    it('should return count of show statuses', async () => {
-      const expectedCount = 5;
+  it('soft-deletes only an active show status', async () => {
+    const expected = createShowStatus({ deletedAt: new Date() });
+    delegate.update.mockResolvedValue(expected);
 
-      jest
-        .spyOn(showStatusRepository, 'count')
-        .mockResolvedValue(expectedCount);
-
-      const result = await service.countShowStatuses({});
-
-      expect(showStatusRepository.count).toHaveBeenCalledWith({});
-      expect(result).toEqual(expectedCount);
-    });
-  });
-
-  describe('getShowStatusBySystemKey', () => {
-    it('delegates to repository.findOne with the system key', async () => {
-      const expected = {
-        id: 6n,
-        uid: 'shst_test123',
-        name: 'cancelled_pending_resolution',
-        systemKey: 'CANCELLED_PENDING_RESOLUTION',
-        metadata: {},
-        createdAt: new Date('2026-01-01T00:00:00.000Z'),
-        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-        deletedAt: null,
-      };
-      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(expected);
-
-      const result = await service.getShowStatusBySystemKey('CANCELLED_PENDING_RESOLUTION');
-
-      expect(showStatusRepository.findOne).toHaveBeenCalledWith({
-        systemKey: 'CANCELLED_PENDING_RESOLUTION',
-      });
-      expect(result).toEqual(expected);
-    });
-
-    it('returns null when not found', async () => {
-      jest.spyOn(showStatusRepository, 'findOne').mockResolvedValue(null);
-
-      const result = await service.getShowStatusBySystemKey('NOT_A_REAL_KEY');
-
-      expect(result).toBeNull();
+    await expect(
+      service.deleteShowStatus({ uid: 'shst_test123' }),
+    ).resolves.toEqual(expected);
+    expect(delegate.update).toHaveBeenCalledWith({
+      where: { uid: 'shst_test123', deletedAt: null },
+      data: { deletedAt: expect.any(Date) },
     });
   });
 });

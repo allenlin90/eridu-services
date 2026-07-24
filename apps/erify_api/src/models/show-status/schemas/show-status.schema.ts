@@ -84,3 +84,25 @@ export type UpdateShowStatusPayload = {
   name?: string;
   metadata?: Record<string, any>;
 };
+
+export type ShowStatusRecord = {
+  id: bigint;
+  uid: string;
+  systemKey: string | null;
+  name: string;
+  metadata: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+};
+
+export type ShowStatusFilter = {
+  systemKey?: string | { notIn: string[] };
+};
+
+export type ListShowStatusesParams = {
+  skip?: number;
+  take?: number;
+  orderBy?: 'asc' | 'desc';
+  where?: ShowStatusFilter;
+};
