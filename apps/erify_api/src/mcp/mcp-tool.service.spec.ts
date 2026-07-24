@@ -216,4 +216,31 @@ describe('mcpToolService', () => {
       skip: 0,
     }));
   });
+
+  it.each([
+    {
+      name: 'shows',
+      query: () => createService().queryShows({
+        studio_id: 'std_123',
+        limit: 101,
+      }),
+      queryService: taskOrchestrationService.getStudioShowsWithTaskSummary,
+    },
+    {
+      name: 'tasks',
+      query: () => createService().queryTasks({
+        studio_id: 'std_123',
+        limit: 101,
+      }),
+      queryService: taskService.findTasksForMcp,
+    },
+  ])('rejects $name list limits above 100 before policy or query execution', async ({
+    query,
+    queryService,
+  }) => {
+    await expect(query()).rejects.toBeInstanceOf(ZodError);
+
+    expect(policy.assertStudioAllowed).not.toHaveBeenCalled();
+    expect(queryService).not.toHaveBeenCalled();
+  });
 });

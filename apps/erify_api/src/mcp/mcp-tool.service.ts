@@ -14,6 +14,8 @@ import { taskWithRelationsDto } from '@/models/task/schemas/task.schema';
 import { TaskService } from '@/models/task/task.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
 
+const MCP_LIST_LIMIT_MAX = 100;
+
 const showScopedSchema = z.object({
   studio_id: z.string().min(1),
   show_id: z.string().min(1),
@@ -34,7 +36,7 @@ export const queryShowsShape = {
   show_status_name: z.string().optional().describe('Filter shows by status name (e.g., Scheduled, Live, Ended).'),
   creator_name: z.string().optional().describe('Filter shows by creator name.'),
   page: z.number().int().min(1).optional().default(1).describe('Page number for pagination (starts at 1).'),
-  limit: z.number().int().min(1).optional().default(20).describe('Maximum number of shows to return (default 20).'),
+  limit: z.number().int().min(1).max(MCP_LIST_LIMIT_MAX).optional().default(20).describe('Maximum number of shows to return (default 20, maximum 100).'),
 };
 
 const queryShowsSchema = z
@@ -67,7 +69,7 @@ export const queryTasksShape = {
     .optional()
     .describe('Filter by task type(s) (e.g., SETUP, ACTIVE, CLOSURE).'),
   page: z.number().int().min(1).optional().default(1).describe('Page number for pagination (starts at 1).'),
-  limit: z.number().int().min(1).optional().default(20).describe('Maximum number of tasks to return (default 20).'),
+  limit: z.number().int().min(1).max(MCP_LIST_LIMIT_MAX).optional().default(20).describe('Maximum number of tasks to return (default 20, maximum 100).'),
 };
 
 const queryTasksSchema = z.object(queryTasksShape);
