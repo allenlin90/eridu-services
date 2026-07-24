@@ -113,6 +113,15 @@ def main():
     # Retrieval + embedding config (secret keys redacted). Captures the RAG
     # settings -- Top K, hybrid search, reranker, chunking, and the embedding
     # model -- that the models/knowledge exports do not include.
+    # Deny-list is broad on purpose: this output is committed to git, so a
+    # new secret field must fail closed. Covers full words and the abbreviated
+    # ids (`_sk`, `_sid`, `_ak`) used by providers such as Sogou.
+    secret_suffixes = ("key", "token", "password", "secret")
+    secret_substrings = (
+        "api_key", "apikey", "access_key", "secret", "password", "credential",
+        "_sk", "_sid", "_ak",
+    )
+
     def redact(node):
         if isinstance(node, dict):
             for field in list(node):
@@ -120,8 +129,8 @@ def main():
                 if isinstance(node[field], (dict, list)):
                     redact(node[field])
                 elif node[field] and (
-                    low.endswith(("key", "token", "password", "secret"))
-                    or "api_key" in low
+                    low.endswith(secret_suffixes)
+                    or any(marker in low for marker in secret_substrings)
                 ):
                     node[field] = "<redacted, see ai/openwebui/.env>"
         elif isinstance(node, list):
@@ -167,7 +176,7 @@ def main():
                 "created_at": kb.get("created_at"),
                 "updated_at": kb.get("updated_at"),
                 "file_count": files_resp.get("total")
-                if isinstance(files_resp, dict)
+                if isinstance(files_resp, dict) and files_resp.get("total") is not None
                 else len(files),
                 "files": files,
             }
