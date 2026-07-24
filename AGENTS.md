@@ -207,7 +207,11 @@ method(@StudioParam() studioUid: string) {
 
 ### Skill Routing (Use Before Editing)
 
-Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and description in its frontmatter. Skills cover these categories:
+Skills are discovered from `.agents/skills/`. Each `SKILL.md` has a name and description in its frontmatter.
+
+For fast keyword lookup, [`.agents/skills/INDEX.md`](.agents/skills/INDEX.md) is a generated one-line-per-skill catalog — grep it to match a task to a skill before opening any `SKILL.md`. It is derived (this routing map stays canonical); regenerate with `pnpm agents:index`, and `pnpm agents:validate` fails if it is stale.
+
+Skills cover these categories:
 
 - **Backend API** — service, repository, controller, orchestration, authorization, database, testing, performance, logging, security patterns
 - **Frontend** — tech stack, UI components, API layer, state management, testing, error handling, performance, i18n, code quality, table views, PWA, pre-implementation UX mockup validation
@@ -256,6 +260,7 @@ For feature/refactor work, also run the refactor-parity checks in [`.agents/work
 ### Useful Commands
 ```bash
 pnpm agents:validate
+pnpm agents:index
 pnpm dev
 pnpm dev:creators
 pnpm dev:studios

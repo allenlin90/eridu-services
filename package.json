@@ -2,7 +2,8 @@
   "name": "monorepo",
   "private": true,
   "scripts": {
-    "agents:validate": "node scripts/validate-agent-skills.mjs",
+    "agents:validate": "node scripts/validate-agent-skills.mjs && node scripts/build-skill-index.mjs --check",
+    "agents:index": "node scripts/build-skill-index.mjs",
     "architecture:signals": "node scripts/measure-erify-api-architecture.mjs",
     "build": "turbo build",
     "dev": "turbo dev --concurrency=20",
