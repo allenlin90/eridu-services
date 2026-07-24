@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, User } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
@@ -12,8 +14,11 @@ export class UserRepository extends BaseRepository<
   Prisma.UserUpdateInput,
   Prisma.UserWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
-    super(new PrismaModelWrapper(prisma.user));
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
+    super(new PrismaModelWrapper(() => txHost.tx.user));
   }
 
   async findByEmail(email: string): Promise<User | null> {

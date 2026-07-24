@@ -13,13 +13,15 @@ Full contract for restoring soft-deleted records: repository, service, controlle
 
 Sets `deletedAt = null` on a soft-deleted record. Key invariants:
 - Operates on deleted records only (`deletedAt IS NOT NULL`)
-- Increments `version` (signals stale clients to refresh)
+- Increments `version` when the model is versioned (signals stale clients to refresh)
 - Privileged write — apply role guards at same level as delete or stricter
 
 ## Layer Pattern
 
 ### Repository
-Override `BaseRepository.restore()` with `deletedAt: { not: null }` and `version: { increment: 1 }`. Scope by studio when applicable.
+`BaseRepository.restore()` already targets `deletedAt: { not: null }` and can
+be inherited by unversioned models. Versioned repositories must override it to
+also apply `version: { increment: 1 }`. Scope by studio when applicable.
 
 ### Service
 Convert `PrismaClientKnownRequestError` (P2025) to `HttpError.notFound` at service boundary. Check dependency/policy constraints before restoring (uniqueness conflicts, dependency state, role constraints).
@@ -49,7 +51,7 @@ Add `includeDeleted` param to list endpoint. Expose `deleted_at` in API response
 ## Checklist
 
 - [ ] Repository targets `deletedAt: { not: null }` records only
-- [ ] Version incremented on restore
+- [ ] Version incremented on restore when the model is versioned
 - [ ] `POST /:id/restore` endpoint (not PATCH)
 - [ ] Role guards same as or stricter than delete
 - [ ] Dependency/uniqueness conflicts checked before restore

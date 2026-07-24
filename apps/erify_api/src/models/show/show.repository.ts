@@ -8,7 +8,6 @@ import {
   ListShowsQueryDto,
   showWithTaskSummaryInclude,
 } from '@/models/show/schemas/show.schema';
-import { PrismaService } from '@/prisma/prisma.service';
 
 // Custom model wrapper that implements IBaseModel with ShowWhereInput
 
@@ -26,10 +25,9 @@ export class ShowRepository extends BaseRepository<
   private static readonly DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.show));
+    super(new PrismaModelWrapper(() => txHost.tx.show));
   }
 
   private get delegate() {

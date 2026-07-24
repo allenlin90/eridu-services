@@ -6,7 +6,6 @@ import { Prisma, StudioCreator } from '@prisma/client';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 const studioCreatorRosterInclude = {
   creator: {
@@ -30,10 +29,9 @@ export class StudioCreatorRepository extends BaseRepository<
   Prisma.StudioCreatorWhereInput
 > {
   constructor(
-    prisma: PrismaService, // only used to seed BaseRepository; all queries go through txHost
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.studioCreator));
+    super(new PrismaModelWrapper(() => txHost.tx.studioCreator));
   }
 
   private get delegate() {

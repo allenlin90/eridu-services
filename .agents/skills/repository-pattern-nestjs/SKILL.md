@@ -30,7 +30,10 @@ Implementation guide for NestJS Repositories using Prisma.
 🔴 Repositories for soft-deletable CRUD models should extend `BaseRepository<T, C, U, W>`.
 
 BaseRepository-based repositories use `PrismaModelWrapper` to bridge repository
-generics to Prisma delegates. Follow that pattern for CRUD models. Standalone
+generics to Prisma delegates. Pass a delegate resolver backed by the ambient
+transaction host: `new PrismaModelWrapper(() => txHost.tx.<model>)`. The
+wrapper resolves the delegate for each operation, so inherited methods join
+the current CLS transaction. Follow that pattern for CRUD models. Standalone
 repositories exist for audit logs, schedule snapshots, task-report scopes, and
 custom replacement/write flows such as show-platform violations; keep those as
 explicit exceptions with module-local service APIs.
@@ -63,9 +66,13 @@ Repositories return `null` for not-found. Never throw HTTP exceptions from the d
 
 🔴 A repository operation that must see or mutate state inside an `@Transactional` service flow must go through `this.txHost.tx.<model>` (the canonical `task.repository` delegate), **not** the unbounded `PrismaService`. Writes otherwise escape the ambient transaction and commit even when the flow rolls back; reads otherwise miss uncommitted changes made earlier in the same transaction.
 
-Inject `TransactionHost<TransactionalAdapterPrisma>` and route `create`/`update`/`delete`/`softDelete` through it. Also override inherited read helpers (`findMany`, custom list reads, count/read pairs) when the caller depends on transaction visibility, such as "resume soft-deleted rows, then immediately reconcile them" flows.
-
-⚠️ **Known gap:** `BaseRepository` binds `super(new PrismaModelWrapper(prisma.<model>))` to the *unbounded* client, so its **inherited** methods don't join a transaction. The canonical pattern works around this by overriding the methods a repo actually uses in transactions; a lazy-delegate `BaseRepository` is the proper fix (deferred — see `docs/tech-debt/erify-api-refactor-residuals.md`).
+Inject `TransactionHost<TransactionalAdapterPrisma>` and construct the base
+wrapper with a lazy resolver:
+`super(new PrismaModelWrapper(() => txHost.tx.<model>))`. Inherited reads and
+writes then join the ambient transaction automatically. Custom repository
+queries should use `this.model` when the base delegate surface is sufficient,
+or `this.txHost.tx.<model>` when they need Prisma-specific operations. Do not
+use the unbounded `PrismaService` for transaction-dependent work.
 
 ## Key Patterns
 
@@ -102,7 +109,7 @@ When filtering through a soft-deletable join table, put `deletedAt: null` on the
 - [ ] 🔴 No `findByUidOrThrow` — controller handles 404
 - [ ] 🔴 Always filter `deletedAt: null`
 - [ ] 🔴 Never throw HTTP exceptions
-- [ ] 🔴 Transaction-dependent reads and writes go through `txHost.tx.<model>`, not inherited unbounded `BaseRepository` methods
+- [ ] 🔴 `PrismaModelWrapper` resolves `txHost.tx.<model>` lazily; custom transaction-dependent queries do not use the unbounded `PrismaService`
 - [ ] 🔴 A relation-derived DTO field is `include`d at every call site that serializes it (create/update/findOne), not just the one you're touching
 - [ ] Accept domain-level parameters (not Prisma types) in public methods
 - [ ] `Promise.all` for pagination (count + data)
