@@ -31,7 +31,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | T1 | Phase 0a: isolated real-DB safety harness | L | now (blocks Wave 1–2) | ✅ |
 | T2 | Phase 0b (light): record signals baseline | S | now, parallel | 🔲 |
 | T3 | MCP list hard maximums | S | now | 🔲 |
-| T4 | Remove dead/duplicate module wiring | S | now | 🔲 |
+| T4 | Remove dead/duplicate module wiring | S | now | ✅ |
 | T5 | Remove empty OpenAPI dynamic module | S | now | 🔲 |
 | T6 | Type the `StudioGuard` membership value | S | now | 🔲 |
 | T7 | `UtilityService` simplification | M | now | 🔲 |
@@ -65,6 +65,10 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 - **Scope**: remove the duplicate `AuditModule` import in `studio-show.module.ts`, other unused module imports, and the unnecessary root-module re-exports (`AdminModule` / `BackdoorModule` / `MeModule` / `StudiosModule` re-export children that only `AppModule` imports — treat them as composition roots, not public barrels).
 - **Gate**: none — module-wiring test plus build.
+- **Result**: the composition roots now import their child modules without
+  re-exporting them as public barrels, duplicate or unused imports are removed,
+  and a real application-module integration test proves the full Nest graph
+  still boots.
 
 ### T5 — Remove empty OpenAPI dynamic module
 
