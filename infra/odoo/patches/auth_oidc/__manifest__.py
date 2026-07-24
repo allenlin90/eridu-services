@@ -2,9 +2,12 @@
 # Copyright 2021 ACSONE SA/NV <https://acsone.eu>
 # License: AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)
 #
-# Patched for eridu-services: external_dependencies changed from python-jose to
-# jwt (PyJWT) to match models/auth_oauth_provider.py — see that file's header
-# comment and infra/odoo/README.md.
+# Patched for eridu-services:
+# - external_dependencies changed from python-jose to jwt (PyJWT) to match
+#   models/auth_oauth_provider.py — see that file's header comment and
+#   infra/odoo/README.md.
+# - post_init_hook added: rotates the admin user's default password on first
+#   install — see eridu_bootstrap.py and infra/odoo/README.md.
 
 {
     "name": "Authentication OpenID Connect",
@@ -20,4 +23,5 @@
     "depends": ["auth_oauth"],
     "data": ["views/auth_oauth_provider.xml", "data/auth_oauth_data.xml"],
     "demo": ["demo/local_keycloak.xml"],
+    "post_init_hook": "bootstrap_admin_password",
 }
