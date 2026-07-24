@@ -86,7 +86,13 @@ The registry exposes read-only record lookup and studio-scoped query tools:
 
 `erify_get_show`, `erify_get_task`, and `erify_query_tasks` parse the raw service result through the same Zod DTO used by the REST API before returning it to the MCP client — this strips internal `BigInt` database ids/foreign keys (which `JSON.stringify` cannot serialize) and maps the row to the public UID-based response shape. `erify_query_shows` does not re-parse through a DTO at the tool layer because `TaskOrchestrationService.getStudioShowsWithTaskSummary` already maps each row through `showDto` and UID-based fields internally before returning — the result reaching the MCP client is already clean.
 
-**Design-review note (this PR):** `erify_query_shows` and `erify_query_tasks` are the first list-shaped, studio-wide tools added past the original single-record lookup foundation. They were reviewed against the constraint below before merge: both stay read-only, both remain studio-scoped behind `McpStudioPolicy`, both are paginated and capped (default/explicit `limit`), and neither introduces a new auth boundary — they reuse the same allowlist gate as the existing tools. Mutation tools and any change to the auth boundary still require a separate design review before being added.
+**Design-review note:** `erify_query_shows` and `erify_query_tasks` are the
+first list-shaped, studio-wide tools added past the original single-record
+lookup foundation. Both stay read-only, remain studio-scoped behind
+`McpStudioPolicy`, and use bounded pagination (`limit` defaults to 20 and has a
+hard maximum of 100). Neither introduces a new auth boundary; both reuse the
+same allowlist gate as the existing tools. Mutation tools and any change to the
+auth boundary still require a separate design review before being added.
 
 ### Date Handling
 
