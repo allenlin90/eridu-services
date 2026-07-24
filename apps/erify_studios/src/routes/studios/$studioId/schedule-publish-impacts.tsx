@@ -37,6 +37,7 @@ import {
   schedulePublishImpactsSearchSchema,
   searchForTabSwitch,
 } from '@/features/shows/config/schedule-publish-impacts-search-schema';
+import { toggleArrayValue } from '@/lib/array-utils';
 import * as m from '@/paraglide/messages';
 
 const RUNS_PAGE_SIZE = 25;
@@ -149,18 +150,12 @@ function ImpactsTab({ studioId, search }: {
   }, [navigate]);
 
   const toggleImpactKind = useCallback((kind: SchedulePublishImpactKind) => {
-    const current = search.impact_kind ?? [];
-    const next = current.includes(kind)
-      ? current.filter((value) => value !== kind)
-      : [...current, kind];
+    const next = toggleArrayValue(search.impact_kind ?? [], kind);
     setFilters({ impact_kind: next.length > 0 ? next : undefined });
   }, [search.impact_kind, setFilters]);
 
   const toggleResolutionStatus = useCallback((status: ScheduleConflictResolutionStatus) => {
-    const current = search.resolution_status ?? [];
-    const next = current.includes(status)
-      ? current.filter((value) => value !== status)
-      : [...current, status];
+    const next = toggleArrayValue(search.resolution_status ?? [], status);
     setFilters({ resolution_status: next.length > 0 ? next : undefined });
   }, [search.resolution_status, setFilters]);
 

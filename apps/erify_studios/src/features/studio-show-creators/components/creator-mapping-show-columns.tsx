@@ -1,12 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Link, useParams } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
 import { ChevronRight } from 'lucide-react';
 
 import { Badge, Checkbox } from '@eridu/ui';
 
 import type { StudioShow } from '@/features/studio-shows/api/get-studio-shows';
+import { formatShowDate, formatShowTimeRange } from '@/lib/show-time-format';
 
 function ShowNameCell({ show, isAccountManager }: { show: StudioShow; isAccountManager?: boolean }) {
   const { studioId: routeStudioId } = useParams({ strict: false }) as { studioId?: string };
@@ -52,10 +52,9 @@ function ScheduleCell({ show }: { show: StudioShow }) {
 
   return (
     <div className="flex flex-col gap-1 text-xs">
-      <span>{format(new Date(show.start_time), 'MMM d, yyyy')}</span>
+      <span>{formatShowDate(show.start_time)}</span>
       <span className="text-muted-foreground">
-        {format(new Date(show.start_time), 'h:mm a')}
-        {show.end_time ? ` - ${format(new Date(show.end_time), 'h:mm a')}` : ''}
+        {formatShowTimeRange(show.start_time, show.end_time)}
       </span>
     </div>
   );

@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import type { SchedulePublishImpactRow } from '@eridu/api-types/shows';
 import { Badge, Button } from '@eridu/ui';
 
+import { formatShowDate, formatShowTimeRange } from '@/lib/show-time-format';
 import * as m from '@/paraglide/messages';
 
 export function createSchedulePublishImpactColumns(
@@ -77,11 +78,9 @@ export function createSchedulePublishImpactColumns(
       header: m.schedule_publish_impacts_column_show_time(),
       cell: ({ row }) => (
         <div className="text-sm">
-          {format(new Date(row.original.show.start_time), 'MMM d, yyyy')}
+          {formatShowDate(row.original.show.start_time)}
           <div className="text-xs text-muted-foreground">
-            {format(new Date(row.original.show.start_time), 'h:mm a')}
-            {' - '}
-            {format(new Date(row.original.show.end_time), 'h:mm a')}
+            {formatShowTimeRange(row.original.show.start_time, row.original.show.end_time)}
           </div>
         </div>
       ),

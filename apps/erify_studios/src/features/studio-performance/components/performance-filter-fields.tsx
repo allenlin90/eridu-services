@@ -12,6 +12,9 @@ import {
 
 import { type PerformanceSearch, toArrayParam } from './performance-shows-filters.utils';
 
+import { MultiSelectCheckboxItems } from '@/components/filters/multi-select-checkbox-items';
+import { toggleArrayValue } from '@/lib/array-utils';
+
 type FilterFieldsProps = {
   setClientSearch: (val: string) => void;
   clientOptions: Array<{ value: string; label: string }>;
@@ -79,25 +82,15 @@ export function FilterFields({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[280px] max-h-[300px] overflow-y-auto" align="start">
-            {showTypeOptions.map((opt) => {
-              const isSelected = toArrayParam(search.show_type_id)?.includes(opt.value) ?? false;
-              return (
-                <DropdownMenuCheckboxItem
-                  key={opt.value}
-                  checked={isSelected}
-                  onCheckedChange={() => {
-                    const current = toArrayParam(search.show_type_id) ?? [];
-                    const next = isSelected
-                      ? current.filter((val) => val !== opt.value)
-                      : [...current, opt.value];
-                    handleMultiFilterChange('show_type_id', next);
-                  }}
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  {opt.label}
-                </DropdownMenuCheckboxItem>
-              );
-            })}
+            <MultiSelectCheckboxItems
+              options={showTypeOptions}
+              selected={toArrayParam(search.show_type_id) ?? []}
+              onToggle={(value) =>
+                handleMultiFilterChange(
+                  'show_type_id',
+                  toggleArrayValue(toArrayParam(search.show_type_id) ?? [], value),
+                )}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -120,25 +113,15 @@ export function FilterFields({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[280px] max-h-[300px] overflow-y-auto" align="start">
-            {platformOptions.map((opt) => {
-              const isSelected = toArrayParam(search.platform_id)?.includes(opt.value) ?? false;
-              return (
-                <DropdownMenuCheckboxItem
-                  key={opt.value}
-                  checked={isSelected}
-                  onCheckedChange={() => {
-                    const current = toArrayParam(search.platform_id) ?? [];
-                    const next = isSelected
-                      ? current.filter((val) => val !== opt.value)
-                      : [...current, opt.value];
-                    handleMultiFilterChange('platform_id', next);
-                  }}
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  {opt.label}
-                </DropdownMenuCheckboxItem>
-              );
-            })}
+            <MultiSelectCheckboxItems
+              options={platformOptions}
+              selected={toArrayParam(search.platform_id) ?? []}
+              onToggle={(value) =>
+                handleMultiFilterChange(
+                  'platform_id',
+                  toggleArrayValue(toArrayParam(search.platform_id) ?? [], value),
+                )}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -161,25 +144,15 @@ export function FilterFields({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[280px] max-h-[300px] overflow-y-auto" align="start">
-            {showStandardOptions.map((opt) => {
-              const isSelected = toArrayParam(search.show_standard_id)?.includes(opt.value) ?? false;
-              return (
-                <DropdownMenuCheckboxItem
-                  key={opt.value}
-                  checked={isSelected}
-                  onCheckedChange={() => {
-                    const current = toArrayParam(search.show_standard_id) ?? [];
-                    const next = isSelected
-                      ? current.filter((val) => val !== opt.value)
-                      : [...current, opt.value];
-                    handleMultiFilterChange('show_standard_id', next);
-                  }}
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  {opt.label}
-                </DropdownMenuCheckboxItem>
-              );
-            })}
+            <MultiSelectCheckboxItems
+              options={showStandardOptions}
+              selected={toArrayParam(search.show_standard_id) ?? []}
+              onToggle={(value) =>
+                handleMultiFilterChange(
+                  'show_standard_id',
+                  toggleArrayValue(toArrayParam(search.show_standard_id) ?? [], value),
+                )}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

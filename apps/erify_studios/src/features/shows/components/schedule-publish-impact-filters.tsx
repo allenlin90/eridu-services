@@ -10,7 +10,6 @@ import type {
 import {
   Badge,
   Button,
-  Checkbox,
   DatePickerWithRange,
   Label,
   Popover,
@@ -25,13 +24,12 @@ import {
 } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
+import {
+  CheckboxFilterGroup,
+  type FilterOption,
+} from '@/components/filters/checkbox-filter-group';
 import { OVERLAY_MAX_H, VIEWPORT_GUTTER_W } from '@/config/layout';
 import * as m from '@/paraglide/messages';
-
-type FilterOption<T extends string> = {
-  value: T;
-  label: () => string;
-};
 
 const IMPACT_KIND_OPTIONS: FilterOption<SchedulePublishImpactKind>[] = [
   { value: 'confirmed_future_updated', label: m.schedule_publish_impacts_filter_kind_updated },
@@ -120,45 +118,6 @@ function DateRangeFilter({
           : null}
       </div>
     </div>
-  );
-}
-
-function CheckboxFilterGroup<T extends string>({
-  idPrefix,
-  label,
-  options,
-  selected,
-  onToggle,
-}: {
-  idPrefix: string;
-  label: string;
-  options: FilterOption<T>[];
-  selected: T[];
-  onToggle: (value: T) => void;
-}) {
-  return (
-    <fieldset className="space-y-2">
-      <legend className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        {label}
-      </legend>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {options.map((option) => {
-          const id = `${idPrefix}-${option.value}`;
-          return (
-            <div key={option.value} className="flex items-center gap-2">
-              <Checkbox
-                id={id}
-                checked={selected.includes(option.value)}
-                onCheckedChange={() => onToggle(option.value)}
-              />
-              <Label htmlFor={id} className="cursor-pointer text-sm font-normal leading-none">
-                {option.label()}
-              </Label>
-            </div>
-          );
-        })}
-      </div>
-    </fieldset>
   );
 }
 

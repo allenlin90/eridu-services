@@ -6,6 +6,7 @@ import { TASK_STATUS } from '@eridu/api-types/task-management';
 
 import type { MyTasksSearch } from '../config/my-tasks-search-schema';
 
+import { toggleArrayValue } from '@/lib/array-utils';
 import { useAppDebounce } from '@/lib/hooks/use-app-debounce';
 
 export type TaskViewMode = 'task' | 'show';
@@ -62,30 +63,19 @@ export function useMyTasksFilters(studioId: string, search: MyTasksSearch, setUr
   };
 
   const toggleStatus = (status: TaskStatus) => {
-    setUrlSearch((prev) => {
-      const nextStatuses = prev.status.includes(status)
-        ? prev.status.filter((s) => s !== status)
-        : [...prev.status, status];
-
-      return {
-        ...prev,
-        status: nextStatuses,
-        page: 1,
-      };
-    });
+    setUrlSearch((prev) => ({
+      ...prev,
+      status: toggleArrayValue(prev.status, status),
+      page: 1,
+    }));
   };
 
   const toggleTaskType = (taskType: TaskType) => {
-    setUrlSearch((prev) => {
-      const nextTaskTypes = prev.task_type.includes(taskType)
-        ? prev.task_type.filter((t) => t !== taskType)
-        : [...prev.task_type, taskType];
-      return {
-        ...prev,
-        task_type: nextTaskTypes,
-        page: 1,
-      };
-    });
+    setUrlSearch((prev) => ({
+      ...prev,
+      task_type: toggleArrayValue(prev.task_type, taskType),
+      page: 1,
+    }));
   };
 
   const setSearch = (value: string) => {
