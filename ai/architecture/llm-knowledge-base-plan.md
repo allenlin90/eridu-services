@@ -103,6 +103,8 @@ review_by: 2026-10-09
 
 Allowed values for `sensitivity`, `status`, and `audiences` must be centrally defined and validated. Collection membership and access grants are derived from these values. A document cannot be published when its metadata has no valid collection and group mapping.
 
+**Pilot-gated exception — `creator-services-tiktok-shop` only.** This Content Contract remains mandatory and unmodified for every collection, including this one once the gate below lifts. `creator-services-tiktok-shop`'s frontmatter is currently metadata-only: nothing validates it, and its Open WebUI access grants are set and maintained manually in Open WebUI rather than derived from it. Scope: this collection only, not a change to the doctrine. Owner: `erisa-creator-services`. Gate lifts when `scripts/ai/creator-kb/generate_kb.py` validates each file's `status`/`audiences`/`sensitivity` and `scripts/ai/creator-kb/upload_kb.py` derives and applies real `access_grants` from `audiences` via `POST /api/v1/knowledge/{id}/access/update` (rejecting wildcard/public grants), or the collection is migrated onto `company-wiki/tools/validate-wiki`. See `ai/openwebui/knowledge/creator-services/README.md` § Governance status for the current state.
+
 Wikilinks are optional authoring conveniences. The validator resolves them to stable document IDs and reports missing or ambiguous targets.
 
 ## Maintenance Architecture
@@ -188,7 +190,7 @@ Create collections around access boundaries first, then retrieval domains. Do no
 | `wiki-onboarding` | Org - General | Reviewed first-day and access-request procedures. |
 | `wiki-commerce` | Commerce groups | Commerce SOPs and sales workflows. |
 | `wiki-erify` | Erify groups | Production, scheduling, and performance SOPs. |
-| `wiki-erisa` | Erisa groups | Creator and affiliate workflows. |
+| `wiki-erisa` | Erisa groups | Creator and affiliate workflows. Realized early as `creator-services-tiktok-shop` (see [`ai/openwebui/knowledge/creator-services/README.md`](../openwebui/knowledge/creator-services/README.md)) via a lighter bootstrap pipeline (Excel → `scripts/ai/creator-kb/generate_kb.py` → `upload_kb.py`) instead of the full `company-wiki/{intake,content,generated,tools}` validator + Sync Pipe. Operates under the Content Contract's pilot-gated exception (above) for validation and grant derivation. |
 | `wiki-finance-ops` | Finance-approved groups | Finance operations without confidential management figures. |
 | `wiki-finance-confidential` | Explicit finance leadership groups | Cash, rates, and other restricted figures. |
 | `wiki-hr` | HR-approved groups | HR procedures and appropriately classified employee material. |

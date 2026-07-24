@@ -1,0 +1,42 @@
+---
+id: creator-services.policy.support-non-exclusive
+title: Creator Policy Q1/2025 — อื่น ๆ ที่เกี่ยวกับ support ของครีเอเตอร์ non-exclusive
+audiences: [erisa]
+owner: erisa-creator-services
+sensitivity: department
+status: active
+source_refs: [CS_TikTok_Shop__Knowledge_Base.xlsx]
+reviewed_at: 2026-07-23
+review_by: 2026-10-21
+---
+
+# นโยบายครีเอเตอร์ Q1/2025 — อื่น ๆ ที่เกี่ยวกับ support ของครีเอเตอร์ non-exclusive
+
+> Q&A นโยบายครีเอเตอร์ TikTok Shop ไตรมาส 1/2025 หมวด: อื่น ๆ ที่เกี่ยวกับ support ของครีเอเตอร์ non-exclusive
+> TikTok Shop creator policy Q&A (Q1/2025). Category: อื่น ๆ ที่เกี่ยวกับ support ของครีเอเตอร์ non-exclusive
+
+## Q: คูปอง Live Specials
+
+อัพเดทใหม่ทุกเดือน ขออัพเดทกับ AM
+
+---
+
+## Q: มี list ร้านค้า รายการสินค้าที่เข้าร่วมโปรแกรม Live Specials ไหม
+
+ไม่สามารถดึงออกมาได้เลยค่ะ เพราะข้อมูลเป็น confidential และ รายชื่อร้านค้าที่เข้าร่วมมีการปรับเปลี่ยนตลอด
+
+---
+
+## Q: ทำไมไลฟ์ไป 5 ชั่วโมงต่อเนื่อง แต่ระบบเพิ่งแจ้งเตือนว่าไลฟ์ครบ 90 นาที เองครับ ระบบผิดพลาดมั๊ยครับ ขึ้นมา 2 วันติดกัน
+
+ไปเปิด Ticket ในระบบค่า จริง ๆ ส่วนนี้มันนอกเหนือจากงานของ MCN และ CAP ช่วยให้ได้แค่บอกคำแนะนำ
+
+หรืออีกทางนึงทีม MCN ไปตรวจสอบ Live Analytics ว่าหลังบ้านมันขึ้นข้อมูลไลฟ์นั้นของครีเอเตอร์ปกติไหมค่า
+
+---
+
+## Q: คลิปที่ลงไปแล้ว กรณีทางร้านปิดค่าคอมมิชชั่น ครีเอเตอร์ควรทำอย่างไรกับคลิปดังกล่าว
+
+ร้องเรียน? จากไหนนะ
+
+---
