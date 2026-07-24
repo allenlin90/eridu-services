@@ -322,7 +322,7 @@ Goal: convert each single-entity detail/edit dialog into a `/studios/:studioId/<
 
 Each item has an extension sketch in cost-model §4:
 
-- Revenue (P-side), commission resolution, contribution margin → [`pnl-revenue-workflow.md`](../prd/future/pnl-revenue-workflow.md)
+- Revenue (P-side), commission resolution, contribution margin → [`pnl-revenue-workflow.md`](../ideation/pnl-revenue-workflow.md)
 - Settlement, freeze, grace tolerance, payment processing, bank-statement reconciliation
 - Recipient acknowledgement, dispute, recipient-initiated adjustments
 - Notifications when manager edits actuals
@@ -331,7 +331,7 @@ Each item has an extension sketch in cost-model §4:
 - Additional typed platform performance metrics beyond GMV/views
 - Advanced compensation rule engine
 - Mechanic catalog advanced layers (deferred from the PR 20 lean cut): immutable `ClientMechanicVersion` history, `ClientMechanicCampaignSet` + set items (campaign-scoped assignment guard), cross-studio mechanic copies, and per-template label overrides — added when client-facing access / multi-campaign curation becomes concrete
-- Studio schedule management — deferred 2026-04-22; Google Sheets remains the scheduling path. Materials at [`studio-schedule-management.md`](../prd/future/studio-schedule-management.md) and the two `STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md` design docs.
+- Studio schedule management — deferred 2026-04-22; Google Sheets remains the scheduling path. Materials at [`studio-schedule-management.md`](../ideation/studio-schedule-management.md) and the two `STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md` design docs.
 
 ## Definition of Done
 
@@ -352,8 +352,8 @@ These items are deferred to [Phase 6](./PHASE_6.md) (Tracks A/B/C + Phase 4/5 de
 
 | Workstream                                                                                       | Reference                                                   | Track |
 | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ----- |
-| Studio reference data (clients, platforms, types, standards, statuses)                           | [PRD](../prd/studio-reference-data.md)                      | C     |
-| Studio creator profile editing                                                                   | [PRD](../prd/studio-creator-profile.md)                     | C     |
+| Studio reference data (clients, platforms, types, standards, statuses)                           | [Ideation](../ideation/studio-reference-data.md)             | C     |
+| Studio creator profile editing                                                                   | [Ideation](../ideation/studio-creator-profile.md)            | C     |
 | Studio snapshot/audit trail visibility                                                           | —                                                           | C     |
 | Advanced compensation rule engine                                                                | —                                                           | A     |
 | Creator HR & operations (HRMS, fixed costs)                                                      | —                                                           | A     |
@@ -362,6 +362,6 @@ These items are deferred to [Phase 6](./PHASE_6.md) (Tracks A/B/C + Phase 4/5 de
 | Recipient acknowledgement / dispute on read-only reference figures                               | —                                                           | A     |
 | Recipient-initiated adjustment requests                                                          | —                                                           | A     |
 | Notifications when manager edits actuals                                                         | —                                                           | B     |
-| Hardware / creator-app actuals sources beyond task submissions                                   | [PRD](../prd/future/member-actuals-attestation.md)          | A     |
+| Hardware / creator-app actuals sources beyond task submissions                                   | [Ideation](../ideation/member-actuals-attestation.md)        | A     |
 | Additional platform performance metrics beyond GMV/views and show-level analytics infrastructure | [Feature doc](../features/show-performance-analytics.md) | A     |
-| P&L revenue workflow, commission resolution, contribution margin                                 | [Future PRD](../prd/future/pnl-revenue-workflow.md)         | A     |
+| P&L revenue workflow, commission resolution, contribution margin                                 | [Ideation](../ideation/pnl-revenue-workflow.md)               | A     |

@@ -3,7 +3,7 @@
 > **Status**: ⏸️ Deferred from Phase 4 (2026-04-22). Retained for reference.
 > **Phase scope**: Revisit as part of the Client Portal workstream
 > **Owner app**: `apps/erify_studios`
-> **Product source**: [`docs/prd/future/studio-schedule-management.md`](../../../../docs/prd/future/studio-schedule-management.md) (relocated to `future/` after Phase 4 deferral)
+> **Product source**: [`docs/ideation/studio-schedule-management.md`](../../../../docs/ideation/studio-schedule-management.md) (retained as ideation after Phase 4 deferral)
 > **Depends on**: studio show management shipped on `master`, backend studio-native schedule contract, shared table URL-state patterns
 
 > **Deferral note**: This design was reviewed in April 2026 and deferred from Phase 4. Planners continue to operate schedules via the Google Sheets flow, which remains stable and ergonomically preferred. Studio-native schedule UX is paused pending Client Portal direction. Content below is preserved unchanged as reference.

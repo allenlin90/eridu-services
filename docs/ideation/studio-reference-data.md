@@ -1,4 +1,4 @@
-# PRD: Studio Reference Data Management
+# Studio Reference Data Management
 
 > **Status**: Deferred
 > **Phase**: 6 candidate (Studio Autonomy track)

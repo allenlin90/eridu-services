@@ -30,8 +30,8 @@ PRDs are **phase-scoped and transient**:
 
 - PRDs are working documents for the current phase, not permanent records.
 - When a feature is **implemented** → promote to `docs/features/` (update status, check off ACs, add links to app-local docs), then delete the PRD.
-- When a feature is **deferred** → delete its PRD; note the deferral in the phase doc.
-- When a phase **closes** → all PRDs should be cleaned up (deleted, promoted to `docs/features/`, or moved to `docs/prd/future/` if they're scoped beyond this phase).
+- When a feature is **deferred** → delete its PRD; preserve actionable discovery in `docs/ideation/` and note the deferral in the phase doc.
+- When a phase **closes** → all PRDs should be cleaned up (deleted, promoted to `docs/features/`, or moved to `docs/ideation/` if they remain actionable beyond the phase).
 - When **mid-phase scope changes** make downstream PRDs stale → retire them and consolidate into a `PHASE_<n>.md (§ PR Roadmap)` tracker. The Phase 4 simplification (2026-05) is the canonical example.
 
 > PRDs own pre-ship intent for novel work. Trackers own remaining execution for additive work. App-local docs own post-ship behavior.
@@ -48,15 +48,6 @@ Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) uses workstream briefs for addit
 | --- | --- | --- |
 | [Operational Notifications and PWA Push](./notification-system.md) | Notification center, read status, optional PWA push, and reusable event policies | Active requirements |
 
-- Studio schedule management was deferred (revisit with the Client Portal workstream); retained at [`future/studio-schedule-management.md`](./future/studio-schedule-management.md).
-- Future P&L revenue workflow is sketched in [`future/pnl-revenue-workflow.md`](./future/pnl-revenue-workflow.md); redraft when revenue planning restarts.
-- Member actuals attestation is retained at [`future/member-actuals-attestation.md`](./future/member-actuals-attestation.md); revisit when an authoritative hardware actuals source is operationally available.
-
-### Phase 6 Candidates (PRDs created, implementation deferred)
-
-| PRD                                                   | Workstream                                                                  | Track | Status              |
-| ----------------------------------------------------- | --------------------------------------------------------------------------- | ----- | ------------------- |
-| [Studio Reference Data](./studio-reference-data.md)   | Studio-initiated creation of clients, platforms, types, standards, statuses | C     | Deferred to Phase 6 |
-| [Studio Creator Profile](./studio-creator-profile.md) | Studio-level editing of creator name, alias, metadata                       | C     | Deferred to Phase 6 |
+Deferred Phase 4 and Phase 6 candidate work is tracked in the [ideation register](../ideation/README.md) until it is committed to an active phase.
 
 Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1, incremental rollout).

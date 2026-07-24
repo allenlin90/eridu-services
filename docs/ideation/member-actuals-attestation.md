@@ -1,9 +1,9 @@
-# PRD: Member Actuals Attestation
+# Member Actuals Attestation
 
 > **Status**: ⏭️ Future target (Phase 5+ — deferred from Phase 4)
 > **Phase**: Revisit when at least one hardware actuals source (fingerprint reader, dynamic-QR punch, geofence) is operationally available.
-> **Workstream**: Studio shift actuals — broaden the writer set beyond manager data-entry without weakening the cost-model's strict-null semantic. This PRD is about member/shift attestation sources, not Phase 4 task-submission extraction for show, creator, or platform facts.
-> **Depends on**: At least one of — fingerprint/biometric access-control log feed · dynamic-QR punch in/out client · geofence cross-event source. Cost-model semantic ([economics-cost-model.md](../../domain/economics-cost-model.md)) §2 strict-null on per-shift `actual_cost`.
+> **Workstream**: Studio shift actuals — broaden the writer set beyond manager data-entry without weakening the cost-model's strict-null semantic. This proposal is about member/shift attestation sources, not Phase 4 task-submission extraction for show, creator, or platform facts.
+> **Depends on**: At least one of — fingerprint/biometric access-control log feed · dynamic-QR punch in/out client · geofence cross-event source. Cost-model semantic ([economics-cost-model.md](../domain/economics-cost-model.md)) §2 strict-null on per-shift `actual_cost`.
 > **Blocks**: Phase 4 PR 10 "flag missing actuals" affordance is the temporary path until this lands.
 
 ## Problem
@@ -32,7 +32,7 @@ Member self-report is a **signal**, not the source of truth. A shift block's `ac
 
 ### 2. Source tagging is required end-to-end
 
-Today's `actualStartTime` / `actualEndTime` are unsourced. This PRD introduces per-timestamp source attribution:
+Today's `actualStartTime` / `actualEndTime` are unsourced. This proposal introduces per-timestamp source attribution:
 
 - `SELF_REPORT` — member entered in app.
 - `MANAGER` — manager-entered or manager-edited (current behavior).
@@ -61,7 +61,7 @@ Source trust order proposed (revisit during design): `BIOMETRIC > PUNCH > GEOFEN
 
 ### 5. Don't break Phase 4
 
-This PRD must not invalidate any Phase 4 contract:
+This proposal must not invalidate any Phase 4 contract:
 
 - `actual_cost` strict-null per cost-model §2 stays correct: a block resolves only on a reconciled or manager-confirmed source.
 - The `planned_cost` / `actual_cost` wire shapes don't change.
@@ -85,12 +85,12 @@ Phase 4 may still add task-submission extraction for `Show`, `ShowCreator`, and 
 
 Until this PRD ships, the operational path is:
 
-- Managers continue to be the only writers via the existing PATCH endpoint and the [ShiftCompensationDialog](../../../apps/erify_studios/src/features/studio-shifts/components/shift-compensation-dialog.tsx).
+- Managers continue to be the only writers via the existing PATCH endpoint and the [ShiftCompensationDialog](../../apps/erify_studios/src/features/studio-shifts/components/shift-compensation-dialog.tsx).
 - Members get a "flag missing actuals" affordance from Phase 4 PR 10 (`/me/compensation/*`) — a structured ping to a manager, not a write path.
 - `/my-shifts` shows pending cells with `Pending — actuals not recorded yet` micro-copy (shipped in Phase 4 PR 3).
 
 ## References
 
-- [`economics-cost-model.md`](../../domain/economics-cost-model.md) §2 — strict-null cost semantic this PRD must preserve.
-- [`PHASE_4.md`](../../roadmap/PHASE_4.md) PR 10 — interim "flag missing actuals" affordance.
-- [`PHASE_4.md`](../../roadmap/PHASE_4.md) Phase 5 deferrals — "Hardware / creator-app actuals sources beyond task submissions" and "Notifications when manager edits actuals" rows.
+- [`economics-cost-model.md`](../domain/economics-cost-model.md) §2 — strict-null cost semantic this PRD must preserve.
+- [`PHASE_4.md`](../roadmap/PHASE_4.md) PR 10 — interim "flag missing actuals" affordance.
+- [`PHASE_4.md`](../roadmap/PHASE_4.md) Phase 5 deferrals — "Hardware / creator-app actuals sources beyond task submissions" and "Notifications when manager edits actuals" rows.

@@ -1,4 +1,4 @@
-# PRD: Studio Schedule Management
+# Studio Schedule Management
 
 > **Status**: ⏸️ Deferred from Phase 4 (2026-04-22)
 > **Phase**: Revisit as part of the Client Portal workstream
@@ -186,7 +186,7 @@ The existing `ValidationService` uses strict datetime comparison and does not ap
 Timestamps are stored as UTC instants. The intended 06:00 cutoff for **schedule membership** is based on the studio's local timezone, not UTC. Studio-level timezone configuration is not yet modeled in the system. Until it is:
 - Do **not** derive this cutoff from the ambient server or worker runtime timezone.
 - Treat exact timezone resolution for hard backend validation as an explicit implementation dependency to record in the design PR.
-- This PRD does **not** change the current shift-planning / duty-manager coverage bucketing, which remains on its existing 06:00 UTC backend rule until revisited separately.
+- This proposal does **not** change the current shift-planning / duty-manager coverage bucketing, which remains on its existing 06:00 UTC backend rule until revisited separately.
 - Improving timezone resolution is tracked in the ideation backlog.
 
 ## Economics Implications
