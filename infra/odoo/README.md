@@ -8,7 +8,7 @@ Stock Odoo's built-in `auth_oauth` module only speaks the OAuth2 **implicit** gr
 
 ## Railway wiring
 
-The `Odoo` service is connected to `allenlin90/eridu-services` (branch `master`) with root directory `infra/odoo`. The service's dashboard/API `builder` setting only accepts Railpack-family builders (`RAILPACK`/`NIXPACKS`/`HEROKU`/`PAKETO`) — there's no `DOCKERFILE` value there, and Railpack does not build a Dockerfile it happens to find sitting next to it. Getting an actual Dockerfile build requires [config-as-code](https://docs.railway.com/config-as-code/reference): `railway.json` in this directory sets `build.builder: "DOCKERFILE"`, which always overrides the dashboard/API setting.
+The `Odoo` service is connected to `allenlin90/eridu-services` (branch `master`) with root directory `infra/odoo`. Its declarative settings live in [`.railway/odoo.json`](../../.railway/odoo.json), matching the `.railway/<service>.json` pattern the other services in this repo already use (`eridu_auth.json`, `erify_api.json`, etc.) — the service's `railwayConfigFile` points at it. This is required, not just for consistency: the dashboard/API `builder` setting only accepts Railpack-family builders (`RAILPACK`/`NIXPACKS`/`HEROKU`/`PAKETO`), there's no `DOCKERFILE` value there, and Railpack does not build a Dockerfile it happens to find sitting next to it. [Config-as-code](https://docs.railway.com/config-as-code/reference) is the only way to set `build.builder: "DOCKERFILE"`, and it always overrides the dashboard/API setting once `railwayConfigFile` is wired up.
 
 All other service config (variables, volume at `/var/lib/odoo`, start command `/entrypoint.sh odoo --proxy-mode --database=odoo --no-database-list`) is unchanged from the prior raw-image deployment.
 
