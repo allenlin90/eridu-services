@@ -10,13 +10,13 @@ import {
   setupJwtAuthMocks,
 } from './jwt-auth-test.helper';
 
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 /**
  * Common mock services used across JWT-protected controllers
  */
 export const commonMockServices = {
-  utilityService: {
+  uidGenerator: {
     generateBrandedId: jest.fn(),
   },
 };
@@ -40,7 +40,7 @@ export type JwtControllerTestConfig<TController> = {
  *
  * Includes:
  * - JWT auth mocks (AuthService, JwtAuthGuard)
- * - Common utility service mock
+ * - Common UID generator mock
  * - Your custom service mocks
  *
  * @param config - Configuration for the test module
@@ -67,10 +67,10 @@ export async function createJwtControllerTestModule<TController>({
     // JWT auth providers
 
     ...jwtProviders,
-    // Common utility service
+    // Common UID generator
     {
-      provide: UtilityService,
-      useValue: commonMockServices.utilityService,
+      provide: UidGeneratorService,
+      useValue: commonMockServices.uidGenerator,
     },
     // Service mocks
 

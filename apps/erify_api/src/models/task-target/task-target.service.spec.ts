@@ -4,14 +4,14 @@ import { Test } from '@nestjs/testing';
 import { TaskTargetRepository } from './task-target.repository';
 import { TaskTargetService } from './task-target.service';
 
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 describe('taskTargetService', () => {
   let service: TaskTargetService;
   const taskTargetRepositoryMock = {
     countActiveByShowId: jest.fn(),
   };
-  const utilityServiceMock = { generateBrandedId: jest.fn() };
+  const uidGeneratorMock = { generateBrandedId: jest.fn() };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -19,7 +19,7 @@ describe('taskTargetService', () => {
       providers: [
         TaskTargetService,
         { provide: TaskTargetRepository, useValue: taskTargetRepositoryMock },
-        { provide: UtilityService, useValue: utilityServiceMock },
+        { provide: UidGeneratorService, useValue: uidGeneratorMock },
       ],
     }).compile();
     service = module.get(TaskTargetService);

@@ -7,7 +7,7 @@ import {
 } from './show-platform-violation.repository';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 export type ShowPlatformViolationEntry = Omit<
   CreateShowPlatformViolationRecord,
@@ -28,9 +28,9 @@ export class ShowPlatformViolationService extends BaseModelService {
 
   constructor(
     private readonly showPlatformViolationRepository: ShowPlatformViolationRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async replaceForTaskField(

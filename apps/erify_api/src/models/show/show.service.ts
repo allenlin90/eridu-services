@@ -12,7 +12,7 @@ import { SHOW_UID_PREFIX } from './show-uid.util';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class ShowService extends BaseModelService {
@@ -21,9 +21,9 @@ export class ShowService extends BaseModelService {
 
   constructor(
     private readonly showRepository: ShowRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

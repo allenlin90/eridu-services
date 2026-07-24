@@ -18,8 +18,8 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { TaskValidationError } from '@/lib/errors/task-validation.error';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { ShowService } from '@/models/show/show.service';
-import { UtilityService } from '@/utility/utility.service';
 
 type TaskUpdateAuditContext = {
   actorExtId?: string;
@@ -37,9 +37,9 @@ export class TaskService extends BaseModelService {
     private readonly taskRepository: TaskRepository,
     private readonly taskValidationService: TaskValidationService,
     private readonly showService: ShowService,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   generateTaskUid(): string {

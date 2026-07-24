@@ -8,7 +8,7 @@ import type {
 import { PublishRunRepository } from './publish-run.repository';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class PublishRunService extends BaseModelService {
@@ -17,9 +17,9 @@ export class PublishRunService extends BaseModelService {
 
   constructor(
     private readonly publishRunRepository: PublishRunRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createPublishRun(payload: CreatePublishRunPayload): Promise<PublishRunRecord> {

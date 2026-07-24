@@ -8,7 +8,7 @@ import type {
 import { PlatformRepository } from './platform.repository';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class PlatformService extends BaseModelService {
@@ -17,9 +17,9 @@ export class PlatformService extends BaseModelService {
 
   constructor(
     private readonly platformRepository: PlatformRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createPlatform(payload: CreatePlatformPayload): ReturnType<PlatformRepository['create']> {

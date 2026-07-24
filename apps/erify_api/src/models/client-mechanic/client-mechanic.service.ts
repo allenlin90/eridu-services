@@ -12,8 +12,8 @@ import {
 import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { parseModeratorSnapshot } from '@/studios/studio-performance/schemas/moderator-snapshot.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 type MechanicScope = {
   mechanicUid: string;
@@ -39,9 +39,9 @@ export class ClientMechanicService extends BaseModelService {
 
   constructor(
     private readonly clientMechanicRepository: ClientMechanicRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

@@ -1,7 +1,7 @@
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 /**
  * Common repository methods that most model repositories implement.
@@ -48,22 +48,22 @@ export function createMockRepository<T extends BaseRepositoryMethods>(
 }
 
 /**
- * Creates a mock UtilityService with generateBrandedId method.
+ * Creates a mock UidGeneratorService with generateBrandedId method.
  *
  * @param defaultUid - Default UID to return from generateBrandedId (optional)
- * @returns A partial mock UtilityService
+ * @returns A partial mock UidGeneratorService
  *
  * @example
  * ```typescript
- * const utilityMock = createMockUtilityService('user_123');
+ * const uidGeneratorMock = createMockUidGeneratorService('user_123');
  * // or
- * const utilityMock = createMockUtilityService();
- * utilityMock.generateBrandedId = jest.fn().mockReturnValue('custom_uid');
+ * const uidGeneratorMock = createMockUidGeneratorService();
+ * uidGeneratorMock.generateBrandedId = jest.fn().mockReturnValue('custom_uid');
  * ```
  */
-export function createMockUtilityService(
+export function createMockUidGeneratorService(
   defaultUid?: string,
-): Partial<jest.Mocked<UtilityService>> {
+): Partial<jest.Mocked<UidGeneratorService>> {
   return {
     generateBrandedId: jest.fn().mockReturnValue(defaultUid || 'test_uid'),
   };
@@ -79,8 +79,8 @@ export type ModelServiceTestConfig<TService, TRepository> = {
   repositoryClass: new (...args: any[]) => TRepository;
   /** Mock repository instance */
   repositoryMock: Partial<TRepository>;
-  /** Mock UtilityService instance */
-  utilityMock?: Partial<jest.Mocked<UtilityService>>;
+  /** Mock UidGeneratorService instance */
+  uidGeneratorMock?: Partial<jest.Mocked<UidGeneratorService>>;
   /** Additional providers to include in the test module */
   additionalProviders?: any[];
   /** Additional module imports (e.g. ClsModule.forRoot(...) for @Transactional() service methods) */
@@ -94,7 +94,7 @@ export type ModelServiceTestConfig<TService, TRepository> = {
  * @param config.serviceClass - The service class to test
  * @param config.repositoryClass - The repository class to mock
  * @param config.repositoryMock - Mock instance for the repository
- * @param config.utilityMock - Optional mock for UtilityService
+ * @param config.uidGeneratorMock - Optional mock for UidGeneratorService
  * @param config.additionalProviders - Additional providers for the test module
  * @param config.imports - Additional module imports (e.g. ClsModule.forRoot(...) for @Transactional() service methods)
  * @returns A compiled TestingModule
@@ -105,7 +105,7 @@ export type ModelServiceTestConfig<TService, TRepository> = {
  *   serviceClass: UserService,
  *   repositoryClass: UserRepository,
  *   repositoryMock: userRepositoryMock,
- *   utilityMock: utilityMock,
+ *   uidGeneratorMock: uidGeneratorMock,
  * });
  * ```
  */
@@ -113,7 +113,7 @@ export async function createModelServiceTestModule<TService, TRepository>({
   serviceClass,
   repositoryClass,
   repositoryMock,
-  utilityMock = createMockUtilityService(),
+  uidGeneratorMock = createMockUidGeneratorService(),
   additionalProviders = [],
   imports = [],
 }: ModelServiceTestConfig<TService, TRepository>): Promise<TestingModule> {
@@ -124,8 +124,8 @@ export async function createModelServiceTestModule<TService, TRepository>({
       useValue: repositoryMock,
     },
     {
-      provide: UtilityService,
-      useValue: utilityMock,
+      provide: UidGeneratorService,
+      useValue: uidGeneratorMock,
     },
 
     ...additionalProviders,

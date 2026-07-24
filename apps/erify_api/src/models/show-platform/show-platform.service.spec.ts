@@ -5,21 +5,21 @@ import type {
 import { ShowPlatformRepository } from './show-platform.repository';
 import { ShowPlatformService } from './show-platform.service';
 
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('showPlatformService', () => {
   let service: ShowPlatformService;
   let showPlatformRepositoryMock: Partial<jest.Mocked<ShowPlatformRepository>>;
-  let utilityMock: Partial<jest.Mocked<UtilityService>>;
+  let uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>>;
 
   beforeEach(async () => {
     showPlatformRepositoryMock = createMockRepository<ShowPlatformRepository>({
@@ -29,13 +29,13 @@ describe('showPlatformService', () => {
       updatePerformanceMetric: jest.fn(),
     });
 
-    utilityMock = createMockUtilityService('show_plt_123');
+    uidGeneratorMock = createMockUidGeneratorService('show_plt_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: ShowPlatformService,
       repositoryClass: ShowPlatformRepository,
       repositoryMock: showPlatformRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<ShowPlatformService>(ShowPlatformService);
@@ -76,7 +76,7 @@ describe('showPlatformService', () => {
 
       const result = await service.create(dto);
 
-      expect(utilityMock.generateBrandedId).toHaveBeenCalledWith(
+      expect(uidGeneratorMock.generateBrandedId).toHaveBeenCalledWith(
         'show_plt',
         undefined,
       );

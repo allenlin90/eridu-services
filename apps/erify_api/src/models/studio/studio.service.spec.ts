@@ -1,36 +1,36 @@
 import { StudioRepository } from './studio.repository';
 import { StudioService } from './studio.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
-import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('studioService', () => {
   let service: StudioService;
   let studioRepository: StudioRepository;
-  let utilityService: UtilityService;
+  let uidGenerator: UidGeneratorService;
 
   beforeEach(async () => {
     const studioRepositoryMock = createMockRepository<StudioRepository>({
       replaceMetadataByUid: jest.fn(),
     });
-    const utilityMock = createMockUtilityService('std_test123');
+    const uidGeneratorMock = createMockUidGeneratorService('std_test123');
 
     const module = await createModelServiceTestModule({
       serviceClass: StudioService,
       repositoryClass: StudioRepository,
       repositoryMock: studioRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<StudioService>(StudioService);
     studioRepository = module.get<StudioRepository>(StudioRepository);
-    utilityService = module.get<UtilityService>(UtilityService);
+    uidGenerator = module.get<UidGeneratorService>(UidGeneratorService);
   });
 
   it('should be defined', () => {
@@ -60,7 +60,7 @@ describe('studioService', () => {
 
       const result = await service.createStudio(studioData);
 
-      expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+      expect(uidGenerator.generateBrandedId).toHaveBeenCalledWith(
         'std',
         undefined,
       );

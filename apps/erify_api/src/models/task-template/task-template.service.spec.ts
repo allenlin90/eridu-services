@@ -6,14 +6,14 @@ import { ClsModule } from 'nestjs-cls';
 import { TaskTemplateRepository } from './task-template.repository';
 import { TaskTemplateService } from './task-template.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { StudioService } from '@/models/studio/studio.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
-import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
@@ -30,12 +30,12 @@ class MockPrismaModule {}
 describe('taskTemplateService', () => {
   let service: TaskTemplateService;
   let repository: jest.Mocked<TaskTemplateRepository>;
-  let _utilityService: UtilityService;
+  let _uidGenerator: UidGeneratorService;
   let studioService: jest.Mocked<StudioService>;
 
   beforeEach(async () => {
     const repositoryMock = createMockRepository<TaskTemplateRepository>();
-    const utilityMock = createMockUtilityService('ttpl_test123');
+    const uidGeneratorMock = createMockUidGeneratorService('ttpl_test123');
     const studioServiceMock = {
       getSharedFields: jest.fn().mockResolvedValue([]),
     };
@@ -44,7 +44,7 @@ describe('taskTemplateService', () => {
       serviceClass: TaskTemplateService,
       repositoryClass: TaskTemplateRepository,
       repositoryMock,
-      utilityMock,
+      uidGeneratorMock,
       imports: [
         ClsModule.forRoot({
           global: true,
@@ -69,7 +69,7 @@ describe('taskTemplateService', () => {
 
     service = module.get<TaskTemplateService>(TaskTemplateService);
     repository = module.get<TaskTemplateRepository>(TaskTemplateRepository) as jest.Mocked<TaskTemplateRepository>;
-    _utilityService = module.get<UtilityService>(UtilityService);
+    _uidGenerator = module.get<UidGeneratorService>(UidGeneratorService);
     studioService = module.get(StudioService);
   });
 

@@ -3,16 +3,16 @@ import { BadRequestException } from '@nestjs/common';
 import { AuditRepository } from './audit.repository';
 import { AuditService } from './audit.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
-import { UtilityService } from '@/utility/utility.service';
 
 describe('auditService', () => {
   let service: AuditService;
   let repository: jest.Mocked<AuditRepository>;
-  let utility: jest.Mocked<UtilityService>;
+  let uidGenerator: jest.Mocked<UidGeneratorService>;
 
   beforeEach(async () => {
     // AuditRepository does not extend BaseRepository (Audit is append-only — no
@@ -23,18 +23,18 @@ describe('auditService', () => {
       findByUid: jest.fn(),
       findForTargets: jest.fn(),
     };
-    const utilityMock = createMockUtilityService('aud_generated');
+    const uidGeneratorMock = createMockUidGeneratorService('aud_generated');
 
     const module = await createModelServiceTestModule({
       serviceClass: AuditService,
       repositoryClass: AuditRepository,
       repositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get(AuditService);
     repository = module.get(AuditRepository);
-    utility = module.get(UtilityService);
+    uidGenerator = module.get(UidGeneratorService);
   });
 
   it('uses the aud_ UID prefix', () => {
@@ -50,7 +50,10 @@ describe('auditService', () => {
       targets: [{ targetType: 'SHOW', targetId: BigInt(1) }],
     });
 
-    expect(utility.generateBrandedId).toHaveBeenCalledWith('aud', undefined);
+    expect(uidGenerator.generateBrandedId).toHaveBeenCalledWith(
+      'aud',
+      undefined,
+    );
     expect(repository.create).toHaveBeenCalledWith(
       expect.objectContaining({ uid: 'aud_generated' }),
     );
@@ -66,7 +69,7 @@ describe('auditService', () => {
       targets: [{ targetType: 'SHOW_CREATOR', targetId: BigInt(1) }],
     });
 
-    expect(utility.generateBrandedId).not.toHaveBeenCalled();
+    expect(uidGenerator.generateBrandedId).not.toHaveBeenCalled();
     expect(repository.create).toHaveBeenCalledWith(
       expect.objectContaining({ uid: 'aud_explicit', actorId: BigInt(5) }),
     );

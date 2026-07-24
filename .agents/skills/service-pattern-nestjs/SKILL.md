@@ -42,7 +42,9 @@ Coordinate multiple Model Services. Use `@Transactional()` for atomicity. See `o
 
 ### 1. Extend BaseModelService
 
-Define `UID_PREFIX` (no trailing underscore). Inject `UtilityService`. Use `this.generateUid()`.
+Define `UID_PREFIX` (no trailing underscore). Inject `UidGeneratorService`.
+Use `this.generateUid()`. Keep deterministic business helpers as pure
+functions; do not add them to the UID adapter.
 
 ### 2. No ORM Coupling
 

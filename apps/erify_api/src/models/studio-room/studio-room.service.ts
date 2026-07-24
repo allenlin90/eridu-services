@@ -8,7 +8,7 @@ import { StudioRoomRepository } from './studio-room.repository';
 import { STUDIO_ROOM_UID_PREFIX } from './studio-room-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class StudioRoomService extends BaseModelService {
@@ -17,9 +17,9 @@ export class StudioRoomService extends BaseModelService {
 
   constructor(
     private readonly studioRoomRepository: StudioRoomRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async create(payload: CreateStudioRoomPayload): ReturnType<StudioRoomRepository['create']> {

@@ -15,10 +15,10 @@ import { StudioCreatorRepository } from './studio-creator.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { CreatorRepository } from '@/models/creator/creator.repository';
 import { CreatorService } from '@/models/creator/creator.service';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 export type StudioCreatorRosterWithUserPayload = {
   extId: string | null;
@@ -43,9 +43,9 @@ export class StudioCreatorService extends BaseModelService {
     private readonly creatorRepository: CreatorRepository,
     private readonly creatorService: CreatorService,
     private readonly userService: UserService,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   listRoster(

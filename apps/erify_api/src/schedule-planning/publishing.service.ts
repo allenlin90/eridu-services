@@ -20,6 +20,7 @@ import { buildPublishingUidLookupMaps } from './publishing-uid-lookup';
 import { ValidationService } from './validation.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { OPERATIONAL_DAY_START_HOUR } from '@/lib/utils/operational-day.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { PublishRunService } from '@/models/publish-run/publish-run.service';
@@ -31,7 +32,6 @@ import { ShowService } from '@/models/show/show.service';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
-import { UtilityService } from '@/utility/utility.service';
 
 export type { ScheduleWithRelations } from './publishing.types';
 
@@ -56,7 +56,7 @@ export class PublishingService {
     private readonly showService: ShowService,
     private readonly relationSyncService: PublishingRelationSyncService,
     private readonly validationService: ValidationService,
-    private readonly utilityService: UtilityService,
+    private readonly uidGenerator: UidGeneratorService,
     private readonly taskService: TaskService,
     private readonly auditService: AuditService,
     private readonly scheduleConflictService: ScheduleConflictService,
@@ -1003,7 +1003,7 @@ export class PublishingService {
           where: { systemKey: status.systemKey },
           update: {},
           create: {
-            uid: this.utilityService.generateBrandedId(ShowStatusService.UID_PREFIX),
+            uid: this.uidGenerator.generateBrandedId(ShowStatusService.UID_PREFIX),
             name: status.fallbackName,
             systemKey: status.systemKey,
             metadata: {},

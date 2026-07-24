@@ -15,9 +15,9 @@ import type {
 import { FK_FIELD_MODEL_MAP, isNoLongerEligible } from './schedule-conflict.types';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { AuditService } from '@/models/audit/audit.service';
 import type { AuditWithTargets } from '@/models/audit/schemas/audit.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 export const CONFLICT_UID_PREFIX = 'conflict';
 const SCHEDULE_PUBLISH_IMPACT_EVENT = 'schedule_publish_impact';
@@ -58,7 +58,7 @@ export class ScheduleConflictService {
   constructor(
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     private readonly auditService: AuditService,
-    private readonly utilityService: UtilityService,
+    private readonly uidGenerator: UidGeneratorService,
   ) {}
 
   /**
@@ -219,7 +219,7 @@ export class ScheduleConflictService {
     params: ReconcileShowConflictParams,
     heldBack: StaleConflictMetadata['held_back'],
   ): Promise<void> {
-    const conflictUid = this.utilityService.generateBrandedId(CONFLICT_UID_PREFIX);
+    const conflictUid = this.uidGenerator.generateBrandedId(CONFLICT_UID_PREFIX);
     const metadata: StaleConflictMetadata = {
       event: SCHEDULE_PUBLISH_IMPACT_EVENT,
       impact_kind: STALE_CONFLICT_IMPACT_KIND,

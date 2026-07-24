@@ -6,13 +6,13 @@ import { ClientMechanicRepository } from './client-mechanic.repository';
 import { ClientMechanicService } from './client-mechanic.service';
 
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
-import type { UtilityService } from '@/utility/utility.service';
 
 const baseMechanic = {
   id: BigInt(1),
@@ -30,7 +30,7 @@ const baseMechanic = {
 describe('clientMechanicService', () => {
   let service: ClientMechanicService;
   let repositoryMock: Partial<jest.Mocked<ClientMechanicRepository>>;
-  let utilityMock: Partial<jest.Mocked<UtilityService>>;
+  let uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>>;
 
   beforeEach(async () => {
     repositoryMock = createMockRepository<ClientMechanicRepository>({
@@ -45,13 +45,13 @@ describe('clientMechanicService', () => {
       findShowForCoverageDetail: jest.fn(),
       findTemplateRefsForShowCoverage: jest.fn(),
     });
-    utilityMock = createMockUtilityService('cmech_123');
+    uidGeneratorMock = createMockUidGeneratorService('cmech_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: ClientMechanicService,
       repositoryClass: ClientMechanicRepository,
       repositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get(ClientMechanicService);
@@ -67,7 +67,7 @@ describe('clientMechanicService', () => {
 
       await service.createMechanic('client_1', { title: 'T', instructionLabel: 'L', instructionBody: 'B' });
 
-      expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('cmech', undefined);
+      expect(uidGeneratorMock.generateBrandedId).toHaveBeenCalledWith('cmech', undefined);
       const [data] = (repositoryMock.create as jest.Mock).mock.calls[0];
       expect(data).toMatchObject({
         uid: 'cmech_123',

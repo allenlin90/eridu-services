@@ -92,6 +92,7 @@ describe('MyController', () => {
 
 ## model-service-test.helper.ts
 
-Provides utilities for testing model services with standardized repository and utility service mocking.
+Provides utilities for testing model services with standardized repository and
+UID generator mocking.
 
 See the file for detailed usage examples.

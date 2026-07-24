@@ -14,8 +14,8 @@ import {
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 /**
  * Manages saved task report definitions (named presets) for studio managers.
@@ -29,9 +29,9 @@ export class TaskReportDefinitionService extends BaseModelService {
   constructor(
     private readonly taskReportDefinitionRepository: TaskReportDefinitionRepository,
     private readonly userService: UserService,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

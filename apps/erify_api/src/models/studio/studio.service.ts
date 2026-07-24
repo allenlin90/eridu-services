@@ -14,7 +14,7 @@ import { STUDIO_UID_PREFIX } from './studio-uid.util';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 /**
  * Service for managing Studio entities.
@@ -26,9 +26,9 @@ export class StudioService extends BaseModelService {
 
   constructor(
     private readonly studioRepository: StudioRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

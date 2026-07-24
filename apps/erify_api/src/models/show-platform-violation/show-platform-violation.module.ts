@@ -3,11 +3,11 @@ import { Module } from '@nestjs/common';
 import { ShowPlatformViolationRepository } from './show-platform-violation.repository';
 import { ShowPlatformViolationService } from './show-platform-violation.service';
 
+import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
-  imports: [PrismaModule, UtilityModule],
+  imports: [PrismaModule, UidGeneratorModule],
   providers: [ShowPlatformViolationService, ShowPlatformViolationRepository],
   exports: [ShowPlatformViolationService],
 })

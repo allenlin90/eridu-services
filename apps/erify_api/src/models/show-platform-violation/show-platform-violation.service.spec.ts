@@ -3,7 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import type { ShowPlatformViolationRepository } from './show-platform-violation.repository';
 import { ShowPlatformViolationService } from './show-platform-violation.service';
 
-import type { UtilityService } from '@/utility/utility.service';
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 function buildRepository(overrides: {
   existing?: Array<{ uid: string; violationType: string; severity: string; reason?: string }>;
@@ -20,13 +20,13 @@ function buildRepository(overrides: {
   } as unknown as jest.Mocked<ShowPlatformViolationRepository>;
 }
 
-function buildUtility(): jest.Mocked<UtilityService> {
+function buildUidGenerator(): jest.Mocked<UidGeneratorService> {
   return {
     generateBrandedId: jest
       .fn()
       .mockReturnValueOnce('spv_new')
       .mockReturnValueOnce('spv_next'),
-  } as unknown as jest.Mocked<UtilityService>;
+  } as unknown as jest.Mocked<UidGeneratorService>;
 }
 
 describe('showPlatformViolationService', () => {
@@ -40,7 +40,10 @@ describe('showPlatformViolationService', () => {
 
   it('supersedes only active rows for the same show platform, source task, and hydrated field', async () => {
     const repository = buildRepository();
-    const service = new ShowPlatformViolationService(repository, buildUtility());
+    const service = new ShowPlatformViolationService(
+      repository,
+      buildUidGenerator(),
+    );
 
     const result = await service.replaceForTaskField({
       showId: 10n,
@@ -103,7 +106,10 @@ describe('showPlatformViolationService', () => {
 
   it('clears scoped rows without creating replacements when entries is empty', async () => {
     const repository = buildRepository();
-    const service = new ShowPlatformViolationService(repository, buildUtility());
+    const service = new ShowPlatformViolationService(
+      repository,
+      buildUidGenerator(),
+    );
 
     const result = await service.replaceForTaskField({
       showId: 10n,
@@ -133,7 +139,10 @@ describe('showPlatformViolationService', () => {
         { uid: 'spv_b', violationType: 'DEFAMATION', severity: 'WARNING', reason: 'same reason text' },
       ],
     });
-    const service = new ShowPlatformViolationService(repository, buildUtility());
+    const service = new ShowPlatformViolationService(
+      repository,
+      buildUidGenerator(),
+    );
 
     const result = await service.replaceForTaskField({
       showId: 10n,
@@ -169,7 +178,10 @@ describe('showPlatformViolationService', () => {
         { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'original reason' },
       ],
     });
-    const service = new ShowPlatformViolationService(repository, buildUtility());
+    const service = new ShowPlatformViolationService(
+      repository,
+      buildUidGenerator(),
+    );
 
     const result = await service.replaceForTaskField({
       showId: 10n,
@@ -197,7 +209,10 @@ describe('showPlatformViolationService', () => {
 
   it('deduplicates incoming entries by (violationType, severity) before writing', async () => {
     const repository = buildRepository({ existing: [] });
-    const service = new ShowPlatformViolationService(repository, buildUtility());
+    const service = new ShowPlatformViolationService(
+      repository,
+      buildUidGenerator(),
+    );
 
     const result = await service.replaceForTaskField({
       showId: 10n,
@@ -231,7 +246,10 @@ describe('showPlatformViolationService', () => {
 
   it('throws NotFoundException when the platform is no longer active under the show', async () => {
     const repository = buildRepository({ existsActiveInShow: false });
-    const service = new ShowPlatformViolationService(repository, buildUtility());
+    const service = new ShowPlatformViolationService(
+      repository,
+      buildUidGenerator(),
+    );
 
     await expect(
       service.replaceForTaskField({
