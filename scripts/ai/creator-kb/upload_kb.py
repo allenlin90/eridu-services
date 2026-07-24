@@ -13,8 +13,10 @@ Follows the documented best-practice path (Open WebUI >= 0.9.6):
   - Falls back to the legacy flow (upload -> poll -> /file/add) automatically
     if the server ignores the metadata auto-link (older versions)
   - Reconciled by content hash, not filename presence: a local file whose
-    sha256 (stored in our own upload metadata) matches the KB copy is
-    skipped; a changed file is deleted then re-uploaded; a KB file with no
+    sha256 matches the KB copy's own server-computed `hash` is skipped; a
+    changed file is uploaded and attached first, and only then does the
+    stale copy get deleted (never the reverse -- a failed upload/attach
+    must leave the prior working document in place); a KB file with no
     matching local filename is removed. This is what makes the sync
     reflect what's actually in Git instead of silently going stale after
     the first run.
@@ -40,10 +42,17 @@ The deployed instance differs from the original runbook assumptions:
      "'str' object has no attribute 'get'". Fixed via _as_items().
   2. Repo .env uses OPEN_WEBUI_HOST / OPEN_WEBUI_API_KEY; the script wanted
      OPENWEBUI_URL / OPENWEBUI_API_KEY. Both names are now accepted.
-  3. get_kb has no `directories`/`dirs` field on this build (no directory API),
-     and `files` may be null when empty. Hardened `... or []` guards.
-     `dirs/create` is expected to 404 -> files fall back to KB root (logged).
+  3. get_kb has no `directories`/`dirs` field on this build (no directory API).
+     Hardened `... or []` guards. `dirs/create` is expected to 404 -> files
+     fall back to KB root (logged).
   4. create/get responses are read tolerantly (id may be top-level or wrapped).
+  5. GET /api/v1/knowledge/{kb_id} never populates `files` at all on this
+     build -- not "null when empty" as originally assumed, but structurally
+     absent (the Knowledge model has no `files` relationship; see
+     ai/openwebui/functions/README.md gotchas). Enumerating existing files
+     for reconciliation (existing_files(), file_in_kb()) now uses the
+     dedicated GET /api/v1/knowledge/{kb_id}/files endpoint instead, matching
+     the proven, live-verified ai/openwebui/functions/sync-pipe.py pattern.
 Only the uploader script was changed; the 28 knowledge .md files are untouched.
 """
 import argparse
@@ -64,6 +73,7 @@ ENDPOINTS = {
     "file_status": "/api/v1/files/{file_id}/process/status",
     "file_meta": "/api/v1/files/{file_id}",
     "file_delete": "/api/v1/files/{file_id}",
+    "kb_files": "/api/v1/knowledge/{kb_id}/files",
     "kb_add_file": "/api/v1/knowledge/{kb_id}/file/add",
     "dir_create": "/api/v1/knowledge/{kb_id}/dirs/create",
 }
@@ -140,25 +150,39 @@ def content_sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def kb_state(api, kb_id):
-    """Return (filename->file_id, filename->stored content_sha256, dirname->dir_id)
-    currently in the KB. The hash comes back from our own upload metadata
-    (set below), so unhashed pre-existing files just compare as None != any
-    local hash and get treated as changed (safe default: reconcile, don't skip)."""
-    kb = api.get("get_kb", kb_id=kb_id)
+def existing_files(api, kb_id):
+    """filename -> {"id":..., "hash":...} for files actually attached to the KB.
+
+    GET /api/v1/knowledge/{kb_id} never populates its `files` field on this
+    deployment -- the Knowledge model has no `files` relationship at all, so
+    this is structurally empty regardless of what's attached, not a timing
+    issue (ai/openwebui/functions/README.md gotchas). Use the dedicated,
+    paginated files endpoint instead, matching the proven, live-verified
+    ai/openwebui/functions/sync-pipe.py pattern -- including using the
+    server's own content hash rather than a self-supplied one.
+    """
+    resp = api.get("kb_files", kb_id=kb_id)
+    items = resp.get("items") or []
+    total = resp.get("total")
+    if total is not None and total > len(items):
+        print(f"  WARNING: KB reports {total} files but this call returned only "
+              f"{len(items)}; this script does not paginate (same as sync-pipe.py, "
+              f"unverified beyond a single page). Reconciliation may miss files.")
     files = {}
-    hashes = {}
-    for f in (kb.get("files") or []):
-        meta = f.get("meta") or {}
-        fname = meta.get("name") or f.get("filename") or ""
+    for f in items:
+        fname = f.get("filename")
         if fname:
-            files[fname] = f["id"]
-            hashes[fname] = meta.get("content_sha256")
+            files[fname] = {"id": f["id"], "hash": f.get("hash")}
+    return files
+
+
+def existing_dirs(api, kb_id):
+    kb = api.get("get_kb", kb_id=kb_id)
     dirs = {}
     for d in (kb.get("directories", kb.get("dirs", [])) or []):
         if d.get("name") and not d.get("parent_id"):
             dirs[d["name"]] = d["id"]
-    return files, hashes, dirs
+    return dirs
 
 
 def ensure_dir(api, kb_id, dirs, name):
@@ -202,8 +226,10 @@ def wait_processed(api, file_id, timeout=300, poll=2):
 
 
 def file_in_kb(api, kb_id, file_id):
-    kb = api.get("get_kb", kb_id=kb_id)
-    return any(f.get("id") == file_id for f in (kb.get("files") or []))
+    # Same "get_kb never populates files" gotcha as existing_files() -- must use
+    # the dedicated endpoint, not get_kb, or this always returns False.
+    resp = api.get("kb_files", kb_id=kb_id)
+    return any(f.get("id") == file_id for f in (resp.get("items") or []))
 
 
 def main():
@@ -236,7 +262,8 @@ def main():
 
     api = Api(base, token)
     kb_id = find_or_create_kb(api, args.kb_name)
-    present, hashes, dirs = kb_state(api, kb_id)
+    present = existing_files(api, kb_id)
+    dirs = existing_dirs(api, kb_id)
     remaining = dict(present)  # names left in the KB once we've accounted for local files
 
     ok = skipped = updated = failed = 0
@@ -247,19 +274,16 @@ def main():
         local_hash = content_sha256(path)
         remaining.pop(upload_name, None)
 
-        if upload_name in present:
-            if hashes.get(upload_name) == local_hash:
-                print(f"  skip (unchanged): {rel}")
-                skipped += 1
-                continue
-            print(f"  update (content changed): {rel}")
-            api.delete("file_delete", file_id=present[upload_name])
-            updated += 1
-        else:
-            print(f"  upload: {rel}")
+        existing_entry = present.get(upload_name)
+        is_update = existing_entry is not None
+        if is_update and existing_entry["hash"] == local_hash:
+            print(f"  skip (unchanged): {rel}")
+            skipped += 1
+            continue
+        print(f"  {'update (content changed)' if is_update else 'upload'}: {rel}")
 
         dir_id = ensure_dir(api, kb_id, dirs, subdir) if subdir else None
-        meta = {"knowledge_id": kb_id, "content_sha256": local_hash}
+        meta = {"knowledge_id": kb_id}
         if dir_id:
             meta["directory_id"] = dir_id
 
@@ -286,6 +310,14 @@ def main():
             if dir_id:
                 body["directory_id"] = dir_id
             api.post("kb_add_file", kb_id=kb_id, json_body=body)
+
+        # Only remove the stale version now that its replacement is confirmed
+        # attached -- a failure anywhere above must leave the prior working
+        # document in place (Sync Contract step 6: "Remove obsolete files only
+        # after replacements finish processing successfully").
+        if is_update:
+            api.delete("file_delete", file_id=existing_entry["id"])
+            updated += 1
         ok += 1
 
     removed = 0

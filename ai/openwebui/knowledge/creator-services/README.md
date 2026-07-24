@@ -11,12 +11,21 @@ directory's lighter pipeline instead of the full `company-wiki/` validator +
 Sync Pipe. Every content file (not this README) carries that plan's Content
 Contract frontmatter — `id`, `audiences: [erisa]`,
 `owner: erisa-creator-services`, `sensitivity: department`, `status`,
-`source_refs`, `reviewed_at`, `review_by` — so it publishes with a classified
-audience/sensitivity instead of unclassified metadata. It is **not yet**
-validated by `company-wiki/tools/validate-wiki` (that tool is scoped to
-`company-wiki/content/`); folding this collection onto that validator, or
-building an equivalent one, is the remaining gap before this counts as fully
-governed per the plan.
+`source_refs`, `reviewed_at`, `review_by`.
+
+**Governance status — metadata only, not yet enforced.** This frontmatter is
+descriptive, not functional: `generate_kb.py` does not validate it (no
+`company-wiki/tools/validate-wiki`-equivalent exists for this collection yet),
+and `upload_kb.py` does not read it or derive Open WebUI access grants from
+it — the collection's real access grants (`ai/openwebui/synced/models.json`
+→ `creator-service-assistant` → `access_grants`) are set and maintained
+manually and are the actual source of truth for who can reach this content
+today, independent of what `audiences`/`sensitivity` say. Before changing who
+can access this collection, update the grants directly in Open WebUI (or via
+`POST /api/v1/knowledge/{id}/access/update`), not by editing frontmatter.
+Building frontmatter validation and grant derivation (or folding this
+collection onto `company-wiki/tools/validate-wiki`) is the remaining gap
+before this counts as fully governed per the plan.
 
 Generated from `CS_TikTok_Shop__Knowledge_Base.xlsx` (Phase 1 one-time snapshot —
 no TikTok Academy scraping yet) via
