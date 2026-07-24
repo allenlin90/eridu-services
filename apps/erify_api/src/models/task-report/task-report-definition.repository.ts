@@ -4,7 +4,6 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma, TaskReportDefinition } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 export type TaskReportDefinitionWithCreator = TaskReportDefinition & {
   createdBy: { uid: string } | null;
@@ -25,10 +24,9 @@ export class TaskReportDefinitionRepository extends BaseRepository<
   Prisma.TaskReportDefinitionWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.taskReportDefinition));
+    super(new PrismaModelWrapper(() => txHost.tx.taskReportDefinition));
   }
 
   private get delegate() {

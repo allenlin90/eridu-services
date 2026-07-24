@@ -1,3 +1,5 @@
+import type { TransactionHost } from '@nestjs-cls/transactional';
+
 import { ClientMechanicRepository } from './client-mechanic.repository';
 
 import type { PrismaService } from '@/prisma/prisma.service';
@@ -20,7 +22,10 @@ describe('clientMechanicRepository', () => {
     jest.clearAllMocks();
 
     const prisma = { clientMechanic: prismaDelegate } as unknown as PrismaService;
-    repository = new ClientMechanicRepository(prisma);
+    const txHost = {
+      tx: { clientMechanic: prismaDelegate },
+    } as unknown as TransactionHost<any>;
+    repository = new ClientMechanicRepository(prisma, txHost);
   });
 
   describe('findByUidForClient', () => {

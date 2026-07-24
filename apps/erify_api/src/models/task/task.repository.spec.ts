@@ -5,7 +5,6 @@ import { TaskRepository } from './task.repository';
 
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
-import type { PrismaService } from '@/prisma/prisma.service';
 
 function createPrismaTaskDelegateMock() {
   return {
@@ -20,17 +19,11 @@ function createPrismaTaskDelegateMock() {
 
 describe('taskRepository', () => {
   let repository: TaskRepository;
-  let prismaTaskDelegate: ReturnType<typeof createPrismaTaskDelegateMock>;
   let txTaskDelegate: ReturnType<typeof createPrismaTaskDelegateMock>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    prismaTaskDelegate = createPrismaTaskDelegateMock();
     txTaskDelegate = createPrismaTaskDelegateMock();
-
-    const prisma = {
-      task: prismaTaskDelegate,
-    } as unknown as PrismaService;
 
     const txHost = {
       tx: {
@@ -38,7 +31,7 @@ describe('taskRepository', () => {
       },
     } as unknown as TransactionHost<any>;
 
-    repository = new TaskRepository(prisma, txHost);
+    repository = new TaskRepository(txHost);
   });
 
   describe('scene review reads', () => {
@@ -120,7 +113,6 @@ describe('taskRepository', () => {
         where: { id: BigInt(1000), deletedAt: null },
         data: { dueDate: new Date('2026-03-01T00:00:00.000Z') },
       });
-      expect(prismaTaskDelegate.update).not.toHaveBeenCalled();
     });
   });
 

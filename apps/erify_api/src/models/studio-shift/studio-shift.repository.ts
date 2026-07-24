@@ -6,7 +6,6 @@ import { Prisma, StudioShift } from '@prisma/client';
 import type { BlocksReplacePayload } from './schemas/studio-shift.schema';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 const lineItemTargetInclude = {
   where: { lineItem: { is: { deletedAt: null } } },
@@ -51,10 +50,9 @@ export class StudioShiftRepository extends BaseRepository<
   Prisma.StudioShiftWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.studioShift));
+    super(new PrismaModelWrapper(() => txHost.tx.studioShift));
   }
 
   private get delegate() {

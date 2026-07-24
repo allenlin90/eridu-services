@@ -30,8 +30,9 @@ non-local host, or a URL equal to the existing `DATABASE_URL`.
 
 ## Current safety gates
 
-- an ambient CLS transaction reads its earlier writes;
-- a thrown transactional workflow rolls back all of its writes;
+- inherited `BaseRepository` methods read earlier writes through the ambient CLS transaction;
+- a thrown transactional workflow rolls back inherited repository writes;
+- inherited restore targets a soft-deleted row and makes it active again;
 - shallow `ShowStatusService` CRUD preserves active-row filtering;
 - the API DTO exposes the external UID instead of the internal database ID;
 - a show is created through the real orchestration capability with UID relations;

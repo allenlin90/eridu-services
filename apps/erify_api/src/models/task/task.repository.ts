@@ -30,7 +30,6 @@ import {
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class TaskRepository extends BaseRepository<
@@ -40,10 +39,9 @@ export class TaskRepository extends BaseRepository<
   Prisma.TaskWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.task));
+    super(new PrismaModelWrapper(() => txHost.tx.task));
   }
 
   private get delegate() {

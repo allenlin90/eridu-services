@@ -2,8 +2,6 @@ import type { TransactionHost } from '@nestjs-cls/transactional';
 
 import { TaskTargetRepository } from './task-target.repository';
 
-import type { PrismaService } from '@/prisma/prisma.service';
-
 function createTaskTargetDelegateMock() {
   return {
     create: jest.fn(),
@@ -21,9 +19,8 @@ describe('taskTargetRepository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const prisma = {} as unknown as PrismaService;
     const txHost = { tx: { taskTarget: txDelegate } } as unknown as TransactionHost<any>;
-    repository = new TaskTargetRepository(prisma, txHost);
+    repository = new TaskTargetRepository(txHost);
   });
 
   describe('countActiveByShowId', () => {

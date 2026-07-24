@@ -30,7 +30,7 @@ export class StudioMembershipRepository extends BaseRepository<
     private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.studioMembership));
+    super(new PrismaModelWrapper(() => txHost.tx.studioMembership));
   }
 
   async createStudioMembership<

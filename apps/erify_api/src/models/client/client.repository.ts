@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Client, Prisma } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { ListClientsQueryDto } from '@/models/client/schemas/client.schema';
-import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class ClientRepository extends BaseRepository<
@@ -12,8 +13,10 @@ export class ClientRepository extends BaseRepository<
   Prisma.ClientUpdateInput,
   Prisma.ClientWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
-    super(new PrismaModelWrapper(prisma.client));
+  constructor(
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
+    super(new PrismaModelWrapper(() => txHost.tx.client));
   }
 
   /**

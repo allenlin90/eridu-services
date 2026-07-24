@@ -7,13 +7,13 @@ import { Test } from '@nestjs/testing';
 import {
   ClsPluginTransactional,
   Transactional,
-  TransactionHost,
 } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule, ClsService } from 'nestjs-cls';
 
 import { showStatusDto } from '@/models/show-status/schemas/show-status.schema';
 import { ShowStatusModule } from '@/models/show-status/show-status.module';
+import { ShowStatusRepository } from '@/models/show-status/show-status.repository';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -23,16 +23,14 @@ const INTEGRATION_NAME_PREFIX = 'integration-safety:';
 @Injectable()
 class TransactionProbe {
   constructor(
-    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+    private readonly showStatusRepository: ShowStatusRepository,
   ) {}
 
   @Transactional<TransactionalAdapterPrisma>()
   async createAndRead(uid: string, name: string) {
-    await this.txHost.tx.showStatus.create({
-      data: { uid, name, metadata: {} },
-    });
+    await this.showStatusRepository.create({ uid, name, metadata: {} });
 
-    return this.txHost.tx.showStatus.findUnique({ where: { uid } });
+    return this.showStatusRepository.findOne({ uid });
   }
 
   @Transactional<TransactionalAdapterPrisma>()
@@ -40,12 +38,8 @@ class TransactionProbe {
     first: { uid: string; name: string },
     second: { uid: string; name: string },
   ): Promise<never> {
-    await this.txHost.tx.showStatus.create({
-      data: { ...first, metadata: {} },
-    });
-    await this.txHost.tx.showStatus.create({
-      data: { ...second, metadata: {} },
-    });
+    await this.showStatusRepository.create({ ...first, metadata: {} });
+    await this.showStatusRepository.create({ ...second, metadata: {} });
 
     throw new Error('integration rollback probe');
   }
@@ -56,6 +50,7 @@ describe('real database persistence safety', () => {
   let clsService: ClsService;
   let prisma: PrismaService;
   let probe: TransactionProbe;
+  let showStatusRepository: ShowStatusRepository;
   let showStatusService: ShowStatusService;
 
   beforeAll(async () => {
@@ -78,7 +73,7 @@ describe('real database persistence safety', () => {
         }),
         ShowStatusModule,
       ],
-      providers: [TransactionProbe],
+      providers: [ShowStatusRepository, TransactionProbe],
     }).compile();
 
     await moduleRef.init();
@@ -86,6 +81,7 @@ describe('real database persistence safety', () => {
     clsService = moduleRef.get(ClsService);
     prisma = moduleRef.get(PrismaService);
     probe = moduleRef.get(TransactionProbe);
+    showStatusRepository = moduleRef.get(ShowStatusRepository);
     showStatusService = moduleRef.get(ShowStatusService);
   });
 
@@ -129,6 +125,27 @@ describe('real database persistence safety', () => {
     const created = await clsService.run(() => probe.createAndRead(uid, name));
 
     expect(created).toMatchObject({ uid, name });
+  });
+
+  it('restores a soft-deleted row through the inherited repository method', async () => {
+    const suffix = `${Date.now()}-${Math.random()}`;
+    const created = await showStatusService.createShowStatus({
+      name: `${INTEGRATION_NAME_PREFIX}restore:${suffix}`,
+      metadata: {},
+    });
+
+    await showStatusService.deleteShowStatus({ uid: created.uid });
+
+    const deleted = await prisma.showStatus.findUnique({
+      where: { uid: created.uid },
+    });
+    expect(deleted?.deletedAt).toBeInstanceOf(Date);
+
+    await showStatusRepository.restore({ uid: created.uid });
+
+    await expect(
+      showStatusService.getShowStatusById(created.uid),
+    ).resolves.toMatchObject({ uid: created.uid, deletedAt: null });
   });
 
   it('rolls back every write when a transactional workflow fails', async () => {

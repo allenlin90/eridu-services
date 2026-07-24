@@ -78,7 +78,13 @@ export type PrismaDelegate<T, C, W> = {
 
 // Generic wrapper implementation
 export class PrismaModelWrapper<T, C, U, W> implements IBaseModel<T, C, U, W> {
-  constructor(private readonly delegate: PrismaDelegate<T, C, W>) {}
+  constructor(
+    private readonly resolveDelegate: () => PrismaDelegate<T, C, W>,
+  ) {}
+
+  private get delegate(): PrismaDelegate<T, C, W> {
+    return this.resolveDelegate();
+  }
 
   async create(args: {
     data: C;
@@ -202,7 +208,7 @@ implements IBaseRepository<T, C, U, W> {
 
   async restore(where: W): Promise<T> {
     return this.model.update({
-      where: { ...where, deletedAt: null },
+      where: { ...where, deletedAt: { not: null } } as W,
       data: { deletedAt: null } as unknown as U,
     });
   }
