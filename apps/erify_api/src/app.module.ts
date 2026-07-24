@@ -24,7 +24,6 @@ import { BackdoorApiKeyGuard } from '@/lib/guards/backdoor-api-key.guard';
 import { GoogleSheetsApiKeyGuard } from '@/lib/guards/google-sheets-api-key.guard';
 import { READ_BURST_THROTTLE_KEY } from '@/lib/guards/read-burst-throttle.decorator';
 import { StudioGuard } from '@/lib/guards/studio.guard';
-import { OpenAPIModule } from '@/lib/openapi/openapi.module';
 import { MeModule } from '@/me/me.module';
 import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -121,7 +120,6 @@ import { UploadModule } from '@/uploads/upload.module';
     MeModule,
     StudiosModule,
     UploadModule,
-    OpenAPIModule.forRoot(),
   ],
   providers: [
     {
