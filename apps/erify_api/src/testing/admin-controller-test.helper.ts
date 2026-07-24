@@ -9,7 +9,6 @@ import { Test } from '@nestjs/testing';
 export const adminMockServices = {
   utilityService: {
     generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
   },
   configService: {
     get: jest.fn(),

@@ -9,7 +9,6 @@ import type { PlanDocument } from './schemas/schedule-planning.schema';
 import { ValidationService } from './validation.service';
 
 import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
 
 // File-scope mock objects (reassigned per test via jest.clearAllMocks + mockResolvedValue)
 // mockTransactionClient: used when CLS transaction is active
@@ -61,7 +60,6 @@ class MockPrismaModule {}
 
 describe('validationService', () => {
   let service: ValidationService;
-  let _utilityService: jest.Mocked<UtilityService>;
 
   // Test data
   const mockValidPlanDocument: PlanDocument = {
@@ -150,17 +148,10 @@ describe('validationService', () => {
           provide: PrismaService,
           useValue: mockPrismaServiceValue,
         },
-        {
-          provide: UtilityService,
-          useValue: {
-            isTimeOverlapping: jest.fn(),
-          },
-        },
       ],
     }).compile();
 
     service = module.get<ValidationService>(ValidationService);
-    _utilityService = module.get(UtilityService);
   });
 
   beforeEach(() => {
@@ -635,9 +626,6 @@ describe('validationService', () => {
     });
 
     it('should detect room conflicts within schedule', async () => {
-      // Mock isTimeOverlapping to return true for overlapping times
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-
       const conflictingSchedule = {
         ...mockScheduleData,
         planDocument: {
@@ -674,9 +662,6 @@ describe('validationService', () => {
     });
 
     it('should NOT detect room conflicts when shows have no room assigned', async () => {
-      // Mock isTimeOverlapping to return true for overlapping times
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-
       const noRoomSchedule = {
         ...mockScheduleData,
         planDocument: {
@@ -705,9 +690,6 @@ describe('validationService', () => {
     });
 
     it('should detect creator double-booking within schedule', async () => {
-      // Mock isTimeOverlapping to return true for overlapping times
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-
       const conflictingSchedule = {
         ...mockScheduleData,
         planDocument: {
@@ -906,116 +888,6 @@ describe('validationService', () => {
     });
   });
 
-  describe('isTimeOverlapping', () => {
-    it('should detect overlapping time ranges', () => {
-      const baseDate = '2024-01-01T';
-
-      // Complete overlap
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}10:00:00Z`,
-          `${baseDate}12:00:00Z`,
-          `${baseDate}10:00:00Z`,
-          `${baseDate}12:00:00Z`,
-        ),
-      ).toBe(true);
-
-      // Partial overlap - second starts during first
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}10:00:00Z`,
-          `${baseDate}12:00:00Z`,
-          `${baseDate}11:00:00Z`,
-          `${baseDate}13:00:00Z`,
-        ),
-      ).toBe(true);
-
-      // Partial overlap - first starts during second
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}11:00:00Z`,
-          `${baseDate}13:00:00Z`,
-          `${baseDate}10:00:00Z`,
-          `${baseDate}12:00:00Z`,
-        ),
-      ).toBe(true);
-
-      // Touching edges (no overlap)
-      _utilityService.isTimeOverlapping.mockReturnValue(false);
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}10:00:00Z`,
-          `${baseDate}12:00:00Z`,
-          `${baseDate}12:00:00Z`,
-          `${baseDate}14:00:00Z`,
-        ),
-      ).toBe(false);
-
-      // No overlap - second starts after first ends
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}10:00:00Z`,
-          `${baseDate}12:00:00Z`,
-          `${baseDate}13:00:00Z`,
-          `${baseDate}15:00:00Z`,
-        ),
-      ).toBe(false);
-
-      // No overlap - first starts after second ends
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}13:00:00Z`,
-          `${baseDate}15:00:00Z`,
-          `${baseDate}10:00:00Z`,
-          `${baseDate}12:00:00Z`,
-        ),
-      ).toBe(false);
-
-      // One contains the other
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}10:00:00Z`,
-          `${baseDate}14:00:00Z`,
-          `${baseDate}11:00:00Z`,
-          `${baseDate}13:00:00Z`,
-        ),
-      ).toBe(true);
-
-      expect(
-        service.utilityService.isTimeOverlapping(
-          `${baseDate}11:00:00Z`,
-          `${baseDate}13:00:00Z`,
-          `${baseDate}10:00:00Z`,
-          `${baseDate}14:00:00Z`,
-        ),
-      ).toBe(true);
-    });
-
-    it('should handle ISO date strings', () => {
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-      expect(
-        service.utilityService.isTimeOverlapping(
-          '2024-01-01T10:00:00Z',
-          '2024-01-01T12:00:00Z',
-          '2024-01-01T11:00:00Z',
-          '2024-01-01T13:00:00Z',
-        ),
-      ).toBe(true);
-
-      _utilityService.isTimeOverlapping.mockReturnValue(false);
-      expect(
-        service.utilityService.isTimeOverlapping(
-          '2024-01-01T10:00:00Z',
-          '2024-01-01T12:00:00Z',
-          '2024-01-01T13:00:00Z',
-          '2024-01-01T15:00:00Z',
-        ),
-      ).toBe(false);
-    });
-  });
-
   describe('edge cases and error handling', () => {
     beforeEach(() => {
       // Setup default mocks for edge case tests
@@ -1150,9 +1022,6 @@ describe('validationService', () => {
     });
 
     it('should detect conflicts when multiple MCs have overlapping assignments', async () => {
-      // Mock isTimeOverlapping to return true for overlapping times
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-
       const multiMcConflictSchedule = {
         ...mockScheduleData,
         planDocument: {
@@ -1207,8 +1076,6 @@ describe('validationService', () => {
     });
 
     it('should detect creator double-booking when only creators payload is provided', async () => {
-      _utilityService.isTimeOverlapping.mockReturnValue(true);
-
       const creatorConflictSchedule = {
         ...mockScheduleData,
         planDocument: {

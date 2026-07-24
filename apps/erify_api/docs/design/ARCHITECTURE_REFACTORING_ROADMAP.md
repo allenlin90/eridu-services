@@ -103,6 +103,9 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Gate**: none — existing unit baseline plus focused utility/service specs; no real-DB dependency.
 - **Skills**: `service-pattern-nestjs`.
 - **Knowledge sync**: `service-pattern-nestjs` (the UtilityService / `BaseModelService` UID rule).
+- **Progress**: extracted `isTimeOverlapping` as a pure function and replaced
+  mock-driven overlap assertions with direct algorithm coverage. T7 remains
+  open until the UID-only provider and its import graph are narrowed.
 
 ## Adjacent — startable now (roadmap correctness, not an architecture phase)
 

@@ -18,15 +18,14 @@ import {
   getCreatorAssignments,
 } from './validation-uid-lookup';
 
+import { isTimeOverlapping } from '@/lib/utils/time-overlap.util';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class ValidationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
-    public readonly utilityService: UtilityService,
   ) {}
 
   /**
@@ -486,7 +485,7 @@ export class ValidationService {
           show1.studioRoomId
           && show2.studioRoomId
           && show1.studioRoomId === show2.studioRoomId
-          && this.utilityService.isTimeOverlapping(
+          && isTimeOverlapping(
             show1.startTime,
             show1.endTime,
             show2.startTime,
@@ -518,7 +517,7 @@ export class ValidationService {
 
         for (const creatorUid of commonCreatorUids) {
           if (
-            this.utilityService.isTimeOverlapping(
+            isTimeOverlapping(
               show1.startTime,
               show1.endTime,
               show2.startTime,
