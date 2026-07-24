@@ -63,13 +63,23 @@ Mirrors `admin-user-management.tsx` (tab shell: list / create) — reuse that st
 - Create / Rotate Secret: both must show the returned secret **once**, in a dismissable panel with `CopyableText`. Never persist it client-side beyond that render — better-auth never re-exposes a stored secret.
 - Delete: `AlertDialog` confirmation naming the client, warning that its signed-in users will be signed out.
 
-## Consumer Integration (e.g. Open WebUI)
+## Before Registering A New Consumer, Confirm It Can Actually Do Authorization-Code + PKCE
+
+`eridu_auth`'s `oauthProvider()` is spec-compliant OAuth 2.1: authorization-code + PKCE only, **no implicit grant** (confirmed live via `/api/auth/.well-known/openid-configuration`'s `grant_types_supported`/`response_types_supported`/`code_challenge_methods_supported`). Some OAuth-capable software only ever implemented the older implicit flow (`response_type=token`) and is flatly incompatible — not a config problem, a protocol mismatch no client-side setting fixes. Confirmed case: stock Odoo's built-in `auth_oauth` module (see the Odoo entry below) — required swapping in OCA's `auth_oidc` module, which adds real authorization-code + PKCE support, before a client registration here could ever work. Check this before spending time on the consumer-side config.
+
+## Consumer Integration
+
+### Open WebUI
 
 Give the consumer the literal discovery URL: `OPENID_PROVIDER_URL=https://<host>/api/auth/.well-known/openid-configuration`. Open WebUI (and most generic-OIDC client configs) take this as a literal URL, not an issuer root to derive `.well-known` from. **Do not** add extra root-level `/.well-known/*` routing just to satisfy better-auth's own startup warning about `basePath !== '/'` — that warning targets spec-purist auto-discovering clients (RFC 8414 well-known insertion), not this consumer. Silence it with `oauthProvider({ silenceWarnings: { oauthAuthServerConfig: true, openidConfig: true } })` only if the log noise matters, or ignore it.
 
 A client's registered `scope` (set at creation, default `openid profile email offline_access` in the Create form) is the actual allow-list checked against what the consumer requests — **not** the provider's global `scopes` array in `auth.ts`. The consumer's requested scope string must match the client's registered scope exactly, including spelling: `offline_access`, not `offline`. A mismatch is rejected with `invalid_scope`, which some consumers (Open WebUI included) surface to the end user as a generic, misleading "email or password incorrect" error instead of the real OAuth error — check the consumer's server logs for the actual `error`/`error_description` query params on its callback redirect before assuming a credentials problem.
 
 For Open WebUI specifically, working values are `OAUTH_SCOPES="openid email profile"` (no `offline_access` — see PKCE note below) and, if the same email may already exist as a local Open WebUI account, `OAUTH_MERGE_ACCOUNTS_BY_EMAIL=true`. Open WebUI's docs call merge-by-email unsafe in general (an IdP that doesn't verify emails could allow account takeover), but it's safe here because eridu_auth's `emailAndPassword.requireEmailVerification: true` guarantees a verified email before any session — including the OAuth flow — is issued.
+
+### Odoo
+
+Full walkthrough in `infra/odoo/README.md`. Stock Odoo can't be a consumer at all (see the compatibility note above) — required a custom Dockerfile (`infra/odoo/Dockerfile`) adding OCA's `auth_oidc` module, itself patched to swap `python-jose` for `PyJWT[crypto]` since `python-jose` has no EdDSA support and eridu_auth signs with EdDSA/Ed25519. Redirect URI is fixed by Odoo's own `auth_oauth` controller: `https://<odoo-host>/auth_oauth/signin`. Scope `openid email profile`, no `offline_access`, same reasoning as Open WebUI. Unlike Open WebUI, `auth_oidc` genuinely implements PKCE (`code_verifier` on its provider model) — this is the one consumer so far that does **not** need the "uncheck Require PKCE" exception below.
 
 ## PKCE Is Required By Default — No Endpoint To Change It Post-Creation
 
@@ -95,6 +105,7 @@ Run `tsc --noEmit --noErrorTruncation -p tsconfig.app.json` and read the resulti
 
 ## Checklist: Adding A New OAuth Consumer
 
+- [ ] Confirm the consumer's OAuth implementation actually supports authorization-code + PKCE — some only ever implemented the older implicit grant and are flatly incompatible, no config fixes it (see above)
 - [ ] Create the client via the admin UI (Portal → OAuth Clients → Create Client), not a raw `curl` against the endpoint
 - [ ] Give the consumer its `client_id`/`client_secret` via its own environment (e.g. Railway variables) — never commit them to this repo
 - [ ] Add the consumer's public origin to `ALLOWED_ORIGINS`; confirm `COOKIE_DOMAIN` covers the shared parent domain
@@ -106,6 +117,7 @@ Run `tsc --noEmit --noErrorTruncation -p tsconfig.app.json` and read the resulti
 ## Related Skills
 
 - [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) — governs Open WebUI/LiteLLM/MCP as one platform; this skill covers the eridu_auth-side implementation it depends on
+- [`.agents/memory/odoo-railway-sso-integration.md`](../../memory/odoo-railway-sso-integration.md) — Railway platform gotchas (preDeployCommand reliability, config-as-code, redeploy-vs-fresh-trigger) and Odoo-specific findings from building the Odoo consumer integration above
 - [ssr-auth-integration](../ssr-auth-integration/SKILL.md) — the JWKS/JWT-cookie pattern this provider's `jwt()` bridge must keep working
 - [table-view-pattern](../table-view-pattern/SKILL.md) — row-actions convention used by the admin client list
 - [frontend-ui-components](../frontend-ui-components/SKILL.md) — `@eridu/ui` `Form`/`Dialog`/`AlertDialog` conventions used throughout the admin UI

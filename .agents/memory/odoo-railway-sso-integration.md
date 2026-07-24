@@ -1,0 +1,43 @@
+# Odoo + eridu_auth SSO on Railway (2026-07-24)
+
+Built `infra/odoo/` — a custom Dockerfile layering OCA's `auth_oidc` onto `odoo:19.0` so Odoo authenticates against `eridu_auth`'s OAuth provider, plus fully automated database/credential bootstrap. Full rationale and current config live in `infra/odoo/README.md`; this is the reusable-elsewhere platform knowledge.
+
+## General pattern: custom Dockerfile as a Railway escape hatch
+
+Odoo is the worked example of a broader, reusable pattern for this project, not just an Odoo-specific fix: when a Railway template or a service's stock/official image doesn't cover a specific requirement — a third-party module or dependency patch it doesn't ship, a bootstrap/migration step it has no hook for, credential wiring an image's entrypoint never does — build a small custom Dockerfile `FROM` that base image instead of accepting the gap or hand-rolling something outside Railway entirely. This gets you:
+
+- Arbitrary build-time customization (installing packages, patching a third-party module's source, pinning a dependency to an exact commit for reproducibility — see the `auth_oidc`/EdDSA patch below for a worked example).
+- Custom scripts baked into the image and wired into `deploy.startCommand`/`deploy.preDeployCommand` for bootstrap logic no stock image or template exposes a config knob for (see the credential-sync pattern below).
+- Still deployed and managed as a normal Railway service afterward — same config-as-code (`.railway/<service>.json`), same variables, same deploy/log tooling as every other service in this project; the only thing that changes is where the image comes from.
+
+Reach for this only when there's a genuine, concrete gap — a demonstrated need, not "custom felt more flexible." `Postgres`/`Redis`/managed-database services have nothing to customize; `Open WebUI`/`LiteLLM` are governed purely through env vars and their own admin APIs today, with no gap forcing a custom image. Don't blanket-migrate working raw-image services to Dockerfile builds "for consistency" — every service on a custom image trades an instant image-tag bump for a git-commit-and-rebuild cycle on every version update, and adds real build latency to every deploy.
+
+## Railway platform gotchas
+
+- **`railway service redeploy` / `serviceInstanceRedeploy` reuses the settings snapshot of the deployment being redeployed, not live current settings.** Changing `rootDirectory`/`dockerfilePath`/`startCommand` and then `redeploy`-ing an older deployment silently rebuilds with the old values. Use `serviceInstanceDeployV2` (fresh trigger) or push a new commit instead.
+- **The dashboard/API `builder` field only accepts Railpack-family values** (`RAILPACK`/`NIXPACKS`/`HEROKU`/`PAKETO`) — no `DOCKERFILE` enum value exists there. To force a Dockerfile build, use [config-as-code](https://docs.railway.com/config-as-code/reference): a `railway.json` (or `.railway/<service>.json` + `railwayConfigFile`, see below) with `build.builder: "DOCKERFILE"`. Plain `dockerfilePath` set via the API was *also* observed to trigger a correct Dockerfile build on a fresh git-push deploy without any config file — inconsistent enough not to rely on; config-as-code is the reliable path.
+- **`.railway/<service>.json` + `railwayConfigFile: "/.railway/<service>.json"` is this repo's established config-as-code pattern**, used even for services whose build root isn't the repo root (`rootDirectory` stays separate from where the config file lives — set `railwayConfigFile` to the absolute repo path regardless).
+- **`deploy.preDeployCommand` array entries are unreliable the moment more than one is used, or one contains shell metacharacters** (quotes, `<` redirection). Failures are silent: build always succeeds, the deployment status just becomes `FAILED` with **zero** log output anywhere — not build logs, not deploy logs, not the `buildLogs`/`deploymentLogs` GraphQL queries, not `--latest`. Confirmed twice with different failure shapes (a `sh -c "... < script.py"` single entry, and later two separate plain-looking entries) — both passed every local Docker test and both failed only in production. Fix: collapse all preDeploy logic into **one** script file baked into the image with a real `#!/bin/bash` shebang, and make `preDeployCommand` a single plain path with zero arguments or metacharacters.
+- **Remote MCP (`railway` plugin) can go `Unauthorized` mid-session**, independent of CLI auth (`railway whoami` kept working). Fall back to the `railway` CLI, or `railway api '<graphql>'` for anything the CLI doesn't expose directly (schema introspection via `railway api search`/`describe`).
+- **Some Railway actions are blocked by an auto-mode permission classifier** regardless of retries: connecting a service source, setting variables, and credential-mutating `railway ssh` commands. These need the user to run them directly — don't try to route around it via a different tool.
+- **`railway ssh -- bash -c '...'` is flaky for output-bearing commands** (empty output on maybe half of attempts, no error) even when the connection itself succeeds. Retry; a clean rerun of the identical command usually works.
+
+## Odoo gotchas
+
+- Stock `odoo:19.0`'s `auth_oauth` only implements the OAuth2 **implicit** grant. Any spec-compliant provider that's authorization-code + PKCE only (better-auth's `oauthProvider()`, and generally anything following current OAuth 2.1 guidance) is incompatible outright — not a config gap. OCA's `auth_oidc` (`OCA/server-auth`) adds a real authorization-code + PKCE flow (`flow` field: `id_token_code`).
+- `auth_oidc` declares `python-jose` as its dependency, which has **no EdDSA support at all**. Any provider signing with EdDSA/Ed25519 (eridu_auth does) needs `PyJWT[crypto]` swapped in instead — `python-jose`'s `ALGORITHMS.SUPPORTED` genuinely doesn't include `EdDSA` in any version tested.
+- `--no-database-list` really does fully disable `/web/database/manager` (confirmed in Odoo's own template: `web/static/src/public/database_manager.qweb.html`'s `t-if="not list_db"` branch renders only a disabled-message, no forms at all) — but only once a boot actually has the flag applied; watch for the redeploy-staleness gotcha above making it look broken.
+- Odoo's real master password (`admin_passwd`) is a `FileOnlyOption` in `odoo.tools.config` — **no CLI flag exists**, config-file only, and defaults to the literal string `"admin"` if never set. A same-named env var (e.g. `ADMIN_PASSWD`) does nothing on its own; something has to explicitly write it into `odoo.conf` on boot.
+- `res.users.password` is **never readable via a plain ORM read** (Odoo masks it server-side). To check a candidate password, read the hash with raw SQL and verify via `env['res.users']._crypt_context().verify(candidate, hash)`.
+- `__manifest__.py`'s `post_init_hook` fires **only on a genuine first module install** — not on a later `-i` of an already-installed module, not on `--reinit` (that sets `update_operation='reinit'`, not `'install'`). Clean one-shot semantics for free, and survives future Odoo image/version bumps since the check is really "has this database's module install state already recorded this", tracked in `ir_module_module` in the persisted database.
+- Odoo's non-interactive `-i` bootstrap creates the `admin` login with the literal default password `"admin"`.
+
+## Pattern: env-var-driven credential sync that never clobbers a human change
+
+Applies beyond Odoo. Storing the *hash* of what was last auto-applied (not the value) and comparing it to the current hash before ever overwriting means: apply the env var value freely when nothing's changed since our last write, and back off the instant a human changes it out-of-band. See `infra/odoo/patches/sync-admin-password.py` (`eridu.admin_password_synced_hash` in `ir.config_parameter`) for the worked implementation.
+
+## Process notes
+
+- Verify every non-trivial claim about a third-party image/module with a real local Docker run (throwaway Postgres + the actual image) before touching production — caught the EdDSA gap, the `/etc/odoo/` directory-permission issue for `sed -i`, and confirmed idempotency multiple times, none of which were discoverable from reading source alone.
+- When Railway's own status/log reporting contradicts what a direct query or live HTTP test proves, trust the live test — this session hit several cases of stale/misleading deployment metadata.
+- This session ran concurrently with at least one other agent session sharing the same working directory — local `master` got checked out to unrelated branches twice mid-task with no warning. Re-check `git branch --show-current` immediately before any push-sensitive git operation in a shared checkout.
