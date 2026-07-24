@@ -25,6 +25,10 @@ Schedule continuity across `erify_api`, `erify_studios`, and Google Sheets integ
 7. Past or done shows are preserved during publish, including creator/platform relations — with one carve-out: a LIVE/COMPLETED show whose incoming row carries `creators` and which has **zero** `ShowCreator` rows (soft-deleted included) gets its creator mappings backfilled (fill-gap only; existing mappings are never overridden — no settlement/freeze guard exists). Backfills record `past_show_creator_backfilled` impact audits; `/validate` reports the eligible count as a non-blocking `info` entry
 8. Future confirmed show changes and missing-row pending transitions write `schedule_publish_impact` Audit rows for manager review
 9. Every `publish()` call persists one `PublishRun` row (source, actor, summary counts) and stamps `Audit.publishRunId` onto all impact rows it writes, making a publish a first-class filterable batch unit
+10. Schedule bulk create/update accepts at most 1,000 items and processes them
+    sequentially with ordered partial-success results. Keep the item cap
+    distinct from `BODY_PARSER_LIMIT`, which may reject a large request before
+    schema validation.
 
 **Current boundary**: diff+upsert, summary counters, restore, `PublishRun` tracking, impacts filters + server-side summary + publish-runs endpoints, and the terminal-show creator backfill are shipped (PR #310). Studio-scoped pending-resolution resolve endpoint/queue/CTA not fully shipped.
 

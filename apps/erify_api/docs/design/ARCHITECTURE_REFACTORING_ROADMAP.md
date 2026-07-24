@@ -139,7 +139,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
 | T9 | Fix `BaseRepository.restore()` + tx-aware lazy delegate | M | T1 | ✅ |
-| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | ⏸ |
+| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | ✅ |
 
 ### T9 — Fix `BaseRepository.restore()` + transaction-aware lazy delegate
 
@@ -157,6 +157,16 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Scope**: use the isolated harness to collect task-scoped timeout and partial-success evidence for the bulk path, then judge the maximum. Preserve the established sequential partial-success contract unless measurements justify a change; the likely outcome is "no change, now documented." This is targeted characterization, not the deferred Phase 0b runtime-performance baseline.
 - **Gate**: T1 (isolated safety harness).
 - **Skills**: `database-patterns`, `schedule-continuity-workflow`.
+- **Result**: retain the 1,000-item maximum and sequential partial-success
+  contract. Three isolated PostgreSQL runs with a forced failure at item 500
+  completed create in 2.31–4.78 seconds and update in 1.82–3.85 seconds; every
+  run returned 999 successes and committed items after the failure.
+  Representative request bodies were about 325 KB for create and 131 KB for
+  update, so
+  `BODY_PARSER_LIMIT` remains an independent byte-size gate: the 100 KB local
+  default cannot carry this representative maximum, while the 2 MB Railway
+  example can. The opt-in measurement is reproducible through the integration
+  runner and does not slow the normal safety suite.
 
 ## Wave 2 — the pilot (gates the rest)
 
