@@ -41,4 +41,11 @@ RUN chown -R odoo:odoo /mnt/extra-addons
 COPY scripts/set-admin-passwd.sh /set-admin-passwd.sh
 RUN chmod +x /set-admin-passwd.sh
 
+# Syncs the admin login password from ODOO_ADMIN_PASSWORD on every deploy (used
+# in deploy.preDeployCommand) — see infra/odoo/README.md and both files' own
+# header comments.
+COPY patches/sync-admin-password.py /sync-admin-password.py
+COPY scripts/sync-admin-password.sh /sync-admin-password.sh
+RUN chmod +x /sync-admin-password.sh
+
 USER odoo
