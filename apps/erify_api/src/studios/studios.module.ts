@@ -30,11 +30,5 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
     StudioPerformanceModule,
     StudioClientMechanicModule,
   ],
-  exports: [
-    StudioTaskTemplateModule,
-    StudioTaskModule,
-    StudioShowModule,
-    StudioCompensationLineItemModule,
-  ],
 })
 export class StudiosModule {}

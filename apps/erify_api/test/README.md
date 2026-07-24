@@ -36,4 +36,5 @@ non-local host, or a URL equal to the existing `DATABASE_URL`.
 - the API DTO exposes the external UID instead of the internal database ID;
 - a show is created through the real orchestration capability with UID relations;
 - a late schedule-publish failure rolls back the publish run and status writes;
+- the HTTP application composition root boots with all child modules;
 - the MCP runtime module graph boots with real Prisma and CLS providers.
