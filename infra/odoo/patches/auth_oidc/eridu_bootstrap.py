@@ -6,7 +6,20 @@
 # `odoo shell` + stdin redirection (Railway's preDeployCommand array entries
 # aren't guaranteed to go through a real shell, so `<` redirection inside a
 # quoted string silently failed with no usable log output).
+#
+# The rotated password is deliberately NOT logged: preDeployCommand runs in a
+# separate container from the app with no volume mounted (Railway's own docs),
+# so there's nowhere durable+permissioned to write it, and Odoo's logger is
+# the only output channel proven to reach Railway's log pipeline reliably -
+# which means logging it would put a plaintext credential in log
+# aggregation, with broader retention/access than this one-time bootstrap
+# secret needs. Instead it's stored in ir.config_parameter (same place Odoo
+# keeps its own runtime secrets) under BOOTSTRAP_PASSWORD_PARAM, readable only
+# via `odoo shell` by someone who already has production DB access - retrieve
+# and then delete it (see infra/odoo/README.md).
 import secrets
+
+BOOTSTRAP_PASSWORD_PARAM = "eridu.bootstrap_admin_password"
 
 
 def bootstrap_admin_password(env):
@@ -29,5 +42,5 @@ def bootstrap_admin_password(env):
 
     new_password = secrets.token_urlsafe(18)
     admin.write({'password': new_password})
+    env['ir.config_parameter'].sudo().set_param(BOOTSTRAP_PASSWORD_PARAM, new_password)
     env.cr.commit()
-    print("ODOO_BOOTSTRAP_ROTATED login=%s password=%s" % (admin.login, new_password))
