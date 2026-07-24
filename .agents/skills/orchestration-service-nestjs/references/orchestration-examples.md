@@ -186,7 +186,6 @@ async assignShowsToUser(studioUid: string, showUids: string[], assigneeUid: stri
 @Module({
   imports: [
     PrismaModule,     // Required by Processor for advisory lock
-    UtilityModule,
     TaskModule,
     TaskTargetModule,
     TaskTemplateModule,

@@ -14,8 +14,8 @@ import { StudioShiftRepository } from './studio-shift.repository';
 import { appendSnapshotAudit, isSnapshotValueEqual } from '@/lib/audit/snapshot-audit.helper';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { UtilityService } from '@/utility/utility.service';
 
 // Local JSON types — structurally compatible with Prisma's InputJsonValue so that
 // metadata objects can be passed to the repository without importing Prisma types here.
@@ -40,9 +40,9 @@ export class StudioShiftService extends BaseModelService {
   constructor(
     private readonly studioShiftRepository: StudioShiftRepository,
     private readonly studioMembershipService: StudioMembershipService,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createShift(studioId: string, payload: CreateStudioShiftInput) {
@@ -336,7 +336,7 @@ export class StudioShiftService extends BaseModelService {
   }
 
   private generateBlockUid(): string {
-    return this.utilityService.generateBrandedId(StudioShiftService.BLOCK_UID_PREFIX);
+    return this.uidGenerator.generateBrandedId(StudioShiftService.BLOCK_UID_PREFIX);
   }
 
   private buildBlocksReplacePayload(

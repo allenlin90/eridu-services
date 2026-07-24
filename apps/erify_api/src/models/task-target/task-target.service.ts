@@ -4,7 +4,7 @@ import type { TaskTarget } from '@prisma/client';
 import { TaskTargetRepository } from './task-target.repository';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class TaskTargetService extends BaseModelService {
@@ -13,9 +13,9 @@ export class TaskTargetService extends BaseModelService {
 
   constructor(
     private readonly taskTargetRepository: TaskTargetRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async create(...args: Parameters<TaskTargetRepository['create']>): ReturnType<TaskTargetRepository['create']> {

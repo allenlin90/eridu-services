@@ -17,12 +17,10 @@ import { TaskTemplateModule } from '@/models/task-template/task-template.module'
 import { FactExtractionModule } from '@/orchestration/fact-extraction/fact-extraction.module';
 import { ShiftAlignmentModule } from '@/orchestration/shift-alignment/shift-alignment.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
   imports: [
     PrismaModule,
-    UtilityModule,
     TaskModule,
     TaskTargetModule,
     TaskTemplateModule,

@@ -10,7 +10,7 @@ import { AuditRepository } from './audit.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class AuditService extends BaseModelService {
@@ -19,9 +19,9 @@ export class AuditService extends BaseModelService {
 
   constructor(
     private readonly auditRepository: AuditRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

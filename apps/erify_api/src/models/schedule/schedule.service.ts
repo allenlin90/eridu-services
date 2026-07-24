@@ -35,8 +35,8 @@ import {
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { ShowPlanItem } from '@/schedule-planning/schemas/schedule-planning.schema';
-import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class ScheduleService extends BaseModelService {
@@ -45,9 +45,9 @@ export class ScheduleService extends BaseModelService {
 
   constructor(
     private readonly scheduleRepository: ScheduleRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createScheduleFromDto<T extends ScheduleInclude = Record<string, never>>(

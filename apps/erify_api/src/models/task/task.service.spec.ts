@@ -13,7 +13,7 @@ import { ShowService } from '@/models/show/show.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
 
@@ -35,7 +35,7 @@ describe('taskService', () => {
     const repositoryMock = createMockRepository<TaskRepository>({
       updateWithVersionCheck: jest.fn(),
     });
-    const utilityMock = createMockUtilityService('task_test123');
+    const uidGeneratorMock = createMockUidGeneratorService('task_test123');
     const taskValidationServiceMock = {};
     const showServiceMock = {};
 
@@ -43,7 +43,7 @@ describe('taskService', () => {
       serviceClass: TaskService,
       repositoryClass: TaskRepository,
       repositoryMock,
-      utilityMock,
+      uidGeneratorMock,
       imports: [
         ClsModule.forRoot({
           global: true,

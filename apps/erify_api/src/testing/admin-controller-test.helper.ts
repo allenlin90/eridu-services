@@ -3,11 +3,13 @@ import type { Provider } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
+
 /**
  * Common mock services used across admin controllers
  */
 export const adminMockServices = {
-  utilityService: {
+  uidGenerator: {
     generateBrandedId: jest.fn(),
   },
   configService: {
@@ -61,8 +63,8 @@ export async function createAdminControllerTestModule<TController>({
     controllerClass,
     // Common services
     {
-      provide: 'UtilityService',
-      useValue: adminMockServices.utilityService,
+      provide: UidGeneratorService,
+      useValue: adminMockServices.uidGenerator,
     },
     {
       provide: 'ConfigService',

@@ -11,7 +11,7 @@ import { ScheduleSnapshotRepository } from './schedule-snapshot.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class ScheduleSnapshotService extends BaseModelService {
@@ -20,9 +20,9 @@ export class ScheduleSnapshotService extends BaseModelService {
 
   constructor(
     private readonly scheduleSnapshotRepository: ScheduleSnapshotRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createScheduleSnapshot(

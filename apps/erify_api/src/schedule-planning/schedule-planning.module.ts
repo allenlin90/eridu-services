@@ -6,6 +6,7 @@ import { SchedulePlanningService } from './schedule-planning.service';
 import { ScheduleRestorationProcessor } from './schedule-restoration-processor.service';
 import { ValidationService } from './validation.service';
 
+import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
 import { AuditModule } from '@/models/audit/audit.module';
 import { PublishRunModule } from '@/models/publish-run/publish-run.module';
 import { ScheduleModule } from '@/models/schedule/schedule.module';
@@ -17,7 +18,6 @@ import { ShowPlatformModule } from '@/models/show-platform/show-platform.module'
 import { TaskModule } from '@/models/task/task.module';
 import { TaskTargetModule } from '@/models/task-target/task-target.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { UtilityModule } from '@/utility/utility.module';
     ShowModule,
     ShowCreatorModule,
     ShowPlatformModule,
-    UtilityModule,
+    UidGeneratorModule,
     TaskModule,
     TaskTargetModule,
   ],

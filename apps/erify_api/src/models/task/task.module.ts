@@ -10,13 +10,13 @@ import { TaskRepository } from './task.repository';
 import { TaskService } from './task.service';
 import { TaskValidationService } from './task-validation.service';
 
+import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
   imports: [
     PrismaModule,
-    UtilityModule,
+    UidGeneratorModule,
     TaskTargetModule,
     TaskTemplateModule,
     ShowModule,

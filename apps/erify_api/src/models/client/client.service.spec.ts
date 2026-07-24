@@ -2,31 +2,31 @@ import type { CreateClientPayload, UpdateClientDto } from './schemas/client.sche
 import { ClientRepository } from './client.repository';
 import { ClientService } from './client.service';
 
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('clientService', () => {
   let service: ClientService;
   let clientRepositoryMock: Partial<jest.Mocked<ClientRepository>>;
-  let utilityMock: Partial<jest.Mocked<UtilityService>>;
+  let uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>>;
 
   beforeEach(async () => {
     clientRepositoryMock = createMockRepository<ClientRepository>();
-    utilityMock = createMockUtilityService('client_123');
+    uidGeneratorMock = createMockUidGeneratorService('client_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: ClientService,
       repositoryClass: ClientRepository,
       repositoryMock: clientRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<ClientService>(ClientService);
@@ -48,7 +48,7 @@ describe('clientService', () => {
 
     const result = await service.createClient(dto);
 
-    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith(
+    expect(uidGeneratorMock.generateBrandedId).toHaveBeenCalledWith(
       'client',
       undefined,
     );

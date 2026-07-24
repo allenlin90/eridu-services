@@ -12,7 +12,7 @@ import type {
 import { SHOW_STATUS_UID_PREFIX } from './show-status-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class ShowStatusService extends BaseModelService {
@@ -21,9 +21,9 @@ export class ShowStatusService extends BaseModelService {
 
   constructor(
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createShowStatus(

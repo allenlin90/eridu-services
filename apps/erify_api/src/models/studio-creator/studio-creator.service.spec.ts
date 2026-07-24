@@ -8,13 +8,13 @@ import { ClsModule } from 'nestjs-cls';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { CreatorRepository } from '@/models/creator/creator.repository';
 import { CreatorService } from '@/models/creator/creator.service';
 import { StudioCreatorRepository, type StudioCreatorRosterRecord } from '@/models/studio-creator/studio-creator.repository';
 import { StudioCreatorService } from '@/models/studio-creator/studio-creator.service';
 import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
 
 const mockPrismaForCls = {
   $transaction: jest.fn(async (callback: any) => await callback({})),
@@ -56,7 +56,7 @@ describe('studioCreatorService', () => {
   let creatorRepository: jest.Mocked<CreatorRepository>;
   let creatorService: jest.Mocked<CreatorService>;
   let userService: jest.Mocked<UserService>;
-  let utilityService: jest.Mocked<UtilityService>;
+  let uidGenerator: jest.Mocked<UidGeneratorService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -109,7 +109,7 @@ describe('studioCreatorService', () => {
           },
         },
         {
-          provide: UtilityService,
+          provide: UidGeneratorService,
           useValue: {
             generateBrandedId: jest.fn().mockReturnValue('smc_generated'),
           },
@@ -122,7 +122,7 @@ describe('studioCreatorService', () => {
     creatorRepository = module.get(CreatorRepository);
     creatorService = module.get(CreatorService);
     userService = module.get(UserService);
-    utilityService = module.get(UtilityService);
+    uidGenerator = module.get(UidGeneratorService);
   });
 
   it('defaults roster listing to active creators', async () => {
@@ -299,7 +299,7 @@ describe('studioCreatorService', () => {
       metadata: { source: 'ui' },
     });
 
-    expect(utilityService.generateBrandedId).toHaveBeenCalledWith('smc', undefined);
+    expect(uidGenerator.generateBrandedId).toHaveBeenCalledWith('smc', undefined);
     expect(studioCreatorRepository.createRosterEntry).toHaveBeenCalledWith({
       uid: 'smc_generated',
       studioUid: 'std_1',

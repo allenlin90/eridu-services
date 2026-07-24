@@ -3,20 +3,20 @@ import { Prisma } from '@prisma/client';
 import { ShowStandardRepository } from './show-standard.repository';
 import { ShowStandardService } from './show-standard.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('showStandardService', () => {
   let service: ShowStandardService;
   let showStandardRepository: ShowStandardRepository;
-  let utilityService: UtilityService;
+  let uidGenerator: UidGeneratorService;
 
   beforeEach(async () => {
     const showStandardRepositoryMock = createMockRepository<ShowStandardRepository>(
@@ -25,20 +25,20 @@ describe('showStandardService', () => {
       },
     );
 
-    const utilityMock = createMockUtilityService('shsd_test123');
+    const uidGeneratorMock = createMockUidGeneratorService('shsd_test123');
 
     const module = await createModelServiceTestModule({
       serviceClass: ShowStandardService,
       repositoryClass: ShowStandardRepository,
       repositoryMock: showStandardRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<ShowStandardService>(ShowStandardService);
     showStandardRepository = module.get<ShowStandardRepository>(
       ShowStandardRepository,
     );
-    utilityService = module.get<UtilityService>(UtilityService);
+    uidGenerator = module.get<UidGeneratorService>(UidGeneratorService);
   });
 
   it('should be defined', () => {
@@ -68,7 +68,7 @@ describe('showStandardService', () => {
 
       const result = await service.createShowStandard(showStandardData);
 
-      expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+      expect(uidGenerator.generateBrandedId).toHaveBeenCalledWith(
         'shsd',
         undefined,
       );

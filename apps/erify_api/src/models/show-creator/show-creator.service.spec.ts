@@ -8,8 +8,8 @@ import type {
 import { ShowCreatorRepository } from './show-creator.repository';
 import { ShowCreatorService } from './show-creator.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
@@ -27,7 +27,7 @@ describe('showCreatorService', () => {
     findOne: jest.fn(),
   };
 
-  const utilityMock: Partial<jest.Mocked<UtilityService>> = {
+  const uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>> = {
     generateBrandedId: jest.fn().mockReturnValue('show_mc_123'),
   };
 
@@ -36,7 +36,7 @@ describe('showCreatorService', () => {
       providers: [
         ShowCreatorService,
         { provide: ShowCreatorRepository, useValue: showCreatorRepositoryMock },
-        { provide: UtilityService, useValue: utilityMock },
+        { provide: UidGeneratorService, useValue: uidGeneratorMock },
       ],
     }).compile();
 
@@ -75,7 +75,7 @@ describe('showCreatorService', () => {
 
       const result = await service.create(dto);
 
-      expect(utilityMock.generateBrandedId).toHaveBeenCalledWith(
+      expect(uidGeneratorMock.generateBrandedId).toHaveBeenCalledWith(
         'show_mc',
         undefined,
       );

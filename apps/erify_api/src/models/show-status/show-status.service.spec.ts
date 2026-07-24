@@ -3,7 +3,7 @@ import type { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapt
 
 import { ShowStatusService } from './show-status.service';
 
-import type { UtilityService } from '@/utility/utility.service';
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 function createShowStatusDelegateMock() {
   return {
@@ -32,11 +32,11 @@ function createShowStatus(overrides: Record<string, unknown> = {}) {
 describe('showStatusService', () => {
   let service: ShowStatusService;
   let delegate: ReturnType<typeof createShowStatusDelegateMock>;
-  let utilityService: jest.Mocked<Pick<UtilityService, 'generateBrandedId'>>;
+  let uidGenerator: jest.Mocked<Pick<UidGeneratorService, 'generateBrandedId'>>;
 
   beforeEach(() => {
     delegate = createShowStatusDelegateMock();
-    utilityService = {
+    uidGenerator = {
       generateBrandedId: jest.fn().mockReturnValue('shst_test123'),
     };
     const txHost = {
@@ -45,7 +45,7 @@ describe('showStatusService', () => {
 
     service = new ShowStatusService(
       txHost,
-      utilityService as unknown as UtilityService,
+      uidGenerator as unknown as UidGeneratorService,
     );
   });
 
@@ -63,7 +63,7 @@ describe('showStatusService', () => {
 
     await expect(service.createShowStatus(payload)).resolves.toEqual(expected);
 
-    expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+    expect(uidGenerator.generateBrandedId).toHaveBeenCalledWith(
       'shst',
       undefined,
     );

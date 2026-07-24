@@ -1,20 +1,20 @@
 import { StudioRoomRepository } from './studio-room.repository';
 import { StudioRoomService } from './studio-room.service';
 
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
-import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('studioRoomService', () => {
   let service: StudioRoomService;
   let studioRoomRepositoryMock: Partial<jest.Mocked<StudioRoomRepository>>;
-  let utilityServiceMock: Partial<jest.Mocked<UtilityService>>;
+  let uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>>;
 
   beforeEach(async () => {
     studioRoomRepositoryMock = createMockRepository<StudioRoomRepository>({
@@ -25,13 +25,13 @@ describe('studioRoomService', () => {
       softDelete: jest.fn(),
     });
 
-    utilityServiceMock = createMockUtilityService('srm_test_id');
+    uidGeneratorMock = createMockUidGeneratorService('srm_test_id');
 
     const module = await createModelServiceTestModule({
       serviceClass: StudioRoomService,
       repositoryClass: StudioRoomRepository,
       repositoryMock: studioRoomRepositoryMock,
-      utilityMock: utilityServiceMock,
+      uidGeneratorMock,
     });
 
     service = module.get<StudioRoomService>(StudioRoomService);
