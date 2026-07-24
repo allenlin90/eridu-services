@@ -8,10 +8,7 @@ Stock Odoo's built-in `auth_oauth` module only speaks the OAuth2 **implicit** gr
 
 ## Railway wiring
 
-The `Odoo` service is connected to `allenlin90/eridu-services` with:
-
-- Root directory: `infra/odoo`
-- Dockerfile path: `Dockerfile`
+The `Odoo` service is connected to `allenlin90/eridu-services` (branch `master`) with root directory `infra/odoo`. The service's dashboard/API `builder` setting only accepts Railpack-family builders (`RAILPACK`/`NIXPACKS`/`HEROKU`/`PAKETO`) — there's no `DOCKERFILE` value there, and Railpack does not build a Dockerfile it happens to find sitting next to it. Getting an actual Dockerfile build requires [config-as-code](https://docs.railway.com/config-as-code/reference): `railway.json` in this directory sets `build.builder: "DOCKERFILE"`, which always overrides the dashboard/API setting.
 
 All other service config (variables, volume at `/var/lib/odoo`, start command `/entrypoint.sh odoo --proxy-mode --database=odoo --no-database-list`) is unchanged from the prior raw-image deployment.
 
