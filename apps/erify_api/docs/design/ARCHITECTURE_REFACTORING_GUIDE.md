@@ -372,7 +372,14 @@ Every option must preserve:
 - audit and optimistic-lock behavior;
 - bounded list and bulk inputs.
 
-If the team accepts this matrix, the same pilot PR must reconcile every instruction or architecture document that asserts “repository for all DB access.” This includes `AGENTS.md`, `repository-pattern-nestjs`, `service-pattern-nestjs`, `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in `database-patterns`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md`. Until then, the current repository-first rules remain canonical.
+The implementation pilot proves this matrix only for `ShowStatus`; it does not
+change repository doctrine. If the team accepts the result, the separate T12
+acceptance PR must reconcile in one change every instruction or architecture
+document that asserts “repository for all DB access.” This includes `AGENTS.md`,
+`repository-pattern-nestjs`, `service-pattern-nestjs`,
+`orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in
+`database-patterns`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md`. Until T12
+lands, the current repository-first rules remain canonical outside the pilot.
 
 ## CQRS: What It Is And Why Not Yet
 
@@ -456,7 +463,10 @@ findings without implementing refactors or creating a parallel backlog.
 
 The scheduled scan should discover and compare signals. Human review decides whether evidence warrants implementation. Performance gates should use runtime measurements and observability rather than source counts.
 
-Capability-first placement is accepted for new work. The persistence matrix remains proposed until the pilot succeeds: repository-first data access stays canonical in the meantime. The generic trigger-audit process applies to both the accepted placement rule and any pilot-gated pattern.
+Capability-first placement is accepted for new work. The persistence matrix
+passed its `ShowStatus` implementation pilot but remains non-canonical until T12
+reconciles repository-first doctrine in one change. The generic trigger-audit
+process applies to both the accepted placement rule and any pilot-gated pattern.
 
 ## Phased Refactoring Plan
 
