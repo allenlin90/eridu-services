@@ -32,7 +32,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | T2 | Phase 0b (light): record signals baseline | S | now, parallel | ✅ |
 | T3 | MCP list hard maximums | S | now | ✅ |
 | T4 | Remove dead/duplicate module wiring | S | now | ✅ |
-| T5 | Remove empty OpenAPI dynamic module | S | now | 🔲 |
+| T5 | Remove empty OpenAPI dynamic module | S | now | ✅ |
 | T6 | Type the `StudioGuard` membership value | S | now | 🔲 |
 | T7 | `UtilityService` simplification | M | now | 🔲 |
 
@@ -83,6 +83,9 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 - **Scope**: confirm `openapi.module.ts` has no runtime role (grep usages), then remove it.
 - **Gate**: none — bootstrap/OpenAPI wiring verification plus build.
+- **Result**: removed the empty module and its `AppModule` registration.
+  `setupOpenAPI()` remains the single bootstrap path; a focused spec pins
+  document creation plus `/swagger-json` and `/api-reference` registration.
 
 ### T6 — Type the `StudioGuard` membership value
 
