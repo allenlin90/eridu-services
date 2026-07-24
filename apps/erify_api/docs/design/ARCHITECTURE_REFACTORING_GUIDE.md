@@ -135,15 +135,21 @@ Some direct repository access is justified by bulk writes, transaction visibilit
 
 **Direction**: make each capability expose a small service/query surface. Keep complex persistence private. If a model service cannot support a required atomic operation, add a capability-owned persistence method instead of exporting a general repository.
 
-#### 2. `BaseRepository` Is A Leaky, Partly False Abstraction
+#### 2. `BaseRepository` Is A Leaky Abstraction
 
 [`base.repository.ts`](../../src/lib/repositories/base.repository.ts) mirrors Prisma CRUD using broad `Record<string, any>` and `any` parameters. It creates consistent soft-delete calls, but it does not hide Prisma's query model and it cannot reliably provide transaction semantics.
 
-The known inherited-delegate problem is already tracked in [`erify-api-refactor-residuals.md`](../../../../docs/tech-debt/erify-api-refactor-residuals.md): inherited methods bind to the unbounded `PrismaService`, while critical overrides use `TransactionHost.tx`. The base `restore()` implementation also adds `deletedAt: null` to the row it intends to restore, so it cannot restore a soft-deleted row. Current restore flows avoid that dormant behavior through specialized overrides, but the generic contract is misleading.
+T9 repaired the two false generic behaviors: `PrismaModelWrapper` now resolves
+each repository delegate lazily from `TransactionHost.tx`, and `restore()`
+targets soft-deleted rows rather than filtering for active rows. Real-PostgreSQL
+tests prove inherited writes join rollback and restore returns a row to active
+reads. The abstraction still exposes broad Prisma-shaped arguments and should
+not become the automatic persistence choice for every capability.
 
 **Direction**:
 
-- Fix or retire the generic abstraction before relying on it more broadly.
+- Keep the repaired generic semantics covered, but do not expand the abstraction
+  by default.
 - Keep named persistence modules for complex queries, conditional writes, optimistic locking, raw SQL, audit storage, and multi-row lifecycle changes.
 - Allow a shallow capability service to use its transaction-aware Prisma delegate directly when a repository adds no policy or reuse.
 - Do not introduce a repository interface for a single Prisma implementation. One adapter is a hypothetical seam; two adapters are a real seam.
