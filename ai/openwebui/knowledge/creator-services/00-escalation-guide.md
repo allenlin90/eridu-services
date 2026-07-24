@@ -1,7 +1,7 @@
 ---
 id: creator-services.escalation-guide
 title: Escalation Guide
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

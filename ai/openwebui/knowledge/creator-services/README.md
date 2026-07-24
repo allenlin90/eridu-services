@@ -9,7 +9,7 @@ in [`ai/architecture/llm-knowledge-base-plan.md`](../../../architecture/llm-know
 roadmap ("Erisa groups — Creator and affiliate workflows"), reached via this
 directory's lighter pipeline instead of the full `company-wiki/` validator +
 Sync Pipe. Every content file (not this README) carries that plan's Content
-Contract frontmatter — `id`, `audiences: [erisa-creator-services]`,
+Contract frontmatter — `id`, `audiences: [erisa]`,
 `owner: erisa-creator-services`, `sensitivity: department`, `status`,
 `source_refs`, `reviewed_at`, `review_by` — so it publishes with a classified
 audience/sensitivity instead of unclassified metadata. It is **not yet**
@@ -56,8 +56,11 @@ scrape and inline these), **6 escalations** (mirrored in `00-escalation-guide.md
   creates the collection and uploads every file. This copy is **reconciled for the
   deployed Open WebUI `0.10.x`**: the list endpoint returns `{"items": [...]}`
   (not a bare list), it reads `OPEN_WEBUI_HOST` / `OPEN_WEBUI_API_KEY` from
-  `ai/openwebui/.env`, and it skips hidden dirs / `site-packages`. It is
-  idempotent (skips files already in the collection).
+  `ai/openwebui/.env`, and it skips hidden dirs / `site-packages`. It reconciles
+  by content hash (own `content_sha256` upload metadata, not filename presence):
+  unchanged files are skipped, changed files are deleted and re-uploaded, and KB
+  files with no matching local filename are removed — so re-running it after a
+  regeneration reflects Git, not whatever ran first.
 - **Long-term:** move sync to the repo's knowledge Sync Pipe (or `oikb`) pointed
   at this directory, matching how `company-wiki/` is kept in sync.
 
@@ -68,9 +71,9 @@ python3 scripts/ai/creator-kb/generate_kb.py <new-excel>.xlsx ai/openwebui/knowl
 ```
 
 Knowledge `.md` files are **generated artifacts** — do not hand-edit content here;
-change the source Excel and regenerate. After regenerating changed content, remove
-the stale files from the collection before re-uploading (the uploader skips files
-whose names already exist).
+change the source Excel and regenerate, then re-run `upload_kb.py`; it reconciles
+changed/removed files automatically (see Sync pipeline above), no manual cleanup
+step needed.
 
 ## Validation questions
 

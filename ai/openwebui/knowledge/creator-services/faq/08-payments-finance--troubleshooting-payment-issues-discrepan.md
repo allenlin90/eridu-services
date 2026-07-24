@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.payments-finance--troubleshooting-payment-issues-discrepan
 title: Payments & Finance — Troubleshooting Payment Issues & Discrepancies
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

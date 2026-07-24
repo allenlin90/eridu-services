@@ -1,7 +1,7 @@
 ---
 id: creator-services.policy.svls-challenge
 title: Creator Policy Q1/2025 — คำถามเกี่ยวกับ SV/LS Challenge
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

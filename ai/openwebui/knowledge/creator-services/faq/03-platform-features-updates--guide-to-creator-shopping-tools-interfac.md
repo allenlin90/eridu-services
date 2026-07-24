@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.platform-features-updates--guide-to-creator-shopping-tools-interfac
 title: Platform Features & Updates — Guide to Creator Shopping Tools Interface (within TikTok app)
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

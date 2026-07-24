@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.official-programs-campaigns-in--terms-conditions-for-specific-programsca
 title: Official Programs, Campaigns & Incentives — Terms & Conditions for Specific Programs/Campaigns
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

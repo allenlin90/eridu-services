@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.official-programs-campaigns-in--eligibility-criteria-registration-for-pr
 title: Official Programs, Campaigns & Incentives — Eligibility Criteria & Registration for Programs/Campaigns
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

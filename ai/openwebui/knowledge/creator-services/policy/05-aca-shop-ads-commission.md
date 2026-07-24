@@ -1,7 +1,7 @@
 ---
 id: creator-services.policy.aca-shop-ads-commission
 title: Creator Policy Q1/2025 — คำถามเกี่ยวกับ ACA = Shop Ads Commission
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

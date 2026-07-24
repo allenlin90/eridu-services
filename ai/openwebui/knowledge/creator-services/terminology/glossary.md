@@ -1,7 +1,7 @@
 ---
 id: creator-services.terminology.glossary
 title: Terminology Glossary
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

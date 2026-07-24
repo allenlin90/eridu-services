@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.payments-finance--payout-cycles-timelines
 title: Payments & Finance — Payout Cycles & Timelines
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

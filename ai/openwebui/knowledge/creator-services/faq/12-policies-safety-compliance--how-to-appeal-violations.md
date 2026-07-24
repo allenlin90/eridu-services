@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.policies-safety-compliance--how-to-appeal-violations
 title: Policies, Safety & Compliance — How to Appeal Violations
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

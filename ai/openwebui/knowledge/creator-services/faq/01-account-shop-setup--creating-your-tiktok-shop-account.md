@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.account-shop-setup--creating-your-tiktok-shop-account
 title: Account & Shop Setup — Creating Your TikTok Shop Account (Seller setup vs. Creator feature enablement)
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

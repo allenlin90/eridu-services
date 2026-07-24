@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.platform-features-updates--using-tiktok-shop-mobile-app-vs-desktop
 title: Platform Features & Updates — Using TikTok Shop Mobile App vs. Desktop
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

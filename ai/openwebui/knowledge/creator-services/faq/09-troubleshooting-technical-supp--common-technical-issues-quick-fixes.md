@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.troubleshooting-technical-supp--common-technical-issues-quick-fixes
 title: Troubleshooting & Technical Support — Common Technical Issues & Quick Fixes
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

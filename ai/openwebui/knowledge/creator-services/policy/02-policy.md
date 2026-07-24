@@ -1,7 +1,7 @@
 ---
 id: creator-services.policy.policy
 title: Creator Policy Q1/2025 — อื่น ๆ
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

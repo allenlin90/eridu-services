@@ -1,7 +1,7 @@
 ---
 id: creator-services.policy.live-base
 title: Creator Policy Q1/2025 — คำถามเกี่ยวกับ Live Base
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

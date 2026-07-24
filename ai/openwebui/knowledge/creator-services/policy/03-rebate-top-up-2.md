@@ -1,7 +1,7 @@
 ---
 id: creator-services.policy.rebate-top-up-2
 title: Creator Policy Q1/2025 — ปัญหา Rebate Top up 2% (รางวัล RS Tier S, A)
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

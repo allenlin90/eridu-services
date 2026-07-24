@@ -1,7 +1,7 @@
 ---
 id: creator-services.violations.common-violations
 title: Common Creator Violations
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

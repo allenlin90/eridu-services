@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.payments-finance--setting-up-payout-information
 title: Payments & Finance — Setting Up Payout Information
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

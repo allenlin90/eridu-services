@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.policies-safety-compliance--prohibited-restricted-products-guideline
 title: Policies, Safety & Compliance — Prohibited & Restricted Products Guidelines
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

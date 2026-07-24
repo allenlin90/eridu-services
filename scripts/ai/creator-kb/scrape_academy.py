@@ -54,9 +54,14 @@ SCOPE_HOSTS = {"seller-th.tiktok.com"}
 SCOPE_PATH_RE = re.compile(r"^/university/(essay|course)")
 IDENTITY_PARAMS = ("knowledge_id", "learning_id", "content_id")
 
-STATE_FILE = Path("state.json")
-AUTH_FILE = Path("auth_state.json")
-OUT_DIR = Path("scraped")
+# Anchored to this script's own directory, not the caller's cwd: running
+# `python3 scripts/ai/creator-kb/scrape_academy.py --login` from the repo
+# root must not drop a live-session auth_state.json at the repo root, where
+# .gitignore's scripts/ai/creator-kb/-scoped entries don't cover it.
+SCRIPT_DIR = Path(__file__).resolve().parent
+STATE_FILE = SCRIPT_DIR / "state.json"
+AUTH_FILE = SCRIPT_DIR / "auth_state.json"
+OUT_DIR = SCRIPT_DIR / "scraped"
 
 
 def canonical_id(url: str):
@@ -203,7 +208,7 @@ def run_login():
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--seeds", default="seed_urls.txt")
+    ap.add_argument("--seeds", default=str(SCRIPT_DIR / "seed_urls.txt"))
     ap.add_argument("--max-depth", type=int, default=DEFAULTS["max_depth"])
     ap.add_argument("--max-pages", type=int, default=DEFAULTS["max_pages"])
     ap.add_argument("--delay-seconds", type=float, default=DEFAULTS["delay_seconds"])

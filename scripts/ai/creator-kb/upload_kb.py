@@ -5,13 +5,19 @@ Upload the creator-services knowledge base to Open WebUI via API.
 Follows the documented best-practice path (Open WebUI >= 0.9.6):
   - Real KB directories are created to mirror the local folders
     (faq/, policy/, violations/, terminology/) via POST /api/v1/knowledge/{id}/dirs/create
-  - Each file is uploaded ONCE with `knowledge_id` + `directory_id` in the upload
+  - Each file is uploaded with `knowledge_id` + `directory_id` in the upload
     metadata, so the server auto-links and processes it into the KB server-side
     (robust to client disconnects; replaces the legacy upload -> add two-step)
   - Processing status is still polled afterwards, because server-side linking
     does not make content instantly queryable
   - Falls back to the legacy flow (upload -> poll -> /file/add) automatically
     if the server ignores the metadata auto-link (older versions)
+  - Reconciled by content hash, not filename presence: a local file whose
+    sha256 (stored in our own upload metadata) matches the KB copy is
+    skipped; a changed file is deleted then re-uploaded; a KB file with no
+    matching local filename is removed. This is what makes the sync
+    reflect what's actually in Git instead of silently going stale after
+    the first run.
 
 Environment variables (required):
     OPENWEBUI_URL / OPEN_WEBUI_HOST         base URL (no trailing slash)
@@ -41,6 +47,7 @@ The deployed instance differs from the original runbook assumptions:
 Only the uploader script was changed; the 28 knowledge .md files are untouched.
 """
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -56,6 +63,7 @@ ENDPOINTS = {
     "upload_file": "/api/v1/files/",
     "file_status": "/api/v1/files/{file_id}/process/status",
     "file_meta": "/api/v1/files/{file_id}",
+    "file_delete": "/api/v1/files/{file_id}",
     "kb_add_file": "/api/v1/knowledge/{kb_id}/file/add",
     "dir_create": "/api/v1/knowledge/{kb_id}/dirs/create",
 }
@@ -89,6 +97,10 @@ class Api:
                         data=data, timeout=120)
         r.raise_for_status()
         return r.json()
+
+    def delete(self, key, **kw):
+        r = self.s.delete(self.url(key, **kw), timeout=30)
+        r.raise_for_status()
 
 
 def _as_items(resp):
@@ -124,19 +136,29 @@ def find_or_create_kb(api, name):
     return kb_id
 
 
+def content_sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def kb_state(api, kb_id):
-    """Return (filename->file_id, dirname->dir_id) currently in the KB."""
+    """Return (filename->file_id, filename->stored content_sha256, dirname->dir_id)
+    currently in the KB. The hash comes back from our own upload metadata
+    (set below), so unhashed pre-existing files just compare as None != any
+    local hash and get treated as changed (safe default: reconcile, don't skip)."""
     kb = api.get("get_kb", kb_id=kb_id)
     files = {}
+    hashes = {}
     for f in (kb.get("files") or []):
-        fname = (f.get("meta") or {}).get("name") or f.get("filename") or ""
+        meta = f.get("meta") or {}
+        fname = meta.get("name") or f.get("filename") or ""
         if fname:
             files[fname] = f["id"]
+            hashes[fname] = meta.get("content_sha256")
     dirs = {}
     for d in (kb.get("directories", kb.get("dirs", [])) or []):
         if d.get("name") and not d.get("parent_id"):
             dirs[d["name"]] = d["id"]
-    return files, dirs
+    return files, hashes, dirs
 
 
 def ensure_dir(api, kb_id, dirs, name):
@@ -214,24 +236,33 @@ def main():
 
     api = Api(base, token)
     kb_id = find_or_create_kb(api, args.kb_name)
-    present, dirs = kb_state(api, kb_id)
+    present, hashes, dirs = kb_state(api, kb_id)
+    remaining = dict(present)  # names left in the KB once we've accounted for local files
 
-    ok = skipped = failed = 0
+    ok = skipped = updated = failed = 0
     for path in md_files:
         rel = path.relative_to(root)
         subdir = rel.parts[0] if len(rel.parts) > 1 else None
         upload_name = rel.name
+        local_hash = content_sha256(path)
+        remaining.pop(upload_name, None)
+
         if upload_name in present:
-            print(f"  skip (already in KB): {rel}")
-            skipped += 1
-            continue
+            if hashes.get(upload_name) == local_hash:
+                print(f"  skip (unchanged): {rel}")
+                skipped += 1
+                continue
+            print(f"  update (content changed): {rel}")
+            api.delete("file_delete", file_id=present[upload_name])
+            updated += 1
+        else:
+            print(f"  upload: {rel}")
 
         dir_id = ensure_dir(api, kb_id, dirs, subdir) if subdir else None
-        meta = {"knowledge_id": kb_id}
+        meta = {"knowledge_id": kb_id, "content_sha256": local_hash}
         if dir_id:
             meta["directory_id"] = dir_id
 
-        print(f"  upload: {rel}")
         with open(path, "rb") as fh:
             up = api.post(
                 "upload_file",
@@ -257,7 +288,14 @@ def main():
             api.post("kb_add_file", kb_id=kb_id, json_body=body)
         ok += 1
 
-    print(f"\nDone: added={ok} skipped={skipped} failed={failed}")
+    removed = 0
+    for stale_name, stale_id in remaining.items():
+        print(f"  remove (no longer in source): {stale_name}")
+        api.delete("file_delete", file_id=stale_id)
+        removed += 1
+
+    print(f"\nDone: added={ok - updated} updated={updated} skipped={skipped} "
+          f"removed={removed} failed={failed}")
     print("Next steps:")
     print("  1. Attach the KB to the assistant model (Workspace > Models > edit > Knowledge).")
     print("  2. ALSO attach 00-escalation-guide.md as a standalone file in FULL CONTEXT")

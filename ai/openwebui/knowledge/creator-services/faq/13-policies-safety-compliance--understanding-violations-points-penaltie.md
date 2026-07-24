@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.policies-safety-compliance--understanding-violations-points-penaltie
 title: Policies, Safety & Compliance — Understanding Violations, Points & Penalties
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

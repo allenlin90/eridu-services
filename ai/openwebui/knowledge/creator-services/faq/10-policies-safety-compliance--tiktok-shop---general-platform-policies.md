@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.policies-safety-compliance--tiktok-shop---general-platform-policies
 title: Policies, Safety & Compliance — TikTok Shop - General Platform Policies
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

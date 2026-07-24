@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.official-programs-campaigns-in--participating-in-official-tiktok-shop-ca
 title: Official Programs, Campaigns & Incentives — Participating in Official TikTok Shop Campaigns
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

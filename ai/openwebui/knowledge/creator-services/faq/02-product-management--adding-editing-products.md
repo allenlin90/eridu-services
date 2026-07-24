@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.product-management--adding-editing-products
 title: Product Management — Adding & Editing Products
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

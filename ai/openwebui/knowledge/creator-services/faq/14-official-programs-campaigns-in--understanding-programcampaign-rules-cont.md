@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.official-programs-campaigns-in--understanding-programcampaign-rules-cont
 title: Official Programs, Campaigns & Incentives — Understanding Program/Campaign Rules & Content Requirements
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

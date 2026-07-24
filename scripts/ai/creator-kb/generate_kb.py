@@ -27,7 +27,6 @@ pipeline instead of the full company-wiki validator/Sync Pipe.
 Repo home: scripts/ai/creator-kb/generate_kb.py, with output synced to
 ai/openwebui/knowledge/creator-services/.
 """
-import datetime
 import os
 import re
 import sys
@@ -40,16 +39,23 @@ LINK_RE = re.compile(r"https?://\S+")
 
 GOVERNANCE = {
     "owner": "erisa-creator-services",
-    "audiences": ["erisa-creator-services"],
+    # Must be a value from company-wiki/tools/wiki-schema.json's audiences
+    # enum (erisa-member/erisa-team-lead/erisa-manager, or the "erisa"
+    # shorthand) so this metadata is reusable by that validator later.
+    "audiences": ["erisa"],
     "sensitivity": "department",
     "source_ref": "CS_TikTok_Shop__Knowledge_Base.xlsx",
+    # Frozen to the date an owner actually reviewed this classification, not
+    # datetime.date.today(): a mechanical regeneration is not a review, and
+    # advancing these on every run would falsely certify stale content
+    # (e.g. Q1/2025 policy pages) as freshly reviewed. Bump both by hand only
+    # after an actual owner review.
+    "reviewed_at": "2026-07-23",
+    "review_by": "2026-10-21",
 }
-REVIEW_CADENCE_DAYS = 90
 
 
 def frontmatter(id_, title):
-    today = datetime.date.today()
-    review_by = today + datetime.timedelta(days=REVIEW_CADENCE_DAYS)
     return [
         "---",
         f"id: {id_}",
@@ -59,8 +65,8 @@ def frontmatter(id_, title):
         f"sensitivity: {GOVERNANCE['sensitivity']}",
         "status: active",
         f"source_refs: [{GOVERNANCE['source_ref']}]",
-        f"reviewed_at: {today.isoformat()}",
-        f"review_by: {review_by.isoformat()}",
+        f"reviewed_at: {GOVERNANCE['reviewed_at']}",
+        f"review_by: {GOVERNANCE['review_by']}",
         "---",
         "",
     ]

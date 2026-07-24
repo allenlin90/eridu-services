@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.official-programs-campaigns-in--overview-of-current-tiktok-shop-incentiv
 title: Official Programs, Campaigns & Incentives — Overview of Current TikTok Shop Incentive Programs
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active

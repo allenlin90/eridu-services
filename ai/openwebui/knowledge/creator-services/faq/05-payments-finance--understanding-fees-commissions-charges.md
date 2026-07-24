@@ -1,7 +1,7 @@
 ---
 id: creator-services.faq.payments-finance--understanding-fees-commissions-charges
 title: Payments & Finance — Understanding Fees, Commissions & Charges
-audiences: [erisa-creator-services]
+audiences: [erisa]
 owner: erisa-creator-services
 sensitivity: department
 status: active
