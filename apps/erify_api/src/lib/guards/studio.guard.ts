@@ -12,6 +12,10 @@ import { HttpError } from '@/lib/errors/http-error.util';
 import { StudioService } from '@/models/studio/studio.service';
 import { UserService } from '@/models/user/user.service';
 
+type StudioGuardMembership = NonNullable<
+  Awaited<ReturnType<UserService['getStudioMembership']>>
+>;
+
 /**
  * Studio Guard
  *
@@ -53,10 +57,10 @@ export class StudioGuard implements CanActivate {
 
     const membership = await this.fetchMembership(request.user!, studioId);
     this.ensureMembershipExists(membership, request.user!, studioId);
-    this.checkRoles(membership!, roles, request.user!.email, studioId);
+    this.checkRoles(membership, roles, request.user!.email, studioId);
 
     // Attach membership to request context
-    request.studioMembership = membership!;
+    request.studioMembership = membership;
 
     return true;
   }
@@ -91,7 +95,11 @@ export class StudioGuard implements CanActivate {
     return this.userService.getStudioMembership(user.ext_id, studioId);
   }
 
-  private ensureMembershipExists(membership: any, user: { ext_id: string; email: string }, studioId: string): void {
+  private ensureMembershipExists(
+    membership: StudioGuardMembership | undefined,
+    user: { ext_id: string; email: string },
+    studioId: string,
+  ): asserts membership is StudioGuardMembership {
     if (!membership) {
       this.logger.warn(
         `User ${user.email} (ext_id: ${user.ext_id}) attempted to access studio ${studioId} without membership`,
@@ -100,7 +108,12 @@ export class StudioGuard implements CanActivate {
     }
   }
 
-  private checkRoles(membership: any, roles: StudioRole[], email: string, studioId: string) {
+  private checkRoles(
+    membership: StudioGuardMembership,
+    roles: StudioRole[],
+    email: string,
+    studioId: string,
+  ) {
     if (roles.length > 0) {
       const hasRole = roles.includes(membership.role as StudioRole);
       if (!hasRole) {
