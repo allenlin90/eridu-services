@@ -29,6 +29,12 @@ Use `@Transactional()` from `@nestjs-cls/transactional`. CLS propagates automati
 
 If a flow mutates rows and then immediately re-queries eligible rows in the same transaction, the read must use a transaction-aware delegate (`txHost.tx.<model>`). This especially matters for restore/resume paths: a raw-client read cannot see rows undeleted earlier in the transaction, so reconciliation logic can silently skip work.
 
+Prove transaction participation with the isolated real-PostgreSQL harness, not
+only repository mocks. The harness must require a dedicated local database whose
+name ends in `_test`, refuse the normal `DATABASE_URL`, apply checked-in
+migrations, and run transaction integration specs serially. See
+[`apps/erify_api/test/README.md`](../../../apps/erify_api/test/README.md).
+
 > 📖 [references/03-transactions.md](references/03-transactions.md)
 
 ## 4. Query Optimization

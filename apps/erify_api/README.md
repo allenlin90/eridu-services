@@ -131,6 +131,9 @@ pnpm run test:e2e
 pnpm run test:cov
 ```
 
+Real PostgreSQL/Prisma/CLS safety checks use an isolated database and a guarded
+runner. See the [real-database integration test guide](test/README.md).
+
 ### Code Quality
 
 ```bash
