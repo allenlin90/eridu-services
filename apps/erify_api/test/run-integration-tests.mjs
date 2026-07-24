@@ -3,6 +3,15 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const testDatabaseUrl = process.env.ERIFY_API_TEST_DATABASE_URL;
+const bulkScheduleMeasurement
+  = process.argv.includes('--bulk-schedule-measurement');
+const unknownArguments = process.argv
+  .slice(2)
+  .filter((argument) => argument !== '--bulk-schedule-measurement');
+
+if (unknownArguments.length > 0) {
+  throw new Error(`Unknown integration runner arguments: ${unknownArguments.join(', ')}`);
+}
 
 if (!testDatabaseUrl) {
   throw new Error(
@@ -50,6 +59,7 @@ const testEnvironment = {
   DATABASE_URL: parsedTestDatabaseUrl.href,
   NODE_ENV: 'test',
   ERIDU_AUTH_URL: process.env.ERIDU_AUTH_URL ?? 'http://localhost:3001',
+  ERIFY_API_RUN_BULK_SCHEDULE_MEASUREMENT: bulkScheduleMeasurement ? '1' : '0',
 };
 
 function run(command, args) {
@@ -69,10 +79,19 @@ function run(command, args) {
 }
 
 run('pnpm', ['exec', 'prisma', 'migrate', 'deploy']);
-run('pnpm', [
+const jestArguments = [
   'exec',
   'jest',
   '--config',
   'test/jest-integration.config.js',
   '--runInBand',
-]);
+];
+
+if (bulkScheduleMeasurement) {
+  jestArguments.push(
+    '--runTestsByPath',
+    'test/integration/bulk-schedule-measurement.integration-spec.ts',
+  );
+}
+
+run('pnpm', jestArguments);
