@@ -9,7 +9,7 @@ Controller-layer patterns for `apps/erify_api`. Controllers validate/translate H
 
 ## First Read
 
-- Canonical controllers: [admin-client](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts), [studio-task-template](../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts), [me-task](../../../apps/erify_api/src/me/me-task/me-task.controller.ts)
+- Canonical controllers: [admin-client](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts), [admin show catalog](../../../apps/erify_api/src/capabilities/show-catalog/http/admin-show-status.controller.ts), [studio-task-template](../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts), [me-task](../../../apps/erify_api/src/me/me-task/me-task.controller.ts)
 - Base controllers: [base-admin](../../../apps/erify_api/src/admin/base-admin.controller.ts), [base-studio](../../../apps/erify_api/src/studios/base-studio.controller.ts), [base](../../../apps/erify_api/src/lib/controllers/base.controller.ts)
 - Detailed rules: [controller-rules.md](references/controller-rules.md) | Examples: [controller-examples.md](references/controller-examples.md)
 
@@ -33,6 +33,11 @@ Controller-layer patterns for `apps/erify_api`. Controllers validate/translate H
 - Semantic action endpoints (`POST .../resolve-cancellation`) over generic `PATCH`
 - Services must not accept HTTP DTOs, request/response objects, or Nest exceptions
 - Admin mutations use domain write paths, not nested Prisma creates
+- Colocate a controller with the capability that owns its use case when that
+  capability is actively consolidated. Preserve the existing `@Controller`
+  prefix, guards, response decorators, and UID pipes; audience composition
+  modules should import the capability module instead of wrapping each
+  controller in a table-specific module.
 - `@Delete` routes default to `ADMIN`-only via an explicit per-route `@StudioProtected([STUDIO_ROLE.ADMIN])` override — never inherit a broader class-level guard meant for reads/writes (e.g. `StudioMembersController.removeMember`). A role broadly authorized to edit a resource (e.g. `ACCOUNT_MANAGER` on a catalog) isn't automatically authorized to hard-delete it; that needs its own explicit decision.
 - When checking whether a route exists, account for NestJS's prefix + method-path composition — `@Controller('studios/:studioId')` plus `@Get('clients')` on a method composes to `GET /studios/:studioId/clients`. Grepping for the full combined path as one literal `@Controller(...)` string misses this and produces a false "route doesn't exist" (caught a codex review false-positive this way on PR 20.4 — `StudioLookupController`'s `clients` lookup route was real, just not findable by that search).
 

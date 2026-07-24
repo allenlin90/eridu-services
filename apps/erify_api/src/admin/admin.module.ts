@@ -4,13 +4,9 @@ import { AdminClientModule } from './clients/admin-client.module';
 import { AdminCompensationLineItemModule } from './compensation-line-items/admin-compensation-line-item.module';
 import { AdminCreatorModule } from './creators/admin-creator.module';
 import { AdminStudioMembershipModule } from './memberships/admin-studio-membership.module';
-import { AdminPlatformModule } from './platforms/admin-platform.module';
 import { AdminScheduleModule } from './schedules/admin-schedule.module';
 import { AdminShowCreatorModule } from './show-creators/admin-show-creator.module';
 import { AdminShowPlatformModule } from './show-platforms/admin-show-platform.module';
-import { AdminShowStandardModule } from './show-standards/admin-show-standard.module';
-import { AdminShowStatusModule } from './show-statuses/admin-show-status.module';
-import { AdminShowTypeModule } from './show-types/admin-show-type.module';
 import { AdminShowModule } from './shows/admin-show.module';
 import { AdminSnapshotModule } from './snapshots/admin-snapshot.module';
 import { AdminStudioRoomModule } from './studio-rooms/admin-studio-room.module';
@@ -19,15 +15,14 @@ import { AdminTaskTemplateModule } from './task-templates/admin-task-template.mo
 import { AdminTaskModule } from './tasks/admin-task.module';
 import { AdminUserModule } from './users/admin-user.module';
 
+import { ShowCatalogModule } from '@/capabilities/show-catalog/show-catalog.module';
+
 @Module({
   imports: [
     AdminUserModule,
     AdminClientModule,
     AdminCreatorModule,
-    AdminPlatformModule,
-    AdminShowStandardModule,
-    AdminShowStatusModule,
-    AdminShowTypeModule,
+    ShowCatalogModule,
     AdminShowModule,
     AdminShowCreatorModule,
     AdminShowPlatformModule,

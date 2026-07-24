@@ -30,6 +30,12 @@
 
 ## Module Architecture
 
+The first consolidated backend capability is
+`apps/erify_api/src/capabilities/show-catalog/`. `ShowCatalogModule` owns the
+show type, status, standard, and platform provider registration plus their
+admin HTTP controllers. Its public Nest interface is the four focused services;
+the repositories remain private.
+
 ```mermaid
 block-beta
     columns 1

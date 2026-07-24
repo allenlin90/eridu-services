@@ -10,7 +10,7 @@ import { StudioShowManagementService } from './studio-show-management.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
-import { PlatformRepository } from '@/models/platform/platform.repository';
+import { PlatformService } from '@/models/platform/platform.service';
 import { PublishRunService } from '@/models/publish-run/publish-run.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
@@ -85,8 +85,8 @@ describe('studioShowManagementService', () => {
     findByUidAndStudioUid: jest.fn(),
     update: jest.fn(),
   };
-  const platformRepositoryMock = {
-    findByUids: jest.fn(),
+  const platformServiceMock = {
+    findActiveByUids: jest.fn(),
   };
   const showPlatformRepositoryMock = {
     findMany: jest.fn(),
@@ -178,7 +178,7 @@ describe('studioShowManagementService', () => {
         { provide: ScheduleService, useValue: scheduleServiceMock },
         { provide: ShowService, useValue: showServiceMock },
         { provide: ShowRepository, useValue: showRepositoryMock },
-        { provide: PlatformRepository, useValue: platformRepositoryMock },
+        { provide: PlatformService, useValue: platformServiceMock },
         { provide: ShowPlatformRepository, useValue: showPlatformRepositoryMock },
         { provide: ShowPlatformService, useValue: showPlatformServiceMock },
         { provide: ShowOrchestrationService, useValue: showOrchestrationServiceMock },
@@ -208,7 +208,7 @@ describe('studioShowManagementService', () => {
       client: { uid: 'cli_1' },
     });
     showPlatformRepositoryMock.findMany.mockResolvedValue([]);
-    platformRepositoryMock.findByUids.mockResolvedValue([
+    platformServiceMock.findActiveByUids.mockResolvedValue([
       { id: BigInt(30), uid: 'plt_1' },
     ]);
     showPlatformServiceMock.generateShowPlatformUid.mockReturnValue('shp_1');
@@ -1572,7 +1572,7 @@ describe('studioShowManagementService', () => {
           { provide: ScheduleService, useValue: scheduleServiceMock },
           { provide: ShowService, useValue: showServiceMock },
           { provide: ShowRepository, useValue: showRepositoryMock },
-          { provide: PlatformRepository, useValue: platformRepositoryMock },
+          { provide: PlatformService, useValue: platformServiceMock },
           { provide: ShowPlatformRepository, useValue: showPlatformRepositoryMock },
           { provide: ShowPlatformService, useValue: showPlatformServiceMock },
           { provide: ShowOrchestrationService, useValue: showOrchestrationServiceMock },

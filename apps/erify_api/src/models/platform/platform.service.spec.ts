@@ -16,7 +16,9 @@ describe('platformService', () => {
   let utilityService: UtilityService;
 
   beforeEach(async () => {
-    const platformRepositoryMock = createMockRepository<PlatformRepository>();
+    const platformRepositoryMock = createMockRepository<PlatformRepository>({
+      findByUids: jest.fn(),
+    });
     const utilityMock = createMockUtilityService('plt_test123');
 
     const module = await createModelServiceTestModule({
@@ -94,6 +96,32 @@ describe('platformService', () => {
 
       expect(platformRepository.findOne).toHaveBeenCalledWith({ uid });
       expect(result).toEqual(expectedResult);
+    });
+  });
+
+  describe('findActiveByUids', () => {
+    it('delegates the active platform lookup through the service boundary', async () => {
+      const platforms = [
+        {
+          id: 1n,
+          uid: 'plt_00000001',
+          name: 'Test Platform',
+          apiConfig: {},
+          metadata: {},
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          deletedAt: null,
+        },
+      ];
+
+      jest.spyOn(platformRepository, 'findByUids').mockResolvedValue(platforms);
+
+      await expect(service.findActiveByUids(['plt_00000001'])).resolves.toEqual(
+        platforms,
+      );
+      expect(platformRepository.findByUids).toHaveBeenCalledWith([
+        'plt_00000001',
+      ]);
     });
   });
 
