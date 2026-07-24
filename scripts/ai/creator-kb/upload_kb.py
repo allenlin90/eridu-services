@@ -321,10 +321,14 @@ def main():
         ok += 1
 
     removed = 0
-    for stale_name, stale_id in remaining.items():
-        print(f"  remove (no longer in source): {stale_name}")
-        api.delete("file_delete", file_id=stale_id)
-        removed += 1
+    if failed:
+        print(f"  skipping obsolete-file cleanup: {failed} replacement(s) failed above "
+              f"(Sync Contract step 6 -- cleanup only runs once all replacements succeed)")
+    else:
+        for stale_name, stale_entry in remaining.items():
+            print(f"  remove (no longer in source): {stale_name}")
+            api.delete("file_delete", file_id=stale_entry["id"])
+            removed += 1
 
     print(f"\nDone: added={ok - updated} updated={updated} skipped={skipped} "
           f"removed={removed} failed={failed}")

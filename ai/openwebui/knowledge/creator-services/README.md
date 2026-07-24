@@ -13,8 +13,11 @@ Contract frontmatter — `id`, `audiences: [erisa]`,
 `owner: erisa-creator-services`, `sensitivity: department`, `status`,
 `source_refs`, `reviewed_at`, `review_by`.
 
-**Governance status — metadata only, not yet enforced.** This frontmatter is
-descriptive, not functional: `generate_kb.py` does not validate it (no
+**Governance status — pilot-gated exception, not a doctrine change.** The
+Content Contract's "grants derived from validated metadata" rule
+(`ai/architecture/llm-knowledge-base-plan.md` § Content Contract) stays
+mandatory for every other collection, and for this one once the gate below
+lifts. Until then: `generate_kb.py` does not validate this frontmatter (no
 `company-wiki/tools/validate-wiki`-equivalent exists for this collection yet),
 and `upload_kb.py` does not read it or derive Open WebUI access grants from
 it — the collection's real access grants (`ai/openwebui/synced/models.json`
@@ -23,9 +26,19 @@ manually and are the actual source of truth for who can reach this content
 today, independent of what `audiences`/`sensitivity` say. Before changing who
 can access this collection, update the grants directly in Open WebUI (or via
 `POST /api/v1/knowledge/{id}/access/update`), not by editing frontmatter.
-Building frontmatter validation and grant derivation (or folding this
-collection onto `company-wiki/tools/validate-wiki`) is the remaining gap
-before this counts as fully governed per the plan.
+
+- **Scope:** `creator-services-tiktok-shop` only.
+- **Owner:** `erisa-creator-services`.
+- **Gate (trigger to close):** `generate_kb.py` validates each file's
+  `status`/`audiences`/`sensitivity`, and `upload_kb.py` derives and applies
+  real `access_grants` from `audiences` via
+  `POST /api/v1/knowledge/{id}/access/update` (rejecting wildcard/public
+  grants) — or this collection is migrated onto
+  `company-wiki/tools/validate-wiki`.
+
+Recorded consistently in `ai/openwebui/knowledge/README.md`,
+`ai/architecture/llm-knowledge-base-plan.md` § Content Contract, and
+`.agents/skills/ai-workspace-control-plane/SKILL.md`.
 
 Generated from `CS_TikTok_Shop__Knowledge_Base.xlsx` (Phase 1 one-time snapshot —
 no TikTok Academy scraping yet) via

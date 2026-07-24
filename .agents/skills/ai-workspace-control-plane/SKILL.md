@@ -37,7 +37,7 @@ Before editing AI workspace files, read the relevant existing source:
 ## Core rules
 
 - Do not treat Open WebUI, LiteLLM, and MCP as unrelated manual UI settings.
-- Keep durable policy in Git; use deployed UIs for monitoring, debugging, and pilot-only changes.
+- Keep durable policy in Git; use deployed UIs for monitoring, debugging, and pilot-only changes. Scoped, recorded exception: the `creator-services-tiktok-shop` knowledge collection's access grants are currently set manually in Open WebUI rather than derived from Git frontmatter (owner `erisa-creator-services`; gate and trigger to close it in `ai/architecture/llm-knowledge-base-plan.md` § Content Contract) — this rule stays mandatory everywhere else, and for that collection once the gate lifts.
 - Use Better Auth as the identity source of truth.
 - Use one LiteLLM virtual key for Open WebUI (never the master key), then forward the Open WebUI user identity as the LiteLLM customer/end-user ID via Open WebUI's global user-info header-forwarding env vars (`ENABLE_FORWARD_USER_INFO_HEADERS` + `FORWARD_USER_INFO_HEADER_USER_ID=x-litellm-customer-id`). Connection-level custom headers are unreliable on this Railway setup; do not rely on them.
 - Treat usage tracking as automatic: LiteLLM records forwarded users as customers as requests arrive, with no pre-provisioning or sync step. Budget-tier assignment is a separate, later governance step.
