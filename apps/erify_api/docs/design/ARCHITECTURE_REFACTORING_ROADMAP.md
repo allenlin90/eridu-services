@@ -29,7 +29,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | ID | Task | Size | Starts | Status |
 | --- | --- | --- | --- | --- |
 | T1 | Phase 0a: isolated real-DB safety harness | L | now (blocks Wave 1–2) | ✅ |
-| T2 | Phase 0b (light): record signals baseline | S | now, parallel | 🔲 |
+| T2 | Phase 0b (light): record signals baseline | S | now, parallel | ✅ |
 | T3 | MCP list hard maximums | S | now | 🔲 |
 | T4 | Remove dead/duplicate module wiring | S | now | ✅ |
 | T5 | Remove empty OpenAPI dynamic module | S | now | 🔲 |
@@ -54,6 +54,12 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Gate**: none.
 - **Skills**: `engineering-best-practices-enforcer`.
 - **Knowledge sync**: `engineering-best-practices-enforcer`, `.agents/workflows/pr-review.md`, `.agents/workflows/repository-health.md`, and the guide baseline.
+- **Result**: reproduced the guide's source snapshot with the maintained signal
+  script and committed the exact output as
+  [`architecture-signals-baseline.json`](./architecture-signals-baseline.json).
+  Review and repository-health workflows now name that file as the comparison
+  baseline. Runtime performance instrumentation remains deferred to the Phase
+  5 gate.
 
 ### T3 — MCP list hard maximums
 
