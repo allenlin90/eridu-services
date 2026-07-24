@@ -246,7 +246,9 @@ The largest production files generally have sibling specs, and guards, controlle
 
 - `AdminModule`, `BackdoorModule`, `MeModule`, and `StudiosModule` re-export child modules even though only `AppModule` imports those aggregators. Treat imports-only composition modules as roots, not public barrels.
 - [`studio-show.module.ts`](../../src/studios/studio-show/studio-show.module.ts) imports `AuditModule` twice.
-- [`openapi.module.ts`](../../src/lib/openapi/openapi.module.ts) is an empty dynamic module with no providers or exports.
+- The former empty `openapi.module.ts` dynamic module had no providers or
+  exports and was removed in Phase 1. OpenAPI remains bootstrapped explicitly
+  by `setupOpenAPI()` in `main.ts`.
 - Several public service signatures still expose Prisma types, including generic task includes and `Prisma.Decimal`, despite the documented service convention.
 - `StudioGuard` uses `any` for membership even though membership is an authorization-critical value.
 - The canonical examples in [Read-Path Optimization](../READ_PATH_OPTIMIZATION.md) still point to task-orchestration methods that have since moved behind concern services, showing normal documentation drift after structural refactors.
