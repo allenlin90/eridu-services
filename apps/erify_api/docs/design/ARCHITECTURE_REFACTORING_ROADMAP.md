@@ -165,7 +165,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
-| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | 🔲 |
+| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | ✅ |
 
 ### T13 — Phase 3: consolidate the show catalog
 
@@ -173,6 +173,13 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Gate**: T11 and T12 pass.
 - **Skills**: `backend-controller-pattern-nestjs`, `design-patterns`.
 - **Knowledge sync**: `design-patterns`, `backend-controller-pattern-nestjs`, `ARCHITECTURE_OVERVIEW.md`.
+- **Result**: `ShowCatalogModule` now owns the four reference-data services,
+  private repositories, and colocated admin controllers. It replaces eight
+  table/audience wrapper modules while preserving the four route prefixes.
+  `PlatformRepository` is private; workflows use
+  `PlatformService.findActiveByUids()`. Static signals moved from 90 to 83 Nest
+  modules, 293 to 269 module edges, and 75 to 68 modules at or below 20 lines,
+  with zero cycles.
 
 ## Not in scope now
 

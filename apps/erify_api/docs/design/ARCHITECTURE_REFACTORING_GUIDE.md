@@ -1,6 +1,6 @@
 # `erify_api` Architecture Refactoring Guide
 
-> **Status**: Accepted direction — capability-first placement and the evidence-based persistence matrix are canonical for new `erify_api` work. The `ShowStatus` pilot passed its behavior, rollback, and reviewability gates, and T12 reconciled the repository-first doctrine.
+> **Status**: Accepted direction with the scheduled foundation implemented through Phase 3. The `ShowStatus` pilot passed, T12 reconciled the persistence doctrine, and `ShowCatalogModule` is the first consolidated capability. Later phases remain trigger-gated.
 > **Source snapshot**: `f677b627` (original analysis baseline); implementation status is tracked in [`ARCHITECTURE_REFACTORING_ROADMAP.md`](./ARCHITECTURE_REFACTORING_ROADMAP.md)
 > **Scope**: Structure, module ownership, service and persistence boundaries, DDD, CQRS, runtime composition, testing, and performance guardrails
 > **Visual companion**: [`architecture-refactoring-visual.html`](./architecture-refactoring-visual.html) — a diagrammed walkthrough of the problem, the NestJS-vs-Rails philosophy, Nest conventions, the phased plan, and the risks. Open it in a browser.
@@ -553,6 +553,15 @@ If the pilot succeeds, group show type, status, standard, and platform reference
 
 Move admin catalog controllers next to the capability while preserving routes and guards. The module should export only the services or queries used by other capabilities.
 
+**Result (2026-07-24): completed.** `ShowCatalogModule` owns show type,
+status, standard, and platform registration plus their four admin controllers.
+It replaced eight table/audience wrapper modules without changing controller
+prefixes. The module exports only the four focused services; platform UID
+lookups now cross the boundary through `PlatformService`, leaving
+`PlatformRepository` private. Static signals improved from 90 to 83 Nest
+modules, 293 to 269 local module edges, and 75 to 68 modules at or below 20
+lines, with zero cycles before and after.
+
 ### Phase 4 — Trigger-Gated Show Operations
 
 Activate this phase with roadmap item 18 or an earlier show-operations change that requires the same capability boundary. Create a `ShowOperationsModule` as the owner of show lifecycle workflows, and implement item 18's canonical lifecycle transition service inside it. Move code incrementally from `studios/studio-show` and `show-orchestration` behind a stable public API; do not create a fifth status writer or run a standalone folder migration.
@@ -673,7 +682,9 @@ The recommended answers are included so discussion can focus on the real tradeof
 2. **Should controllers move from audience folders into capability folders?** Recommended: yes, incrementally. Preserve route prefixes and authorization decorators; use runtime root modules only for composition.
 3. **Should all repositories be removed?** Recommended: no. Retain deep persistence modules and make them private.
 4. **Should `@nestjs/cqrs` be introduced during this refactor?** Recommended: no. First implement named write use cases and query providers with direct calls.
-5. **Which pilot should prove the direction?** Recommended: `ShowStatus` for repository removal, followed by one isolated show-operations slice for capability consolidation.
+5. **Which pilots proved the direction?** `ShowStatus` proved selective
+   repository removal; `ShowCatalogModule` proved capability consolidation.
+   Show-operations remains gated by roadmap item 18.
 6. **Should performance be a claimed outcome?** Recommended: only for changes with before/after query, payload, lock-duration, or latency evidence. Structural simplicity is a separate outcome.
 
 ## Related Guidance

@@ -119,6 +119,17 @@ export type UpdatePlatformPayload = {
   metadata?: Record<string, any>;
 };
 
+export type PlatformRecord = {
+  id: bigint;
+  uid: string;
+  name: string;
+  apiConfig: unknown;
+  metadata: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+};
+
 /**
  * Type-safe filter options for platforms.
  */

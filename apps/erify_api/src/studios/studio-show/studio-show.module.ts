@@ -3,15 +3,14 @@ import { Module } from '@nestjs/common';
 import { StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
+import { ShowCatalogModule } from '@/capabilities/show-catalog/show-catalog.module';
 import { AuditModule } from '@/models/audit/audit.module';
 import { ClientMechanicModule } from '@/models/client-mechanic/client-mechanic.module';
-import { PlatformModule } from '@/models/platform/platform.module';
 import { PublishRunModule } from '@/models/publish-run/publish-run.module';
 import { ScheduleModule } from '@/models/schedule/schedule.module';
 import { ScheduleConflictModule } from '@/models/schedule-conflict/schedule-conflict.module';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowPlatformModule } from '@/models/show-platform/show-platform.module';
-import { ShowStatusModule } from '@/models/show-status/show-status.module';
 import { StudioModule } from '@/models/studio/studio.module';
 import { StudioRoomModule } from '@/models/studio-room/studio-room.module';
 import { TaskModule } from '@/models/task/task.module';
@@ -26,12 +25,11 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     AuditModule,
     ShowModule,
     ShowOrchestrationModule,
-    ShowStatusModule,
+    ShowCatalogModule,
     StudioModule,
     StudioRoomModule,
     ScheduleModule,
     ScheduleConflictModule,
-    PlatformModule,
     PublishRunModule,
     ShowPlatformModule,
     ClientMechanicModule,

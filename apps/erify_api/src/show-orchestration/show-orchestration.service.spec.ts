@@ -10,7 +10,7 @@ import { ClsModule } from 'nestjs-cls';
 import { STUDIO_CREATOR_ROSTER_ERROR } from '@eridu/api-types/studio-creators';
 
 import { CreatorRepository } from '@/models/creator/creator.repository';
-import { PlatformRepository } from '@/models/platform/platform.repository';
+import { PlatformService } from '@/models/platform/platform.service';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
 import { CompensationLineItemService } from '@/models/compensation-line-item/compensation-line-item.service';
@@ -55,7 +55,7 @@ describe('showOrchestrationService', () => {
   let showCreatorRepository: jest.Mocked<ShowCreatorRepository>;
   let creatorRepository: jest.Mocked<CreatorRepository>;
   let showPlatformRepository: jest.Mocked<ShowPlatformRepository>;
-  let platformRepository: jest.Mocked<PlatformRepository>;
+  let platformService: jest.Mocked<PlatformService>;
   let studioCreatorRepository: jest.Mocked<StudioCreatorRepository>;
   let taskService: jest.Mocked<TaskService>;
   let taskTargetService: jest.Mocked<TaskTargetService>;
@@ -178,9 +178,9 @@ describe('showOrchestrationService', () => {
           },
         },
         {
-          provide: PlatformRepository,
+          provide: PlatformService,
           useValue: {
-            findByUids: jest.fn(),
+            findActiveByUids: jest.fn(),
           },
         },
         {
@@ -224,7 +224,7 @@ describe('showOrchestrationService', () => {
     showCreatorRepository = module.get<ShowCreatorRepository>(ShowCreatorRepository) as jest.Mocked<ShowCreatorRepository>;
     creatorRepository = module.get<CreatorRepository>(CreatorRepository) as jest.Mocked<CreatorRepository>;
     showPlatformRepository = module.get<ShowPlatformRepository>(ShowPlatformRepository) as jest.Mocked<ShowPlatformRepository>;
-    platformRepository = module.get<PlatformRepository>(PlatformRepository) as jest.Mocked<PlatformRepository>;
+    platformService = module.get<PlatformService>(PlatformService) as jest.Mocked<PlatformService>;
     studioCreatorRepository = module.get<StudioCreatorRepository>(StudioCreatorRepository) as jest.Mocked<StudioCreatorRepository>;
     taskService = module.get<TaskService>(TaskService) as jest.Mocked<TaskService>;
     taskTargetService = module.get<TaskTargetService>(TaskTargetService) as jest.Mocked<TaskTargetService>;
@@ -302,7 +302,7 @@ describe('showOrchestrationService', () => {
       expect(showService.updateShowFromDto).toHaveBeenCalledWith(uid, dto);
       // Sync methods NOT called since showCreators/showPlatforms are undefined
       expect(creatorRepository.findByUids).not.toHaveBeenCalled();
-      expect(platformRepository.findByUids).not.toHaveBeenCalled();
+      expect(platformService.findActiveByUids).not.toHaveBeenCalled();
       expect(showRepository.findByUid).toHaveBeenCalledWith(
         uid,
         expect.any(Object),
@@ -345,7 +345,7 @@ describe('showOrchestrationService', () => {
       showCreatorRepository.findMany.mockResolvedValue([]);
       showCreatorRepository.createAssignment.mockResolvedValue({} as any);
       showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new');
-      platformRepository.findByUids.mockResolvedValue([mockPlatform] as any);
+      platformService.findActiveByUids.mockResolvedValue([mockPlatform] as any);
       showPlatformRepository.findMany.mockResolvedValue([]);
       showPlatformRepository.createAssignment.mockResolvedValue({} as any);
       showPlatformService.generateShowPlatformUid.mockReturnValue('show_plt_new');
@@ -369,7 +369,7 @@ describe('showOrchestrationService', () => {
           }),
         }),
       );
-      expect(platformRepository.findByUids).toHaveBeenCalledWith(['plt_test123']);
+      expect(platformService.findActiveByUids).toHaveBeenCalledWith(['plt_test123']);
       expect(showPlatformRepository.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
           uid: 'show_plt_new',
@@ -509,12 +509,12 @@ describe('showOrchestrationService', () => {
       const mockPlt2 = { id: BigInt(2), uid: 'plt_2' };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      platformRepository.findByUids.mockResolvedValue([mockPlt1, mockPlt2] as any);
+      platformService.findActiveByUids.mockResolvedValue([mockPlt1, mockPlt2] as any);
       showPlatformRepository.softDeleteByPlatformIds.mockResolvedValue(undefined as any);
 
       await service.removePlatformsFromShow(uid, platformIds);
 
-      expect(platformRepository.findByUids).toHaveBeenCalledWith(platformIds);
+      expect(platformService.findActiveByUids).toHaveBeenCalledWith(platformIds);
       expect(showPlatformRepository.softDeleteByPlatformIds).toHaveBeenCalledWith(
         mockShow.id,
         [BigInt(1), BigInt(2)],
@@ -1117,7 +1117,7 @@ describe('showOrchestrationService', () => {
 
       showService.getShowById.mockResolvedValue(mockShow);
       showPlatformService.generateShowPlatformUid.mockReturnValue('show_plt_new');
-      platformRepository.findByUids.mockResolvedValue([mockPlatform] as any);
+      platformService.findActiveByUids.mockResolvedValue([mockPlatform] as any);
       showPlatformRepository.findMany.mockResolvedValue([]);
       showPlatformRepository.createAssignment.mockResolvedValue({} as any);
       showRepository.findByUid.mockResolvedValue(mockShow);
@@ -1125,7 +1125,7 @@ describe('showOrchestrationService', () => {
       const result = await service.replacePlatformsForShow(uid, platforms);
 
       expect(showService.getShowById).toHaveBeenCalledWith(uid);
-      expect(platformRepository.findByUids).toHaveBeenCalledWith(['plt_test123']);
+      expect(platformService.findActiveByUids).toHaveBeenCalledWith(['plt_test123']);
       expect(showPlatformRepository.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
           uid: 'show_plt_new',
@@ -1359,4 +1359,3 @@ describe('showOrchestrationService', () => {
   });
 
 });
-
