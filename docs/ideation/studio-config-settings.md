@@ -85,6 +85,25 @@ This document unifies three previously scattered ideation tracks:
 
 ---
 
+### 9. Scene QC Taxonomy Governance
+
+Scene QC Stage 1 records Pass, Minor, or Fail with required Designer feedback for Minor and Fail. Structured element/defect findings and user-managed taxonomy are deferred.
+
+The eventual configuration must support:
+
+- a shared system catalog of stable QC element and defect codes;
+- optional studio-scoped additions or applicability overrides;
+- explicit governance for which roles can create, update, or retire entries;
+- retirement rather than deletion so historical findings remain readable;
+- stable labels or label snapshots for confirmed historical records; and
+- centralized counting and labeling behavior for reports.
+
+The scope decision remains open between fully shared, fully studio-scoped, and hybrid shared-plus-studio taxonomy. The hybrid shape is the leading option because it preserves cross-studio reporting consistency while allowing local scene vocabulary.
+
+Promote this configuration slice when Scene QC Stage 3 begins or repeated free-text feedback demonstrates stable issue categories worth structuring.
+
+---
+
 ## Proposed Unified Solution: Studio Settings Schema
 
 Introduce a structured JSONB `settings` field inside the `Studio` model in `schema.prisma`.
@@ -209,6 +228,7 @@ const hasModerationTask = tasks.some(task => {
     *   `/studios/:studioId/task-setup`
     *   Studio dashboard operational-day cards.
 *   **Studio Settings UI:** A new settings page/tab in `erify_studios` (`/studios/:studioId/settings`) for authorized administrators to adjust operational day boundaries, timezones, default range days, premium show standard qualifiers, and moderation task regexes.
+*   **Scene QC Configuration:** A later settings section governs shared and studio-scoped taxonomy entries when structured Scene QC findings are promoted.
 
 ---
 
@@ -221,6 +241,7 @@ This consolidated topic should be promoted to a PRD and scheduled for execution 
 4.  **Operational-day drift becomes user-visible:** surfaces disagree on the same window (e.g. PR #205's report-vs-dashboard mismatch), or the performance-vs-shift-alignment boundary disagreement (gap §6) produces a wrong-day bucket in production. Each interim per-surface patch raises the cost of *not* unifying on a studio timezone.
 5.  **Mechanic enforcement requested (§7):** product defines a concrete standard for "which mechanics a show requires" (even for one client/show-standard), or repeated account-manager sign-off requests for the same client signal the manual conversation should become configuration.
 6.  **Hard lifecycle gates requested (§8):** a studio operationally needs `block`-level transition enforcement after Phase 5 item 19's warning-only delivery, or repeated transition-warning overrides signal that per-studio condition configuration is due.
+7.  **Scene QC structured findings promoted (§9):** Stage 3 begins, or recurring Designer feedback demonstrates stable issue categories that need consistent reporting.
 
 ---
 

@@ -2,6 +2,8 @@
 
 Scene Review is the dedicated, read-only workspace for inspecting screenshot evidence from submitted tasks. It separates a Designer's visual review from the Manager/Admin Task Review approval queue.
 
+The accepted replacement requirements are defined in [Scene Quality Control](../../../docs/prd/scene-qc.md). Until that capability ships, this document remains the source of truth for the current read-only behavior.
+
 ## Access and routes
 
 - `DESIGNER`, `MANAGER`, and `ADMIN` can open `/studios/:studioId/scene-review`.
