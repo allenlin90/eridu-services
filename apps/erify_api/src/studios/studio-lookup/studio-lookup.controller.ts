@@ -31,6 +31,7 @@ import { StudioService } from '@/models/studio/studio.service';
 import { studioRoomDto } from '@/models/studio-room/schemas/studio-room.schema';
 import { StudioRoomService } from '@/models/studio-room/studio-room.service';
 import { studioShowLookupsDto } from '@/models/task/schemas/task.schema';
+import { CANCELLATION_GATE_OWNED_SHOW_STATUS_SYSTEM_KEYS } from '@/show-orchestration/show-status-write-policy';
 
 const DEFAULT_LOOKUP_LIMIT = 200;
 
@@ -38,8 +39,6 @@ const DEFAULT_LOOKUP_LIMIT = 200;
 // statuses (see ShowCancellationGateService); the generic studio show-edit
 // form must not offer them as a destination, or the user hits a 400 from
 // StudioShowManagementService.updateShow after already filling out the form.
-const STUDIO_EXCLUDED_SHOW_STATUS_SYSTEM_KEYS = ['CANCELLED', 'CANCELLED_PENDING_RESOLUTION'];
-
 const studioRoomListQuerySchema = createPaginatedQuerySchema(
   z.object({
     name: z.string().optional(),
@@ -92,7 +91,11 @@ export class StudioLookupController extends BaseStudioController {
       this.showStandardService.listShowStandards({ take: DEFAULT_LOOKUP_LIMIT }),
       this.showStatusService.getShowStatuses({
         take: DEFAULT_LOOKUP_LIMIT,
-        where: { systemKey: { notIn: STUDIO_EXCLUDED_SHOW_STATUS_SYSTEM_KEYS } },
+        where: {
+          systemKey: {
+            notIn: [...CANCELLATION_GATE_OWNED_SHOW_STATUS_SYSTEM_KEYS],
+          },
+        },
       }),
       this.platformService.listPlatforms({ take: DEFAULT_LOOKUP_LIMIT }),
       this.studioRoomService.getStudioRooms({
@@ -209,7 +212,11 @@ export class StudioLookupController extends BaseStudioController {
     const { data, total } = await this.showStatusService.getShowStatuses({
       skip: query.skip,
       take: query.take,
-      where: { systemKey: { notIn: STUDIO_EXCLUDED_SHOW_STATUS_SYSTEM_KEYS } },
+      where: {
+        systemKey: {
+          notIn: [...CANCELLATION_GATE_OWNED_SHOW_STATUS_SYSTEM_KEYS],
+        },
+      },
     });
     return this.createPaginatedResponse(data, total, query);
   }

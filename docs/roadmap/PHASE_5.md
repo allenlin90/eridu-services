@@ -38,7 +38,7 @@ Each row is one workstream or deliverable. Items are numbered in execution order
 | #   | Workstream                                                                                                                                                                                                 | Depends on                                | Status         |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | -------------- |
 | 7   | [Schedule publish impact review enhancements](#7-schedule-publish-impact-review-enhancements) — filters, persisted publish-run batches, and scoped past-show creator-mapping backfill for `/schedule-publish-impacts` | — (informational: 4, 9, 11/19 — see brief) | ✅ Done |
-| 8   | [Show status write-path hardening](#8-show-status-write-path-hardening) — close the admin show-edit status bypass so gate-owned statuses cannot move outside the cancellation gate                         | —                                         | 🔲 Planned     |
+| 8   | [Show status write-path hardening](#8-show-status-write-path-hardening) — close the admin show-edit status bypass so gate-owned statuses cannot move outside the cancellation gate                         | —                                         | ✅ Done        |
 | 9   | [Show-level issue ownership](#9-show-level-issue-ownership) — narrow issue record for show blockers and extraction-detected anomalies without state-gate enforcement                                       | —                                         | 📐 Ready       |
 | 10  | [Import platform performance data](#10-import-platform-performance-data) — controlled manual export/upload flow before platform API integration; design doc first                                          | —                                         | 🔲 Planned     |
 | 11  | [Advisory planning readiness checklist](#11-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition                                    | 1, 2                                      | 🔲 Planned     |
@@ -171,9 +171,18 @@ Align the lookup-backed show status vocabulary across seed data, `BUSINESS.md`, 
 
 **Source**: [`Show Cancellation Gate`](../../apps/erify_api/docs/SHOW_CANCELLATION_GATE.md); Phase 5 review (July 2026)
 
-The admin show-update path (`updateShowWithAssignments` → `show.service.buildUpdatePayload`) accepts any `show_status_id` with no transition validation, while the studio edit path explicitly blocks entering or leaving `CANCELLED` and `CANCELLED_PENDING_RESOLUTION` precisely because a direct write "would skip the gate's active-task guard and Audit trail entirely." Any admin-role caller can currently move a show into or out of gate-owned statuses with no active-task check, no reason, and no audit row — a live bypass of the shipped item 4 contract.
+The admin show-update path (`updateShowWithAssignments` →
+`show.service.buildUpdatePayload`) previously accepted any `show_status_id`
+with no transition validation, bypassing the shipped item 4 cancellation gate.
 
-Mirror the studio-level guard on the admin path (or extract it into a shared helper both endpoints call) and apply the same gate-owned-status exclusions to admin status lookups. This is a narrow, state-independent correctness fix: it neither needs nor prejudges item 18's design, and item 18's write-path consolidation builds on the shared guard.
+**Completion result**: admin and studio generic show edits now share a
+server-side policy that rejects entering or leaving `CANCELLED` and
+`CANCELLED_PENDING_RESOLUTION`. Admin and studio status lookup lists use the
+same exclusion constant, so neither edit form offers a gate-owned destination.
+The dedicated cancellation gate remains the only manual path for those
+transitions, preserving active-task checks, reasons, and Audit history. This is
+a narrow, state-independent correctness fix; item 18 still owns consolidation
+of all status writers.
 
 ### 9. Show-level issue ownership
 
@@ -257,7 +266,7 @@ Feature-specific exports remain focused: planning, task setup, creator mapping, 
 
 **Architecture activation**: item 18 activates Phase 4 of the architecture guide. Implement the transition service inside `ShowOperationsModule`; do not create a fifth parallel writer or perform a standalone folder move. Its schedule-publish integration activates the guide's Phase 5 only when that integration requires `PublishingService` decomposition, or when measured query, lock, rollback, or maintainability risk independently reaches the guide's gate.
 
-**Scope decision (July 2026 review)**: item 18 is the **single canonical show-status transition mechanism**, not a fifth parallel writer. Today `Show.status` is written by four independent paths with uneven validation: studio generic edit (guards only the two cancellation statuses), admin generic edit (no validation — item 8 closes the immediate bypass), `ShowCancellationGateService` (the only path with reason capture, actor-tier checks, active-task guard, and Audit history), and schedule publish (direct writes, no audit — tracked tech debt). Item 18 converges them:
+**Scope decision (July 2026 review)**: item 18 is the **single canonical show-status transition mechanism**, not a fifth parallel writer. Today `Show.status` is written by four independent paths with uneven validation: studio and admin generic edits share the item 8 guard for the two cancellation statuses but otherwise accept free-form status changes, `ShowCancellationGateService` owns reason capture, actor-tier checks, active-task guards, and Audit history, and schedule publish writes directly without audit (tracked tech debt). Item 18 converges them:
 
 1. **Transition service**: a lifecycle transition service owning the transition graph (`draft → confirmed → live → completed` plus cancellation paths), server-side transition validation, and `Audit`-row history, extending the status + Audit pattern the cancellation gate proved. There is no task-based `STATE_GATE` mechanism in code — the lifecycle skill has been corrected on this point; whether gates ever become task-backed is this item's design decision, not an existing constraint.
 2. **Fold in the cancellation gate**: the item 4 endpoints remain the cancellation UX but delegate to the transition service as its cancellation transitions. The two deferred state-machine designs above are revisited **inside this item**, not before or after it. Notification publishing follows the [notification PRD](../prd/notification-system.md) and item 21 rather than a no-op gate-specific seam.

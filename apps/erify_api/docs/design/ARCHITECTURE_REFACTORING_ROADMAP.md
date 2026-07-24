@@ -119,14 +119,20 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 | ID | Task | Size | Starts | Status |
 | --- | --- | --- | --- | --- |
-| T8 | Roadmap item 8: admin status write-path hardening | S–M | now | 🔲 |
+| T8 | Roadmap item 8: admin status write-path hardening | S–M | now | ✅ |
 
 ### T8 — Roadmap item 8: admin status write-path hardening
 
 - **Scope**: mirror the studio-level guard on the admin status path (or extract a shared helper both call), and apply the gate-owned-status exclusions to admin status lookups. State-independent; it neither needs nor prejudges item 18's lifecycle design.
 - **Gate**: none.
-- **Skills**: `erify-authorization`, `secure-coding-practices`.
+- **Skills**: `erify-authorization`, `secure-coding-practices`,
+  `show-production-lifecycle`.
 - **Reference**: [`PHASE_5.md`](../../../../docs/roadmap/PHASE_5.md) item 8.
+- **Result**: admin and studio generic show edits share one status-write policy
+  that rejects entering or leaving either cancellation-gate-owned status.
+  Their status lookup lists share the same exclusion constant, while the
+  dedicated cancellation gate remains the only manual transition path for
+  those statuses.
 
 ## Wave 1 — after T1 merges (harness available)
 

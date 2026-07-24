@@ -600,6 +600,36 @@ describe('studioShowManagementService', () => {
     expect(showRepositoryMock.update).not.toHaveBeenCalled();
   });
 
+  it('rejects updateShow when changing show_status_id from cancelled', async () => {
+    showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
+      id: BigInt(100),
+      uid: 'show_123',
+      studioId: BigInt(10),
+      startTime: new Date('2026-01-01T00:00:00.000Z'),
+      endTime: new Date('2026-01-01T01:00:00.000Z'),
+      showStatus: {
+        uid: 'shst_cancelled',
+        name: 'cancelled',
+        systemKey: 'CANCELLED',
+      },
+    });
+    showStatusServiceMock.getShowStatusById.mockResolvedValue({
+      uid: 'shst_draft',
+      systemKey: 'DRAFT',
+    });
+
+    await expect(
+      service.updateShow('std_123', 'show_123', {
+        showStatusId: 'shst_draft',
+      } as UpdateStudioShowDto),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({
+        message: 'SHOW_STATUS_LOCKED_BY_CANCELLATION_GATE',
+      }),
+    });
+    expect(showRepositoryMock.update).not.toHaveBeenCalled();
+  });
+
   it('allows updateShow to change show_status_id when no gate is pending and the target is not a gate-owned status', async () => {
     showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({
       id: BigInt(100),

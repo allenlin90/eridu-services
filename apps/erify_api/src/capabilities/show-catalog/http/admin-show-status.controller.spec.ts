@@ -91,6 +91,11 @@ describe('adminShowStatusController', () => {
       expect(mockShowStatusService.getShowStatuses).toHaveBeenCalledWith({
         skip: query.skip,
         take: query.take,
+        where: {
+          systemKey: {
+            notIn: ['CANCELLED', 'CANCELLED_PENDING_RESOLUTION'],
+          },
+        },
       });
       expect(result).toEqual({
         data: statuses,
