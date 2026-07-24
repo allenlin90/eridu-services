@@ -19,9 +19,20 @@ Do not use those three skills to justify adding a new model-shaped service, a re
 
 ### Persistence doctrine is pilot-gated
 
-Capability-first **placement** is active now. The **persistence-decision matrix** — a shallow capability service using `TransactionHost.tx.<model>` directly instead of a repository, and retiring `BaseRepository` as the default — is **proposed and pilot-gated**, not yet canonical. Per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md), repository-first data access stays canonical until the `ShowStatus` pilot (roadmap T11) proves the matrix and reconciles all repository-first doctrine in one PR (T12).
+Capability-first **placement** is active now. The **persistence-decision matrix** — a shallow capability service using `TransactionHost.tx.<model>` directly instead of a repository, and retiring `BaseRepository` as the default — passed the `ShowStatus` implementation pilot (roadmap T11) but is **not yet canonical**. Per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md), repository-first data access stays canonical until the separate acceptance change reconciles all repository-first doctrine in one PR (T12).
 
-Until that pilot lands, persistence keeps using repositories and `BaseRepository.softDelete()` per [`repository-pattern-nestjs`](../repository-pattern-nestjs/SKILL.md) and [`database-patterns`](../database-patterns/SKILL.md). **Compliant pre-pilot path for a new capability:** a new soft-deletable entity gets a capability-owned repository extending `BaseRepository` — that is the sanctioned persistence implementation until T12, and it is fully compatible with placing that repository inside its capability module rather than a table-shaped `models/` module. The placement rule ("do not add a repository *per Prisma model* by default") forbids table-driven proliferation, not a genuinely-needed capability repository. The sections below that describe direct-`txHost.tx` access and `BaseRepository` retirement are the **destination** — apply them only inside the pilot or once it is accepted. Do not adopt them, or flip persistence doctrine, outside the pilot PR.
+Until T12 lands, persistence outside the `ShowStatus` pilot keeps using
+repositories and `BaseRepository.softDelete()` per
+[`repository-pattern-nestjs`](../repository-pattern-nestjs/SKILL.md) and
+[`database-patterns`](../database-patterns/SKILL.md). A new soft-deletable
+capability gets a capability-owned repository extending `BaseRepository`; that
+remains the sanctioned persistence implementation until T12 and is compatible
+with placing the repository inside its capability module rather than a
+table-shaped `models/` module. The placement rule ("do not add a repository
+*per Prisma model* by default") forbids table-driven proliferation, not a
+genuinely-needed capability repository. The direct-`txHost.tx` sections below
+remain the destination and the implemented pilot exception. Do not generalize
+them or flip persistence doctrine before T12.
 
 ## Purpose
 
