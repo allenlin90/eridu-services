@@ -33,6 +33,7 @@ ai/openwebui/knowledge/creator-services/.
 """
 import os
 import re
+import shutil
 import sys
 import unicodedata
 from collections import OrderedDict
@@ -207,8 +208,20 @@ def fmt_answer(r):
     return r["answer"]
 
 
+GENERATED_SUBDIRS = ("faq", "policy", "violations", "terminology")
+ESCALATION_GUIDE_NAME = "00-escalation-guide.md"
+
+
 def generate(records, vio, pol, term, out_dir):
     os.makedirs(out_dir, exist_ok=True)
+    # Clear prior-run output before writing so a removed/renamed Excel
+    # category doesn't leave its old .md file behind as still-publishable
+    # source content. README.md is hand-maintained and never touched here.
+    for sub in GENERATED_SUBDIRS:
+        shutil.rmtree(os.path.join(out_dir, sub), ignore_errors=True)
+    esc_path = os.path.join(out_dir, ESCALATION_GUIDE_NAME)
+    if os.path.exists(esc_path):
+        os.remove(esc_path)
     written = []
 
     # --- FAQ files, one per (main, sub) ---
