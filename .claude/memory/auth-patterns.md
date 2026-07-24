@@ -199,29 +199,19 @@ export class AdminGuard implements CanActivate {
   }
 }
 
-// 3. StudioGuard validates membership + role
-@Injectable()
-export class StudioGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = Reflector.get('studioRoles', context.getHandler());
-    if (!requiredRoles) return true;
-
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
-    const studioUid = request.params.studioId;
-
-    const membership = await studioMembershipService.findByUserAndStudio(user.id, studioUid);
-    if (!membership) throw new ForbiddenException('Not a studio member');
-
-    if (!requiredRoles.includes(membership.role)) {
-      throw new ForbiddenException('Insufficient studio permissions');
-    }
-
-    request.studioMembership = membership;
-    return true;
-  }
-}
+// 3. StudioGuard narrows typed request context before membership and role checks
+type StudioGuardMembership = NonNullable<
+  Awaited<ReturnType<UserService['getStudioMembership']>>
+>;
 ```
+
+`ensureAuthenticated()` narrows `AuthenticatedRequest.user`, and
+`ensureMembershipExists()` narrows the possibly undefined membership before
+role checks or request attachment. Neither path uses `any` or non-null
+assertions.
+
+See the canonical implementation in
+[`studio.guard.ts`](../../apps/erify_api/src/lib/guards/studio.guard.ts).
 
 ## Security Features
 
