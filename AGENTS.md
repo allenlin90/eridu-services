@@ -134,8 +134,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ### Core Engineering Rules
 - Never expose DB internal IDs from API responses. Use UID-based external IDs.
-- Backend (`erify_api`) follows repository/service/controller separation.
-- New `erify_api` work follows the capability-first modular-monolith direction ([`ARCHITECTURE_REFACTORING_GUIDE.md`](apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)): place a use case with the business capability that owns the rule instead of adding another table-first or audience-first slice; do not create a Nest module or repository per Prisma model by default; keep persistence providers private, retaining a repository only when it hides real persistence complexity; introduce no global CQRS bus, speculative interface, exported repository, or folder migration without a demonstrated trigger. This changes code **placement** now — it does not change persistence doctrine: "repository for all DB access" and repository/service/controller separation remain canonical until the `ShowStatus` pilot proves the persistence-decision matrix and reconciles all repository-first doctrine in the same PR.
+- Backend (`erify_api`) follows controller → capability service/use case → persistence separation. Persistence may be direct through `TransactionHost.tx` for shallow single-model CRUD or private behind a repository/query provider when complexity earns that seam.
+- New `erify_api` work follows the capability-first modular-monolith direction and persistence matrix ([`ARCHITECTURE_REFACTORING_GUIDE.md`](apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)): place a use case with the business capability that owns the rule instead of adding another table-first or audience-first slice; do not create a Nest module or repository per Prisma model by default; keep persistence providers private, retaining a repository only when it hides real persistence complexity; introduce no global CQRS bus, speculative interface, exported repository, or folder migration without a demonstrated trigger.
 - Use Zod schemas and consistent snake_case (API) <-> camelCase (service/domain) transformations.
 - Prefer bulk DB operations and relation includes over N+1 query patterns.
 - Maintain strict typing. Do not bypass with `any` or `@ts-ignore` unless explicitly requested.
@@ -292,20 +292,21 @@ pnpm architecture:signals
 
 #### Performance
 - Use `Promise.all` for independent reads.
-- Prefer bulk repository operations over loops of individual creates or updates.
+- Prefer bulk persistence operations over loops of individual creates or updates.
 
 ### Service Layer Rules
 - Schemas may import Prisma types to define payload types. Services must not expose Prisma input types in public signatures.
-- Services should work with payload types defined in local schemas and delegate DB access to repositories.
-- Prefer the task model and task orchestration flows as reference implementations when choosing between competing existing patterns.
-- For `erify_api` module/capability placement, load `erify-api-capability-refactoring` first (authoritative for placement; its persistence matrix is pilot-gated). It supersedes `service-pattern-nestjs`/`repository-pattern-nestjs`/`orchestration-service-nestjs` for *placement* only — their persistence and correctness rules stay canonical until the `ShowStatus` pilot.
-- Reference priority for new backend code: `task.service.ts` → `task-orchestration.service.ts` → `studio-membership` schema.
+- Services work with payload types defined in local schemas. A shallow capability service may use `TransactionHost.tx.<model>` directly; complex filters, projections, conditional writes, raw SQL, or reusable persistence policy belong in a private repository, store, or query provider.
+- Direct-persistence services may build only private, bounded Prisma operations. Do not expose Prisma types or a generic Prisma query DSL through the service API.
+- For `erify_api` module placement and persistence selection, load `erify-api-capability-refactoring` first. Use `service-pattern-nestjs`, `repository-pattern-nestjs`, and `orchestration-service-nestjs` for the selected implementation's correctness rules.
+- Reference priority for new backend code: `show-status.service.ts` for shallow direct persistence → `task.service.ts` and its repository for complex persistence → `task-orchestration.service.ts` for workflows → `studio-membership` schema for payload types.
 
-| Do                               | Don't                                   |
-| -------------------------------- | --------------------------------------- |
-| Define payload types in schemas  | Expose `Prisma.*` in service signatures |
-| Use repository for all DB access | Build Prisma queries in service         |
-| Follow task model as reference   | Copy patterns from unverified models    |
+| Do | Don't |
+| --- | --- |
+| Define payload types in schemas | Expose `Prisma.*` in service signatures |
+| Use direct `txHost.tx` for shallow CRUD | Add a pass-through repository by default |
+| Keep complex persistence in a private provider | Export repositories for caller convenience |
+| Follow verified capability references | Copy patterns from unverified models |
 
 ### Agent Memory & Supplementary References
 - **Shared Agent Memory (`.agents/memory/`):** Contains tool-agnostic refactoring logs, migration history, and architectural overrides (e.g. `data-table-extraction.md`).

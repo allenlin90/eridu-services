@@ -1,6 +1,6 @@
 ---
 name: orchestration-service-nestjs
-description: Legacy erify_api orchestration pattern. Capability skill wins on placement; workflow correctness rules here stay canonical until the ShowStatus pilot.
+description: Implement erify_api workflow coordination, transactions, idempotency, locks, and race-safe writes inside capability-owned use cases.
 ---
 
 # Orchestration Service Pattern - NestJS (Superseded for placement)

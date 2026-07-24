@@ -2,7 +2,14 @@
 
 **Based on analysis of task model (best service) + studio-membership model (best schema)**
 
-> **Placement superseded (2026-07).** The `/models/{domain}` layout below is the legacy **table-first placement**. For new `erify_api` work, [`erify-api-capability-refactoring`](../../.agents/skills/erify-api-capability-refactoring/SKILL.md) is authoritative for placement — organize by business capability, not one module/service/repository per Prisma model. What remains canonical here is the *persistence and correctness* pattern (three-tier schema, payload types, UID boundaries, `deletedAt` soft delete, repository-first data access); repository-first persistence stays canonical until the `ShowStatus` pilot (roadmap T11/T12) proves the persistence-decision matrix.
+> **Legacy repository-backed example (2026-07).** The `/models/{domain}` layout
+> and mandatory repository below are not the default for new `erify_api` work.
+> [`erify-api-capability-refactoring`](../../.agents/skills/erify-api-capability-refactoring/SKILL.md)
+> is authoritative: organize by capability, use direct `TransactionHost.tx` for
+> shallow bounded CRUD, and retain a private repository/query provider only
+> when persistence complexity earns it. The payload, UID, soft-delete, and
+> public-type rules below remain useful; repository-specific sections apply
+> only after the matrix selects a repository.
 
 ## File Structure
 
@@ -427,10 +434,11 @@ export class DomainController {
    - Use payload types in method signatures
    - Transform DTOs to payloads in service
    - Keep business logic here
-   - Call repository for data access
+   - Use direct `TransactionHost.tx` only for shallow bounded persistence, or
+     call the selected private provider
 
-3. **Repository Layer**:
-   - Encapsulate ALL Prisma queries here
+3. **Repository Layer (when selected)**:
+   - Encapsulate complex/reused Prisma queries here
    - Build Prisma where clauses here
    - Accept domain filter types, return entities
 
@@ -442,7 +450,8 @@ export class DomainController {
 ### ❌ DON'T:
 
 1. **Never** expose `Prisma.*` types in service method signatures
-2. **Never** build Prisma queries in service layer
+2. **Never** expose a generic Prisma query DSL or place complex/reused
+   persistence directly in a service
 3. **Never** use Prisma types in controller layer
 4. **Never** return raw Prisma entities from controllers (always transform)
 5. **Never** expose internal BigInt IDs externally (use UIDs)

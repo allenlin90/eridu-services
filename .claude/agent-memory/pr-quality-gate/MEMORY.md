@@ -13,7 +13,10 @@
 
 ### Service Layer Rule: No Prisma.* Types
 Services MUST NOT import `Prisma.*` types — including `Prisma.JsonValue`, `Prisma.ShowGetPayload`, etc.
-Use `unknown` or a local structural type alias instead. Only the repository layer can use Prisma types.
+Use `unknown` or a local structural type alias instead. A service selected for
+shallow direct persistence may use its generated delegate privately, but
+public signatures must remain schema/domain typed. Complex Prisma shapes stay
+inside a private repository/query provider.
 - `studio-shift.service.ts` — CLEAN. No Prisma imports; uses local JsonValue/JsonObject alias and repository pass-through.
 - `shift-alignment.service.ts` — CLEAN (fixed in feat/studio-shift-schedule PR review). Replaced `Prisma.ShowGetPayload<>` with local `ShowWithPlanningContext` interface; replaced `TaskType` enum with `REQUIRED_SHOW_TASK_TYPES` string literal array.
 
@@ -33,8 +36,10 @@ All writable models must have `version: number` for optimistic locking.
 `StudioShift` and `StudioShiftBlock` are MISSING this field — introduced in feat/studio-shift-schedule.
 This is technical debt deferred to next migration pass. See `known-issues.md`.
 
-### Repository Pattern: CLS Transaction Participation
-All repositories must use `this.txHost.tx` (CLS transaction adapter) instead of `this.prisma` directly.
+### Persistence Pattern: CLS Transaction Participation
+All transaction-dependent persistence—direct service or repository—must use
+`this.txHost.tx` (CLS transaction adapter) instead of an unbounded
+`this.prisma` client.
 `StudioShiftRepository` — FIXED in feat/studio-shift-schedule PR review. Now injects `TransactionHost<TransactionalAdapterPrisma>` and uses `this.txHost.tx.*` via a `delegate` getter for all DB calls.
 
 ### buildBlocksReplacePayload: Domain Type Pattern (RESOLVED)

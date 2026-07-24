@@ -22,14 +22,20 @@ The first application of `codebase-hardening-program` ran on `apps/erify_api` (b
 
 1. **A plan recommendation was infeasible as written.** Plan said "make `ScheduleSnapshotRepository` extend `BaseRepository`" — but that model has **no `deletedAt` column** and `BaseRepository` injects `deletedAt: null` filters, so extending it would break reads. Correct fix: txHost wiring only, keep hard delete. **Lesson: confirm every plan recommendation against source at ticket start; line-cited audit claims are not infallible.**
 2. **Scope expanded on a grep-audit.** A "wire 3 repos" item became 7 once the mandated audit found 4 more with the same issue. Flag the expansion; keep it one coherent PR.
-3. **A deeper root cause was found but deliberately left for a follow-up.** `BaseRepository` itself binds inherited base methods to the unbounded client; the canonical reference repo works around it by overriding the methods it uses in transactions. Following the convention (not rewriting the base) kept the PR safe; the base rewrite is logged as separate tech-debt.
+3. **A deeper root cause was found and later fixed behind a real-database gate.**
+   `BaseRepository` once bound inherited methods to the unbounded client. T9
+   changed the wrapper to resolve `TransactionHost.tx` lazily and corrected
+   generic restore; the lesson remains to separate a cross-cutting fix and prove
+   it with rollback characterization before relying on it.
 4. **A decomposition target missed the LOC threshold and was signed off.** One sub-service stayed at 557 LOC (target <400) as a cohesion tradeoff; another proposed split was *declined* as over-decomposition. Both surfaced for explicit sign-off rather than forced.
 5. **A planned race-fix became won't-fix.** The `actuals_source` whole-blob race wasn't reachable because actuals are written **sequentially by operational phase** — verified before building a fix, then documented as won't-fix. (`actuals-source-sequential-no-concurrency` memory.)
 6. **A money-util consolidation turned out to need a design decision, not a sweep.** The three "duplicate" formatters had genuinely different semantics, and converting `Decimal` out of a public signature only *moved* the `new Decimal` to a math-doing consumer. Deferred pending a domain-`Money` direction call rather than forced. (Now in `docs/tech-debt/erify-api-refactor-residuals.md`.)
 
 ## Decision-handling pattern
 
-- **Lock direction; defer detail.** e.g. "analytics services get a repository layer" was locked; the repo shape was decided in-ticket.
+- **Lock direction; defer detail.** For example, decide that analytics needs a
+  private read boundary, then select a query provider/repository shape in the
+  implementation ticket.
 - **Frame decisions user-flow-first.** Lead with the concrete end-to-end flow + plain "why", then the one real fork — not an abstract A/B/C matrix. (`decision-framing-user-flow-first` memory.)
 - **Resolved erify_api decisions, for reference:** accept-the-race on upload counter (D1); analytics repositories (D2); split review/compensation out of orchestration (D3); publish bumps `version` (D5); hard-delete immutable snapshots (D6); blank-numeric → null (D9); delete the soft-delete-bypassing override (D10); datetime actuals race won't-fix (D8/D12). Still open: domain-`Money` (D4), Sheets service-account identity (D7), `studioId`→`studioUid` rename (D11).
 
