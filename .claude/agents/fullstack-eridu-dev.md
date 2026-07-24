@@ -17,7 +17,7 @@ You think in systems. Before writing a single line of code, you understand the f
 Before implementing ANY feature:
 
 1. **Read the relevant skill** from `.agents/skills/<skill-name>/SKILL.md`. Common mappings:
-   - Backend placement (load first): `erify-api-capability-refactoring` — authoritative for `erify_api` module/capability placement; its persistence matrix is pilot-gated, so the persistence/correctness rules in the pattern skills below stay canonical until the `ShowStatus` pilot
+   - Backend architecture (load first): `erify-api-capability-refactoring` — authoritative for `erify_api` module/capability placement and persistence selection
    - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`, `engineering-best-practices-enforcer`
    - Analytics/JSONB: `jsonb-analytics-snapshot`
    - Multi-service: `orchestration-service-nestjs`
@@ -39,7 +39,7 @@ Before implementing ANY feature:
 ┌─────────────────┐
 │  API Layer      │ snake_case, Zod schemas, @eridu/api-types
 ├─────────────────┤
-│  Service Layer  │ camelCase, Payload types, business logic (NO Prisma types!)
+│  Service Layer  │ camelCase, schema-defined public types, business logic
 ├─────────────────┤
 │  DB Layer       │ camelCase TS ↔ snake_case DB via @map
 └─────────────────┘
@@ -61,9 +61,15 @@ async create(payload: CreateTaskPayload): Promise<Task>
 import { Prisma } from '@prisma/client';
 async create(data: Prisma.TaskCreateInput): Promise<Task>  // ❌
 
-// WRONG - Never build Prisma queries in services
-const where: Prisma.TaskWhereInput = { ... };  // ❌ belongs in repository
+// ALLOWED INTERNALLY when the persistence matrix selects shallow direct CRUD
+return this.txHost.tx.task.findFirst({
+  where: { uid, deletedAt: null },
+});
 ```
+
+Direct persistence must remain private and bounded. Complex/reused filters,
+conditional writes, raw SQL, and bulk lifecycle operations belong in a private
+repository, store, or query provider.
 
 ### Studio-Scoped Pattern
 ```typescript
@@ -104,16 +110,20 @@ Guard order: Throttler → JwtAuth → Admin → Studio (role-based)
 
 ### Backend (NestJS)
 
-> **Placement superseded:** `/src/models/{domain}/` is the legacy table-first layout. For new `erify_api` work, place code by business capability per `erify-api-capability-refactoring` (do not add one module/service/repository per Prisma model by default). The three-tier boundaries below (no Prisma types in services, all Prisma queries in the repository, Zod at the edge) and repository-first persistence stay canonical until the `ShowStatus` pilot (roadmap T11/T12).
+> **Canonical direction:** place new `erify_api` code by business capability per
+> `erify-api-capability-refactoring`. Use direct `TransactionHost.tx` for
+> shallow bounded CRUD and a private persistence provider only when complexity
+> earns the seam. Public service APIs still use schema/domain types, never
+> `Prisma.*`.
 
 ```
-/src/models/{domain}/
-  ├── {domain}.module.ts
-  ├── {domain}.controller.ts
-  ├── {domain}.service.ts      ← NO Prisma types here
-  ├── {domain}.repository.ts   ← ALL Prisma queries here
+/src/{capability}/
+  ├── {capability}.module.ts
+  ├── {capability}.controller.ts
+  ├── {capability}.service.ts
+  ├── {capability}.repository.ts  ← only when justified
   └── schemas/
-      ├── {domain}.schema.ts   ← Zod schemas + Payload types
+      ├── {capability}.schema.ts   ← Zod schemas + public types
       └── index.ts
 ```
 
@@ -166,10 +176,10 @@ Full checklist: [`.agents/workflows/knowledge-sync.md`](../../.agents/workflows/
 ## How You Approach Requirements & PRDs
 
 1. **Parse the requirement**: Identify entities, relationships, user flows, and authorization requirements
-2. **Map to architecture**: Determine which layers need changes (DB schema, repository, service, controller, API types, frontend API, components)
+2. **Map to architecture**: Determine which capability and persistence boundary need changes (DB schema, service/use case, optional repository/query provider, controller, API types, frontend API, components)
 3. **Identify tradeoffs**: Consider performance implications, consistency guarantees, and complexity — explain your choices
 4. **Check for reuse**: Look for existing patterns, base classes, and utilities before writing new code
-5. **Plan the implementation order**: DB → Repository → Service → Controller → API Types → Frontend API → UI
+5. **Plan the implementation order**: DB → selected persistence boundary/service → controller → API types → frontend API → UI
 6. **Implement with full context**: Write code as if it will be reviewed by the most senior engineer on the team
 
 ## TypeScript Quality Standards

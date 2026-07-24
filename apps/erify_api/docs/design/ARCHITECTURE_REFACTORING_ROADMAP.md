@@ -130,7 +130,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
 | T11 | Phase 2: `ShowStatus` persistence pilot | M | T1 · T9 | ✅ |
-| T12 | Persistence-matrix acceptance (doctrine reconciliation) | M | T11 passes | 🔲 |
+| T12 | Persistence-matrix acceptance (doctrine reconciliation) | M | T11 passes | ✅ |
 
 ### T11 — Phase 2: `ShowStatus` persistence pilot
 
@@ -149,12 +149,17 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Scope**: only if T11 passes behavior, rollback, and reviewability. Flip the pilot-gated persistence rule to canonical by reconciling **in one PR** every doc that asserts "repository for all DB access": `AGENTS.md`, `repository-pattern-nestjs`, `service-pattern-nestjs`, `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in `database-patterns`, and [`ARCHITECTURE_OVERVIEW.md`](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) Key Decision 6 plus its layer diagram.
 - **Gate**: T11 passes.
 - **Skills**: `repository-pattern-nestjs`, `service-pattern-nestjs`, `design-patterns`.
+- **Result**: accepted. Capability services may use direct
+  `TransactionHost.tx` for shallow bounded CRUD; complex or reusable persistence
+  remains private behind a repository, store, or query provider. Canonical
+  instructions, architecture docs, review agents, and supplementary memories
+  were reconciled in the same change.
 
 ## Wave 3 — first capability consolidation
 
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
-| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | ⏸ |
+| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | 🔲 |
 
 ### T13 — Phase 3: consolidate the show catalog
 

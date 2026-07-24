@@ -1,7 +1,7 @@
 # `erify_api` Architecture Refactoring Guide
 
-> **Status**: Accepted direction — capability-first placement is the default for new `erify_api` work as of the merge of this guide. The `ShowStatus` implementation pilot has passed its behavior, rollback, and reviewability gates. The persistence matrix is still not canonical until T12 reconciles all repository-first doctrine in one change.
-> **Source snapshot**: `f677b627` (PR base; `apps/erify_api/src` is unchanged through current `master`)
+> **Status**: Accepted direction — capability-first placement and the evidence-based persistence matrix are canonical for new `erify_api` work. The `ShowStatus` pilot passed its behavior, rollback, and reviewability gates, and T12 reconciled the repository-first doctrine.
+> **Source snapshot**: `f677b627` (original analysis baseline); implementation status is tracked in [`ARCHITECTURE_REFACTORING_ROADMAP.md`](./ARCHITECTURE_REFACTORING_ROADMAP.md)
 > **Scope**: Structure, module ownership, service and persistence boundaries, DDD, CQRS, runtime composition, testing, and performance guardrails
 > **Visual companion**: [`architecture-refactoring-visual.html`](./architecture-refactoring-visual.html) — a diagrammed walkthrough of the problem, the NestJS-vs-Rails philosophy, Nest conventions, the phased plan, and the risks. Open it in a browser.
 
@@ -139,12 +139,13 @@ Some direct repository access is justified by bulk writes, transaction visibilit
 
 [`base.repository.ts`](../../src/lib/repositories/base.repository.ts) mirrors Prisma CRUD using broad `Record<string, any>` and `any` parameters. It creates consistent soft-delete calls, but it does not hide Prisma's query model and it cannot reliably provide transaction semantics.
 
-T9 repaired the two false generic behaviors: `PrismaModelWrapper` now resolves
-each repository delegate lazily from `TransactionHost.tx`, and `restore()`
-targets soft-deleted rows rather than filtering for active rows. Real-PostgreSQL
-tests prove inherited writes join rollback and restore returns a row to active
-reads. The abstraction still exposes broad Prisma-shaped arguments and should
-not become the automatic persistence choice for every capability.
+At the original source snapshot, inherited methods bound to the unbounded
+`PrismaService`, and generic `restore()` targeted active rather than deleted
+rows. T9 closed both defects behind the isolated PostgreSQL gate: the wrapper
+now resolves `TransactionHost.tx` lazily and restore targets
+`deletedAt: { not: null }`. `BaseRepository` remains non-default because its
+broad generic query surface is still a leaky abstraction, not because its
+transaction and restore semantics remain broken.
 
 **Direction**:
 
@@ -372,14 +373,11 @@ Every option must preserve:
 - audit and optimistic-lock behavior;
 - bounded list and bulk inputs.
 
-The implementation pilot proves this matrix only for `ShowStatus`; it does not
-change repository doctrine. If the team accepts the result, the separate T12
-acceptance PR must reconcile in one change every instruction or architecture
-document that asserts “repository for all DB access.” This includes `AGENTS.md`,
-`repository-pattern-nestjs`, `service-pattern-nestjs`,
-`orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in
-`database-patterns`, and `docs/engineering/ARCHITECTURE_OVERVIEW.md`. Until T12
-lands, the current repository-first rules remain canonical outside the pilot.
+This matrix was accepted after the `ShowStatus` pilot. T12 reconciled every
+instruction and architecture document that asserted “repository for all DB
+access,” including `AGENTS.md`, the service/repository/orchestration/design and
+database skills, tool-specific agent guidance, and
+`docs/engineering/ARCHITECTURE_OVERVIEW.md`.
 
 ## CQRS: What It Is And Why Not Yet
 
@@ -463,10 +461,8 @@ findings without implementing refactors or creating a parallel backlog.
 
 The scheduled scan should discover and compare signals. Human review decides whether evidence warrants implementation. Performance gates should use runtime measurements and observability rather than source counts.
 
-Capability-first placement is accepted for new work. The persistence matrix
-passed its `ShowStatus` implementation pilot but remains non-canonical until T12
-reconciles repository-first doctrine in one change. The generic trigger-audit
-process applies to both the accepted placement rule and any pilot-gated pattern.
+Capability-first placement and the persistence matrix are accepted for new
+work. The generic trigger-audit process applies to both decisions.
 
 ## Phased Refactoring Plan
 
@@ -539,8 +535,10 @@ and the repository mock seam. The service keeps its caller-facing methods,
 builds only the bounded filter shapes its callers use, and exposes
 schema-defined types rather than `Prisma.*` signatures. Focused caller tests and
 the isolated PostgreSQL harness preserved active-row filtering, soft delete,
-transaction visibility, and rollback. This result unlocks T12; it does not
-change persistence doctrine by itself.
+transaction visibility, and rollback. T12 accepted the result and reconciled
+the persistence doctrine. Existing repositories are not migration debt by
+default; migrate them only when touched and only when the matrix selects a
+simpler boundary.
 
 ### Phase 3 — Consolidate The Show Catalog Capability
 

@@ -11,7 +11,11 @@ For detailed code examples, read the corresponding file from `references/` as ne
 
 ## 1. Soft Delete
 
-NEVER permanently delete logical data. Use `deletedAt` timestamps. Every query MUST filter `deletedAt: null`. Use `BaseRepository.softDelete()`. Add `@@index([deletedAt])`.
+NEVER permanently delete logical data. Use `deletedAt` timestamps. Every active
+query MUST filter `deletedAt: null`. Soft-delete through the selected
+transaction-aware persistence boundary: `BaseRepository.softDelete()` for an
+existing repository or a scoped `txHost.tx.<model>.update` for shallow direct
+persistence. Add `@@index([deletedAt])`.
 
 > 📖 [references/01-soft-delete.md](references/01-soft-delete.md)
 

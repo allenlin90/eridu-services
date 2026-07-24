@@ -4,7 +4,7 @@
 
 > Root-level reference for high-level architecture decisions and cross-app terminology. For backend implementation patterns, see the skills listed below and the `erify_api` implementation docs.
 
-> **Direction (2026-07):** new `erify_api` work follows capability-first *placement* (`erify-api-capability-refactoring`, per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)). The `Controller → Service → Repository → Database` layering and repository-first data access shown below remain **canonical for persistence** until the `ShowStatus` pilot proves the persistence-decision matrix and reconciles all repository-first doctrine in one PR (roadmap T11/T12). This overview describes the current canonical persistence layer; it is not reconciled to the pilot-gated matrix yet.
+> **Direction (2026-07):** new `erify_api` work follows capability-first placement and the accepted persistence matrix (`erify-api-capability-refactoring`, per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)). Shallow bounded CRUD may live in a capability service through `TransactionHost.tx`; complex or reusable persistence stays private behind a repository, store, or query provider.
 
 ---
 
@@ -44,13 +44,13 @@ block-beta
     space
     block:biz["Business Logic Layer"]
         columns 2
-        ModelSvc["Model Services\n(single-entity CRUD)"]
-        OrchSvc["Orchestration Services\n(multi-entity workflows)"]
+        ModelSvc["Capability Services\n(stable public APIs)"]
+        OrchSvc["Use Cases\n(multi-capability workflows)"]
     end
     space
-    block:data["Data Access Layer"]
+    block:data["Persistence Boundary"]
         columns 1
-        Repo["Repositories (BaseRepository)\nPrisma delegates, soft delete, version checks"]
+        Persistence["Direct txHost for shallow CRUD\nPrivate repositories/queries for complexity"]
     end
     space
     block:db["Database"]
@@ -75,14 +75,14 @@ block-beta
                    │
 ┌──────────────────▼───────────────────────────────┐
 │              Business Logic Layer                │
-│  Model Services (single entity CRUD)             │
-│  Orchestration Services (multi-entity workflows) │
+│  Capability Services (stable public APIs)        │
+│  Use Cases (multi-capability workflows)          │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
-│              Data Access Layer                   │
-│  Repositories (extends BaseRepository)           │
-│  Prisma delegates, soft delete, version checks   │
+│              Persistence Boundary                │
+│  Direct txHost for shallow bounded CRUD          │
+│  Private repositories/queries for complexity     │
 └──────────────────┬───────────────────────────────┘
                    │
 ┌──────────────────▼───────────────────────────────┐
@@ -95,7 +95,10 @@ block-beta
 
 ## Runtime Boundaries
 
-`erify_api` is a modular NestJS backend that can expose multiple runtime entrypoints over the same service/repository layer. Each runtime imports the modules needed for its transport and audience rather than booting every route surface.
+`erify_api` is a modular NestJS backend that can expose multiple runtime
+entrypoints over the same capability and persistence layers. Each runtime
+imports the modules needed for its transport and audience rather than booting
+every route surface.
 
 | Runtime | Entrypoint | Audience | Transport | Boundary |
 | ------- | ---------- | -------- | --------- | -------- |
@@ -109,11 +112,15 @@ Runtime adapters stay thin:
 
 ```text
 REST Controller ┐
-MCP Tool        ├─> Use Case / Service ─> Repository ─> Database
-Worker Processor ┘
+MCP Tool        ├─> Use Case / Service ─> Persistence ─> Database
+Worker Processor ┘                         ├─ direct txHost
+                                           └─ private repository/queries
 ```
 
-Controllers, MCP tools, and worker processors translate transport-specific input/output. Business rules live in services/use-cases and repositories remain the data-access boundary.
+Controllers, MCP tools, and worker processors translate transport-specific
+input/output. Business rules live in capability services/use cases. The
+selected persistence boundary remains private: direct `txHost` for shallow CRUD
+or a named provider for complex persistence.
 
 ## Controller Scopes
 
@@ -131,8 +138,8 @@ Controllers, MCP tools, and worker processors translate transport-specific input
 2. **Zod response serialization** — `@ZodResponse(Schema)` on every endpoint ensures no internal data leaks.
 3. **Global guards** — `JwtAuthGuard`, `AdminGuard`, `StudioGuard` registered globally; routes opt-in via decorators.
 4. **CLS transactions** — `@Transactional()` from `@nestjs-cls/transactional`; never pass `tx` as parameter.
-5. **Soft deletes** — All entities use `deletedAt` timestamps; base repository filters automatically.
-6. **Module exports = services only** — Repositories are private; services are the module's public API.
+5. **Soft deletes** — All entities use `deletedAt` timestamps; the selected persistence boundary applies active-row predicates and scoped soft-delete writes.
+6. **Module exports = capability APIs only** — Services and intentional query APIs may be public; repositories/stores remain private.
 
 ## Monorepo Packages
 
@@ -152,11 +159,11 @@ For detailed implementation patterns, see `.agents/skills/`:
 
 | Skill                                 | Covers                                                     |
 | ------------------------------------- | ---------------------------------------------------------- |
-| `erify-api-capability-refactoring`    | Capability/module placement (authoritative; persistence matrix pilot-gated) |
+| `erify-api-capability-refactoring`    | Capability/module placement and persistence selection (authoritative)       |
 | `backend-controller-pattern-nestjs`   | All controller types, base classes, response serialization |
-| `service-pattern-nestjs`              | Model services, ORM decoupling, error handling (superseded for placement)   |
-| `repository-pattern-nestjs`           | BaseRepository, filtering, optimistic locking (superseded for placement)    |
-| `orchestration-service-nestjs`        | Multi-service coordination, `@Transactional`, processors (superseded for placement) |
+| `service-pattern-nestjs`              | Capability services, typed APIs, direct or provider-backed persistence      |
+| `repository-pattern-nestjs`           | Selective private repositories, filtering, optimistic locking              |
+| `orchestration-service-nestjs`        | Capability workflow coordination, `@Transactional`, processors             |
 | `authentication-authorization-nestjs` | JWT validation, token storage, protected routes            |
 | `erify-authorization`                 | AdminGuard, StudioProtected, role-based access             |
 | `database-patterns`                   | Soft delete, bulk ops, transactions, nested writes         |

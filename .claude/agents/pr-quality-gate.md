@@ -47,9 +47,13 @@ Report exact output. Any failure is a **BLOCKING** issue.
 
 ### Repository Method Necessity Gate
 
-For **every new named method** added to a repository file (beyond `findOne` / `findByUid`):
+First verify that the persistence matrix justifies the repository. For every
+new named method added to a justified repository file (beyond `findOne` /
+`findByUid`):
 
-1. **Necessity test**: read the method body. Can it be replaced by `this.repository.findMany({ where: {...}, ...rest })` called directly from the service? If yes — the method must not exist. Flag as **BLOCKING**.
+1. **Necessity test**: read the method body. Is it shallow bounded CRUD that
+   can live clearly in the capability service through `TransactionHost.tx`? If
+   yes, the pass-through repository/method must not exist. Flag as **BLOCKING**.
 
 2. **Exception criteria** (any one is sufficient to justify the method):
    - Non-trivial Prisma query that cannot be a flat `where` (range overlap, OR conditions, subqueries)
@@ -79,8 +83,8 @@ async findActiveByStudioUid(studioUid: string): Promise<Schedule[]> {
 ### Three-Tier Schema Architecture
 Verify the layering is respected:
 - **API Layer**: snake_case, Zod schemas, in `@eridu/api-types` — no business logic
-- **Service Layer**: camelCase, Payload types only — NO `Prisma.*` types in method signatures, no Prisma queries
-- **DB/Repository Layer**: All Prisma access lives here only
+- **Service Layer**: camelCase, schema/domain types in public signatures; shallow private `txHost.tx` operations are allowed when selected by the persistence matrix
+- **Persistence Boundary**: complex/reused queries, conditional writes, raw SQL, and bulk lifecycle operations live in a private named provider
 
 **Service Layer Red Flags** (BLOCKING):
 ```typescript
@@ -88,26 +92,31 @@ Verify the layering is respected:
 import { Prisma } from '@prisma/client';
 async create(data: Prisma.TaskCreateInput)  // ❌
 
-// WRONG — service builds Prisma query
-const where: Prisma.TaskWhereInput = { ... }  // ❌
-
 // CORRECT
 import type { CreateTaskPayload } from './schemas';
 async create(payload: CreateTaskPayload): Promise<Task>  // ✅
+
+// ALSO CORRECT — private, bounded direct persistence selected by the matrix
+return this.txHost.tx.task.findFirst({
+  where: { uid, deletedAt: null },
+});
 ```
 
 ### File Structure Compliance
 
-> **Placement superseded:** `/src/models/{domain}/` is the legacy table-first layout. New `erify_api` work is placed by business capability per `erify-api-capability-refactoring` — do not flag capability-first placement as non-compliant. The three-tier boundaries below and repository-first persistence stay canonical until the `ShowStatus` pilot (roadmap T11/T12).
+> **Canonical direction:** new `erify_api` work is placed by business
+> capability per `erify-api-capability-refactoring`. Do not require one
+> service/module/repository per Prisma model. Review direct persistence against
+> the accepted matrix and require repositories only when complexity earns them.
 
 Backend:
 ```
-/src/models/{domain}/
-  {domain}.module.ts
-  {domain}.controller.ts
-  {domain}.service.ts
-  {domain}.repository.ts
-  schemas/{domain}.schema.ts
+/src/{capability}/
+  {capability}.module.ts
+  {capability}.controller.ts
+  {capability}.service.ts
+  {capability}.repository.ts  # optional, justified
+  schemas/{capability}.schema.ts
   schemas/index.ts
 ```
 

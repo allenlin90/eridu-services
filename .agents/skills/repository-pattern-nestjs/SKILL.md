@@ -1,18 +1,15 @@
 ---
 name: repository-pattern-nestjs
-description: Legacy erify_api repository pattern. Capability skill wins on placement; repository-first persistence stays canonical until the ShowStatus pilot.
+description: Implement private erify_api repositories when complex persistence earns a dedicated provider.
 ---
 
-# Repository Pattern - Prisma/NestJS (Superseded for placement)
+# Repository Pattern - Prisma/NestJS (Selective)
 
-> **Superseded for architecture and placement selection.**
+> **Not the default persistence choice.**
 > [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
-> decides *whether* a capability needs a repository and *where* persistence lives.
-> **Repository-first persistence — `BaseRepository`, `BaseRepository.softDelete()`, and
-> the correctness rules below — stays canonical for new and refactored `erify_api` code
-> until the `ShowStatus` pilot (roadmap T11/T12).** A new soft-deletable capability uses
-> a capability-owned repository extending `BaseRepository`; the pilot-gated
-> direct-`txHost.tx` matrix is not yet the default.
+> decides whether a capability uses direct `TransactionHost.tx`, a private query
+> provider, or a repository/store. Apply this skill when that matrix selects a
+> repository.
 
 Implementation guide for NestJS Repositories using Prisma.
 
@@ -25,26 +22,34 @@ Implementation guide for NestJS Repositories using Prisma.
 
 ## Core Rules
 
-### 1. Use BaseRepository by Default
+### 1. Use BaseRepository Only When It Helps The Selected Repository
 
-🔴 Repositories for soft-deletable CRUD models should extend `BaseRepository<T, C, U, W>`.
+Repositories that need the shared soft-delete CRUD contract may extend
+`BaseRepository<T, C, U, W>`. Do not create a repository merely to use the base
+class; shallow CRUD belongs directly in the capability service.
 
 BaseRepository-based repositories use `PrismaModelWrapper` to bridge repository
 generics to Prisma delegates. Pass a delegate resolver backed by the ambient
 transaction host: `new PrismaModelWrapper(() => txHost.tx.<model>)`. The
 wrapper resolves the delegate for each operation, so inherited methods join
-the current CLS transaction. Follow that pattern for CRUD models. Standalone
+the current CLS transaction. Follow that pattern when an existing or justified
+repository uses the base class. Standalone
 repositories exist for audit logs, schedule snapshots, task-report scopes, and
 custom replacement/write flows such as show-platform violations; keep those as
 explicit exceptions with module-local service APIs.
 
 ### 2. Soft Delete Filtering
 
-🔴 Always filter `deletedAt: null` in custom queries. Use `BaseRepository.softDelete()`.
+🔴 Always filter `deletedAt: null` in custom queries. Use
+`BaseRepository.softDelete()` when extending the base class; otherwise perform
+the equivalent scoped `txHost.tx.<model>.update`.
 
 ### 3. No Method Proliferation
 
-🔴 Do NOT add named methods that are only thin `findMany({ where })` wrappers. Call `findMany` directly from the service.
+🔴 Do NOT add named methods that are only thin `findMany({ where })` wrappers.
+If the capability needs only that operation, use direct persistence in the
+service. If an existing repository already exposes generic `findMany`, call it
+without adding another alias.
 
 A named method IS justified when:
 - Non-trivial Prisma query building (range logic, OR conditions, subqueries)
@@ -77,10 +82,13 @@ use the unbounded `PrismaService` for transaction-dependent work.
 ## Key Patterns
 
 ### Specialized Find Methods
-Use `findOne({ uid, deletedAt: null })` from BaseRepository. Only add `findByUid` if it has additional logic (includes, scoping).
+Use `findOne({ uid })` from `BaseRepository` when the selected repository
+extends it. Only add `findByUid` if it has additional logic such as includes or
+tenant scoping.
 
 ### Join/Association Tables
-Repository is private to its module (never exported). Module's service wraps the repository and provides the public API.
+Repository is private to its capability module (never exported). The
+capability's service wraps it and provides the public API.
 
 ### Advanced Filtering with Pagination
 Accept domain-level parameters, build Prisma where clauses internally. Use `Promise.all` for concurrent data + count queries.
@@ -104,7 +112,8 @@ When filtering through a soft-deletable join table, put `deletedAt: null` on the
 
 ## Checklist
 
-- [ ] 🔴 Extends `BaseRepository` with `PrismaModelWrapper` for soft-deletable CRUD models
+- [ ] The persistence matrix justifies a repository instead of shallow direct persistence
+- [ ] If it extends `BaseRepository`, `PrismaModelWrapper` resolves the ambient transaction lazily
 - [ ] 🔴 No thin `findMany` wrappers — call `findMany` from service
 - [ ] 🔴 No `findByUidOrThrow` — controller handles 404
 - [ ] 🔴 Always filter `deletedAt: null`
@@ -120,6 +129,6 @@ When filtering through a soft-deletable join table, put `deletedAt: null` on the
 
 ## Related Skills
 
-- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Service layer using repositories
+- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Capability service and persistence selection
 - [Database Patterns](../database-patterns/SKILL.md) — Soft delete, transactions, locking
 - [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Controller patterns

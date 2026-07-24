@@ -112,15 +112,19 @@ Source of truth:
 
 ## Critical Skills Clarifications
 
-> **Placement authority (2026-07):** For `erify_api`, `erify-api-capability-refactoring` is now authoritative for *placement* (which capability owns a use case, where a workflow/persistence lives) and supersedes the two skills below for that decision. Its persistence-decision matrix is **pilot-gated** — repository-first persistence and the correctness rules in these skills stay canonical until the `ShowStatus` pilot (roadmap T11/T12). "PRIMARY" below means canonical for persistence/correctness, not for module placement.
+> **Architecture authority (2026-07):** For `erify_api`,
+> `erify-api-capability-refactoring` is authoritative for placement and
+> persistence selection. The accepted matrix uses direct `TransactionHost.tx`
+> for shallow bounded CRUD and private repositories/query providers for complex
+> persistence. The skills below define correctness for the selected boundary.
 
 ### service-pattern-nestjs (PRIMARY)
 
 **Key Rules** (from skill):
 1. ✅ Schemas MAY import `Prisma` types to DEFINE payload types
 2. ✅ Services MUST import payload types, NOT Prisma types
-3. ✅ Use `Parameters<Repository['method']>` for pass-through methods
-4. ✅ Repository owns where-clause building (not service)
+3. ✅ Public service APIs expose domain/schema types, never a Prisma query DSL
+4. ✅ The selected private persistence boundary owns query construction
 
 **Example (CORRECT)**:
 ```typescript
@@ -142,11 +146,11 @@ async create(payload: CreateTaskPayload): Promise<Task> {
 
 **This clarifies**: My earlier analysis saying "services shouldn't use Prisma types" is correct for SERVICE layer, but SCHEMA layer CAN derive payloads from Prisma types. The key is the **abstraction boundary**.
 
-### repository-pattern-nestjs (PRIMARY)
+### repository-pattern-nestjs (WHEN THE MATRIX SELECTS A REPOSITORY)
 
 **Key Rules**:
-1. ✅ ALL repositories MUST extend `BaseRepository<T, C, U, W>`
-2. ✅ Create ModelWrapper implementing `IBaseModel`
+1. ✅ Create a repository only when persistence complexity earns the seam
+2. ✅ Use `BaseRepository`/ModelWrapper only when its shared contract helps
 3. ✅ Use `findFirst` for soft-delete filtering (not `findUnique`)
 4. ✅ Implement `findPaginated` accepting domain parameters
 5. ✅ Repository builds Prisma where clauses internally
@@ -233,7 +237,8 @@ export class StudioTaskController {
 **Clarification from skills**:
 - ❌ Services MUST NOT import `Prisma` namespace in method signatures
 - ✅ Schemas CAN import `Prisma` types to DEFINE payloads
-- ❌ Services MUST NOT build Prisma where clauses
+- ✅ A direct-persistence service may build private bounded queries through
+  `TransactionHost.tx`; public service APIs must not expose Prisma query types
 
 **Refined rule**:
 ```typescript
@@ -311,7 +316,9 @@ async findPaginated(params: {
 ## Skills vs Memory Files
 
 ### When to Use Skills
-- ✅ **Creating new `erify_api` capabilities/models** → `erify-api-capability-refactoring` first for placement, then `service-pattern-nestjs`, `repository-pattern-nestjs` for persistence/correctness (canonical until the `ShowStatus` pilot)
+- ✅ **Creating new `erify_api` capabilities/models** →
+  `erify-api-capability-refactoring` first for placement and persistence
+  selection, then the service/repository skills that match the selected boundary
 - ✅ **Adding guards** → `erify-authorization`
 - ✅ **Frontend API** → `frontend-api-layer`, `frontend-state-management`
 - ✅ **Shared types** → `shared-api-types`

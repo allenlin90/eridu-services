@@ -199,7 +199,13 @@ interface UserWriter {
 
 - **NestJS DI**: Inject dependencies via constructor injection. Never instantiate dependencies with `new` inside a class.
 - **Tokens and Interfaces**: Use injection tokens or interfaces for cross-cutting concerns (loggers, config, external clients) so they can be swapped or mocked.
-- **Layer Isolation**: Controllers depend on services, services depend on the persistence layer — never the reverse. For `erify_api` this repository-first layering stays canonical until the `ShowStatus` pilot (roadmap T11/T12); "abstractions" does not mean adding a speculative repository interface for a single Prisma implementation (`erify-api-capability-refactoring`: introduce an interface only when there are genuinely different adapters).
+- **Layer Isolation**: Controllers depend on capability services/use cases, which
+  own or depend on their private persistence boundary — never the reverse.
+  Shallow services may use `TransactionHost.tx` directly; complex persistence
+  may use a repository/query provider. "Abstractions" does not mean adding a
+  speculative repository interface for a single Prisma implementation
+  (`erify-api-capability-refactoring`: introduce an interface only when there
+  are genuinely different adapters).
 - **Testability**: DIP enables easy mocking — every injected dependency can be replaced in tests.
 
 ```typescript

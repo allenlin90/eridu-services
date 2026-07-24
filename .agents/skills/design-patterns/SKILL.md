@@ -7,20 +7,25 @@ description: Make high-level architecture, layer-boundary, and package-organizat
 
 High-level architecture, layer boundaries, and package organization.
 
-For `erify_api` module and capability placement, [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is authoritative (its persistence-matrix rules are pilot-gated; repository-first persistence stays canonical until the `ShowStatus` pilot).
+For `erify_api` module placement and persistence selection,
+[`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
+is authoritative.
 
 For implementation details: [controllers](../backend-controller-pattern-nestjs/SKILL.md) | [services](../service-pattern-nestjs/SKILL.md) | [repositories](../repository-pattern-nestjs/SKILL.md)
 
 ## Architectural Layers
 
 ```
-HTTP API (Controllers) → Business Logic (Services) → Data Access (Repositories) → Database
+HTTP API → Capability Service / Use Case → Persistence → Database
+                                      ├─ direct txHost for shallow CRUD
+                                      └─ private repository/queries for complexity
 ```
 
 **Boundaries**:
 - Only Controllers speak HTTP — services never know about HTTP
 - Services implement all business logic — controllers never contain business logic
-- Repositories hide DB/ORM — services never write raw queries
+- Capability APIs never expose ORM query types
+- Shallow services may use `TransactionHost.tx` directly; complex persistence stays private behind a named provider
 - Shared API types at external edges; domain/DB types internally
 
 ## OLTP Facts vs Analytical Read Models
@@ -46,14 +51,18 @@ Use the standard `Audit` / `AuditTarget` history for new override and extraction
 
 | Type | Responsibility | Dependencies |
 |---|---|---|
-| **Model Service** | Single entity CRUD | Repository, UtilityService |
-| **Orchestration** | Multi-entity coordination | Multiple Model Services |
+| **Capability Service** | Stable API, single-capability behavior | `TransactionHost` or private persistence provider |
+| **Orchestration** | Multi-capability coordination | Capability services and private workflow providers |
 
-Decision: one table → Model Service; multiple tables in transaction → Orchestration.
+Decision: one shallow capability → direct persistence is allowed; complex or
+reused persistence → private provider; multiple capabilities in one workflow →
+capability-owned orchestration/use case.
 
 ## Module Exports
 
-Export services only. Repositories are private. Join/association table modules: add a service (even if thin), export only the service.
+Export capability services or intentional query APIs only. Persistence
+providers remain private. Do not add a thin service or module solely because a
+join table exists.
 
 ## When to Separate Join Table Modules
 

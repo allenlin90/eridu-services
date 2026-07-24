@@ -1,6 +1,6 @@
 ---
 name: erify-api-capability-refactoring
-description: Capability-first placement for apps/erify_api NestJS refactors — modules, persistence, transactions, workflows, read paths, MCP. Matrix stays pilot-gated.
+description: Capability-first placement and evidence-based persistence selection for apps/erify_api NestJS refactors.
 ---
 
 # `erify_api` Capability Refactoring Skill
@@ -17,22 +17,19 @@ For that placement decision it supersedes the design-selection guidance in:
 
 Do not use those three skills to justify adding a new model-shaped service, a repository per Prisma model, a default `BaseRepository`, a generic orchestration service, or a table-first module. For that decision, this skill wins.
 
-### Persistence doctrine is pilot-gated
+### Persistence doctrine is evidence-based
 
-Capability-first **placement** is active now. The **persistence-decision matrix** — a shallow capability service using `TransactionHost.tx.<model>` directly instead of a repository, and retiring `BaseRepository` as the default — passed the `ShowStatus` implementation pilot (roadmap T11) but is **not yet canonical**. Per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md), repository-first data access stays canonical until the separate acceptance change reconciles all repository-first doctrine in one PR (T12).
+Capability-first placement and the persistence-decision matrix are canonical.
+A shallow capability service uses `TransactionHost.tx.<model>` directly when
+the persistence is single-model CRUD with bounded inputs and no reusable query
+policy. Keep a private repository, store, or query provider when the capability
+needs complex filtering/projections, optimistic conditional writes, raw SQL,
+bulk lifecycle operations, or a real adapter seam.
 
-Until T12 lands, persistence outside the `ShowStatus` pilot keeps using
-repositories and `BaseRepository.softDelete()` per
-[`repository-pattern-nestjs`](../repository-pattern-nestjs/SKILL.md) and
-[`database-patterns`](../database-patterns/SKILL.md). A new soft-deletable
-capability gets a capability-owned repository extending `BaseRepository`; that
-remains the sanctioned persistence implementation until T12 and is compatible
-with placing the repository inside its capability module rather than a
-table-shaped `models/` module. The placement rule ("do not add a repository
-*per Prisma model* by default") forbids table-driven proliferation, not a
-genuinely-needed capability repository. The direct-`txHost.tx` sections below
-remain the destination and the implemented pilot exception. Do not generalize
-them or flip persistence doctrine before T12.
+The placement rule ("do not add a repository *per Prisma model* by default")
+forbids table-driven proliferation, not a genuinely-needed capability
+repository. Existing repositories remain valid when they earn their seam; do
+not perform a blanket migration.
 
 ## Purpose
 
@@ -170,14 +167,13 @@ async execute(input: PublishScheduleInput): Promise<PublishResult> {
 }
 ```
 
-Repository methods used inside the workflow must access the ambient transaction through
-`TransactionHost.tx`.
+Every persistence operation used inside the workflow must resolve through the
+ambient `TransactionHost.tx`. Existing `BaseRepository` subclasses do this by
+passing a lazy delegate resolver to `PrismaModelWrapper`; direct-persistence
+services use `txHost.tx.<model>` themselves.
 
-`BaseRepository` resolves its Prisma delegate lazily through `TransactionHost.tx`, so
-its inherited operations join the ambient transaction. Custom repository operations
-must follow the same rule; a direct `PrismaService` call can still miss uncommitted
-changes or escape rollback. Prove material transaction behavior with the isolated
-real-PostgreSQL harness.
+A direct `PrismaService` call can miss uncommitted changes or escape rollback.
+Prove material transaction behavior with the isolated real-PostgreSQL harness.
 
 ### 4. Use repositories selectively
 
@@ -211,19 +207,17 @@ independent contract.
 
 ### 5. Retire `BaseRepository` as the universal default
 
-`BaseRepository` currently provides consistency around soft delete but is a leaky
+`BaseRepository` provides consistency around soft delete but remains a leaky
 abstraction:
 
 - broad `any` and `Record<string, any>` erase Prisma's strongest type information;
 - `include`, `orderBy`, and where-clause shapes still expose Prisma concepts;
 - concrete repositories frequently need overrides to behave correctly.
 
-Although its transaction and restore semantics are repaired:
-
-- do not expand its use automatically;
-- keep specialized repositories explicit;
-- add regression tests for every critical override;
-- prefer deletion of a pass-through repository over creating another generic wrapper.
+Do not expand its use automatically. Existing subclasses must use the lazy
+`TransactionHost.tx` delegate, keep specialized behavior explicit, and cover
+critical overrides with regression tests. Prefer deleting a pass-through
+repository over creating another generic wrapper.
 
 ### 6. Keep framework classes at the boundary; use plain TypeScript internally
 
@@ -553,10 +547,9 @@ For each refactoring PR:
 
 This is a destination map and dependency order, not a scheduled queue. Each step activates only on its trigger; do not start a later step ahead of its gate. [`ARCHITECTURE_REFACTORING_ROADMAP.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_ROADMAP.md) is the authoritative task and gate list.
 
-1. Preserve the repaired generic `BaseRepository` transaction and restore behavior
-   (roadmap T9).
+1. Preserve the corrected transaction-aware `BaseRepository` behavior (roadmap T9).
 2. Stop adding table-shaped modules and pass-through repositories (placement rule, active now).
-3. Pilot shallow direct persistence on one low-risk reference capability — the `ShowStatus` pilot (roadmap T11), gated on step 1 and the safety harness. Persistence doctrine flips only if this pilot is accepted (T12); until then repository-first stays canonical.
+3. Use the accepted persistence matrix proven by the `ShowStatus` pilot (roadmap T11/T12); migrate other capabilities only when touched and only when the matrix selects a simpler boundary.
 4. Consolidate show reference data into a coherent catalog capability.
 5. Decompose studio show management by use case behind a stable facade — a destination map, not a standalone move; activates when Phase 5 show-lifecycle work (roadmap item 18) starts or an earlier change already requires the same decomposition.
 6. Decompose schedule publishing into planning, application, reconciliation, and query

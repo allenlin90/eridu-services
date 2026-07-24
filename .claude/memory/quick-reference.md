@@ -2,7 +2,13 @@
 
 One-page reference for common tasks and patterns.
 
-## 🚀 Creating a New Model (Backend)
+> **`erify_api` direction (2026-07):** the model/repository templates below are
+> legacy quick examples, not a creation checklist. Start with
+> `erify-api-capability-refactoring`: place code by capability, use direct
+> `TransactionHost.tx` for shallow bounded CRUD, and add a private repository or
+> query provider only when complexity earns it.
+
+## 🚀 Legacy Repository-Backed Model Example
 
 ```bash
 # 1. Create directory structure
@@ -623,16 +629,22 @@ async create(data: Prisma.WidgetCreateInput): Promise<Widget>
 async create(payload: CreateWidgetPayload): Promise<Widget>
 ```
 
-### ❌ Building Queries in Service
+### ❌ Exposing Generic Query Shapes From A Service
 ```typescript
-// WRONG (in service)
-const where: Prisma.WidgetWhereInput = { name: { contains: search } };
-return this.repository.findMany({ where });
+// WRONG (public service API)
+async list(where: Prisma.WidgetWhereInput) {}
 
-// CORRECT (in repository)
+// CORRECT when a private provider is justified
 async findByName(search: string) {
   return this.findMany({
     where: { name: { contains: search } },
+  });
+}
+
+// ALSO CORRECT for shallow bounded direct persistence
+async getByUid(uid: string): Promise<WidgetRecord | null> {
+  return this.txHost.tx.widget.findFirst({
+    where: { uid, deletedAt: null },
   });
 }
 ```
