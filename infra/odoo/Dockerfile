@@ -48,4 +48,8 @@ COPY patches/sync-admin-password.py /sync-admin-password.py
 COPY scripts/sync-admin-password.sh /sync-admin-password.sh
 RUN chmod +x /sync-admin-password.sh
 
+# Single deploy.preDeployCommand entry point — see its own header comment.
+COPY scripts/pre-deploy.sh /pre-deploy.sh
+RUN chmod +x /pre-deploy.sh
+
 USER odoo

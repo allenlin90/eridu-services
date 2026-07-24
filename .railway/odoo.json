@@ -6,8 +6,7 @@
   },
   "deploy": {
     "preDeployCommand": [
-      "/entrypoint.sh odoo -i auth_oidc -d odoo --without-demo=all --stop-after-init",
-      "/sync-admin-password.sh"
+      "/pre-deploy.sh"
     ],
     "startCommand": "/set-admin-passwd.sh odoo --proxy-mode --database=odoo --no-database-list",
     "restartPolicyType": "ON_FAILURE",
