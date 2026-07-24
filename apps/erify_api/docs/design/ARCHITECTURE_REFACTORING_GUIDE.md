@@ -172,7 +172,11 @@ transaction and restore semantics remain broken.
 
 The service is a useful public API. The separate repository is not clearly earning its extra seam.
 
-`UtilityService` is another shallow module: it wraps UID generation and time-range overlap, yet `UtilityModule` is imported by 48 modules. Pure deterministic functions do not require Nest dependency injection merely to be testable.
+`UtilityService` is another shallow module. T7's first step moved the
+deterministic time-range overlap predicate to a pure function with direct
+algorithm tests; the service now wraps only UID generation. The remaining
+provider migration is tracked by T7 because deterministic UID injection is
+still useful in service tests.
 
 **Direction**: preserve a stable service API but fold shallow persistence and pure utilities. Measure reduced imports, mocks, files, and navigation steps in the pilot.
 

@@ -18,7 +18,6 @@ import { UtilityService } from '@/utility/utility.service';
 export const commonMockServices = {
   utilityService: {
     generateBrandedId: jest.fn(),
-    isTimeOverlapping: jest.fn(),
   },
 };
 
