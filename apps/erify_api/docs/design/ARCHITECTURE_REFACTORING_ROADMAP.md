@@ -105,7 +105,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
-| T9 | Fix `BaseRepository.restore()` + tx-aware lazy delegate | M | T1 | ⏸ |
+| T9 | Fix `BaseRepository.restore()` + tx-aware lazy delegate | M | T1 | ✅ |
 | T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | ⏸ |
 
 ### T9 — Fix `BaseRepository.restore()` + transaction-aware lazy delegate
@@ -114,6 +114,10 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Gate**: T1 — real-DB transaction, restore, and rollback characterization.
 - **Skills**: `repository-pattern-nestjs`, `database-patterns`, `soft-delete-restore`.
 - **Knowledge sync**: `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and close/rewrite the lazy-delegate row in [`erify-api-refactor-residuals.md`](../../../../docs/tech-debt/erify-api-refactor-residuals.md).
+- **Result**: every `BaseRepository` delegate now resolves lazily through the
+  ambient `TransactionHost`, inherited writes participate in rollback, and the
+  generic restore targets only soft-deleted rows before returning them to
+  active reads.
 
 ### T10 — Reassess the 1,000-item schedule bulk limit
 

@@ -5,7 +5,6 @@ import { Prisma, TaskTarget } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
 import { FINALIZED_LOOP_TASK_STATUSES } from '@/models/task/task-finalized-loop.constants';
-import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class TaskTargetRepository extends BaseRepository<
@@ -15,10 +14,9 @@ export class TaskTargetRepository extends BaseRepository<
   Prisma.TaskTargetWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.taskTarget));
+    super(new PrismaModelWrapper(() => txHost.tx.taskTarget));
   }
 
   private get delegate() {

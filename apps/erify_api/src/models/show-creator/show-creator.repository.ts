@@ -4,7 +4,6 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma, ShowCreator } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 type ShowCreatorWithIncludes<T extends Prisma.ShowCreatorInclude> =
   Prisma.ShowCreatorGetPayload<{
@@ -43,10 +42,9 @@ export class ShowCreatorRepository extends BaseRepository<
   Prisma.ShowCreatorWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.showCreator));
+    super(new PrismaModelWrapper(() => txHost.tx.showCreator));
   }
 
   private get delegate() {

@@ -19,7 +19,7 @@ export class ScheduleRepository extends BaseRepository<
     private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.schedule));
+    super(new PrismaModelWrapper(() => txHost.tx.schedule));
   }
 
   async findByUid(

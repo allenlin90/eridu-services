@@ -1,3 +1,5 @@
+import type { TransactionHost } from '@nestjs-cls/transactional';
+
 import { UserRepository } from './user.repository';
 
 import type { PrismaService } from '@/prisma/prisma.service';
@@ -24,8 +26,11 @@ describe('userRepository', () => {
     const prisma = {
       user: prismaUserDelegate,
     } as unknown as PrismaService;
+    const txHost = {
+      tx: { user: prismaUserDelegate },
+    } as unknown as TransactionHost<any>;
 
-    repository = new UserRepository(prisma);
+    repository = new UserRepository(prisma, txHost);
   });
 
   it('returns empty result without querying when search is blank after trim', async () => {
