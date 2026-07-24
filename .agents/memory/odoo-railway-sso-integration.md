@@ -2,6 +2,16 @@
 
 Built `infra/odoo/` — a custom Dockerfile layering OCA's `auth_oidc` onto `odoo:19.0` so Odoo authenticates against `eridu_auth`'s OAuth provider, plus fully automated database/credential bootstrap. Full rationale and current config live in `infra/odoo/README.md`; this is the reusable-elsewhere platform knowledge.
 
+## General pattern: custom Dockerfile as a Railway escape hatch
+
+Odoo is the worked example of a broader, reusable pattern for this project, not just an Odoo-specific fix: when a Railway template or a service's stock/official image doesn't cover a specific requirement — a third-party module or dependency patch it doesn't ship, a bootstrap/migration step it has no hook for, credential wiring an image's entrypoint never does — build a small custom Dockerfile `FROM` that base image instead of accepting the gap or hand-rolling something outside Railway entirely. This gets you:
+
+- Arbitrary build-time customization (installing packages, patching a third-party module's source, pinning a dependency to an exact commit for reproducibility — see the `auth_oidc`/EdDSA patch below for a worked example).
+- Custom scripts baked into the image and wired into `deploy.startCommand`/`deploy.preDeployCommand` for bootstrap logic no stock image or template exposes a config knob for (see the credential-sync pattern below).
+- Still deployed and managed as a normal Railway service afterward — same config-as-code (`.railway/<service>.json`), same variables, same deploy/log tooling as every other service in this project; the only thing that changes is where the image comes from.
+
+Reach for this only when there's a genuine, concrete gap — a demonstrated need, not "custom felt more flexible." `Postgres`/`Redis`/managed-database services have nothing to customize; `Open WebUI`/`LiteLLM` are governed purely through env vars and their own admin APIs today, with no gap forcing a custom image. Don't blanket-migrate working raw-image services to Dockerfile builds "for consistency" — every service on a custom image trades an instant image-tag bump for a git-commit-and-rebuild cycle on every version update, and adds real build latency to every deploy.
+
 ## Railway platform gotchas
 
 - **`railway service redeploy` / `serviceInstanceRedeploy` reuses the settings snapshot of the deployment being redeployed, not live current settings.** Changing `rootDirectory`/`dockerfilePath`/`startCommand` and then `redeploy`-ing an older deployment silently rebuilds with the old values. Use `serviceInstanceDeployV2` (fresh trigger) or push a new commit instead.
