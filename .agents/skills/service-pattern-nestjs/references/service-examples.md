@@ -18,7 +18,7 @@ import { TaskTemplateRepository } from './task-template.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class TaskTemplateService extends BaseModelService {
@@ -27,9 +27,9 @@ export class TaskTemplateService extends BaseModelService {
 
   constructor(
     private readonly repository: TaskTemplateRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   // Pass-through method using Parameters<Repo['method']>

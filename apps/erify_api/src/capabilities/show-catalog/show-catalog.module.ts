@@ -5,6 +5,7 @@ import { AdminShowStandardController } from './http/admin-show-standard.controll
 import { AdminShowStatusController } from './http/admin-show-status.controller';
 import { AdminShowTypeController } from './http/admin-show-type.controller';
 
+import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { PlatformService } from '@/models/platform/platform.service';
 import { ShowStandardRepository } from '@/models/show-standard/show-standard.repository';
@@ -13,10 +14,9 @@ import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { ShowTypeRepository } from '@/models/show-type/show-type.repository';
 import { ShowTypeService } from '@/models/show-type/show-type.service';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
-  imports: [PrismaModule, UtilityModule],
+  imports: [PrismaModule, UidGeneratorModule],
   controllers: [
     AdminPlatformController,
     AdminShowStandardController,

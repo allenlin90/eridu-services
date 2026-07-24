@@ -9,7 +9,7 @@ import { ShowCreatorRepository } from './show-creator.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class ShowCreatorService extends BaseModelService {
@@ -18,9 +18,9 @@ export class ShowCreatorService extends BaseModelService {
 
   constructor(
     private readonly showCreatorRepository: ShowCreatorRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

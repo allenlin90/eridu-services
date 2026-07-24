@@ -2,30 +2,30 @@ import type { CreateUserDto, ListUsersQueryDto, UpdateUserDto } from './schemas/
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
-import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('userService', () => {
   let service: UserService;
   let userRepositoryMock: Partial<jest.Mocked<UserRepository>>;
-  let utilityMock: Partial<jest.Mocked<UtilityService>>;
+  let uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>>;
 
   beforeEach(async () => {
     userRepositoryMock = createMockRepository<UserRepository>();
-    utilityMock = createMockUtilityService('user_123');
+    uidGeneratorMock = createMockUidGeneratorService('user_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: UserService,
       repositoryClass: UserRepository,
       repositoryMock: userRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<UserService>(UserService);
@@ -46,7 +46,7 @@ describe('userService', () => {
 
     const result = await service.createUser(dto);
 
-    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith(
+    expect(uidGeneratorMock.generateBrandedId).toHaveBeenCalledWith(
       'user',
       undefined,
     );

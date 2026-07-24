@@ -9,6 +9,7 @@ import { ClsModule } from 'nestjs-cls';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { AuditService } from '@/models/audit/audit.service';
 import { PlatformService } from '@/models/platform/platform.service';
 import { PublishRunService } from '@/models/publish-run/publish-run.service';
@@ -28,7 +29,6 @@ import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ShowCancellationGateService } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
-import { UtilityService } from '@/utility/utility.service';
 
 let mockTx: {
   creator: { findFirst: jest.Mock };
@@ -1566,7 +1566,7 @@ describe('studioShowManagementService', () => {
         providers: [
           StudioShowManagementService,
           ScheduleConflictService,
-          { provide: UtilityService, useValue: { generateBrandedId: jest.fn().mockReturnValue('conflict_fresh') } },
+          { provide: UidGeneratorService, useValue: { generateBrandedId: jest.fn().mockReturnValue('conflict_fresh') } },
           { provide: StudioService, useValue: studioServiceMock },
           { provide: StudioRoomService, useValue: studioRoomServiceMock },
           { provide: ScheduleService, useValue: scheduleServiceMock },

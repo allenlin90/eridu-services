@@ -9,9 +9,9 @@ import { CompensationLineItemRepository } from './compensation-line-item.reposit
 import { CompensationLineItemService } from './compensation-line-item.service';
 import { LineItemTargetResolver } from './line-item-target.resolver';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { UserService } from '@/models/user/user.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
 
 const mockPrismaForCls = {
   $transaction: jest.fn(async (callback: any) => await callback({})),
@@ -39,7 +39,7 @@ describe('compensationLineItemService', () => {
     const userService = {
       getUserByExtId: jest.fn(),
     };
-    const utilityService = {
+    const uidGenerator = {
       generateBrandedId: jest.fn().mockReturnValue('cli_generated'),
     };
 
@@ -63,13 +63,13 @@ describe('compensationLineItemService', () => {
         { provide: CompensationLineItemRepository, useValue: repository },
         { provide: LineItemTargetResolver, useValue: targetResolver },
         { provide: UserService, useValue: userService },
-        { provide: UtilityService, useValue: utilityService },
+        { provide: UidGeneratorService, useValue: uidGenerator },
       ],
     }).compile();
 
     const service = module.get(CompensationLineItemService);
 
-    return { service, repository, targetResolver, userService, utilityService };
+    return { service, repository, targetResolver, userService, uidGenerator };
   };
 
   it('creates an admin line item with actor, studio, and nested target row', async () => {

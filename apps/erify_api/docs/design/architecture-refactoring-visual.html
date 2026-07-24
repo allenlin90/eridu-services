@@ -925,9 +925,9 @@ class ShowQueries {
         </div>
         <div class="card reframe tick">
           <span class="reframe-tag reframe">reframed convention</span>
-          <div class="rf-was"><span>Was</span> <span class="mono">UtilityService</span> is injected everywhere so it's testable.</div>
-          <div class="rf-now"><span>Now</span> Pure deterministic functions (UID, time-overlap) don't need DI to be tested; fold them into <span class="mono">shared/util</span>.</div>
-          <div class="rf-why">48 modules import it purely for two pure functions.</div>
+          <div class="rf-was"><span>Was</span> <span class="mono">UtilityService</span> combines UID generation and time-overlap, so 48 modules import it.</div>
+          <div class="rf-now"><span>Now</span> Keep nondeterministic UID generation in a narrow injectable adapter; move deterministic time-overlap logic to a pure utility.</div>
+          <div class="rf-why">Tests retain deterministic UID control without a generic utility-service dependency.</div>
         </div>
         <div class="card reframe tick">
           <span class="reframe-tag reframe">refined guardrail</span>

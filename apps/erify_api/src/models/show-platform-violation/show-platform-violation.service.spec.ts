@@ -3,7 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import type { ShowPlatformViolationRepository } from './show-platform-violation.repository';
 import { ShowPlatformViolationService } from './show-platform-violation.service';
 
-import type { UtilityService } from '@/utility/utility.service';
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 function buildRepository(overrides: {
   existing?: Array<{ uid: string; violationType: string; severity: string; reason?: string }>;
@@ -20,13 +20,13 @@ function buildRepository(overrides: {
   } as unknown as jest.Mocked<ShowPlatformViolationRepository>;
 }
 
-function buildUtility(): jest.Mocked<UtilityService> {
+function buildUtility(): jest.Mocked<UidGeneratorService> {
   return {
     generateBrandedId: jest
       .fn()
       .mockReturnValueOnce('spv_new')
       .mockReturnValueOnce('spv_next'),
-  } as unknown as jest.Mocked<UtilityService>;
+  } as unknown as jest.Mocked<UidGeneratorService>;
 }
 
 describe('showPlatformViolationService', () => {

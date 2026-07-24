@@ -172,13 +172,16 @@ transaction and restore semantics remain broken.
 
 The service is a useful public API. The separate repository is not clearly earning its extra seam.
 
-`UtilityService` is another shallow module. T7's first step moved the
-deterministic time-range overlap predicate to a pure function with direct
-algorithm tests; the service now wraps only UID generation. The remaining
-provider migration is tracked by T7 because deterministic UID injection is
-still useful in service tests.
+`UtilityService` was another shallow module: it wrapped UID generation and
+time-range overlap, while `UtilityModule` was imported by 48 modules. T7 moved
+the deterministic overlap predicate to a pure function and narrowed the
+injectable boundary to `UidGeneratorService`, preserving deterministic UID
+injection in service tests without retaining an unrelated utility grab bag.
 
-**Direction**: preserve a stable service API but fold shallow persistence and pure utilities. Measure reduced imports, mocks, files, and navigation steps in the pilot.
+**Direction**: preserve a stable service API but fold shallow persistence and
+pure utilities. Keep dependency injection only for narrow adapters whose
+nondeterminism is intentionally replaced in tests. Measure reduced imports,
+mocks, files, and navigation steps in the pilot.
 
 #### 4. Complex Workflows Are Under-Decomposed
 
@@ -522,13 +525,13 @@ Phase 0b is observability work. It does not block Phase 1 correctness fixes or t
 | Remove the duplicate `AuditModule` import, other unused module imports, and unnecessary root re-exports | Module wiring test plus build; do not wait for Phase 0 |
 | Remove the empty OpenAPI dynamic module if it has no runtime role | Bootstrap/OpenAPI wiring verification plus build; do not wait for Phase 0 |
 | Type the authorization membership value in `StudioGuard` | Focused guard specs and typecheck; do not wait for Phase 0 |
-| Replace `UtilityService` with pure UID/time utilities, or narrow it to an actual injectable adapter | Existing unit baseline and focused utility/service specs; no real-database dependency |
+| Replace `UtilityService` with a narrow UID generator adapter and a pure time-overlap utility | Existing unit baseline and focused utility/service specs; no real-database dependency |
 | Fix or remove generic `BaseRepository.restore()` and implement the transaction-aware lazy delegate, or stop inherited base writes in transactions | Phase 0a real-database transaction, restore, and rollback characterization |
 | Reassess the 1,000-item schedule bulk limit | Phase 0a harness plus task-scoped timeout/partial-success measurements; preserve the established sequential partial-success contract unless measurements justify change |
 
 Keep these changes in small PRs. Do not combine them with folder moves.
 
-The restore/lazy-delegate PR must update `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and close or rewrite the lazy-delegate row in `erify-api-refactor-residuals.md`. The UtilityService PR must reconcile `service-pattern-nestjs`, including the `BaseModelService` UID-generation contract.
+The restore/lazy-delegate PR must update `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and close or rewrite the lazy-delegate row in `erify-api-refactor-residuals.md`. The UID-generator PR must reconcile `service-pattern-nestjs`, including the `BaseModelService` UID-generation contract.
 
 ### Phase 2 — Optional Repository Pilot: `ShowStatus`
 

@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { AuditRepository } from './audit.repository';
 import { AuditService } from './audit.service';
 
+import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 /**
  * Foundation module for PR 12.0.1. Provides `AuditService` for downstream
@@ -13,7 +13,7 @@ import { UtilityModule } from '@/utility/utility.module';
  * consuming module will import it directly.
  */
 @Module({
-  imports: [PrismaModule, UtilityModule],
+  imports: [PrismaModule, UidGeneratorModule],
   providers: [AuditService, AuditRepository],
   exports: [AuditService],
 })

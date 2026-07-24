@@ -4,12 +4,12 @@ import { CompensationLineItemRepository } from './compensation-line-item.reposit
 import { CompensationLineItemService } from './compensation-line-item.service';
 import { LineItemTargetResolver } from './line-item-target.resolver';
 
+import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
 import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
-  imports: [PrismaModule, UtilityModule, UserModule],
+  imports: [PrismaModule, UidGeneratorModule, UserModule],
   providers: [
     CompensationLineItemService,
     CompensationLineItemRepository,

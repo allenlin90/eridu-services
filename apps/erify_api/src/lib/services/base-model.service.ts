@@ -1,4 +1,4 @@
-import type { UtilityService } from '@/utility/utility.service';
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 /**
  * Base service class for core model entity services providing common functionality
@@ -27,7 +27,7 @@ export abstract class BaseModelService {
    */
   protected abstract readonly uidPrefix: string;
 
-  constructor(protected readonly utilityService: UtilityService) {}
+  constructor(protected readonly uidGenerator: UidGeneratorService) {}
 
   /**
    * Generates a branded UID for an entity using the service's UID prefix.
@@ -42,6 +42,6 @@ export abstract class BaseModelService {
    * ```
    */
   protected generateUid(size?: number): string {
-    return this.utilityService.generateBrandedId(this.uidPrefix, size);
+    return this.uidGenerator.generateBrandedId(this.uidPrefix, size);
   }
 }

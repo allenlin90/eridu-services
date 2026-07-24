@@ -34,7 +34,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | T4 | Remove dead/duplicate module wiring | S | now | ✅ |
 | T5 | Remove empty OpenAPI dynamic module | S | now | ✅ |
 | T6 | Type the `StudioGuard` membership value | S | now | ✅ |
-| T7 | `UtilityService` simplification | M | now | 🔲 |
+| T7 | `UtilityService` simplification | M | now | ✅ |
 
 ### T1 — Phase 0a: isolated real-DB safety harness
 
@@ -99,13 +99,21 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 ### T7 — `UtilityService` simplification
 
-- **Scope**: replace the injected two-function service (`generateBrandedId`, `isTimeOverlapping`) with pure functions in `shared/util`, or narrow it to a real injectable adapter only if deterministic ID injection is actually required. Touches ~48 importers and the `BaseModelService` UID-generation constructor contract — land it as one mechanical PR.
+- **Scope**: replace the injected two-function service (`generateBrandedId`,
+  `isTimeOverlapping`) with pure functions in `shared/util`, or narrow it to a
+  real injectable adapter only if deterministic ID injection is actually
+  required. Touches ~48 importers and the `BaseModelService` UID-generation
+  constructor contract — land it as one mechanical PR.
 - **Gate**: none — existing unit baseline plus focused utility/service specs; no real-DB dependency.
 - **Skills**: `service-pattern-nestjs`.
-- **Knowledge sync**: `service-pattern-nestjs` (the UtilityService / `BaseModelService` UID rule).
-- **Progress**: extracted `isTimeOverlapping` as a pure function and replaced
-  mock-driven overlap assertions with direct algorithm coverage. T7 remains
-  open until the UID-only provider and its import graph are narrowed.
+- **Knowledge sync**: `service-pattern-nestjs` (the UID-generator /
+  `BaseModelService` contract).
+- **Result**: deterministic UID generation remains a narrow injectable adapter
+  for service-test control, while time-range overlap is a pure function.
+  Audience/controller wrappers no longer import the UID module transitively;
+  only modules that provide UID-dependent services own that dependency. The
+  architecture signal moved from 48 generic utility-module importers to 25
+  UID-generator owners, and static module edges fell from 268 to 252.
 
 ## Adjacent — startable now (roadmap correctness, not an architecture phase)
 

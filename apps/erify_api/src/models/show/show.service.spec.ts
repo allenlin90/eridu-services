@@ -7,21 +7,21 @@ import { showDtoListInclude } from './schemas/show.schema';
 import { ShowRepository } from './show.repository';
 import { ShowService } from './show.service';
 
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('showService', () => {
   let service: ShowService;
   let showRepositoryMock: Partial<jest.Mocked<ShowRepository>>;
-  let utilityMock: Partial<jest.Mocked<UtilityService>>;
+  let uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>>;
 
   const mockClient = {
     id: BigInt(1),
@@ -59,13 +59,13 @@ describe('showService', () => {
       findPaginated: jest.fn(),
     });
 
-    utilityMock = createMockUtilityService('show_123');
+    uidGeneratorMock = createMockUidGeneratorService('show_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: ShowService,
       repositoryClass: ShowRepository,
       repositoryMock: showRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<ShowService>(ShowService);
@@ -110,7 +110,7 @@ describe('showService', () => {
 
       const result = await service.createShowFromDto(dto);
 
-      expect(utilityMock.generateBrandedId).toHaveBeenCalledWith(
+      expect(uidGeneratorMock.generateBrandedId).toHaveBeenCalledWith(
         'show',
         undefined,
       );
