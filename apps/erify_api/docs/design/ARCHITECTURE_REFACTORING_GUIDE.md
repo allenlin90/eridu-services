@@ -217,7 +217,8 @@ Architecture cleanup does not automatically improve request latency. Moving file
 
 Concrete risks to measure or constrain include:
 
-- MCP list limits have no hard maximum.
+- MCP list limits previously had no hard maximum; Phase 1 now caps both
+  studio-wide list tools at 100.
 - Bulk schedule schemas allow 1,000 items while the services intentionally execute per-item writes sequentially for partial success.
 - Schedule publishing performs multiple per-show reads and writes inside a transaction that may hold an advisory lock for up to 30 seconds.
 - Some service-layer code constructs Prisma filters or orderings, so query ownership is inconsistent.
