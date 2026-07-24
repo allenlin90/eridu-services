@@ -13,12 +13,12 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma, ShowStatus } from '@prisma/client';
 import { ClsModule, ClsService } from 'nestjs-cls';
 
+import { ShowCatalogModule } from '@/capabilities/show-catalog/show-catalog.module';
 import {
   BaseRepository,
   PrismaModelWrapper,
 } from '@/lib/repositories/base.repository';
 import { showStatusDto } from '@/models/show-status/schemas/show-status.schema';
-import { ShowStatusModule } from '@/models/show-status/show-status.module';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -111,7 +111,7 @@ describe('real database persistence safety', () => {
             }),
           ],
         }),
-        ShowStatusModule,
+        ShowCatalogModule,
       ],
       providers: [ShowStatusBaseRepository, TransactionProbe],
     }).compile();

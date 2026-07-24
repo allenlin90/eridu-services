@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import type {
   CreatePlatformPayload,
+  PlatformRecord,
   UpdatePlatformPayload,
 } from './schemas/platform.schema';
 import { PlatformRepository } from './platform.repository';
@@ -36,6 +37,10 @@ export class PlatformService extends BaseModelService {
     ...args: Parameters<PlatformRepository['findPaginated']>
   ): ReturnType<PlatformRepository['findPaginated']> {
     return this.platformRepository.findPaginated(...args);
+  }
+
+  async findActiveByUids(uids: string[]): Promise<PlatformRecord[]> {
+    return this.platformRepository.findByUids(uids);
   }
 
   async updatePlatform(
