@@ -33,4 +33,12 @@ COPY patches/auth_oidc/models/auth_oauth_provider.py /mnt/extra-addons/auth_oidc
 
 RUN chown -R odoo:odoo /mnt/extra-addons
 
+# See infra/odoo/README.md "Master password and admin login bootstrap" for what
+# these do and why. set-admin-passwd.sh wraps the real entrypoint (used in
+# deploy.startCommand); bootstrap-admin-user.py runs via `odoo shell` (used in
+# deploy.preDeployCommand).
+COPY scripts/set-admin-passwd.sh /set-admin-passwd.sh
+COPY scripts/bootstrap-admin-user.py /bootstrap-admin-user.py
+RUN chmod +x /set-admin-passwd.sh
+
 USER odoo

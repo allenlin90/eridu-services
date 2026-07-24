@@ -5,7 +5,11 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "/entrypoint.sh odoo --proxy-mode --database=odoo --no-database-list",
+    "preDeployCommand": [
+      "/entrypoint.sh odoo -i auth_oidc -d odoo --without-demo=all --stop-after-init",
+      "sh -c \"/entrypoint.sh odoo shell -d odoo --no-http < /bootstrap-admin-user.py\""
+    ],
+    "startCommand": "/set-admin-passwd.sh odoo --proxy-mode --database=odoo --no-database-list",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
