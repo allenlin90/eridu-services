@@ -110,6 +110,70 @@ def main():
     write_json("knowledge-files.json", knowledge_files)
     write_json("functions.json", function_data, indent=2)
 
+    # Retrieval + embedding config (secret keys redacted). Captures the RAG
+    # settings -- Top K, hybrid search, reranker, chunking, and the embedding
+    # model -- that the models/knowledge exports do not include.
+    def redact(node):
+        if isinstance(node, dict):
+            for field in list(node):
+                low = field.lower()
+                if isinstance(node[field], (dict, list)):
+                    redact(node[field])
+                elif node[field] and (
+                    low.endswith(("key", "token", "password", "secret"))
+                    or "api_key" in low
+                ):
+                    node[field] = "<redacted, see ai/openwebui/.env>"
+        elif isinstance(node, list):
+            for item in node:
+                redact(item)
+        return node
+
+    retrieval_config = {
+        "config": redact(api_get(host, headers, "/api/v1/retrieval/config")),
+        "embedding": redact(api_get(host, headers, "/api/v1/retrieval/embedding")),
+    }
+    write_json("retrieval-config.json", retrieval_config, indent=2)
+
+    # Metadata for every knowledge collection (id, name, description,
+    # access_grants, file list). File CONTENT is intentionally not exported --
+    # some collections hold third-party (TikTok Academy) material.
+    kb_list = api_get(host, headers, "/api/v1/knowledge/")
+    kb_items = kb_list.get("items", kb_list) if isinstance(kb_list, dict) else kb_list
+    collections = []
+    for kb in sorted(kb_items, key=lambda item: item.get("name", "")):
+        files_resp = api_get(
+            host, headers, f"/api/v1/knowledge/{kb['id']}/files?limit=100000"
+        )
+        file_items = (
+            files_resp.get("items", []) if isinstance(files_resp, dict) else files_resp
+        )
+        files = sorted(
+            (
+                {
+                    "id": entry.get("id"),
+                    "name": (entry.get("meta") or {}).get("name") or entry.get("filename"),
+                }
+                for entry in file_items
+            ),
+            key=lambda entry: entry["name"] or "",
+        )
+        collections.append(
+            {
+                "id": kb.get("id"),
+                "name": kb.get("name"),
+                "description": kb.get("description"),
+                "access_grants": kb.get("access_grants"),
+                "created_at": kb.get("created_at"),
+                "updated_at": kb.get("updated_at"),
+                "file_count": files_resp.get("total")
+                if isinstance(files_resp, dict)
+                else len(files),
+                "files": files,
+            }
+        )
+    write_json("knowledge-collections.json", collections, indent=2)
+
     skills_dir = os.path.join(SYNCED_DIR, "skills")
     os.makedirs(skills_dir, exist_ok=True)
     written_files = set()
