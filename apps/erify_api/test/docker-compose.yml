@@ -1,0 +1,16 @@
+services:
+  erify_api_test_database:
+    image: postgres:17
+    ports:
+      - '${ERIFY_API_TEST_POSTGRES_PORT:-55432}:5432'
+    environment:
+      POSTGRES_DB: erify_api_test
+      POSTGRES_USER: erify_test
+      POSTGRES_PASSWORD: erify_test
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U erify_test -d erify_api_test']
+      interval: 1s
+      timeout: 5s
+      retries: 30
+    tmpfs:
+      - /var/lib/postgresql/data

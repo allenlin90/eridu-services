@@ -28,7 +28,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 | ID | Task | Size | Starts | Status |
 | --- | --- | --- | --- | --- |
-| T1 | Phase 0a: isolated real-DB safety harness | L | now (blocks Wave 1–2) | 🔲 |
+| T1 | Phase 0a: isolated real-DB safety harness | L | now (blocks Wave 1–2) | ✅ |
 | T2 | Phase 0b (light): record signals baseline | S | now, parallel | 🔲 |
 | T3 | MCP list hard maximums | S | now | 🔲 |
 | T4 | Remove dead/duplicate module wiring | S | now | 🔲 |
@@ -43,6 +43,10 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Minimum invariant gates proven**: transaction writes roll back together; in-transaction reads see earlier writes; active reads exclude soft-deleted rows; public responses carry UIDs not internal IDs; the current unit suite stays green.
 - **Skills**: `backend-testing-patterns`, `database-patterns`.
 - **Knowledge sync**: `backend-testing-patterns`, `database-patterns`, and a real-DB test runbook/config.
+- **Result**: the isolated PostgreSQL harness now proves transaction visibility,
+  rollback, soft-delete filtering, UID-only API serialization, show
+  orchestration, schedule-publish rollback, and MCP runtime composition without
+  accepting the development database URL.
 
 ### T2 — Phase 0b (light): record signals baseline
 
