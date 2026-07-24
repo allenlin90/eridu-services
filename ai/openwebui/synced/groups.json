@@ -375,7 +375,9 @@
                 "prompts_import": false,
                 "prompts_export": false,
                 "tools_import": false,
-                "tools_export": false
+                "tools_export": false,
+                "skills_import": false,
+                "skills_export": false
             },
             "sharing": {
                 "models": false,
@@ -390,6 +392,7 @@
                 "public_skills": false,
                 "notes": false,
                 "public_notes": false,
+                "folders": false,
                 "public_chats": false,
                 "public_calendars": false
             },
@@ -411,6 +414,7 @@
                 "edit": true,
                 "share": true,
                 "export": true,
+                "import": true,
                 "stt": true,
                 "tts": true,
                 "call": true,
@@ -429,15 +433,16 @@
                 "code_interpreter": false,
                 "memories": true,
                 "automations": false,
-                "calendar": true
+                "calendar": true,
+                "webhooks": false
             },
             "settings": {
                 "interface": true
             }
         },
         "created_at": 1784303185,
-        "updated_at": 1784303185,
-        "member_count": 0
+        "updated_at": 1784876026,
+        "member_count": 1
     },
     {
         "id": "768416a7-4602-4471-af88-2aa36e43b5b1",
@@ -697,8 +702,8 @@
             }
         },
         "created_at": 1784303192,
-        "updated_at": 1784303192,
-        "member_count": 0
+        "updated_at": 1784874289,
+        "member_count": 2
     },
     {
         "id": "a56a6a87-6942-4b4a-a7d0-eb86f9862859",
@@ -897,7 +902,9 @@
                 "prompts_import": false,
                 "prompts_export": false,
                 "tools_import": false,
-                "tools_export": false
+                "tools_export": false,
+                "skills_import": false,
+                "skills_export": false
             },
             "sharing": {
                 "models": false,
@@ -912,6 +919,7 @@
                 "public_skills": false,
                 "notes": false,
                 "public_notes": false,
+                "folders": false,
                 "public_chats": false,
                 "public_calendars": false
             },
@@ -933,6 +941,7 @@
                 "edit": true,
                 "share": true,
                 "export": true,
+                "import": true,
                 "stt": true,
                 "tts": true,
                 "call": true,
@@ -951,14 +960,15 @@
                 "code_interpreter": false,
                 "memories": true,
                 "automations": false,
-                "calendar": true
+                "calendar": true,
+                "webhooks": false
             },
             "settings": {
                 "interface": true
             }
         },
         "created_at": 1784303183,
-        "updated_at": 1784303183,
-        "member_count": 0
+        "updated_at": 1784876041,
+        "member_count": 1
     }
 ]
