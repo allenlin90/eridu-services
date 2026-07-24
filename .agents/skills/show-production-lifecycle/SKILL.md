@@ -129,11 +129,20 @@ Use explicit synchronous orchestration for this required single-consumer handoff
 
 There is **no task-based state-gate mechanism**: no `STATE_GATE` value exists in `TaskType` or anywhere in code. The shipped gate (`ShowCancellationGateService`, PR #233) is entirely `Show.status` + `Audit`-row based with zero Task-model involvement. Whether a future gate becomes task-backed is a design decision for Phase 5 item 18, not a current constraint.
 
-`Show.status` is currently written by four independent paths with uneven validation: the studio generic edit (blocks entering/leaving `CANCELLED` and `CANCELLED_PENDING_RESOLUTION`), the admin generic edit (no transition validation — Phase 5 item 8 closes this bypass), `ShowCancellationGateService` (reason capture, actor-tier checks, active-task guard, Audit history), and schedule publish (direct status writes, no audit — tracked tech debt). Phase 5 item 18 converges these into one canonical transition service.
+`Show.status` is currently written by four independent paths with uneven
+validation: studio and admin generic edits share the Phase 5 item 8 guard for
+`CANCELLED` and `CANCELLED_PENDING_RESOLUTION` but otherwise accept free-form
+status changes, `ShowCancellationGateService` owns reason capture, actor-tier
+checks, active-task guards, and Audit history, and schedule publish writes
+directly without audit (tracked tech debt). Phase 5 item 18 converges these into
+one canonical transition service.
 
 Invariants that must hold when touching status writes:
 
-- Only the cancellation gate may move a show into or out of `CANCELLED` / `CANCELLED_PENDING_RESOLUTION`; generic edit paths keep their guards, and studio status lookups keep excluding gate-owned statuses.
+- Only the cancellation gate may move a show into or out of `CANCELLED` /
+  `CANCELLED_PENDING_RESOLUTION`; generic admin and studio edit paths share the
+  same server-side guard, and both status lookup lists exclude gate-owned
+  destinations.
 - Gate history lives in `Audit` rows (`metadata.field = show_status`, `metadata.event = opened | resolved`); do not store gate state in JSONB metadata or a parallel table.
 - `CANCELLED` outcomes require zero active tasks (shared active-task definition); `COMPLETED` outcomes do not use that guard.
 - Concurrent resolution relies on conditional status updates; validate the transition before the conditional write, not inside it.

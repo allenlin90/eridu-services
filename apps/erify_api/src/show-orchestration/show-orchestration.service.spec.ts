@@ -13,6 +13,7 @@ import { CreatorRepository } from '@/models/creator/creator.repository';
 import { PlatformService } from '@/models/platform/platform.service';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
+import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { CompensationLineItemService } from '@/models/compensation-line-item/compensation-line-item.service';
 import { ShowCreatorRepository } from '@/models/show-creator/show-creator.repository';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
@@ -48,6 +49,7 @@ class MockPrismaModule {}
 describe('showOrchestrationService', () => {
   let service: ShowOrchestrationService;
   let showService: jest.Mocked<ShowService>;
+  let showStatusService: jest.Mocked<ShowStatusService>;
   let compensationLineItemService: jest.Mocked<CompensationLineItemService>;
   let showCreatorService: jest.Mocked<ShowCreatorService>;
   let showPlatformService: jest.Mocked<ShowPlatformService>;
@@ -118,6 +120,12 @@ describe('showOrchestrationService', () => {
             buildUpdatePayload: jest.fn(),
             ensureValidActualTimeRange: jest.fn(),
             getShowsForReview: jest.fn(),
+          },
+        },
+        {
+          provide: ShowStatusService,
+          useValue: {
+            getShowStatusById: jest.fn(),
           },
         },
         {
@@ -217,6 +225,9 @@ describe('showOrchestrationService', () => {
 
     service = module.get<ShowOrchestrationService>(ShowOrchestrationService);
     showService = module.get<ShowService>(ShowService) as jest.Mocked<ShowService>;
+    showStatusService = module.get<ShowStatusService>(
+      ShowStatusService,
+    ) as jest.Mocked<ShowStatusService>;
     compensationLineItemService = module.get<CompensationLineItemService>(CompensationLineItemService) as jest.Mocked<CompensationLineItemService>;
     showCreatorService = module.get<ShowCreatorService>(ShowCreatorService) as jest.Mocked<ShowCreatorService>;
     showPlatformService = module.get<ShowPlatformService>(ShowPlatformService) as jest.Mocked<ShowPlatformService>;
@@ -298,7 +309,9 @@ describe('showOrchestrationService', () => {
 
       const result = await service.updateShowWithAssignments(uid, dto, 'actor_123');
 
-      expect(showService.getShowById).toHaveBeenCalledWith(uid);
+      expect(showService.getShowById).toHaveBeenCalledWith(uid, {
+        showStatus: { select: { systemKey: true } },
+      });
       expect(showService.updateShowFromDto).toHaveBeenCalledWith(uid, dto);
       // Sync methods NOT called since showCreators/showPlatforms are undefined
       expect(creatorRepository.findByUids).not.toHaveBeenCalled();
@@ -352,7 +365,9 @@ describe('showOrchestrationService', () => {
 
       const result = await service.updateShowWithAssignments(uid, dto, 'actor_123');
 
-      expect(showService.getShowById).toHaveBeenCalledWith(uid);
+      expect(showService.getShowById).toHaveBeenCalledWith(uid, {
+        showStatus: { select: { systemKey: true } },
+      });
       expect(showService.updateShowFromDto).toHaveBeenCalledWith(uid, dto);
       expect(creatorRepository.findByUids).toHaveBeenCalledWith(['creator_test123']);
       expect(showCreatorRepository.createAssignment).toHaveBeenCalledWith(
@@ -427,6 +442,70 @@ describe('showOrchestrationService', () => {
         { actualStartTime: undefined, actualEndTime: dto.actualEndTime },
       );
     });
+
+    it.each([
+      [
+        'CANCELLED_PENDING_RESOLUTION',
+        'SHOW_STATUS_LOCKED_BY_PENDING_CANCELLATION',
+      ],
+      ['CANCELLED', 'SHOW_STATUS_LOCKED_BY_CANCELLATION_GATE'],
+    ])(
+      'rejects leaving gate-owned current status %s',
+      async (currentSystemKey, expectedMessage) => {
+        const dto = {
+          showStatusId: 'shst_live',
+        } as UpdateShowWithAssignmentsDto;
+        showService.getShowById.mockResolvedValue({
+          ...mockShow,
+          showStatus: { systemKey: currentSystemKey },
+        } as any);
+        showStatusService.getShowStatusById.mockResolvedValue({
+          systemKey: 'LIVE',
+        } as any);
+
+        await expect(
+          service.updateShowWithAssignments(
+            'show_test123',
+            dto,
+            'actor_123',
+          ),
+        ).rejects.toThrow(expectedMessage);
+
+        expect(showService.updateShowFromDto).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      [
+        'CANCELLED_PENDING_RESOLUTION',
+        'SHOW_STATUS_PENDING_RESOLUTION_REQUIRES_GATE',
+      ],
+      ['CANCELLED', 'SHOW_STATUS_CANCELLATION_REQUIRES_GATE'],
+    ])(
+      'rejects entering gate-owned target status %s',
+      async (targetSystemKey, expectedMessage) => {
+        const dto = {
+          showStatusId: 'shst_target',
+        } as UpdateShowWithAssignmentsDto;
+        showService.getShowById.mockResolvedValue({
+          ...mockShow,
+          showStatus: { systemKey: 'CONFIRMED' },
+        } as any);
+        showStatusService.getShowStatusById.mockResolvedValue({
+          systemKey: targetSystemKey,
+        } as any);
+
+        await expect(
+          service.updateShowWithAssignments(
+            'show_test123',
+            dto,
+            'actor_123',
+          ),
+        ).rejects.toThrow(expectedMessage);
+
+        expect(showService.updateShowFromDto).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('deleteShow', () => {

@@ -24,6 +24,7 @@ import {
   UpdateShowStatusDto,
 } from '@/models/show-status/schemas/show-status.schema';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
+import { CANCELLATION_GATE_OWNED_SHOW_STATUS_SYSTEM_KEYS } from '@/show-orchestration/show-status-write-policy';
 
 @Controller('admin/show-statuses')
 export class AdminShowStatusController extends BaseAdminController {
@@ -51,6 +52,11 @@ export class AdminShowStatusController extends BaseAdminController {
     const { data, total } = await this.showStatusService.getShowStatuses({
       skip: query.skip,
       take: query.take,
+      where: {
+        systemKey: {
+          notIn: [...CANCELLATION_GATE_OWNED_SHOW_STATUS_SYSTEM_KEYS],
+        },
+      },
     });
 
     return this.createPaginatedResponse(data, total, query);
