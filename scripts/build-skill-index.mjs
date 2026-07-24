@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { parseDocument } from 'yaml'
 
 // Generates .agents/skills/INDEX.md — a flat, one-line-per-skill catalog derived
 // from each SKILL.md frontmatter, so agents can keyword-match a task to a skill
@@ -18,10 +19,17 @@ const SKILLS_DIRECTORY = '.agents/skills'
 const OUTPUT = path.join(SKILLS_DIRECTORY, 'INDEX.md')
 const HASH_PATTERN = /<!-- agents:index-hash ([a-f0-9]{64}) -->/
 
-function readField(frontmatter, field) {
-  const match = frontmatter.match(new RegExp(`^${field}:\\s*(.+)$`, 'm'))
-  if (!match) return ''
-  return match[1].trim().replace(/^["']|["']$/g, '')
+// Parse SKILL.md YAML frontmatter with the same `yaml` parser as
+// scripts/validate-agent-skills.mjs (which runs immediately before this in
+// `agents:validate`), rather than a second hand-rolled regex parser.
+function readFrontmatter(content) {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+  if (!match) return {}
+  const parsed = parseDocument(match[1])
+  if (parsed.errors.length > 0) return {}
+  const metadata = parsed.toJS()
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return {}
+  return metadata
 }
 
 async function collectSkills() {
@@ -38,8 +46,7 @@ async function collectSkills() {
     } catch {
       continue
     }
-    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
-    const frontmatter = match ? match[1] : ''
+    const metadata = readFrontmatter(content)
     let refs = 0
     try {
       refs = (await readdir(path.join(SKILLS_DIRECTORY, slug, 'references'))).filter((file) =>
@@ -49,8 +56,8 @@ async function collectSkills() {
       refs = 0
     }
     rows.push({
-      name: readField(frontmatter, 'name') || slug,
-      description: readField(frontmatter, 'description'),
+      name: typeof metadata.name === 'string' ? metadata.name : slug,
+      description: typeof metadata.description === 'string' ? metadata.description : '',
       refs,
     })
   }
