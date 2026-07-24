@@ -33,7 +33,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | T3 | MCP list hard maximums | S | now | ✅ |
 | T4 | Remove dead/duplicate module wiring | S | now | ✅ |
 | T5 | Remove empty OpenAPI dynamic module | S | now | ✅ |
-| T6 | Type the `StudioGuard` membership value | S | now | 🔲 |
+| T6 | Type the `StudioGuard` membership value | S | now | ✅ |
 | T7 | `UtilityService` simplification | M | now | 🔲 |
 
 ### T1 — Phase 0a: isolated real-DB safety harness
@@ -92,6 +92,10 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Scope**: replace `any` for the authorization-critical membership value with its real type.
 - **Gate**: none — focused guard specs plus typecheck.
 - **Skills**: `erify-authorization`.
+- **Result**: the guard derives its membership type from
+  `UserService.getStudioMembership`, uses an assertion function to narrow the
+  missing-membership branch, and performs role checks plus request attachment
+  without `any` or non-null assertions.
 
 ### T7 — `UtilityService` simplification
 
