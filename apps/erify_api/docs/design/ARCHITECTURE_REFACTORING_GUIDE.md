@@ -97,7 +97,7 @@ comments, treats each unique static import between local `*.module.ts` files as
 one directed edge, detects cycles with depth-first search, and calculates the
 MCP closure from `McpAppModule` including the entry module.
 
-| Signal | Current evidence | Interpretation |
+| Signal | Source snapshot `f677b627` | Interpretation |
 | --- | ---: | --- |
 | Nest modules | 90 | High navigation and registration breadth |
 | Static local module edges | 293 | A wide dependency graph |
