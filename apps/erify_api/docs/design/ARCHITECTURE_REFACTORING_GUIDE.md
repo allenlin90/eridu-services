@@ -474,6 +474,12 @@ Minimum gates:
 - public responses contain UIDs, not internal IDs;
 - current unit suite remains green.
 
+Run the gate through `pnpm -C apps/erify_api test:integration` and record the
+result in every gated PR. Automated enforcement remains an
+[explicit ideation topic](../../../../docs/ideation/erify-api-real-database-ci-gate.md);
+until that topic is promoted, agents and reviewers must not infer that normal
+unit-test success includes the real-database safety suite.
+
 Phase 0a gates the generic restore/lazy-delegate work, the `ShowStatus` persistence pilot, and any behavior-bearing decomposition that could change transaction or soft-delete behavior. It does not block independent correctness fixes already covered by focused unit or wiring tests.
 
 ### Phase 0b — Architecture And Performance Baselines

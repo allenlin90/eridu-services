@@ -29,17 +29,34 @@ Build mock `ExecutionContext` with `jest.fn()`. Assert: returns `true` for valid
 
 Mock all injected Model Services. Assert: coordination sequence, idempotency, partial failure handling, payload mapping.
 
-## 5. Error Cases
+## 5. Real-Database Integration Tests
+
+Unit tests mock the repository boundary. Use the isolated real-PostgreSQL harness
+when the invariant depends on Prisma, PostgreSQL, Nest module wiring, or CLS
+transaction behavior and therefore cannot be proven by a mock.
+
+- Run it only with `ERIFY_API_TEST_DATABASE_URL`; never fall back to the normal
+  `DATABASE_URL`.
+- Require a dedicated local database whose name ends in `_test`.
+- Apply checked-in migrations before the suite and keep the Jest run serial.
+- Characterize observable behavior: rollback, read-your-own-writes, active-row
+  filtering, UID-only boundaries, and representative runtime module boot.
+- Do not treat a mocked repository test as evidence of transaction participation.
+
+See [`apps/erify_api/test/README.md`](../../../apps/erify_api/test/README.md) for
+the guarded runner and local database commands.
+
+## 6. Error Cases
 
 - `VersionConflictError` → HTTP 409: use `new VersionConflictError('outdated', 1, 2)`
 - Prisma P2025: use `createPrismaNotFoundError()` from `@/testing/prisma-error.helper`
 - `HttpError`: assert throws correct exception variant
 
-## 6. Test Data
+## 7. Test Data
 
 Use `createBaseMockEntity()` from `@/testing/model-service-test.helper`. Check `@/testing/mock-data-factories.ts` before creating inline mock data.
 
-## 7. What NOT to Test
+## 8. What NOT to Test
 
 | Skip | Why |
 |---|---|

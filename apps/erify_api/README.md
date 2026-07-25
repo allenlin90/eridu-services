@@ -127,9 +127,16 @@ pnpm run test:watch
 # Run e2e tests
 pnpm run test:e2e
 
+# Run guarded real-database integration tests
+ERIFY_API_TEST_DATABASE_URL=postgresql://erify_test:erify_test@localhost:55432/erify_api_test \
+  pnpm run test:integration
+
 # Generate test coverage report
 pnpm run test:cov
 ```
+
+Real PostgreSQL/Prisma/CLS safety checks use an isolated database and a guarded
+runner. See the [real-database integration test guide](test/README.md).
 
 ### Code Quality
 
