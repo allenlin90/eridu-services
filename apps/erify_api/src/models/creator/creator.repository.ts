@@ -8,7 +8,6 @@ import { STUDIO_CREATOR_ROSTER_STATE, type StudioCreatorRosterState } from '@eri
 import type { CreateCreatorPayload, UpdateCreatorPayload } from './schemas/creator.schema';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class CreatorRepository extends BaseRepository<
@@ -18,10 +17,9 @@ export class CreatorRepository extends BaseRepository<
   Prisma.CreatorWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.creator));
+    super(new PrismaModelWrapper(() => txHost.tx.creator));
   }
 
   private get delegate() {

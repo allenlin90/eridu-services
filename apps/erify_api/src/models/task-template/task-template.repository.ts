@@ -21,7 +21,7 @@ export class TaskTemplateRepository extends BaseRepository<
     private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.taskTemplate));
+    super(new PrismaModelWrapper(() => txHost.tx.taskTemplate));
   }
 
   async findByUid(

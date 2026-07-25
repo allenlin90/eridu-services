@@ -3,8 +3,6 @@ import type { Prisma } from '@prisma/client';
 
 import { PlatformRepository } from './platform.repository';
 
-import type { PrismaService } from '@/prisma/prisma.service';
-
 /**
  * Behavior spec for PlatformRepository.
  *
@@ -25,16 +23,14 @@ function createPlatformDelegateMock() {
 
 describe('platformRepository', () => {
   let repository: PlatformRepository;
-  const prismaDelegate = createPlatformDelegateMock();
   const txDelegate = createPlatformDelegateMock();
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const prisma = { platform: prismaDelegate } as unknown as PrismaService;
     const txHost = { tx: { platform: txDelegate } } as unknown as TransactionHost<any>;
 
-    repository = new PlatformRepository(prisma, txHost);
+    repository = new PlatformRepository(txHost);
   });
 
   describe('findPaginated', () => {
@@ -109,23 +105,24 @@ describe('platformRepository', () => {
     // WI-33 removed the bespoke override that forwarded params verbatim and
     // leaked soft-deleted rows. findMany now comes from BaseRepository, which
     // injects deletedAt: null unless includeDeleted is set — restoring the
-    // soft-delete invariant. (Base wraps the PrismaService delegate.)
+    // soft-delete invariant. The base repository resolves the ambient
+    // transaction delegate for every operation.
     it('injects deletedAt: null alongside the caller where by default', async () => {
-      prismaDelegate.findMany.mockResolvedValue([]);
+      txDelegate.findMany.mockResolvedValue([]);
 
       await repository.findMany({ where: { name: { contains: 'x' } } });
 
-      expect(prismaDelegate.findMany).toHaveBeenCalledWith(
+      expect(txDelegate.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { name: { contains: 'x' }, deletedAt: null } }),
       );
     });
 
     it('suppresses the soft-delete filter when includeDeleted is true', async () => {
-      prismaDelegate.findMany.mockResolvedValue([]);
+      txDelegate.findMany.mockResolvedValue([]);
 
       await repository.findMany({ includeDeleted: true, where: { name: { contains: 'x' } } });
 
-      expect(prismaDelegate.findMany).toHaveBeenCalledWith(
+      expect(txDelegate.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { name: { contains: 'x' } } }),
       );
     });

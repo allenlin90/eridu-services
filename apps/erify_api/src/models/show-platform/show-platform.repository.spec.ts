@@ -2,8 +2,6 @@ import type { TransactionHost } from '@nestjs-cls/transactional';
 
 import { ShowPlatformRepository } from './show-platform.repository';
 
-import type { PrismaService } from '@/prisma/prisma.service';
-
 function createShowPlatformDelegateMock() {
   return {
     create: jest.fn(),
@@ -15,17 +13,12 @@ function createShowPlatformDelegateMock() {
 
 describe('showPlatformRepository', () => {
   let repository: ShowPlatformRepository;
-  const prismaShowPlatformDelegate = createShowPlatformDelegateMock();
   const txShowPlatformDelegate = createShowPlatformDelegateMock();
   const executeRaw = jest.fn();
   const queryRaw = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    const prisma = {
-      showPlatform: prismaShowPlatformDelegate,
-    } as unknown as PrismaService;
 
     const txHost = {
       tx: {
@@ -35,7 +28,7 @@ describe('showPlatformRepository', () => {
       },
     } as unknown as TransactionHost<any>;
 
-    repository = new ShowPlatformRepository(prisma, txHost);
+    repository = new ShowPlatformRepository(txHost);
   });
 
   it('writes performance metrics against the mapped show_platforms table', async () => {

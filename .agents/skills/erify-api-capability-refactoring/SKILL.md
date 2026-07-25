@@ -162,9 +162,11 @@ async execute(input: PublishScheduleInput): Promise<PublishResult> {
 Repository methods used inside the workflow must access the ambient transaction through
 `TransactionHost.tx`.
 
-Never assume inherited `BaseRepository` methods are transaction-safe. The current base
-repository binds to the unbounded Prisma delegate. Reads can miss uncommitted changes,
-and writes can escape rollback unless explicitly routed through the transaction host.
+`BaseRepository` resolves its Prisma delegate lazily through `TransactionHost.tx`, so
+its inherited operations join the ambient transaction. Custom repository operations
+must follow the same rule; a direct `PrismaService` call can still miss uncommitted
+changes or escape rollback. Prove material transaction behavior with the isolated
+real-PostgreSQL harness.
 
 ### 4. Use repositories selectively
 
@@ -203,15 +205,11 @@ abstraction:
 
 - broad `any` and `Record<string, any>` erase Prisma's strongest type information;
 - `include`, `orderBy`, and where-clause shapes still expose Prisma concepts;
-- inherited methods are not automatically transaction-aware;
-- `restore()` filters by `deletedAt: null`, so the generic implementation cannot restore
-  a deleted row;
 - concrete repositories frequently need overrides to behave correctly.
 
-Until replaced or fixed:
+Although its transaction and restore semantics are repaired:
 
 - do not expand its use automatically;
-- treat inherited transaction behavior as unsafe;
 - keep specialized repositories explicit;
 - add regression tests for every critical override;
 - prefer deletion of a pass-through repository over creating another generic wrapper.
@@ -544,7 +542,8 @@ For each refactoring PR:
 
 This is a destination map and dependency order, not a scheduled queue. Each step activates only on its trigger; do not start a later step ahead of its gate. [`ARCHITECTURE_REFACTORING_ROADMAP.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_ROADMAP.md) is the authoritative task and gate list.
 
-1. Correct or retire unsafe generic `BaseRepository` behavior (roadmap T9).
+1. Preserve the repaired generic `BaseRepository` transaction and restore behavior
+   (roadmap T9).
 2. Stop adding table-shaped modules and pass-through repositories (placement rule, active now).
 3. Pilot shallow direct persistence on one low-risk reference capability — the `ShowStatus` pilot (roadmap T11), gated on step 1 and the safety harness. Persistence doctrine flips only if this pilot is accepted (T12); until then repository-first stays canonical.
 4. Consolidate show reference data into a coherent catalog capability.

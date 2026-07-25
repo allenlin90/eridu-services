@@ -3,7 +3,6 @@ import type { TransactionHost } from '@nestjs-cls/transactional';
 import { ShowRepository } from './show.repository';
 
 import { showWithTaskSummaryInclude } from '@/models/show/schemas/show.schema';
-import type { PrismaService } from '@/prisma/prisma.service';
 
 function createPrismaShowDelegateMock() {
   return {
@@ -11,6 +10,7 @@ function createPrismaShowDelegateMock() {
     findFirst: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
   };
@@ -18,19 +18,10 @@ function createPrismaShowDelegateMock() {
 
 describe('showRepository', () => {
   let repository: ShowRepository;
-  const prismaShowDelegate = createPrismaShowDelegateMock();
-  const txShowDelegate = {
-    findMany: jest.fn(),
-    count: jest.fn(),
-    updateMany: jest.fn(),
-  };
+  const txShowDelegate = createPrismaShowDelegateMock();
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    const prisma = {
-      show: prismaShowDelegate,
-    } as unknown as PrismaService;
 
     const txHost = {
       tx: {
@@ -38,7 +29,7 @@ describe('showRepository', () => {
       },
     } as unknown as TransactionHost<any>;
 
-    repository = new ShowRepository(prisma, txHost);
+    repository = new ShowRepository(txHost);
   });
 
   it('keeps explicit datetime cutoff for studio task-summary date_to', async () => {

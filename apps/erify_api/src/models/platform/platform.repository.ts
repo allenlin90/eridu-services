@@ -4,7 +4,6 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import type { Platform, Prisma } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class PlatformRepository extends BaseRepository<
@@ -14,10 +13,9 @@ export class PlatformRepository extends BaseRepository<
   Prisma.PlatformWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.platform));
+    super(new PrismaModelWrapper(() => txHost.tx.platform));
   }
 
   private get delegate() {

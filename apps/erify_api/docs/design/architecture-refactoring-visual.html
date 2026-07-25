@@ -914,8 +914,8 @@ class ShowQueries {
         <div class="card reframe tick">
           <span class="reframe-tag bug">confirmed bug</span>
           <div class="rf-was"><span>Was</span> <span class="mono">BaseRepository</span> is a safe shared abstraction to build on.</div>
-          <div class="rf-now"><span>Now</span> Fix or retire it: its generic <span class="mono">restore()</span> can't restore a row, and inherited methods bind to the non-transactional client.</div>
-          <div class="rf-why">Dormant only because every real flow overrides it. A latent trap for the next author.</div>
+          <div class="rf-now"><span>Now</span> Its generic <span class="mono">restore()</span> targets deleted rows, and inherited methods resolve the ambient transaction delegate lazily.</div>
+          <div class="rf-why">T9 repaired the false semantics and added real-database rollback and restore coverage; the abstraction remains optional.</div>
         </div>
         <div class="card reframe tick">
           <span class="reframe-tag drift">doctrine drift</span>

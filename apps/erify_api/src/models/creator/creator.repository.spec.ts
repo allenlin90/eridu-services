@@ -2,8 +2,6 @@ import type { TransactionHost } from '@nestjs-cls/transactional';
 
 import { CreatorRepository } from './creator.repository';
 
-import type { PrismaService } from '@/prisma/prisma.service';
-
 function createPrismaCreatorDelegateMock() {
   return {
     create: jest.fn(),
@@ -17,20 +15,10 @@ function createPrismaCreatorDelegateMock() {
 
 describe('creatorRepository', () => {
   let repository: CreatorRepository;
-  const prismaCreatorDelegate = createPrismaCreatorDelegateMock();
-  const txCreatorDelegate = {
-    create: jest.fn(),
-    findFirst: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-  };
+  const txCreatorDelegate = createPrismaCreatorDelegateMock();
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    const prisma = {
-      creator: prismaCreatorDelegate,
-    } as unknown as PrismaService;
 
     const txHost = {
       tx: {
@@ -38,7 +26,7 @@ describe('creatorRepository', () => {
       },
     } as unknown as TransactionHost<any>;
 
-    repository = new CreatorRepository(prisma, txHost);
+    repository = new CreatorRepository(txHost);
   });
 
   it('lists creators with loose availability constraints, search matching, and inactive roster exclusion', async () => {

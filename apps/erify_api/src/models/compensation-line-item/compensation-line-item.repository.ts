@@ -14,7 +14,6 @@ import {
 } from './schemas/compensation-line-item.schema';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
-import { PrismaService } from '@/prisma/prisma.service';
 
 type RepositoryListQuery = {
   skip: number;
@@ -38,10 +37,9 @@ export class CompensationLineItemRepository extends BaseRepository<
   Prisma.CompensationLineItemWhereInput
 > {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
   ) {
-    super(new PrismaModelWrapper(prisma.compensationLineItem));
+    super(new PrismaModelWrapper(() => txHost.tx.compensationLineItem));
   }
 
   private get delegate() {

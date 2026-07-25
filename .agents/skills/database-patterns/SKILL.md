@@ -25,9 +25,22 @@ NEVER loop over individual DB calls. Use `createMany` / `updateMany`.
 
 Use `@Transactional()` from `@nestjs-cls/transactional`. CLS propagates automatically — never pass `tx`. Apply on **Orchestration Services**, not repositories. Keep transactions short.
 
+**Mental model:** `txHost.tx` is a transaction-aware client accessor, analogous
+to an Express/knex helper that returns `AsyncLocalStorage.getStore()?.trx` and
+falls back to the pool. Resolve it when the repository operation runs. Do not
+capture the raw Prisma delegate, or resolve `txHost.tx`, in a singleton
+provider's constructor or field initializer. Nest `Scope.REQUEST` is not a
+substitute: it changes provider lifetime but does not make raw Prisma calls join
+a transaction, and CLS transaction context also applies to non-HTTP async flows.
+
 **Anti-patterns:** Self-invocation bypasses proxy silently. Internal `try/catch` causes silent partial commit. Reading through a repository method bound to the raw `PrismaService` misses uncommitted writes made earlier in the same transaction. Nested `@Transactional()` calls reuse the ambient CLS transaction — a write that must survive a later throw in the same call chain (e.g. an audit row recording a rejection) needs its own, separately-committing transaction call, not a nested one. `createdAt`-only ordering (plain or `distinct`) can't distinguish two rows written in the same transaction — Postgres' `now()` returns one value per transaction, not per statement — add the autoincrement `id` as a secondary sort key wherever a table can be written more than once per transaction.
 
 If a flow mutates rows and then immediately re-queries eligible rows in the same transaction, the read must use a transaction-aware delegate (`txHost.tx.<model>`). This especially matters for restore/resume paths: a raw-client read cannot see rows undeleted earlier in the transaction, so reconciliation logic can silently skip work.
+
+For `BaseRepository` subclasses, pass a lazy transaction delegate to
+`PrismaModelWrapper`: `new PrismaModelWrapper(() => txHost.tx.<model>)`.
+Resolving the delegate per operation lets inherited CRUD methods use the
+ambient transaction instead of capturing the unbounded client at construction.
 
 Prove transaction participation with the isolated real-PostgreSQL harness, not
 only repository mocks. The harness must require a dedicated local database whose

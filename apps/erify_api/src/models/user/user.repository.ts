@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, User } from '@prisma/client';
 
 import { BaseRepository, PrismaModelWrapper } from '@/lib/repositories/base.repository';
@@ -12,8 +14,11 @@ export class UserRepository extends BaseRepository<
   Prisma.UserUpdateInput,
   Prisma.UserWhereInput
 > {
-  constructor(private readonly prisma: PrismaService) {
-    super(new PrismaModelWrapper(prisma.user));
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
+    super(new PrismaModelWrapper(() => txHost.tx.user));
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -52,14 +57,9 @@ export class UserRepository extends BaseRepository<
   async createManyAndReturn(
     data: Prisma.UserCreateManyInput[],
   ): Promise<User[]> {
-    // createManyAndReturn is available in newer Prisma versions
-    // If it's not available in the generated client, we might need a fallback or upgrade
-    // Assuming it's available as per user code attempt.
-    // However, BaseRepository/IBaseModel doesn't expose it.
-    // We access prisma directly.
-    // If strict mode prevents accessing implicit methods, we might need to cast or just use it.
-    // Note: createManyAndReturn is not on IBaseModel, so we use this.prisma.user
-    return this.prisma.user.createManyAndReturn({
+    // BaseRepository does not expose this bulk operation, so keep it explicit
+    // while resolving the ambient transaction through TransactionHost.
+    return this.txHost.tx.user.createManyAndReturn({
       data,
     });
   }

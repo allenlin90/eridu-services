@@ -3,8 +3,6 @@ import { Prisma } from '@prisma/client';
 
 import { CompensationLineItemRepository } from './compensation-line-item.repository';
 
-import type { PrismaService } from '@/prisma/prisma.service';
-
 /**
  * Repository spec for CompensationLineItemRepository (WI-T2).
  *
@@ -41,10 +39,9 @@ describe('compensationLineItemRepository', () => {
     txDelegate.findMany.mockResolvedValue([]);
     txDelegate.count.mockResolvedValue(0);
 
-    const prisma = { compensationLineItem: createDelegateMock() } as unknown as PrismaService;
     const txHost = { tx: { compensationLineItem: txDelegate } } as unknown as TransactionHost<any>;
 
-    repository = new CompensationLineItemRepository(prisma, txHost);
+    repository = new CompensationLineItemRepository(txHost);
   });
 
   describe('soft-delete safety', () => {

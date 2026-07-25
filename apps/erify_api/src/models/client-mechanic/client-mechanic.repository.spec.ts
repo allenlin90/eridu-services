@@ -1,3 +1,5 @@
+import type { TransactionHost } from '@nestjs-cls/transactional';
+
 import { ClientMechanicRepository } from './client-mechanic.repository';
 
 import type { PrismaService } from '@/prisma/prisma.service';
@@ -14,22 +16,28 @@ function createClientMechanicDelegateMock() {
 
 describe('clientMechanicRepository', () => {
   let repository: ClientMechanicRepository;
-  const prismaDelegate = createClientMechanicDelegateMock();
+  let prismaDelegate: ReturnType<typeof createClientMechanicDelegateMock>;
+  let txDelegate: ReturnType<typeof createClientMechanicDelegateMock>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    prismaDelegate = createClientMechanicDelegateMock();
+    txDelegate = createClientMechanicDelegateMock();
 
     const prisma = { clientMechanic: prismaDelegate } as unknown as PrismaService;
-    repository = new ClientMechanicRepository(prisma);
+    const txHost = {
+      tx: { clientMechanic: txDelegate },
+    } as unknown as TransactionHost<any>;
+    repository = new ClientMechanicRepository(prisma, txHost);
   });
 
   describe('findByUidForClient', () => {
     it('excludes mechanics whose owning client is soft-deleted', async () => {
-      prismaDelegate.findFirst.mockResolvedValue(null);
+      txDelegate.findFirst.mockResolvedValue(null);
 
       await repository.findByUidForClient({ uid: 'cmech_123', clientUid: 'client_1' });
 
-      expect(prismaDelegate.findFirst).toHaveBeenCalledWith(
+      expect(txDelegate.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             uid: 'cmech_123',
@@ -38,19 +46,20 @@ describe('clientMechanicRepository', () => {
           },
         }),
       );
+      expect(prismaDelegate.findFirst).not.toHaveBeenCalled();
     });
   });
 
   describe('updateWithVersionCheck', () => {
     it('excludes mechanics whose owning client is soft-deleted', async () => {
-      prismaDelegate.update.mockResolvedValue({ uid: 'cmech_123' });
+      txDelegate.update.mockResolvedValue({ uid: 'cmech_123' });
 
       await repository.updateWithVersionCheck(
         { uid: 'cmech_123', clientUid: 'client_1', version: 3 },
         { title: 'Renamed' },
       );
 
-      expect(prismaDelegate.update).toHaveBeenCalledWith(
+      expect(txDelegate.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             uid: 'cmech_123',
@@ -60,6 +69,7 @@ describe('clientMechanicRepository', () => {
           },
         }),
       );
+      expect(prismaDelegate.update).not.toHaveBeenCalled();
     });
   });
 });
