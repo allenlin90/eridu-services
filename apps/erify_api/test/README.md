@@ -15,7 +15,7 @@ Deploy the checked-in migrations and run the integration suite:
 
 ```bash
 ERIFY_API_TEST_DATABASE_URL=postgresql://erify_test:erify_test@localhost:55432/erify_api_test \
-  node apps/erify_api/test/run-integration-tests.mjs
+  pnpm -C apps/erify_api test:integration
 ```
 
 Stop the database:
