@@ -139,7 +139,15 @@ Replacing a material creates a revision. It never overwrites an earlier object r
 | `version` | Optimistic-lock token |
 | `createdAt`, `updatedAt`, `deletedAt` | Standard lifecycle fields; no public delete action |
 
-`SceneProfileRevision` is an immutable composition revision. Each semantic composition save creates one revision and a set of ordered `SceneProfileRevisionMaterial` rows:
+`SceneProfileRevision` is an immutable composition revision:
+
+| Field | Contract |
+| --- | --- |
+| `profileId`, `revision` | Unique monotonically increasing profile revision |
+| `profileName`, `profileDescription` | Confirmation-safe display snapshots |
+| `createdById`, `createdAt` | Revision provenance |
+
+Each semantic composition save creates one revision and a set of ordered `SceneProfileRevisionMaterial` rows:
 
 | Field | Contract |
 | --- | --- |
@@ -148,7 +156,7 @@ Replacing a material creates a revision. It never overwrites an earlier object r
 | `sortOrder` | Stable expected-reference order |
 | `studioId` | Optional applicability filter |
 | `platformId` | Optional applicability filter |
-| `label` | Optional comparison label specific to this composition |
+| `label` | Required snapshot label; use an explicit override or copy the material name at composition time |
 
 At read time, a material link applies when its optional studio matches the Show studio and its optional platform is among the Show platforms. An unscoped link applies everywhere within the owning Client. A profile cannot reference another Client's material.
 
@@ -208,6 +216,7 @@ A bounded, operator-reviewed cutover mapping populates evidence-ref rows for exi
 | `result` | `PASS`, `MINOR`, or `FAIL` |
 | `feedback` | Null for Pass; required non-empty text for Minor and Fail |
 | `reviewedById` | Current reviewing actor |
+| `reviewedAt` | Time of the latest accepted draft decision; confirmation does not rewrite it |
 | `profileRevisionId` | Nullable exact profile revision shown during review |
 | `version` | Optimistic-lock token |
 | `confirmedAt` | Null while editable; set when first included in a confirmation |
@@ -246,8 +255,12 @@ An image record may be marked Fail when it appears blank, corrupt, or non-viewab
 | --- | --- |
 | `confirmationId`, `showId` | Included scope |
 | `reviewId`, `reviewVersion` | Effective review included in this confirmation |
+| `showName`, `scheduledStartTime` | Confirmation-time Show display facts |
+| `clientId`, `clientName` | Confirmation-time Client identity and label |
 
-The unique revision scope and advisory-lock key use studio plus exact window bounds; `operationalDate` remains the human-readable business key. The confirmation command acquires that lock, re-queries the eligible Show set, verifies one review with image evidence for every Show, rejects incomplete scope, appends the next confirmation revision, writes its items, marks previously unconfirmed included reviews confirmed, and records audit history in one CLS transaction.
+`SceneQcDailyConfirmationItemPlatform` stores one normalized confirmation-time platform identity and label per item. Report queries use these confirmation rows rather than current mutable Show relations.
+
+The unique revision scope and advisory-lock key use studio plus exact window bounds; `operationalDate` remains the human-readable business key. The confirmation command acquires that lock, re-queries the eligible Show set, verifies one review with image evidence for every Show, rejects incomplete scope, appends the next confirmation revision, snapshots its normalized Show/Client/platform report dimensions, writes its items, marks previously unconfirmed included reviews confirmed, and records audit history in one CLS transaction.
 
 The latest confirmation state is computed by comparing its pinned Show set with the current eligible set:
 
@@ -354,7 +367,7 @@ GET    /studios/:studioId/scene-qc-confirmations/:confirmationId/report.csv
 
 Records support `date_from`, `date_to`, `client_id`, `platform_id`, `result`, `page`, and `limit`. Dates filter the Show's operational date. The list is a lean projection. Detail loads pinned evidence, pinned profile/material references, confirmation identity, and available audit history.
 
-No report exists before the first confirmation. A report requested by confirmation UID remains available after later scope changes because it is an immutable historical artifact. The latest stale confirmation is labeled `STALE`, and an older revision after reconfirmation is labeled `SUPERSEDED`; the Daily Review surface does not present either as the current manager report. The report returns exactly:
+No report exists before the first confirmation. A report requested by confirmation UID remains available after later scope changes because it is an immutable historical artifact. The latest stale confirmation is labeled `STALE`, and an older revision after reconfirmation is labeled `SUPERSEDED`; the Daily Review surface does not present either as the current manager report. Report identity, Show detail, Client breakdowns, and platform breakdowns read the normalized confirmation snapshots, while outcomes and evidence read the pinned review/version. The report returns exactly:
 
 - identity: studio, operational date, timezone, confirmation status, confirming operator, confirmation time, report generation time, and confirmation revision;
 - coverage: total eligible, total reviewed, result counts, and result percentages;
@@ -607,9 +620,10 @@ The workflow never writes Task, TaskTarget, Show, ShowStatus, or Manager Review 
 3. Resolve one effective review for each Show.
 4. Reject missing reviews, no-evidence blockers, or optimistic conflicts.
 5. Append confirmation and item rows.
-6. Mark newly included draft reviews confirmed.
-7. Write Audit.
-8. Commit, then make the report queryable.
+6. Append confirmation-time Show, Client, and platform report dimensions.
+7. Mark newly included draft reviews confirmed.
+8. Write Audit.
+9. Commit, then make the report queryable.
 
 ### 8.4 Refresh Policy
 
@@ -792,6 +806,7 @@ Also run Prisma format, validate, generate, and the official migration command r
 - confirmation rechecks completeness inside its lock and transaction;
 - replayed concurrent confirmation creates one next revision;
 - added, removed, rescheduled, reactivated, and terminally cancelled Shows produce the expected stale state;
+- later Show, Client, platform, or profile-label edits do not rewrite an earlier confirmation report;
 - report totals, Client breakdowns, platform breakdowns, detail, exceptions, and CSV rows reconcile to confirmation items; and
 - review and confirmation rollback leave no partial Audit or pinned-child rows.
 

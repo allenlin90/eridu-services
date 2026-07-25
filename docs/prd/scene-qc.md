@@ -132,6 +132,7 @@ Designer, Manager, and Admin have the same Stage 1 Scene QC permissions, includi
 - Show-level detail includes scheduled time, Show, Client, platform, result, reviewer, reviewer feedback, evidence count, and Scene Profile used when available.
 - An exceptions section lists every Minor and Fail result, its feedback, and whether the confirmed result was later amended.
 - A report identifies its confirmation and any later amendments honestly.
+- Report identity and breakdown dimensions are pinned at confirmation so later Show, Client, platform, or Scene Profile label changes do not rewrite a historical report.
 - The manager report remains advisory and cannot trigger Task or Show transitions.
 - The Stage 1 report implementation keeps cross-day trends, taxonomy issue breakdowns, heatmaps, period comparisons, and PDF export out of scope.
 - The report module must contain an actionable `TODO(scene-qc-reporting)` comment naming those deferred extensions so later reporting work stays discoverable in the same capability.
@@ -331,6 +332,7 @@ The current heuristic extraction of any image field and provisional Task-content
 - [ ] A scope change after confirmation marks the day stale and requires an append-only reconfirmation revision.
 - [ ] A confirmed day makes its manager report available.
 - [ ] The Stage 1 report contains identity, coverage, outcome totals, Client/platform breakdowns, Show-level detail, and an exception list.
+- [ ] A historical report continues to render its confirmation-time Show, Client, platform, and Scene Profile labels after later source edits.
 - [ ] The Stage 1 report is available in-app and as CSV.
 - [ ] The report module contains an actionable `TODO(scene-qc-reporting)` for trends, taxonomy breakdowns, heatmaps, period comparisons, and PDF export.
 - [ ] Scene QC cannot change Task status, approve or reject Tasks, or change Show lifecycle state.
