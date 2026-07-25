@@ -84,7 +84,12 @@ StudioSceneProfileController
        -> AuditService
 ```
 
-The capability follows the repository/service/controller separation that remains canonical in `erify_api`. Repositories are private providers. Commands and queries are separated by service responsibility only; Stage 1 does not introduce a CQRS bus, generic event system, or speculative interfaces.
+The capability follows controller → capability service/use case → private
+persistence separation. Its repositories are justified by complex projections,
+optimistic writes, multi-row workflows, and reusable persistence policy rather
+than created per model by default. Commands and queries are separated by
+service responsibility only; Stage 1 does not introduce a CQRS bus, generic
+event system, or speculative interfaces.
 
 Task remains the source of submitted evidence. Show remains the review anchor. Client remains the owner of Scene Profiles and materials. Studio and platform references describe applicability, not ownership.
 

@@ -67,8 +67,9 @@ Public MCP should remain an adapter over shared services/use-cases, not a second
 
 ```text
 Private MCP Tool ┐
-Public MCP Tool  ├─> Use Case / Service ─> Repository ─> Database
-REST Controller  ┘
+Public MCP Tool  ├─> Use Case / Service ─> Persistence ─> Database
+REST Controller  ┘                         ├─ direct txHost
+                                           └─ private provider
 ```
 
 Keep the public registry explicitly curated. Shared use-cases can be reused, but authentication, authorization, rate-limit, and audit middleware should be public-surface-specific.

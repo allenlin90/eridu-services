@@ -32,8 +32,9 @@ The MCP server is a separate runtime entrypoint, not another REST controller gro
 
 ```text
 REST Controller ┐
-MCP Tool        ├─> Use Case / Service ─> Repository ─> Database
-BullMQ Worker   ┘
+MCP Tool        ├─> Use Case / Service ─> Persistence ─> Database
+BullMQ Worker   ┘                         ├─ direct txHost
+                                          └─ private provider
 ```
 
 The foundation implementation may reuse existing Nest modules directly. As the MCP surface grows, move shared read/use-case logic behind narrower services and keep MCP handlers as adapters. Do not let MCP tools import broad REST orchestration modules merely for convenience.

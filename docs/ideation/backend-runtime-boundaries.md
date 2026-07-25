@@ -6,7 +6,7 @@
 
 ## What
 
-Define `erify_api` as a modular NestJS backend with multiple runtime entrypoints instead of one process that serves every audience and transport. The package can keep sharing model services, orchestration services, repositories, Prisma, auth helpers, and Zod contracts, while each runtime imports only the surface it exposes.
+Define `erify_api` as a modular NestJS backend with multiple runtime entrypoints instead of one process that serves every audience and transport. The package can keep sharing capability services, workflows, selected persistence providers, Prisma, auth helpers, and Zod contracts, while each runtime imports only the surface it exposes.
 
 Target runtime surfaces:
 
@@ -50,8 +50,9 @@ Transport adapters should remain thin:
 
 ```text
 REST Controller ┐
-MCP Tool        ├─> Use Case / Service ─> Repository ─> Database
-Worker Processor ┘
+MCP Tool        ├─> Use Case / Service ─> Persistence ─> Database
+Worker Processor ┘                         ├─ direct txHost
+                                           └─ private provider
 ```
 
 Controllers, MCP handlers, and worker processors should not contain business logic. They translate protocol-specific inputs into service/use-case calls and translate errors/results back to the transport.
