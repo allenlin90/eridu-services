@@ -307,7 +307,7 @@ pnpm architecture:signals
 | Do                               | Don't                                   |
 | -------------------------------- | --------------------------------------- |
 | Define payload types in schemas  | Expose `Prisma.*` in service signatures |
-| Outside T11, use repository for all DB access | Build Prisma queries in service |
+| Outside the `ShowStatus` pilot, use repository for all DB access | Build Prisma queries in service |
 | Follow task model as reference   | Copy patterns from unverified models    |
 
 ### Agent Memory & Supplementary References

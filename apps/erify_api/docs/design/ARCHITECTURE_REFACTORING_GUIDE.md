@@ -160,7 +160,8 @@ not become the automatic persistence choice for every capability.
 
 - [`show-status.module.ts`](../../src/models/show-status/show-status.module.ts) registers a service, repository, Prisma, and utility module;
 - [`show-status.service.ts`](../../src/models/show-status/show-status.service.ts) generates a UID and delegates most methods;
-- [`show-status.repository.ts`](../../src/models/show-status/show-status.repository.ts) mainly restates Prisma CRUD and pagination.
+- `models/show-status/show-status.repository.ts` in the source snapshot mainly
+  restates Prisma CRUD and pagination.
 
 The service is a useful public API. The separate repository is not clearly earning its extra seam.
 
@@ -542,12 +543,14 @@ Do not generalize until the pilot passes behavior, rollback, and reviewability c
 
 **Pilot result (2026-07-24): passed.** Folding persistence into
 `ShowStatusService` removed one production file, one Nest provider registration,
-and the repository mock seam. The service keeps its caller-facing methods,
-builds only the bounded filter shapes its callers use, and exposes
-schema-defined types rather than `Prisma.*` signatures. Focused caller tests and
-the isolated PostgreSQL harness preserved active-row filtering, soft delete,
-transaction visibility, and rollback. This result unlocks T12; it does not
-change persistence doctrine by itself.
+and the repository mock seam. The service keeps its caller-facing methods and
+builds only the bounded filter shape its callers use. Its schema-local record
+alias follows the generated Prisma output type to prevent model drift; the
+bounded `systemKey` filter remains deliberately persistence-shaped rather than
+claiming an ORM-independent port. Focused caller tests and the isolated
+PostgreSQL harness preserved active-row filtering, soft delete, transaction
+visibility, and rollback. This result unlocks T12; it does not change
+persistence doctrine by itself.
 
 ### Phase 3 — Consolidate The Show Catalog Capability
 

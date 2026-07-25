@@ -106,7 +106,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
 | T9 | Fix `BaseRepository.restore()` + tx-aware lazy delegate | M | T1 | ✅ |
-| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | ⏸ |
+| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | 🔲 |
 
 ### T9 — Fix `BaseRepository.restore()` + transaction-aware lazy delegate
 
@@ -139,10 +139,12 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Skills**: `repository-pattern-nestjs`, `service-pattern-nestjs`.
 - **Result**: passed. The repository file, provider registration, and repository
   mock seam were removed. `ShowStatusService` now owns bounded pagination and
-  active-row predicates through `TransactionHost.tx.showStatus`; schema-defined
-  service types avoid public `Prisma.*` signatures. Focused caller specs and the
-  real-PostgreSQL harness preserve CRUD, soft-delete, transaction visibility,
-  and rollback behavior. T12 remains the separate acceptance and doctrine gate.
+  active-row predicates through `TransactionHost.tx.showStatus`. Its
+  schema-local record alias follows the generated Prisma output type, while the
+  bounded `systemKey` filter remains deliberately persistence-shaped. Focused
+  caller specs and the real-PostgreSQL harness preserve CRUD, soft-delete,
+  transaction visibility, and rollback behavior. T12 remains the separate
+  acceptance and doctrine gate.
 
 ### T12 — Persistence-matrix acceptance (doctrine reconciliation)
 

@@ -25,6 +25,10 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 const INTEGRATION_NAME_PREFIX = 'integration-safety:';
 
+/**
+ * Isolates the generic BaseRepository contract from production repositories
+ * whose model-specific behavior is covered by their own focused specs.
+ */
 @Injectable()
 class ShowStatusBaseRepository extends BaseRepository<
     ShowStatus,
