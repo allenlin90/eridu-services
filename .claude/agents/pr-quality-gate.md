@@ -120,6 +120,11 @@ Backend:
   schemas/index.ts
 ```
 
+This is the destination shape for new or actively consolidated work. The
+`ShowStatus` direct-persistence reference remains under
+`apps/erify_api/src/models/show-status/` until T13 consolidates the show catalog;
+do not flag that legacy path by itself.
+
 Frontend:
 ```
 /src/features/{domain}/

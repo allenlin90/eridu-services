@@ -127,6 +127,11 @@ Guard order: Throttler → JwtAuth → Admin → Studio (role-based)
       └── index.ts
 ```
 
+This is the destination shape for new or actively consolidated work. The
+`ShowStatus` direct-persistence reference remains under
+`apps/erify_api/src/models/show-status/` until T13 consolidates the show catalog;
+do not move it independently.
+
 ### Frontend (React)
 ```
 /src/features/{domain}/
@@ -221,7 +226,7 @@ This builds institutional knowledge that makes every future feature faster to im
 
 Before presenting your implementation, verify:
 - [ ] All services use payload types, not `Prisma.*` in signatures
-- [ ] All DB queries are in repositories, not services
+- [ ] Persistence follows the matrix: bounded private direct queries or a justified private provider
 - [ ] Internal BigInt IDs are never exposed at the API layer
 - [ ] Studio-scoped routes use `@StudioProtected` and `@StudioParam`
 - [ ] API JSON uses snake_case, internal code uses camelCase
