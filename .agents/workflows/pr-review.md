@@ -71,21 +71,21 @@ Compare the output with the architecture baseline named by the affected design/c
 
 ### Repository checks
 
-For **every new named repository method** (beyond `findOne`/`findByUid`):
+For **every new repository or named repository method**:
 
-1. **Necessity test** — can the body be replaced by `findMany({ where: {...} })` called from the service? If yes → delete the method, inline at the service. **BLOCKING.**
-2. **Exception justification** — if the method IS necessary (non-trivial query, multi-step op, reused complex logic), it must have an `// Engineering decision:` comment in code explaining why `findMany` is insufficient.
+1. **Persistence-matrix test** — can the operation remain a private, bounded single-model query in the capability service? If yes → delete the pass-through repository or method. **BLOCKING.**
+2. **Repository justification** — retain a private repository/query provider when it hides complex filters or projections, conditional writes, raw SQL, bulk lifecycle work, or reusable persistence policy. If the reason is not evident, add an `// Engineering decision:` comment.
 3. **Feature doc record** — the same decision must appear in the relevant feature doc (Key Product Decisions or Design Decisions) so it is traceable.
 
-- [ ] Every new named repository method has passed the necessity test or carries a documented exception (code comment + feature doc entry).
+- [ ] Every new repository or named method is justified by the persistence matrix or removed as pass-through ceremony.
 - [ ] All custom queries filter `deletedAt: null` unless `includeDeleted` is explicit.
 - [ ] No `Prisma.*` types leaking into service method signatures — payload types defined in schema files.
 - [ ] No `findByUidOrThrow` — return `null`, let the controller call `ensureResourceExists()`.
-- [ ] No Prisma query-building in services — `where` clauses belong in repositories.
+- [ ] Direct-persistence services keep Prisma operations private and bounded; complex or reusable persistence remains in a private repository/query provider.
 - [ ] Raw SQL (`$executeRaw` / `$queryRaw`) references `@@map`/`@map` names, not model/field names — Prisma does not map raw queries. New raw-SQL methods carry a regression test asserting the literal table name.
 - [ ] Any new "operational day" / relative-date (`today`, `yesterday`, business-day) resolution reuses `OPERATIONAL_DAY_START_HOUR`/`toOperationalDayKey` from `apps/erify_api/src/lib/utils/operational-day.util.ts` — no independent reimplementation of the cutover-hour shift. See `.agents/skills/operations-review-surface/SKILL.md` § Operational-day bucketing.
 
-Full reference: `.agents/skills/repository-pattern-nestjs/SKILL.md`
+Full reference: `.agents/skills/erify-api-capability-refactoring/SKILL.md`, `.agents/skills/repository-pattern-nestjs/SKILL.md`
 
 ### Service checks
 
@@ -230,6 +230,18 @@ Run the repository-wide markdown formatting check:
 pnpm lint:markdown
 ```
 
+For `erify_api` changes that affect persistence transaction semantics,
+soft-delete/restore behavior, CLS participation, or Nest runtime composition,
+also run and record:
+
+```bash
+pnpm -C apps/erify_api test:integration
+```
+
+This gate is manual until
+[`erify-api-real-database-ci-gate.md`](../../docs/ideation/erify-api-real-database-ci-gate.md)
+is promoted.
+
 If formatting errors are found, you can format them automatically with:
 
 ```bash
@@ -298,6 +310,7 @@ Only once §1–§3 are done is the verdict **ready to merge**.
 - [ ] Architecture trigger audit recorded `NOT TRIGGERED`, `TRIGGERED — HANDLED`, `TRIGGERED — REGISTERED`, or `BLOCKING` for every affected signal.
 - [ ] Every new named repository method: necessity tested; exceptions documented in code and feature doc.
 - [ ] No Prisma types in service signatures; no business logic in controllers.
+- [ ] Conditional `erify_api` real-database gate run and recorded when persistence, CLS, soft-delete/restore, or runtime composition changed.
 - [ ] All implemented design docs promoted; no `✅` items remaining in any Design table.
 - [ ] All PRDs for shipped features promoted to `docs/features/`.
 - [ ] lint / lint:markdown ✅ · typecheck ✅ · test ✅ · build ✅ for all affected workspaces.

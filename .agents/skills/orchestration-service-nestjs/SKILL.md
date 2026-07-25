@@ -1,6 +1,6 @@
 ---
 name: orchestration-service-nestjs
-description: Legacy erify_api orchestration pattern. Capability skill wins on placement; workflow correctness rules here stay canonical.
+description: Implement erify_api workflow coordination, transactions, idempotency, locks, and race-safe writes inside capability-owned use cases.
 ---
 
 # Orchestration Service Pattern - NestJS (Superseded for placement)
@@ -12,7 +12,7 @@ description: Legacy erify_api orchestration pattern. Capability skill wins on pl
 > correctness rules below (transactions, advisory locks, idempotency, race-safe writes,
 > persisted-JSON guards) stay canonical for new and refactored `erify_api` code.**
 
-Orchestration Services coordinate multiple Model Services for workflows spanning multiple domain models.
+Orchestration services coordinate multiple capability/model services for workflows spanning multiple domain models.
 
 ## Canonical Examples
 
@@ -52,7 +52,7 @@ Reference: `TaskOrchestrationService.submitTaskContent` ([task-orchestration.ser
 ## Architecture
 
 ```
-Controller → OrchestrationService → ModelService A, B, C
+Controller → OrchestrationService → Capability/Model Service A, B, C
                                   → ProcessorService (@Transactional boundary)
 ```
 
@@ -136,7 +136,7 @@ Codex P1 on PR #103 caught a single unguarded `.target` deref that aborted an en
 
 ## Checklist
 
-- [ ] Injects only Model Services (no Repository imports)
+- [ ] Injects only capability/model services (no Repository imports)
 - [ ] `@Transactional()` on Processor, not Orchestration Service
 - [ ] Processor NOT exported from module
 - [ ] Idempotency with `{ includeDeleted: true }` for three-case resume
@@ -153,6 +153,6 @@ Codex P1 on PR #103 caught a single unguarded `.target` deref that aborted an en
 ## Related Skills
 
 - [Fact Extraction Pipeline](../fact-extraction-pipeline/SKILL.md) — extractor / paired-write / per-target collision patterns; required reading before any new `IngestionExtractor`
-- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Model Service patterns
+- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Capability/model service patterns
 - [Database Patterns](../database-patterns/SKILL.md) — `@Transactional()`, advisory locks
 - [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Controller patterns

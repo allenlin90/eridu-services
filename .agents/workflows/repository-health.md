@@ -53,7 +53,9 @@ Read `AGENTS.md`, the affected layer skills, `docs/domain/`, and applicable ADRs
 Check:
 
 - **Correctness and safety** — authorization, validation, transactions, soft delete, optimistic locking, audit history, sensitive-data handling.
-- **Architecture** — repository/service/controller separation, deep modules with small interfaces, domain locality, duplicated orchestration, and speculative seams with only one adapter.
+- **Architecture** — controller/capability/persistence boundaries, correct use of
+  the persistence matrix, deep modules with small interfaces, domain locality,
+  duplicated orchestration, and speculative seams with only one adapter.
 - **Type and contract integrity** — `any` at production seams, unvalidated JSON, ORM types in service interfaces, UID-only external contracts, snake_case/camelCase transformations.
 - **Efficiency** — N+1 reads, sequential independent work, unbounded lists, oversized payloads, cache invalidation, bundle/chunk warnings, and missing performance baselines.
 - **Maintainability** — behavior-bearing backend files above 600 LOC, frontend route or feature modules above 200 LOC, thin wrappers, generated-file noise, and testability through public interfaces.

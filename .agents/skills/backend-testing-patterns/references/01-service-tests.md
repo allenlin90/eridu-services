@@ -1,5 +1,9 @@
 # Service Tests — Extended Patterns
 
+These examples cover repository-backed services. When the persistence matrix
+selects shallow direct persistence, mock the model delegate through a
+`TransactionHost` provider instead; see `show-status.service.spec.ts`.
+
 ## Adding Extra Service Dependencies
 
 When a model service depends on more than just a repository and UtilityService, use `additionalProviders`:

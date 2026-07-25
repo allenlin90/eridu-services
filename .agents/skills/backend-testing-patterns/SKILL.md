@@ -1,6 +1,6 @@
 ---
 name: backend-testing-patterns
-description: Test erify_api services, controllers, guards, and orchestration with Jest, TestingModule, repo helpers, and mocks.
+description: Test erify_api services, persistence boundaries, controllers, guards, and orchestration with Jest and real-DB gates.
 ---
 
 # Backend Testing Patterns
@@ -13,7 +13,12 @@ description: Test erify_api services, controllers, guards, and orchestration wit
 
 ## 1. Model Service Tests
 
-Use `createModelServiceTestModule` from `@/testing/model-service-test.helper`. Mock at the repository boundary — never use a real Prisma client.
+Mock the selected persistence boundary:
+
+- repository-backed service → use `createModelServiceTestModule` and mock the repository;
+- direct-persistence service → provide a mock `TransactionHost` delegate for the model.
+
+Keep unit tests isolated from a real Prisma client.
 
 ## 2. Controller Tests
 
@@ -31,7 +36,7 @@ Mock all injected Model Services. Assert: coordination sequence, idempotency, pa
 
 ## 5. Real-Database Integration Tests
 
-Unit tests mock the repository boundary. Use the isolated real-PostgreSQL harness
+Unit tests mock the selected persistence boundary. Use the isolated real-PostgreSQL harness
 when the invariant depends on Prisma, PostgreSQL, Nest module wiring, or CLS
 transaction behavior and therefore cannot be proven by a mock.
 
@@ -42,6 +47,20 @@ transaction behavior and therefore cannot be proven by a mock.
 - Characterize observable behavior: rollback, read-your-own-writes, active-row
   filtering, UID-only boundaries, and representative runtime module boot.
 - Do not treat a mocked repository test as evidence of transaction participation.
+
+### Required completion gate
+
+Run `pnpm -C apps/erify_api test:integration` and record the result before
+handoff when a change can affect:
+
+- Prisma or `TransactionHost.tx` delegate selection;
+- transaction visibility or rollback;
+- soft-delete or restore semantics;
+- Nest module imports, exports, provider resolution, or runtime bootstrap.
+
+Unit-test success does not satisfy this gate. Automated enforcement is
+[deferred explicitly](../../../docs/ideation/erify-api-real-database-ci-gate.md),
+so the PR must contain the manual result until that topic is promoted.
 
 See [`apps/erify_api/test/README.md`](../../../apps/erify_api/test/README.md) for
 the guarded runner and local database commands.
@@ -60,13 +79,13 @@ Use `createBaseMockEntity()` from `@/testing/model-service-test.helper`. Check `
 
 | Skip | Why |
 |---|---|
-| NestJS DI wiring | Framework |
-| Prisma query syntax | Repository responsibility |
+| NestJS DI wiring in unit tests | Boot representative runtime graphs through the real-database harness |
+| Prisma query syntax alone | Persistence integration behavior matters more |
 | Input validation (Zod) | Schema unit test |
 | Guard logic in controller tests | Guard has own spec |
 
 ## Related Skills
 
 - [Service Pattern](../service-pattern-nestjs/SKILL.md) — Service layer being tested
-- [Repository Pattern](../repository-pattern-nestjs/SKILL.md) — Interface being mocked
+- [Repository Pattern](../repository-pattern-nestjs/SKILL.md) — Complex persistence boundary
 - [Frontend Testing Patterns](../frontend-testing-patterns/SKILL.md) — Vitest (contrast)

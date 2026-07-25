@@ -6,6 +6,7 @@ Operational guide for coding agents in `eridu-services`.
 - This file applies to the entire monorepo.
 - `AGENTS.md` is the canonical shared instruction file for this repo.
 - Claude Code auto-loads `.claude/CLAUDE.md`; that file should remain a thin adapter that points back to this file instead of duplicating shared guidance.
+- Cursor auto-loads `.cursor/rules/`; keep the `erify_api` rule as a thin adapter to this file and the canonical skills instead of duplicating backend doctrine.
 - Canonical agent skill location: `.agents/skills/`. Skills are discovered dynamically from this directory.
 - House rules: `.agents/rules/`.
 - Workflows: `.agents/workflows/`.
@@ -126,7 +127,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - When a phase closes, PRDs ship, or docs are reorganized, run the `doc-lifecycle` skill for bookkeeping and artifact transitions.
 - When a large committed scope needs several independently reviewed PRs but must land to `master` atomically, run [`.agents/workflows/integration-pr-delivery.md`](.agents/workflows/integration-pr-delivery.md) on top of the normal PRD, `pr-ready`, knowledge-sync, and doc-lifecycle flows. Breakdown PRs target the main integration branch; the main PR owns final wrap-up and the single merge to `master`.
 - When a backwards-incompatible schema redesign lands for a shipped feature, run `.agents/workflows/feature-version-cutover.md` (manual trigger). It decides whether to update docs in place or promote the feature doc to a versioned folder (`v1.md` archived, `README.md` describing v2), and enforces same-PR updates across all related docs and skills.
-- **Pattern/direction reconciliation gate (ready-to-start precondition).** Before starting a task that changes an established pattern, convention, or architectural direction — deprecating or superseding a skill, flipping a default, changing a doctrine — enumerate every skill, rule, workflow, agent, memory, and doc that asserts the old pattern (`grep -rln "<skill/pattern>" .agents .claude docs apps/*/docs AGENTS.md`) and reconcile all of them in the same PR. The task is not ready to *start* until that reconciliation set is listed, and not ready to *merge* until each entry is updated or explicitly deferred with a recorded gate (e.g. pilot-gated doctrine). Partial reconciliation that leaves a canonical skill or doc asserting the superseded pattern is a blocking inconsistency. If a direction is only partly accepted, say exactly which part is active and which is gated — do not blanket-deprecate ahead of the gate. See the `agent-instruction-maintenance` skill.
+- **Pattern/direction reconciliation gate (ready-to-start precondition).** Before starting a task that changes an established pattern, convention, or architectural direction — deprecating or superseding a skill, flipping a default, changing a doctrine — enumerate every skill, rule, workflow, agent, memory, vendor adapter, and doc that asserts the old pattern (`grep -rln "<skill/pattern>" .agents .claude .cursor docs apps/*/docs AGENTS.md`) and reconcile all of them in the same PR. The task is not ready to *start* until that reconciliation set is listed, and not ready to *merge* until each entry is updated or explicitly deferred with a recorded gate (e.g. pilot-gated doctrine). Partial reconciliation that leaves a canonical skill or doc asserting the superseded pattern is a blocking inconsistency. If a direction is only partly accepted, say exactly which part is active and which is gated — do not blanket-deprecate ahead of the gate. See the `agent-instruction-maintenance` skill.
 - Use `docs/tech-debt/` for accepted implementation gaps and cleanup issues that should be fixed later; use `docs/ideation/` for deferred product or architecture ideas that need future discovery or PRD promotion.
 - Before merging a PR, run the `pr-ready` skill, which executes `.agents/workflows/pr-review.md` end-to-end and returns a READY / NOT READY verdict. Its Wrap-up step is part of the merge-readiness verdict: it folds in `knowledge-sync.md` and the `doc-lifecycle` skill so the skill/doc/lifecycle updates this PR implies — synced skills, updated docs and links, retired design docs/PRDs/superpowers specs, roadmap status — land in the same PR with the description updated, not in a follow-up.
 - During design review, optimization investigations, or phase planning, cross-check `.agents/workflows/ideation-lifecycle.md`.
@@ -134,10 +135,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ### Core Engineering Rules
 - Never expose DB internal IDs from API responses. Use UID-based external IDs.
-- Backend (`erify_api`) follows repository/service/controller separation. The
-  implemented `ShowStatus` T11 pilot is the sole direct-persistence exception
-  while T12 remains pending.
-- New `erify_api` work follows the capability-first modular-monolith direction ([`ARCHITECTURE_REFACTORING_GUIDE.md`](apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)): place a use case with the business capability that owns the rule instead of adding another table-first or audience-first slice; do not create a Nest module or repository per Prisma model by default; keep persistence providers private, retaining a repository only when it hides real persistence complexity; introduce no global CQRS bus, speculative interface, exported repository, or folder migration without a demonstrated trigger. This changes code **placement** now — it does not change persistence doctrine: outside the `ShowStatus` pilot, "repository for all DB access" and repository/service/controller separation remain canonical until T12 accepts the persistence matrix and reconciles all repository-first doctrine in one PR.
+- Backend (`erify_api`) follows controller → capability service/use case → persistence separation. Persistence may be direct through `TransactionHost.tx` for shallow single-model CRUD or private behind a repository/query provider when complexity earns that seam.
+- New `erify_api` work follows the capability-first modular-monolith direction and persistence matrix ([`ARCHITECTURE_REFACTORING_GUIDE.md`](apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md)): place a use case with the business capability that owns the rule instead of adding another table-first or audience-first slice; do not create a Nest module or repository per Prisma model by default; keep persistence providers private, retaining a repository only when it hides real persistence complexity; introduce no global CQRS bus, speculative interface, exported repository, or folder migration without a demonstrated trigger.
 - Use Zod schemas and consistent snake_case (API) <-> camelCase (service/domain) transformations.
 - Prefer bulk DB operations and relation includes over N+1 query patterns.
 - Maintain strict typing. Do not bypass with `any` or `@ts-ignore` unless explicitly requested.
@@ -257,6 +256,14 @@ pnpm --filter <workspace> build
 
 If cross-workspace changes were made, validate dependents too.
 
+For `erify_api` changes that can affect persistence transaction semantics,
+soft-delete/restore behavior, CLS participation, or Nest runtime composition,
+also run the guarded real-database gate from
+[`backend-testing-patterns`](.agents/skills/backend-testing-patterns/SKILL.md#5-real-database-integration-tests)
+and record the result in the PR. This remains a manual gate until the
+[automated CI topic](docs/ideation/erify-api-real-database-ci-gate.md) is
+promoted.
+
 For feature/refactor work, also run the refactor-parity checks in [`.agents/workflows/verification.md`](.agents/workflows/verification.md#steps) (loading/empty/data UI states, route/search-param contracts, pagination stack parity) in addition to the commands above.
 
 ### Useful Commands
@@ -294,21 +301,21 @@ pnpm architecture:signals
 
 #### Performance
 - Use `Promise.all` for independent reads.
-- Prefer bulk repository operations over loops of individual creates or updates.
+- Prefer bulk persistence operations over loops of individual creates or updates.
 
 ### Service Layer Rules
 - Schemas may import Prisma types to define payload types. Services must not expose Prisma input types in public signatures.
-- Services should work with payload types defined in local schemas and, outside
-  the `ShowStatus` T11 pilot, delegate DB access to repositories.
-- Prefer the task model and task orchestration flows as reference implementations when choosing between competing existing patterns.
-- For `erify_api` module/capability placement, load `erify-api-capability-refactoring` first (authoritative for placement; its persistence matrix is acceptance-gated). It supersedes `service-pattern-nestjs`/`repository-pattern-nestjs`/`orchestration-service-nestjs` for *placement* only — their persistence and correctness rules stay canonical outside the `ShowStatus` pilot until T12.
-- Reference priority for new backend code: `task.service.ts` → `task-orchestration.service.ts` → `studio-membership` schema.
+- Services work with payload types defined in local schemas. A shallow capability service may use `TransactionHost.tx.<model>` directly; complex filters, projections, conditional writes, raw SQL, or reusable persistence policy belong in a private repository, store, or query provider.
+- Direct-persistence services may build only private, bounded Prisma operations. Do not expose Prisma types or a generic Prisma query DSL through the service API.
+- For `erify_api` module placement and persistence selection, load `erify-api-capability-refactoring` first. Use `service-pattern-nestjs`, `repository-pattern-nestjs`, and `orchestration-service-nestjs` for the selected implementation's correctness rules.
+- Reference priority for new backend code: `show-status.service.ts` for shallow direct persistence → `task.service.ts` and its repository for complex persistence → `task-orchestration.service.ts` for workflows → `studio-membership` schema for payload types.
 
-| Do                               | Don't                                   |
-| -------------------------------- | --------------------------------------- |
-| Define payload types in schemas  | Expose `Prisma.*` in service signatures |
-| Outside the `ShowStatus` pilot, use repository for all DB access | Build Prisma queries in service |
-| Follow task model as reference   | Copy patterns from unverified models    |
+| Do | Don't |
+| --- | --- |
+| Define payload types in schemas | Expose `Prisma.*` in service signatures |
+| Use direct `txHost.tx` for shallow CRUD | Add a pass-through repository by default |
+| Keep complex persistence in a private provider | Export repositories for caller convenience |
+| Follow verified capability references | Copy patterns from unverified models |
 
 ### Agent Memory & Supplementary References
 - **Shared Agent Memory (`.agents/memory/`):** Contains tool-agnostic refactoring logs, migration history, and architectural overrides (e.g. `data-table-extraction.md`).

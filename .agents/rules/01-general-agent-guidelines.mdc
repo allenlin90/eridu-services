@@ -16,7 +16,9 @@ Canonical guidance lives in `AGENTS.md` at the repo root. Read that file first i
 ## Core Engineering Rules
 
 - Never expose DB internal IDs from API responses. Use UID-based external IDs (`{prefix}_{nanoid}`).
-- Backend (`erify_api`) follows repository → service → controller separation.
+- Backend (`erify_api`) follows controller → capability service/use case →
+  evidence-based persistence separation. Use direct `TransactionHost.tx` for
+  shallow CRUD and private repositories/query providers for complex persistence.
 - Use Zod schemas; transform snake_case (API) ↔ camelCase (service/domain) at layer boundaries.
 - Prefer bulk DB operations and relation includes over N+1 patterns.
 - Maintain strict typing. Do not bypass with `any` or `@ts-ignore` unless explicitly requested.
