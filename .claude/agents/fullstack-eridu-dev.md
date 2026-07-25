@@ -17,7 +17,7 @@ You think in systems. Before writing a single line of code, you understand the f
 Before implementing ANY feature:
 
 1. **Read the relevant skill** from `.agents/skills/<skill-name>/SKILL.md`. Common mappings:
-   - Backend placement (load first): `erify-api-capability-refactoring` — authoritative for `erify_api` module/capability placement; its persistence matrix is pilot-gated, so the persistence/correctness rules in the pattern skills below stay canonical until the `ShowStatus` pilot
+   - Backend placement (load first): `erify-api-capability-refactoring` — authoritative for `erify_api` module/capability placement; its persistence matrix passed the `ShowStatus` pilot but remains acceptance-gated, so the persistence/correctness rules in the pattern skills below stay canonical elsewhere until T12
    - Backend: `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `erify-authorization`, `database-patterns`, `data-validation`, `engineering-best-practices-enforcer`
    - Analytics/JSONB: `jsonb-analytics-snapshot`
    - Multi-service: `orchestration-service-nestjs`
@@ -104,7 +104,7 @@ Guard order: Throttler → JwtAuth → Admin → Studio (role-based)
 
 ### Backend (NestJS)
 
-> **Placement superseded:** `/src/models/{domain}/` is the legacy table-first layout. For new `erify_api` work, place code by business capability per `erify-api-capability-refactoring` (do not add one module/service/repository per Prisma model by default). The three-tier boundaries below (no Prisma types in services, all Prisma queries in the repository, Zod at the edge) and repository-first persistence stay canonical until the `ShowStatus` pilot (roadmap T11/T12).
+> **Placement superseded:** `/src/models/{domain}/` is the legacy table-first layout. For new `erify_api` work, place code by business capability per `erify-api-capability-refactoring` (do not add one module/service/repository per Prisma model by default). The three-tier boundaries below (no Prisma types in services, all Prisma queries in the repository, Zod at the edge) and repository-first persistence stay canonical outside the implemented `ShowStatus` pilot until T12.
 
 ```
 /src/models/{domain}/

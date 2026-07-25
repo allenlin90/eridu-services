@@ -2,34 +2,53 @@ import 'reflect-metadata';
 
 import { Injectable } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ModuleRef } from '@nestjs/core';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import {
   ClsPluginTransactional,
   Transactional,
+  TransactionHost,
 } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Prisma, ShowStatus } from '@prisma/client';
 import { ClsModule, ClsService } from 'nestjs-cls';
 
+import {
+  BaseRepository,
+  PrismaModelWrapper,
+} from '@/lib/repositories/base.repository';
 import { showStatusDto } from '@/models/show-status/schemas/show-status.schema';
 import { ShowStatusModule } from '@/models/show-status/show-status.module';
-import { ShowStatusRepository } from '@/models/show-status/show-status.repository';
 import { ShowStatusService } from '@/models/show-status/show-status.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
 
 const INTEGRATION_NAME_PREFIX = 'integration-safety:';
 
+/**
+ * Isolates the generic BaseRepository contract from production repositories
+ * whose model-specific behavior is covered by their own focused specs.
+ */
+@Injectable()
+class ShowStatusBaseRepository extends BaseRepository<
+    ShowStatus,
+    Prisma.ShowStatusCreateInput,
+    Prisma.ShowStatusUpdateInput,
+    Prisma.ShowStatusWhereInput
+  > {
+  constructor(
+    txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {
+    super(new PrismaModelWrapper(() => txHost.tx.showStatus));
+  }
+}
+
 @Injectable()
 class TransactionProbe {
   constructor(
-    private readonly moduleRef: ModuleRef,
+    private readonly showStatusRepository: ShowStatusBaseRepository,
+    private readonly showStatusService: ShowStatusService,
   ) {}
-
-  private get showStatusRepository(): ShowStatusRepository {
-    return this.moduleRef.get(ShowStatusRepository, { strict: false });
-  }
 
   @Transactional<TransactionalAdapterPrisma>()
   async createAndRead(uid: string, name: string) {
@@ -48,6 +67,26 @@ class TransactionProbe {
 
     throw new Error('integration rollback probe');
   }
+
+  @Transactional<TransactionalAdapterPrisma>()
+  async createAndReadThroughService(name: string) {
+    const created = await this.showStatusService.createShowStatus({
+      name,
+      metadata: {},
+    });
+
+    return this.showStatusService.getShowStatusById(created.uid);
+  }
+
+  @Transactional<TransactionalAdapterPrisma>()
+  async createThroughServiceAndFail(name: string): Promise<never> {
+    await this.showStatusService.createShowStatus({
+      name,
+      metadata: {},
+    });
+
+    throw new Error('show status pilot rollback probe');
+  }
 }
 
 describe('real database persistence safety', () => {
@@ -55,7 +94,7 @@ describe('real database persistence safety', () => {
   let clsService: ClsService;
   let prisma: PrismaService;
   let probe: TransactionProbe;
-  let showStatusRepository: ShowStatusRepository;
+  let showStatusRepository: ShowStatusBaseRepository;
   let showStatusService: ShowStatusService;
 
   beforeAll(async () => {
@@ -78,7 +117,7 @@ describe('real database persistence safety', () => {
         }),
         ShowStatusModule,
       ],
-      providers: [TransactionProbe],
+      providers: [ShowStatusBaseRepository, TransactionProbe],
     }).compile();
 
     await moduleRef.init();
@@ -86,7 +125,7 @@ describe('real database persistence safety', () => {
     clsService = moduleRef.get(ClsService);
     prisma = moduleRef.get(PrismaService);
     probe = moduleRef.get(TransactionProbe);
-    showStatusRepository = moduleRef.get(ShowStatusRepository, { strict: false });
+    showStatusRepository = moduleRef.get(ShowStatusBaseRepository);
     showStatusService = moduleRef.get(ShowStatusService);
   });
 
@@ -132,6 +171,17 @@ describe('real database persistence safety', () => {
     expect(created).toMatchObject({ uid, name });
   });
 
+  it('keeps direct service persistence visible inside the ambient transaction', async () => {
+    const suffix = `${Date.now()}-${Math.random()}`;
+    const name = `${INTEGRATION_NAME_PREFIX}pilot-read:${suffix}`;
+
+    const created = await clsService.run(
+      () => probe.createAndReadThroughService(name),
+    );
+
+    expect(created).toMatchObject({ name, deletedAt: null });
+  });
+
   it('restores a soft-deleted row through the inherited repository method', async () => {
     const suffix = `${Date.now()}-${Math.random()}`;
     const created = await showStatusService.createShowStatus({
@@ -172,6 +222,19 @@ describe('real database persistence safety', () => {
       prisma.showStatus.count({
         where: { uid: { in: [first.uid, second.uid] } },
       }),
+    ).resolves.toBe(0);
+  });
+
+  it('rolls back direct service persistence with the ambient transaction', async () => {
+    const suffix = `${Date.now()}-${Math.random()}`;
+    const name = `${INTEGRATION_NAME_PREFIX}pilot-rollback:${suffix}`;
+
+    await expect(
+      clsService.run(() => probe.createThroughServiceAndFail(name)),
+    ).rejects.toThrow('show status pilot rollback probe');
+
+    await expect(
+      prisma.showStatus.count({ where: { name } }),
     ).resolves.toBe(0);
   });
 });

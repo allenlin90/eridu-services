@@ -1,3 +1,4 @@
+import type { ShowStatus } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -83,4 +84,17 @@ export type CreateShowStatusPayload = {
 export type UpdateShowStatusPayload = {
   name?: string;
   metadata?: Record<string, any>;
+};
+
+export type ShowStatusRecord = ShowStatus;
+
+export type ShowStatusFilter = {
+  systemKey?: string | { notIn: string[] };
+};
+
+export type ListShowStatusesParams = {
+  skip?: number;
+  take?: number;
+  orderBy?: 'asc' | 'desc';
+  where?: ShowStatusFilter;
 };

@@ -7,7 +7,7 @@ description: Make high-level architecture, layer-boundary, and package-organizat
 
 High-level architecture, layer boundaries, and package organization.
 
-For `erify_api` module and capability placement, [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is authoritative (its persistence-matrix rules are pilot-gated; repository-first persistence stays canonical until the `ShowStatus` pilot).
+For `erify_api` module and capability placement, [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is authoritative. Its persistence matrix passed the `ShowStatus` pilot but remains acceptance-gated; repository-first persistence stays canonical elsewhere until T12.
 
 For implementation details: [controllers](../backend-controller-pattern-nestjs/SKILL.md) | [services](../service-pattern-nestjs/SKILL.md) | [repositories](../repository-pattern-nestjs/SKILL.md)
 

@@ -106,7 +106,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
 | T9 | Fix `BaseRepository.restore()` + tx-aware lazy delegate | M | T1 | ✅ |
-| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | ⏸ |
+| T10 | Reassess the 1,000-item schedule bulk limit | S | T1 | 🔲 |
 
 ### T9 — Fix `BaseRepository.restore()` + transaction-aware lazy delegate
 
@@ -129,18 +129,33 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
-| T11 | Phase 2: `ShowStatus` persistence pilot | M | T1 · T9 | ⏸ |
-| T12 | Persistence-matrix acceptance (doctrine reconciliation) | M | T11 passes | ⏸ |
+| T11 | Phase 2: `ShowStatus` persistence pilot | M | T1 · T9 | ✅ |
+| T12 | Persistence-matrix acceptance (doctrine reconciliation) | M | T11 passes | 🔲 |
 
 ### T11 — Phase 2: `ShowStatus` persistence pilot
 
 - **Scope**: keep `ShowStatusService`'s public methods and API contracts stable; fold the shallow repository into the service via the transaction-aware delegate, or replace it with a small private query provider if pagination warrants. Evaluate files/registrations/mocks removed, controller-to-DB readability, soft-delete and transaction parity, whether any caller needed a repository API, and whether Prisma types leaked into the public contract.
 - **Gate**: T1 and T9 — the isolated harness and transaction-aware delegate must be available before the pilot.
 - **Skills**: `repository-pattern-nestjs`, `service-pattern-nestjs`.
+- **Result**: passed. The repository file, provider registration, and repository
+  mock seam were removed. `ShowStatusService` now owns bounded pagination and
+  active-row predicates through `TransactionHost.tx.showStatus`. Its
+  schema-local record alias follows the generated Prisma output type, while the
+  bounded `systemKey` filter remains deliberately persistence-shaped. Focused
+  caller specs and the real-PostgreSQL harness preserve CRUD, soft-delete,
+  transaction visibility, and rollback behavior. T12 remains the separate
+  acceptance and doctrine gate.
 
 ### T12 — Persistence-matrix acceptance (doctrine reconciliation)
 
-- **Scope**: only if T11 passes behavior, rollback, and reviewability. Flip the pilot-gated persistence rule to canonical by reconciling **in one PR** every doc that asserts "repository for all DB access": `AGENTS.md`, `repository-pattern-nestjs`, `service-pattern-nestjs`, `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in `database-patterns`, and [`ARCHITECTURE_OVERVIEW.md`](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) Key Decision 6 plus its layer diagram.
+- **Scope**: only if T11 passes behavior, rollback, and reviewability. Flip the
+  acceptance-gated persistence rule to canonical by reconciling **in one PR**
+  every doc that asserts "repository for all DB access": `AGENTS.md`,
+  `repository-pattern-nestjs`, `service-pattern-nestjs`,
+  `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in
+  `database-patterns`, and
+  [`ARCHITECTURE_OVERVIEW.md`](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)
+  Key Decision 6 plus its layer diagram.
 - **Gate**: T11 passes.
 - **Skills**: `repository-pattern-nestjs`, `service-pattern-nestjs`, `design-patterns`.
 
