@@ -25,7 +25,7 @@ Scene QC owns only its profiles, materials, review outcomes, confirmations, and 
 | Question | Stage 1 decision | Reason |
 | --- | --- | --- |
 | Review anchor | One effective review per Show | The purpose is to verify the Show's complete scene setup, even when several Tasks or images supply evidence. |
-| Actors | Designer, Manager, and Admin have the same Scene QC permissions | These roles may all perform the job. Moderation Manager is excluded. |
+| Actors | Designer, Manager, and Admin have the same Scene QC permissions | Confirmation attests completeness of an advisory QC dataset; it is not an independent approval or the separate Manager Review process. Actor audit remains mandatory. Moderation Manager is excluded. |
 | Task Template evidence configuration | Existing Task Template permissions apply | Evidence designation changes a Task Template and must not broaden template administration through Scene QC access. |
 | Hard prerequisite | At least one explicit image evidence record | Without an image, there is nothing to review. |
 | Unusable image | The operator may record Fail with feedback | A present record that renders blank, corrupt, or non-viewable is evidence of an unusable submission. A transient browser load error must not auto-fail it. |
@@ -35,9 +35,10 @@ Scene QC owns only its profiles, materials, review outcomes, confirmations, and 
 | Confirmed review editing | Immutable through normal controls | Reasoned, audited amendments arrive in Stage 2. |
 | Scene Profile resolution | Explicit Show assignment, otherwise Client default | This is deterministic and avoids ambiguous platform-specific profile selection. |
 | Stage 1 composition | Ordered expected-reference gallery with optional studio/platform applicability on each material link | This supports reusable materials and side-by-side comparison without building a canvas editor. |
-| Operational timezone | Reuse the existing client-resolved operational-window contract | `Studio` has no canonical timezone field today. Stage 1 stores the exact ISO bounds and browser-resolved IANA timezone label on confirmation instead of inventing a Scene-QC-only timezone source. |
+| Scene type | Required on each Scene Profile as `GRAPHIC_BG` or `REAL_BACKDROP` | A Client can have profiles for different physical setups. Pinning the type on each profile revision preserves the source spec's taxonomy gate without assuming one type per Client. |
+| Operational timezone | Add a canonical IANA timezone to `Studio`; keep the Stage 1 start hour fixed at 06:00 | A durable shared confirmation cannot inherit the reviewer's browser timezone. The server resolves every operational date from the Studio timezone. |
 | Manager report | In-app plus CSV, available only from a complete current confirmation | The report is advisory and must identify exactly which confirmation it represents. |
-| Taxonomy | Deferred | Free-text feedback supplies the first useful signal. Shared and studio-scoped taxonomy remains a later Studio Configuration concern. |
+| Taxonomy | Structured findings and self-service configuration are deferred; the source vocabulary remains the Stage 3 seed candidate | Stage 1 free text supplies required actionable context without prematurely fixing catalog ownership and governance. It is not intended to rediscover or outperform the validated two-axis vocabulary. |
 | Cutover | Direct replacement behind an integration branch; no dual public API | The current feature stores no QC outcomes and has no data contract worth migrating. Atomic delivery avoids exposing half of the workflow. |
 
 ## 3. Actor and Action Matrix
@@ -56,7 +57,9 @@ Scene QC owns only its profiles, materials, review outcomes, confirmations, and 
 
 All public endpoints use the existing studio-membership guard and allow exactly `DESIGNER`, `MANAGER`, and `ADMIN`, except Task Template changes, which retain their current authorization.
 
-Every Client-scoped read or mutation also validates that the Client is linked to the requested Studio, following the existing Studio Client Mechanic and Task Template pattern. Optional studio applicability can reference only a Studio where the actor has the required membership. This keeps Client-owned rows reusable without turning a studio-scoped route into unrestricted global Client administration.
+Every Client-scoped read or mutation also validates that the Client is linked to the requested Studio, following the existing Studio Client Mechanic and Task Template pattern. Optional studio applicability can reference only a Studio where the actor has the required membership.
+
+Before a mutation that can change another Studio's resolved references—retiring or replacing a material, retiring a profile, changing a Client default, or changing a composition used outside the route Studio—the server computes the impacted active Studio set. The actor must hold an allowed Scene QC role in every impacted Studio. Otherwise the command returns a generic forbidden response without disclosing unauthorized Studio identities and makes no change. Show assignment and unassignment require membership in the Show's Studio. This preserves equal Designer, Manager, and Admin permissions while preventing a Studio A operator from changing Studio B's active scene setup.
 
 ## 4. Capability Boundary
 
@@ -99,7 +102,9 @@ The final cutover removes the old `features/scene-review` Task projection instea
 
 ## 5. Persisted Model
 
-Prisma generates the migration. UID fields are the only identifiers exposed through the API.
+Add a required `Studio.timezone` IANA identifier as the canonical timezone for operational-date resolution. The generated migration first adds it as nullable, backfills every active Studio from an explicit reviewed Studio-to-timezone mapping, verifies no null or invalid values remain, and then makes it required. There is no silent browser, host-locale, or `UTC` fallback. The operational-day start hour remains the shared constant `06:00` in Stage 1.
+
+Prisma generates the base migration. UID fields are the only identifiers exposed through the API. PostgreSQL constraints that Prisma cannot express are added to that generated migration inside `-- CUSTOM SQL START/END` markers, following the repository migration policy.
 
 ### 5.1 Scene Material
 
@@ -109,7 +114,7 @@ Prisma generates the migration. UID fields are the only identifiers exposed thro
 | --- | --- |
 | `uid` | External `scene_material_*` UID |
 | `clientId` | Required Client owner |
-| `name` | Operator-facing name, unique among active materials for the Client |
+| `name` | Operator-facing name; a partial unique index enforces one active, non-deleted material name per Client |
 | `status` | `ACTIVE` or `RETIRED` |
 | `version` | Optimistic-lock token for semantic mutations |
 | `createdAt`, `updatedAt`, `deletedAt` | Standard lifecycle fields; no public delete action |
@@ -119,11 +124,11 @@ Prisma generates the migration. UID fields are the only identifiers exposed thro
 | Field | Contract |
 | --- | --- |
 | `materialId`, `revision` | Unique monotonically increasing material revision |
-| `objectKey`, `fileUrl` | Existing R2 object identity and render URL |
+| `objectKey`, `fileUrl` | Durable R2 object identity and upload-time URL/locator |
 | `mimeType`, `fileSize` | Validated image metadata |
 | `createdById`, `createdAt` | Revision provenance |
 
-Replacing a material creates a revision. It never overwrites an earlier object reference. Stage 1 accepts supported image MIME types only, even though the broader `SCENE_REFERENCE` upload use case can support other files.
+Replacing a material creates a revision. It never overwrites an earlier object reference. Historical reads re-sign the durable `objectKey`; `fileUrl` is the upload-time locator, not the sole render source. Stage 1 accepts supported image MIME types only, even though the broader `SCENE_REFERENCE` upload use case can support other files.
 
 ### 5.2 Scene Profile
 
@@ -135,7 +140,8 @@ Replacing a material creates a revision. It never overwrites an earlier object r
 | `clientId` | Required Client owner |
 | `name`, `description` | Operator-facing identity |
 | `status` | `ACTIVE` or `RETIRED` |
-| `isDefault` | At most one active default per Client |
+| `isDefault` | A partial unique index enforces at most one active, non-deleted default per Client |
+| `sceneType` | Required `GRAPHIC_BG` or `REAL_BACKDROP` |
 | `version` | Optimistic-lock token |
 | `createdAt`, `updatedAt`, `deletedAt` | Standard lifecycle fields; no public delete action |
 
@@ -144,7 +150,7 @@ Replacing a material creates a revision. It never overwrites an earlier object r
 | Field | Contract |
 | --- | --- |
 | `profileId`, `revision` | Unique monotonically increasing profile revision |
-| `profileName`, `profileDescription` | Confirmation-safe display snapshots |
+| `profileName`, `profileDescription`, `sceneType` | Confirmation-safe display snapshots |
 | `createdById`, `createdAt` | Revision provenance |
 
 Each semantic composition save creates one revision and a set of ordered `SceneProfileRevisionMaterial` rows:
@@ -166,7 +172,7 @@ The first release renders the applicable ordered references as a gallery. It doe
 
 | Field | Contract |
 | --- | --- |
-| `showId` | Unique Show |
+| `showId` | Show identity; a partial unique index permits only one non-deleted assignment per Show |
 | `profileId` | Active profile owned by the Show's Client |
 | `version` | Optimistic-lock token |
 | `createdAt`, `updatedAt`, `deletedAt` | Standard lifecycle fields |
@@ -177,7 +183,20 @@ Resolution is:
 2. otherwise the Client's active default profile;
 3. otherwise no profile, producing a warning but not a blocker.
 
-Default changes and assignments use a transaction and a Client-scoped advisory lock so concurrent writes cannot create competing defaults.
+Default changes and assignments use a transaction and a Client-scoped advisory lock so concurrent writes cannot create competing defaults. The migration adds these explicit partial indexes:
+
+```sql
+CREATE UNIQUE INDEX ... ON scene_materials (client_id, lower(name))
+WHERE deleted_at IS NULL AND status = 'ACTIVE';
+
+CREATE UNIQUE INDEX ... ON scene_profiles (client_id)
+WHERE deleted_at IS NULL AND status = 'ACTIVE' AND is_default = true;
+
+CREATE UNIQUE INDEX ... ON scene_profile_assignments (show_id)
+WHERE deleted_at IS NULL;
+```
+
+The Prisma schema does not add unconditional `@unique` constraints for these soft-delete-aware rules.
 
 ### 5.3 Explicit Evidence Binding
 
@@ -199,20 +218,21 @@ The Scene QC evidence resolver:
 1. finds Tasks targeted to the Show;
 2. joins their immutable snapshots to explicit evidence refs;
 3. reads only the corresponding Task content values;
-4. accepts image records with safe existing storage URLs;
-5. returns every eligible image with source Task UID, field key, label, and Task version; and
+4. accepts image records with safe existing storage object keys and URLs;
+5. returns every eligible image with object key, source Task UID, field key, label, and Task version; and
 6. never falls back to recursive URL discovery, filename matching, or provisional metric-label matching.
 
 A bounded, operator-reviewed cutover mapping populates evidence-ref rows for existing active snapshots that must feed Scene QC. Before cutover, a verification command must report zero in-scope active Task snapshots without an intentional binding. There is no permanent heuristic compatibility path.
 
 ### 5.4 Show Review
 
-`SceneQcReview` is the single current review head for a Show:
+`SceneQcReview` is the single current review head for a Show within one operational date:
 
 | Field | Contract |
 | --- | --- |
 | `uid` | External `scene_qc_review_*` UID |
-| `showId` | Unique Show anchor |
+| `showId`, `operationalDate` | Unique Show and server-resolved operational-date anchor |
+| `windowStart`, `windowEnd`, `timezone` | Server-resolved provenance for that operational date |
 | `result` | `PASS`, `MINOR`, or `FAIL` |
 | `feedback` | Null for Pass; required non-empty text for Minor and Fail |
 | `reviewedById` | Current reviewing actor |
@@ -230,9 +250,11 @@ A bounded, operator-reviewed cutover mapping populates evidence-ref rows for exi
 | `sourceTaskId` | Source Task |
 | `sourceTaskVersion` | Task version at review time |
 | `sourceFieldKey`, `sourceLabel` | Explicit evidence binding identity |
-| `fileUrl` | Reviewed image record |
+| `objectKey`, `fileUrl` | Durable R2 object identity plus the URL observed at review time |
 
-On every draft save, the workflow re-resolves the current evidence and profile, validates that at least one image exists, replaces the draft's pinned evidence set transactionally, and increments `version`. After `confirmedAt` is set, the normal update command rejects edits. Stage 2 introduces explicit amendment records rather than weakening this command.
+The database enforces one review head per `(showId, operationalDate)`. The server derives the date and bounds from the Show's scheduled start and the Studio timezone; a review from another operational date is never effective for the selected day. If an unconfirmed Show moves across the boundary, the old draft remains historical and a new review head is created for the new date. A confirmed review remains pinned to its original date and confirmation.
+
+On every draft save, the workflow re-resolves the current evidence and profile, validates that at least one image exists, replaces the draft's pinned evidence set transactionally, and increments `version`. Historical reads re-sign `objectKey` through the storage service; persisted `fileUrl` is never the sole render source. After `confirmedAt` is set, the normal update command rejects edits. Stage 2 introduces explicit amendment records rather than weakening this command.
 
 An image record may be marked Fail when it appears blank, corrupt, or non-viewable. The persisted state remains the normal `FAIL` result plus required feedback; Stage 1 does not need a separate unusable-image enum.
 
@@ -245,7 +267,7 @@ An image record may be marked Fail when it appears blank, corrupt, or non-viewab
 | `uid` | External `scene_qc_confirmation_*` UID |
 | `studioId` | Studio scope |
 | `operationalDate` | Local `YYYY-MM-DD` business date |
-| `windowStart`, `windowEnd`, `timezone` | Exact resolved scope and browser-resolved IANA timezone label |
+| `windowStart`, `windowEnd`, `timezone` | Exact server-resolved scope and Studio IANA timezone snapshot |
 | `revision` | Monotonic revision within studio and operational date |
 | `confirmedById`, `confirmedAt` | Actor and time |
 
@@ -260,7 +282,7 @@ An image record may be marked Fail when it appears blank, corrupt, or non-viewab
 
 `SceneQcDailyConfirmationItemPlatform` stores one normalized confirmation-time platform identity and label per item. Report queries use these confirmation rows rather than current mutable Show relations.
 
-The unique revision scope and advisory-lock key use studio plus exact window bounds; `operationalDate` remains the human-readable business key. The confirmation command acquires that lock, re-queries the eligible Show set, verifies one review with image evidence for every Show, rejects incomplete scope, appends the next confirmation revision, snapshots its normalized Show/Client/platform report dimensions, writes its items, marks previously unconfirmed included reviews confirmed, and records audit history in one CLS transaction.
+The database enforces one revision number per `(studioId, operationalDate, revision)`. Exact window bounds are immutable confirmation facts, not lineage identity. The confirmation transaction locks the normalized string `scene-qc-confirmation:{studioId}:{operationalDate}` with `pg_advisory_xact_lock(hashtextextended(key, 0))`, then reads the maximum revision and appends the next one. The confirmation command re-queries the server-resolved eligible Show set, verifies one same-operational-date review with image evidence for every Show, rejects incomplete scope, snapshots its normalized Show/Client/platform report dimensions, writes its items, marks previously unconfirmed included reviews confirmed, and records audit history in one CLS transaction.
 
 The latest confirmation state is computed by comparing its pinned Show set with the current eligible set:
 
@@ -272,13 +294,15 @@ A stale day uses the same confirmation command after the current scope is comple
 
 ### 5.6 Audit
 
-Extend the typed `AuditTarget` pattern for:
+Continue using the standard `Audit` envelope, but do not add five more nullable columns and indexes to the shared `audit_targets` table. Add a capability-owned `SceneQcAuditTarget` side table with:
 
-- `SCENE_MATERIAL`;
-- `SCENE_PROFILE`;
-- `SCENE_PROFILE_ASSIGNMENT`;
-- `SCENE_QC_REVIEW`; and
-- `SCENE_QC_CONFIRMATION`.
+- `auditId`;
+- nullable typed FKs for material, profile, profile assignment, review, and confirmation;
+- `CHECK (num_nonnulls(...) = 1)`;
+- one index for each typed FK; and
+- cascade from the target row only into the side-table junction, preserving the parent `Audit` envelope.
+
+This follows the open/extensible-target side-table rule while acknowledging the five-FK/index cost inside the Scene QC capability instead of imposing it on every generic audit query. Child PR 1 must receive architecture review from the `erify_api` refactor program before this persistence boundary lands; widening `audit_targets` is not the fallback.
 
 Audit creation, semantic edits, default or assignment changes, review saves, and confirmation. Store business fields in normalized tables, not audit metadata. Use the standard `reason` column only for future reasoned amendment commands.
 
@@ -323,6 +347,8 @@ Assignment deletion soft-removes the override and returns the Show to Client-def
 
 Reuse the `SCENE_REFERENCE` presign flow, extended with validated Client/material context. The browser uploads directly to R2, then the material revision command records the validated object key, URL, MIME type, and size. Presign creation alone does not create a material revision or increment its semantic version.
 
+Profile and material responses expose whether the resource has cross-studio impact without identifying Studios the actor cannot access. Mutations re-evaluate the exact impact inside their transaction and reject cross-studio changes unless the actor is authorized in every affected Studio; the client-side warning is informative, never the authorization boundary.
+
 ### 6.2 Daily Review
 
 ```text
@@ -334,7 +360,7 @@ PATCH  /studios/:studioId/scene-qc-reviews/:reviewId
 POST   /studios/:studioId/scene-qc-confirmations
 ```
 
-Every daily query, review command, or confirmation request receives `window_start`, `window_end`, and `operational_date`. Confirmation also receives `timezone`, obtained from `Intl.DateTimeFormat().resolvedOptions().timeZone`. The frontend resolves the local 06:00–05:59 operational window through the existing shared utility; the backend validates ordering and a single-day maximum and stores the exact instants and valid IANA label on confirmation. This follows the current infrastructure. A canonical per-Studio timezone belongs in future Studio Configuration rather than a private Scene QC setting.
+Every daily query, review command, and confirmation request receives `operational_date`. The backend loads `Studio.timezone`, resolves the exact local 06:00–05:59 window with one shared IANA-aware utility, and returns `window_start`, `window_end`, and `timezone`. Scene QC write contracts do not accept client-selected bounds or timezone. The date picker may reuse existing URL-state controls, but the browser locale never defines the durable scope.
 
 `summary` returns lean counts and confirmation state:
 
@@ -354,7 +380,7 @@ confirmation_id / confirmation_revision / confirmed_by / confirmed_at
 
 `items/:showId` returns all current evidence, the resolved profile revision and applicable ordered material revisions, current review, and allowed actions. It does not return audit history.
 
-Review create/update accepts `show_id`, `operational_date`, `window_start`, `window_end`, `result`, `feedback`, and `version` for updates. The server resolves and pins evidence and references; clients cannot submit arbitrary evidence URLs or profile revision IDs.
+Review create/update accepts `show_id`, `operational_date`, `result`, `feedback`, and `version` for updates. The server resolves and pins the operational window, evidence, and references; clients cannot submit arbitrary bounds, timezone, evidence URLs, or profile revision IDs.
 
 ### 6.3 Records and Report
 
@@ -365,18 +391,18 @@ GET    /studios/:studioId/scene-qc-confirmations/:confirmationId/report
 GET    /studios/:studioId/scene-qc-confirmations/:confirmationId/report.csv
 ```
 
-Records support `date_from`, `date_to`, `client_id`, `platform_id`, `result`, `page`, and `limit`. Dates filter the Show's operational date. The list is a lean projection. Detail loads pinned evidence, pinned profile/material references, confirmation identity, and available audit history.
+Records support `date_from`, `date_to`, `client_id`, `platform_id`, `result`, `page`, and `limit`. Dates filter the review's pinned `operationalDate`, never the Show's current schedule. The list is a lean projection. Detail loads pinned evidence, pinned profile/material references, confirmation identity, and available audit history.
 
 No report exists before the first confirmation. A report requested by confirmation UID remains available after later scope changes because it is an immutable historical artifact. The latest stale confirmation is labeled `STALE`, and an older revision after reconfirmation is labeled `SUPERSEDED`; the Daily Review surface does not present either as the current manager report. Report identity, Show detail, Client breakdowns, and platform breakdowns read the normalized confirmation snapshots, while outcomes and evidence read the pinned review/version. The report returns exactly:
 
 - identity: studio, operational date, timezone, confirmation status, confirming operator, confirmation time, report generation time, and confirmation revision;
-- coverage: total eligible, total reviewed, result counts, and result percentages;
+- confirmed scope: total confirmed Shows, result counts, and result percentages;
 - Client breakdown: Client identity and Pass/Minor/Fail totals;
 - platform breakdown: platform identity and Pass/Minor/Fail totals;
-- Show detail: scheduled time, Show, Client, platforms, result, reviewer, feedback, evidence count, and Scene Profile name/revision when available; and
+- Show detail: scheduled time, Show, Client, platforms, result, reviewer, feedback, evidence count, and Scene Profile name/type/revision when available; and
 - exceptions: every Minor and Fail row with feedback and amendment indicator.
 
-Result percentages use the confirmation's total eligible Shows as the denominator and render to one decimal place. Each Show contributes once to its Client. A multi-platform Show contributes once to each linked platform, so platform breakdown totals are not expected to sum to the eligible-Show total.
+Result percentages use the confirmation's total Show count as the denominator and render to one decimal place. Pass, Minor, and Fail counts must sum to that total. `reviewed` and `blocked` are pre-confirmation workflow metrics, not report dimensions: every confirmed Show is reviewed and the blocked count is necessarily zero. Each Show contributes once to its Client. A multi-platform Show contributes once to each linked platform, so platform breakdown totals are not expected to sum to the confirmed-Show total.
 
 The CSV contains one row per Show and repeats report identity columns so an exported row remains attributable. Its columns are:
 
@@ -399,6 +425,7 @@ reviewed_by
 reviewed_at
 evidence_count
 scene_profile
+scene_type
 scene_profile_revision
 amended
 ```
@@ -552,7 +579,7 @@ The list remains lean. Evidence, references, and audits load only when a record 
 **Open report** on a current confirmation opens a focused report page or Sheet with:
 
 1. confirmation identity and generation time;
-2. coverage and result cards;
+2. confirmed-scope and result cards;
 3. Client and platform breakdown tables;
 4. the full Show detail table;
 5. a Minor/Fail exceptions section; and
@@ -566,6 +593,7 @@ The profile manager begins with a required Client selector, then shows:
 
 - the Client's profiles, active/default state, and last update;
 - the selected profile's ordered expected-reference gallery;
+- the selected profile's required Graphic BG or Real Backdrop scene type;
 - reusable Client materials with active/retired state;
 - upload/replace material;
 - add/remove/reorder material references;
@@ -589,9 +617,9 @@ Stage 1 deliberately omits drag-positioned layers, freeform canvas composition, 
 
 ### 8.1 Operational Scope
 
-The frontend resolves the selected local date into exact ISO bounds through `operational-day-range.ts`. The backend:
+The frontend sends the selected `operational_date`. The backend resolves exact ISO bounds from `Studio.timezone` and the shared 06:00 start-hour constant, then:
 
-1. validates one operational day;
+1. validates the date-only value and resolves one operational day;
 2. loads non-deleted Shows assigned to the studio whose scheduled start falls within the bounds;
 3. excludes only terminal `cancelled`;
 4. includes `cancelled_pending_resolution`; and
@@ -603,7 +631,7 @@ The summary and confirmation always use the unfiltered eligible set. List filter
 
 1. Lock or optimistic-check the review head.
 2. Resolve and authorize the Show within the studio.
-3. Reject terminally cancelled or out-of-window context against the required daily scope.
+3. Resolve and pin the operational date/window from the Studio timezone; reject terminally cancelled or out-of-window context.
 4. Resolve explicit image evidence and require at least one record.
 5. Resolve the profile and applicable immutable material revisions.
 6. Validate the result and feedback contract.
@@ -615,7 +643,7 @@ The workflow never writes Task, TaskTarget, Show, ShowStatus, or Manager Review 
 
 ### 8.3 Confirmation Transaction
 
-1. Acquire an advisory lock for studio and operational date.
+1. Acquire `pg_advisory_xact_lock(hashtextextended('scene-qc-confirmation:' || studioId || ':' || operationalDate, 0))`.
 2. Recompute eligible Shows without UI filters.
 3. Resolve one effective review for each Show.
 4. Reject missing reviews, no-evidence blockers, or optimistic conflicts.
@@ -660,7 +688,7 @@ Use [integration PR delivery](../../../../.agents/workflows/integration-pr-deliv
 Deliver:
 
 - new `@eridu/api-types/scene-qc` schemas, UID prefixes, enums, and pagination contracts;
-- Prisma models, indexes, relations, audit targets, and generated migration;
+- canonical `Studio.timezone`, Prisma models, relations, capability-owned audit targets, generated migration, and marked custom partial indexes;
 - private repositories and single-model services;
 - profile resolution and eligibility unit tests; and
 - architecture import-closure checks.
@@ -669,6 +697,8 @@ Exit:
 
 - generated Prisma client builds;
 - model constraints reject cross-Client composition and ambiguous defaults;
+- the explicit Studio timezone backfill is complete and server-resolved day boundaries pass cross-timezone tests;
+- the `erify_api` refactor program accepts the capability-owned audit-target side table;
 - repositories use UID boundaries and soft-delete filters; and
 - no public route behavior changes.
 
@@ -687,6 +717,7 @@ Deliver:
 Exit:
 
 - an allowed user can create a Client material, compose and default a profile, and resolve it for a Show;
+- cross-studio impact authorization prevents an operator from changing references used by an unauthorized Studio;
 - an existing/new Task snapshot can explicitly supply multiple Scene QC images;
 - no arbitrary image field appears as evidence; and
 - every reference read in the later review UI has an implemented write path.
@@ -723,6 +754,7 @@ Deliver:
 Exit:
 
 - incomplete or blocked days cannot confirm;
+- concurrent confirmation calls share one studio/operational-date lineage regardless of browser timezone;
 - a current confirmation unlocks exactly one current report revision, while stale and superseded historical reports remain attributable;
 - a changed Show scope marks the latest confirmation stale;
 - reconfirmation appends a revision; and
@@ -744,7 +776,7 @@ The main PR is not mergeable if any child is absent or if the integration branch
 
 ## 11. Pattern and Documentation Reconciliation
 
-The current operations-review doctrine describes every review surface as read-only. Scene QC changes that doctrine narrowly: operational review summaries stay read-only, while a review capability may write only its own normalized decisions and confirmations. It still cannot mutate the source Task, Show, actuals, or lifecycle.
+The current operations-review doctrine describes every review surface as read-only and makes operational-day windows frontend-owned. Scene QC changes both rules narrowly: operational review summaries stay read-only, while a review capability may write only its own normalized decisions and confirmations; durable confirmations use server-authoritative Studio timezone resolution while existing read-only surfaces retain their current bounds contract until separately migrated. Scene QC still cannot mutate the source Task, Show, actuals, or lifecycle.
 
 Reconcile these files in the main integration PR:
 
@@ -788,23 +820,28 @@ pnpm architecture:signals
 pnpm lint:markdown
 ```
 
-Also run Prisma format, validate, generate, and the official migration command required by the target environment. Do not hand-write or rewrite a deployed migration.
+Also run Prisma format, validate, generate, and the official migration command required by the target environment. Add required PostgreSQL partial indexes and check constraints only inside the newly generated migration with `-- CUSTOM SQL START/END` markers. Never rewrite a deployed migration.
 
 ### 12.2 Backend Scenarios
 
 - each allowed role can read, review, manage Stage 1 profiles, and confirm; excluded roles receive authorization failure;
 - a profile cannot reference another Client's material or be assigned to another Client's Show;
+- a material/profile mutation affecting another Studio fails unless the actor has an allowed role in every impacted Studio;
 - concurrent default-profile writes leave one default;
+- retire-then-recreate material names, default changes, and unassign-then-reassign flows satisfy the partial unique indexes;
 - material replace and profile composition save create immutable revisions;
 - explicit evidence resolution returns every designated image and no undesignated image;
 - a Show with zero evidence is counted as blocked and review create fails;
 - Pass accepts empty feedback; Minor and Fail reject empty feedback;
 - a draft update pins current evidence and profile revisions and increments version;
+- pinned evidence can be re-signed from `objectKey` after its stored URL expires;
+- moving a Show across the 06:00 boundary makes its prior-date review ineffective and permits a new review for the new operational date;
 - a confirmed review rejects normal edits;
 - terminal `cancelled` is excluded and `cancelled_pending_resolution` remains included;
 - filtered items and the unfiltered summary intentionally use different scopes;
 - confirmation rechecks completeness inside its lock and transaction;
-- replayed concurrent confirmation creates one next revision;
+- replayed concurrent confirmation creates one next revision under the normalized hashed lock key;
+- different browser timezones resolve the same Studio/operational-date window and confirmation lineage;
 - added, removed, rescheduled, reactivated, and terminally cancelled Shows produce the expected stale state;
 - later Show, Client, platform, or profile-label edits do not rewrite an earlier confirmation report;
 - report totals, Client breakdowns, platform breakdowns, detail, exceptions, and CSV rows reconcile to confirmation items; and
@@ -813,6 +850,7 @@ Also run Prisma format, validate, generate, and the official migration command r
 ### 12.3 Frontend Scenarios
 
 - default date is the current operational day and previous/next/date selection preserve correct 06:00–05:59 bounds;
+- date selection uses the server-returned Studio timezone window rather than the browser timezone;
 - URL back/forward restores filters, pagination, and selected Show or record;
 - queue loading, empty, error, filtered-empty, blocked, and selected states render;
 - side-by-side desktop and Live/Expected mobile comparison keep the form adjacent;
@@ -844,11 +882,12 @@ Capture Playwright evidence at desktop and mobile widths for:
 
 Before production cutover:
 
-1. apply the generated migration;
-2. run the reviewed evidence-ref backfill;
-3. run the zero-unintentional-unbound-snapshot verification;
-4. smoke-test one profile, one multi-image Show, one blocked Show, confirmation, Records, and report in the target environment; and
-5. enable the replaced route only after all checks pass.
+1. apply the generated migration, explicit Studio timezone mapping, marked partial indexes, and audit side-table constraint;
+2. verify every active Studio has a valid IANA timezone;
+3. run the reviewed evidence-ref backfill;
+4. run the zero-unintentional-unbound-snapshot verification;
+5. smoke-test one profile, one multi-image Show, one blocked Show, confirmation, Records, and report in the target environment; and
+6. enable the replaced route only after all checks pass.
 
 Rollback the application by restoring the previous route build while leaving additive Scene QC tables intact. Do not drop tables or rewrite evidence bindings during an emergency rollback. Because the old route is read-only and new data is capability-owned, retained rows are safe for a corrected redeployment.
 
