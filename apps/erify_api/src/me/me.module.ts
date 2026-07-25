@@ -8,6 +8,5 @@ import { ShowsModule } from './shows/shows.module';
 
 @Module({
   imports: [ProfileModule, ShowsModule, MeTaskModule, MeShiftsModule, MeCompensationsModule],
-  exports: [ShowsModule, MeTaskModule, MeShiftsModule, MeCompensationsModule],
 })
 export class MeModule {}

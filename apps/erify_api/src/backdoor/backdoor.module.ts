@@ -14,12 +14,5 @@ import { BackdoorUserModule } from './users/backdoor-user.module';
     BackdoorStudioModule,
     BackdoorTaskTemplateModule,
   ],
-  exports: [
-    BackdoorAuthModule,
-    BackdoorUserModule,
-    BackdoorMembershipModule,
-    BackdoorStudioModule,
-    BackdoorTaskTemplateModule,
-  ],
 })
 export class BackdoorModule {}

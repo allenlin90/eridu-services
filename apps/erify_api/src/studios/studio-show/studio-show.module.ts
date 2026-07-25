@@ -28,7 +28,6 @@ import { TaskOrchestrationModule } from '@/task-orchestration/task-orchestration
     ShowOrchestrationModule,
     ShowStatusModule,
     StudioModule,
-    AuditModule,
     StudioRoomModule,
     ScheduleModule,
     ScheduleConflictModule,
