@@ -123,7 +123,7 @@ export class ClientMechanicRepository extends BaseRepository<
     const { uid, clientUid, version } = params;
 
     try {
-      return await this.prisma.clientMechanic.update({
+      return await this.txHost.tx.clientMechanic.update({
         where: {
           uid,
           version,

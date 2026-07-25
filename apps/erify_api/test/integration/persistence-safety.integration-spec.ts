@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import { Injectable } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ModuleRef } from '@nestjs/core';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import {
@@ -23,8 +24,12 @@ const INTEGRATION_NAME_PREFIX = 'integration-safety:';
 @Injectable()
 class TransactionProbe {
   constructor(
-    private readonly showStatusRepository: ShowStatusRepository,
+    private readonly moduleRef: ModuleRef,
   ) {}
+
+  private get showStatusRepository(): ShowStatusRepository {
+    return this.moduleRef.get(ShowStatusRepository, { strict: false });
+  }
 
   @Transactional<TransactionalAdapterPrisma>()
   async createAndRead(uid: string, name: string) {
@@ -73,7 +78,7 @@ describe('real database persistence safety', () => {
         }),
         ShowStatusModule,
       ],
-      providers: [ShowStatusRepository, TransactionProbe],
+      providers: [TransactionProbe],
     }).compile();
 
     await moduleRef.init();
@@ -81,7 +86,7 @@ describe('real database persistence safety', () => {
     clsService = moduleRef.get(ClsService);
     prisma = moduleRef.get(PrismaService);
     probe = moduleRef.get(TransactionProbe);
-    showStatusRepository = moduleRef.get(ShowStatusRepository);
+    showStatusRepository = moduleRef.get(ShowStatusRepository, { strict: false });
     showStatusService = moduleRef.get(ShowStatusService);
   });
 

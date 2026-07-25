@@ -18,16 +18,19 @@ function createPrismaUserDelegateMock() {
 
 describe('userRepository', () => {
   let repository: UserRepository;
-  const prismaUserDelegate = createPrismaUserDelegateMock();
+  let prismaUserDelegate: ReturnType<typeof createPrismaUserDelegateMock>;
+  let txUserDelegate: ReturnType<typeof createPrismaUserDelegateMock>;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    prismaUserDelegate = createPrismaUserDelegateMock();
+    txUserDelegate = createPrismaUserDelegateMock();
 
     const prisma = {
       user: prismaUserDelegate,
     } as unknown as PrismaService;
     const txHost = {
-      tx: { user: prismaUserDelegate },
+      tx: { user: txUserDelegate },
     } as unknown as TransactionHost<any>;
 
     repository = new UserRepository(prisma, txHost);
@@ -40,19 +43,20 @@ describe('userRepository', () => {
     });
 
     expect(result).toEqual([]);
+    expect(txUserDelegate.findMany).not.toHaveBeenCalled();
     expect(prismaUserDelegate.findMany).not.toHaveBeenCalled();
   });
 
   it('excludes only users linked to active creators from onboarding search', async () => {
-    prismaUserDelegate.findMany.mockResolvedValue([]);
+    txUserDelegate.findMany.mockResolvedValue([]);
 
     await repository.searchUsersForCreatorOnboarding({
       search: 'alice',
       limit: 20,
     });
 
-    expect(prismaUserDelegate.findMany).toHaveBeenCalledTimes(1);
-    expect(prismaUserDelegate.findMany).toHaveBeenCalledWith({
+    expect(txUserDelegate.findMany).toHaveBeenCalledTimes(1);
+    expect(txUserDelegate.findMany).toHaveBeenCalledWith({
       where: {
         deletedAt: null,
         NOT: {
@@ -75,5 +79,31 @@ describe('userRepository', () => {
       ],
       take: 20,
     });
+    expect(prismaUserDelegate.findMany).not.toHaveBeenCalled();
+  });
+
+  it('routes bulk creates through the transactional client', async () => {
+    txUserDelegate.createManyAndReturn.mockResolvedValue([]);
+
+    await repository.createManyAndReturn([
+      {
+        uid: 'user_abc123',
+        extId: 'external_abc123',
+        email: 'alice@example.com',
+        name: 'Alice',
+      },
+    ]);
+
+    expect(txUserDelegate.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        {
+          uid: 'user_abc123',
+          extId: 'external_abc123',
+          email: 'alice@example.com',
+          name: 'Alice',
+        },
+      ],
+    });
+    expect(prismaUserDelegate.createManyAndReturn).not.toHaveBeenCalled();
   });
 });
