@@ -48,6 +48,20 @@ transaction behavior and therefore cannot be proven by a mock.
   filtering, UID-only boundaries, and representative runtime module boot.
 - Do not treat a mocked repository test as evidence of transaction participation.
 
+### Required completion gate
+
+Run `pnpm -C apps/erify_api test:integration` and record the result before
+handoff when a change can affect:
+
+- Prisma or `TransactionHost.tx` delegate selection;
+- transaction visibility or rollback;
+- soft-delete or restore semantics;
+- Nest module imports, exports, provider resolution, or runtime bootstrap.
+
+Unit-test success does not satisfy this gate. Automated enforcement is
+[deferred explicitly](../../../docs/ideation/erify-api-real-database-ci-gate.md),
+so the PR must contain the manual result until that topic is promoted.
+
 See [`apps/erify_api/test/README.md`](../../../apps/erify_api/test/README.md) for
 the guarded runner and local database commands.
 
@@ -65,7 +79,7 @@ Use `createBaseMockEntity()` from `@/testing/model-service-test.helper`. Check `
 
 | Skip | Why |
 |---|---|
-| NestJS DI wiring | Framework |
+| NestJS DI wiring in unit tests | Boot representative runtime graphs through the real-database harness |
 | Prisma query syntax alone | Persistence integration behavior matters more |
 | Input validation (Zod) | Schema unit test |
 | Guard logic in controller tests | Guard has own spec |

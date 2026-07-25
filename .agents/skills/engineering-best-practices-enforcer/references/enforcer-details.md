@@ -38,7 +38,8 @@ Extended guidance for refactor impact protocol, review checklists, and implement
 
 ### ORM Leakage
 - No `Prisma.*` types in service signatures
-- No Prisma query building in services
+- Direct-persistence services contain only private, bounded model operations
+- Complex or reusable persistence remains in a private repository/query provider
 
 ### Error Handling
 - Repository returns `null` for not-found (never throws)

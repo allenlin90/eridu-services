@@ -36,7 +36,7 @@ Triggered by a studio MANAGER/ADMIN, scoped to their studio, with a **dry-run pr
 
 3. **N+1 in the script must not carry over.** Bulk-resolve `ShowPlatform` rows for the range in one round-trip (the live `fact-extraction.service` already does this) instead of `findFirst` per content key.
 
-4. **Strict typing.** A service cannot use the script's `prisma: any` / `as any`; it must follow the three-tier schema + repository/service separation and define request/response Zod schemas in `@eridu/api-types/performance`.
+4. **Strict typing.** A service cannot use the script's `prisma: any` / `as any`; it must follow the three-tier schema and the `erify_api` persistence matrix, with request/response Zod schemas defined in `@eridu/api-types/performance`.
 
 5. **Concurrency with live ingestion.** Whole-blob `metadata` replacement (as in the script) is unsafe against concurrent live writes; the atomic per-metric merge path (constraint 2) resolves this.
 

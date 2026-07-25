@@ -255,6 +255,14 @@ pnpm --filter <workspace> build
 
 If cross-workspace changes were made, validate dependents too.
 
+For `erify_api` changes that can affect persistence transaction semantics,
+soft-delete/restore behavior, CLS participation, or Nest runtime composition,
+also run the guarded real-database gate from
+[`backend-testing-patterns`](.agents/skills/backend-testing-patterns/SKILL.md#5-real-database-integration-tests)
+and record the result in the PR. This remains a manual gate until the
+[automated CI topic](docs/ideation/erify-api-real-database-ci-gate.md) is
+promoted.
+
 For feature/refactor work, also run the refactor-parity checks in [`.agents/workflows/verification.md`](.agents/workflows/verification.md#steps) (loading/empty/data UI states, route/search-param contracts, pagination stack parity) in addition to the commands above.
 
 ### Useful Commands
