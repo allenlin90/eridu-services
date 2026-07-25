@@ -466,7 +466,8 @@ The scheduled scan should discover and compare signals. Human review decides whe
 Capability-first placement is accepted for new work. The persistence matrix
 passed its `ShowStatus` implementation pilot but remains non-canonical until T12
 reconciles repository-first doctrine in one change. The generic trigger-audit
-process applies to both the accepted placement rule and any pilot-gated pattern.
+process applies to both the accepted placement rule and the acceptance-gated
+persistence matrix.
 
 ## Phased Refactoring Plan
 

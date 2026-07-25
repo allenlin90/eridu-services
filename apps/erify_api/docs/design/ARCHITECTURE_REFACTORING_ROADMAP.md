@@ -146,7 +146,14 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 ### T12 — Persistence-matrix acceptance (doctrine reconciliation)
 
-- **Scope**: only if T11 passes behavior, rollback, and reviewability. Flip the pilot-gated persistence rule to canonical by reconciling **in one PR** every doc that asserts "repository for all DB access": `AGENTS.md`, `repository-pattern-nestjs`, `service-pattern-nestjs`, `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in `database-patterns`, and [`ARCHITECTURE_OVERVIEW.md`](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) Key Decision 6 plus its layer diagram.
+- **Scope**: only if T11 passes behavior, rollback, and reviewability. Flip the
+  acceptance-gated persistence rule to canonical by reconciling **in one PR**
+  every doc that asserts "repository for all DB access": `AGENTS.md`,
+  `repository-pattern-nestjs`, `service-pattern-nestjs`,
+  `orchestration-service-nestjs`, `design-patterns`, the soft-delete rules in
+  `database-patterns`, and
+  [`ARCHITECTURE_OVERVIEW.md`](../../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)
+  Key Decision 6 plus its layer diagram.
 - **Gate**: T11 passes.
 - **Skills**: `repository-pattern-nestjs`, `service-pattern-nestjs`, `design-patterns`.
 

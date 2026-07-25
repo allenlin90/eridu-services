@@ -1,6 +1,6 @@
 ---
 name: erify-api-capability-refactoring
-description: Capability-first placement for apps/erify_api NestJS refactors — modules, persistence, transactions, workflows, read paths, MCP. Matrix stays pilot-gated.
+description: Capability-first placement for apps/erify_api NestJS refactors — modules, persistence, transactions, workflows, read paths, MCP. Matrix stays acceptance-gated.
 ---
 
 # `erify_api` Capability Refactoring Skill
@@ -17,7 +17,7 @@ For that placement decision it supersedes the design-selection guidance in:
 
 Do not use those three skills to justify adding a new model-shaped service, a repository per Prisma model, a default `BaseRepository`, a generic orchestration service, or a table-first module. For that decision, this skill wins.
 
-### Persistence doctrine is pilot-gated
+### Persistence doctrine is acceptance-gated
 
 Capability-first **placement** is active now. The **persistence-decision matrix** — a shallow capability service using `TransactionHost.tx.<model>` directly instead of a repository, and retiring `BaseRepository` as the default — passed the `ShowStatus` implementation pilot (roadmap T11) but is **not yet canonical**. Per [`ARCHITECTURE_REFACTORING_GUIDE.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md), repository-first data access stays canonical until the separate acceptance change reconciles all repository-first doctrine in one PR (T12).
 
@@ -556,7 +556,7 @@ This is a destination map and dependency order, not a scheduled queue. Each step
 1. Preserve the repaired generic `BaseRepository` transaction and restore behavior
    (roadmap T9).
 2. Stop adding table-shaped modules and pass-through repositories (placement rule, active now).
-3. Pilot shallow direct persistence on one low-risk reference capability — the `ShowStatus` pilot (roadmap T11), gated on step 1 and the safety harness. Persistence doctrine flips only if this pilot is accepted (T12); until then repository-first stays canonical.
+3. Preserve the passed shallow direct-persistence `ShowStatus` pilot (roadmap T11), which was gated on step 1 and the safety harness. Persistence doctrine flips only if the result is accepted in T12; until then repository-first stays canonical elsewhere.
 4. Consolidate show reference data into a coherent catalog capability.
 5. Decompose studio show management by use case behind a stable facade — a destination map, not a standalone move; activates when Phase 5 show-lifecycle work (roadmap item 18) starts or an earlier change already requires the same decomposition.
 6. Decompose schedule publishing into planning, application, reconciliation, and query
