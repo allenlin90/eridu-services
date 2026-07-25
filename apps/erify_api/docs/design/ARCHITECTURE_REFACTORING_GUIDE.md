@@ -507,12 +507,12 @@ Phase 0b is observability work. It does not block Phase 1 correctness fixes or t
 | Remove the empty OpenAPI dynamic module if it has no runtime role | Bootstrap/OpenAPI wiring verification plus build; do not wait for Phase 0 |
 | Type the authorization membership value in `StudioGuard` | Focused guard specs and typecheck; do not wait for Phase 0 |
 | Replace `UtilityService` with pure UID/time utilities, or narrow it to an actual injectable adapter | Existing unit baseline and focused utility/service specs; no real-database dependency |
-| Fix or remove generic `BaseRepository.restore()` and implement the transaction-aware lazy delegate, or stop inherited base writes in transactions | Phase 0a real-database transaction, restore, and rollback characterization |
+| Preserve the repaired generic `BaseRepository.restore()` and transaction-aware lazy delegate | Phase 0a real-database transaction, restore, and rollback characterization |
 | Reassess the 1,000-item schedule bulk limit | Phase 0a harness plus task-scoped timeout/partial-success measurements; preserve the established sequential partial-success contract unless measurements justify change |
 
 Keep these changes in small PRs. Do not combine them with folder moves.
 
-The restore/lazy-delegate PR must update `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and close or rewrite the lazy-delegate row in `erify-api-refactor-residuals.md`. The UtilityService PR must reconcile `service-pattern-nestjs`, including the `BaseModelService` UID-generation contract.
+T9 updated `repository-pattern-nestjs` §6, `soft-delete-restore`, `database-patterns` §1/§3, and closed the lazy-delegate row in `erify-api-refactor-residuals.md`. The UtilityService PR must reconcile `service-pattern-nestjs`, including the `BaseModelService` UID-generation contract.
 
 ### Phase 2 — Optional Repository Pilot: `ShowStatus`
 
