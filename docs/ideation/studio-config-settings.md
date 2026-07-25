@@ -1,13 +1,13 @@
 # Studio Configuration & Settings
 
 **Status:** Ideation
-**Scope:** Design and architecture for studio-scoped settings to replace hardcoded business rules, consolidating three previously separate ideation tracks (operational day window, timezone boundary normalization, and show readiness task gating) into a single unified configuration path.
+**Scope:** Design and architecture for studio-scoped settings to replace hardcoded business rules, with durable operational identity stored in typed Studio columns and broader policy grouped behind explicit configuration domains.
 
 ---
 
 ## Context
 
-To support initial deployment, several critical operational, timezone, and task readiness rules are hardcoded in the NestJS backend (`apps/erify_api/`). As the platform scales to support diverse studios (e.g. international regions, custom workflows, varying shifts), these hardcoded rules must move into a unified per-studio configuration settings schema.
+To support initial deployment, several critical operational, timezone, and task readiness rules are hardcoded in the NestJS backend (`apps/erify_api/`). As the platform scales to support diverse studios (e.g. international regions, custom workflows, varying shifts), these hardcoded rules must move into typed per-studio configuration. Values whose concurrent loss would change workflow scope belong in dedicated columns or tables, not a shared JSONB envelope.
 
 This document unifies three previously scattered ideation tracks:
 1.  **Configurable Operational Day Window:** Allowing day boundaries to be configurable per studio.
@@ -61,7 +61,7 @@ This document unifies three previously scattered ideation tracks:
     1.  **Latent correctness bug:** performance/costs bucket shows at 06:00 local (UTC+7 in practice) while shift-alignment buckets at 06:00 UTC — a 7-hour disagreement on which operational day a show belongs to. Today this is masked because all studios are in `Asia/Bangkok`; it diverges the moment a studio is in any other zone, and is already incorrect for any non-browser caller (scheduled exports, server jobs).
     2.  **Client-clock dependence:** all three approaches ultimately tie a **studio-intrinsic** window to whoever is *viewing* it (the browser's clock). The operational day is a property of the studio's physical location, not the viewer's device — so a traveling manager, a cross-border VA, or any headless caller produces wrong windows. PR #205's explicit-instant contract is the cleanest of the three (no server-side tz math, no offset derivation) and is a good reference shape for the eventual server-authoritative util, but it is still viewer-clock-driven.
 *   **Concrete instance — task report metrics (PR #205, June 2026):** midnight shows starting before 06:00 were displayed on the performance dashboard but excluded from task reports, because the report builder clamped to `00:00–23:59` calendar days instead of the `06:00→05:59` operational window. PR #205 fixed this by having the FE send the operational-day window as explicit ISO instants and deleting the BE's server-local `new Date(\`${dateStr}T00:00:00\`)` string-munging entirely. This removed the worst (server-host-locale) variant, but the window is still resolved from the viewer's browser clock — the studio-timezone-as-config target below is what makes it authoritative.
-*   **Target:** a single `StudioSettings.planning.{timezone, operationalDayStartHour}` consumed by **one** shared BE timezone-boundary utility (proper IANA conversion, not naive `setHours`), retiring `deriveClientOffsetMs`, `ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC`, and the client-supplied `window_start`/`window_end` contract in favor of server-authoritative resolution.
+*   **Target:** required `Studio.timezone` and `Studio.operationalDayStartHour` columns consumed by **one** shared BE timezone-boundary utility (proper IANA conversion, not naive `setHours`), retiring `deriveClientOffsetMs`, `ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC`, and the client-supplied `window_start`/`window_end` contract in favor of server-authoritative resolution. Scene QC promotes `Studio.timezone` first because a signed daily confirmation requires stable shared scope; the start hour remains the shared constant `06:00` until the broader configuration is promoted.
 
 ### 7. Mechanic Requirement Enforcement (Future)
 
@@ -85,16 +85,37 @@ This document unifies three previously scattered ideation tracks:
 
 ---
 
-## Proposed Unified Solution: Studio Settings Schema
+### 9. Scene QC Taxonomy Governance
 
-Introduce a structured JSONB `settings` field inside the `Studio` model in `schema.prisma`.
+Scene QC Stage 1 records Pass, Minor, or Fail with required Designer feedback for Minor and Fail. It also pins `GRAPHIC_BG` or `REAL_BACKDROP` on each Scene Profile revision. Structured element/defect findings and user-managed taxonomy are deferred.
+
+The eventual configuration must support:
+
+- a shared system catalog of stable QC element and defect codes;
+- optional studio-scoped additions or applicability overrides;
+- explicit governance for which roles can create, update, or retire entries;
+- retirement rather than deletion so historical findings remain readable;
+- stable labels or label snapshots for confirmed historical records; and
+- centralized counting and labeling behavior for reports.
+
+The scope decision remains open between fully shared, fully studio-scoped, and hybrid shared-plus-studio taxonomy. The hybrid shape is the leading option because it preserves cross-studio reporting consistency while allowing local scene vocabulary.
+
+The functional specification's two-axis element/defect vocabulary and optional related element are the seed candidate. Promote this configuration slice when Scene QC Stage 3 begins and its shared-versus-studio governance is agreed; free text is operational context, not a replacement taxonomy-discovery mechanism.
+
+---
+
+## Proposed Unified Solution: Typed Operational Identity and Studio Settings
+
+Store workflow-critical operational identity in typed `Studio` columns. Reserve a structured JSONB `settings` field for non-critical preferences whose concurrent overwrite cannot change eligibility, confirmation scope, or lifecycle enforcement. Future enforcement policies that affect business workflows require dedicated typed tables or columns.
 
 ### 1. Database Schema Extension
 ```prisma
 // Proposed add-on to Studio model in apps/erify_api/prisma/schema.prisma
 model Studio {
   // Existing fields...
-  settings Json @default("{}") // Structured settings envelope
+  timezone String // Required IANA identifier, explicitly populated per Studio
+  operationalDayStartHour Int @default(6)
+  settings Json @default("{}") // Non-critical preference envelope
 }
 ```
 
@@ -102,12 +123,6 @@ model Studio {
 ```typescript
 interface StudioSettings {
   planning: {
-    // Canonical timezone for date presets and boundary calculations
-    timezone: string; // e.g. "Asia/Bangkok" (default: "UTC")
-
-    // Configurable day cutoff hour (local to studio timezone)
-    operationalDayStartHour: number; // default: 6
-
     // Default date range (in days) to load on dashboards (Performance, Costs) on first load
     defaultDashboardRangeDays: number; // default: 7
   };
@@ -145,14 +160,13 @@ interface StudioSettings {
 ### 3. Refactored Gating & Normalization (`ShiftAlignmentService`)
 Refactor the alignment and task checks to fetch and apply these configurations:
 ```typescript
-const settings = (studio.settings as unknown as StudioSettings) || DEFAULT_STUDIO_SETTINGS;
-
 // 1. Resolve date boundaries using configured timezone and operational cutoff
-const timezone = settings.planning.timezone;
-const cutoffHour = settings.planning.operationalDayStartHour;
+const timezone = studio.timezone;
+const cutoffHour = studio.operationalDayStartHour;
 // (Calculations move to centralized timezone-boundary utilities)
 
 // 2. Resolve required task types and moderation checks dynamically based on show standard.
+const settings = parseStudioSettings(studio.settings);
 // This allows the studio setting to explicitly dictate what assignments a bau/premium show
 // needs in order to be counted as fully complete and ready.
 const standardName = show.standardName.toLowerCase();
@@ -197,7 +211,7 @@ const hasModerationTask = tasks.some(task => {
 
 ## Impacted Surfaces
 
-*   **Prisma Schema:** `Studio` table receives a new `settings Json` column with a migration.
+*   **Prisma Schema:** `Studio` receives required typed `timezone` and `operationalDayStartHour` columns. Non-critical preferences may use a separate `settings Json` envelope.
 *   **Backend Orchestration:**
     *   `ShiftAlignmentService` refactored to consume `StudioSettings`.
     *   `task-report-scope.service.ts` refactored to normalize boundaries using studio timezone.
@@ -208,7 +222,8 @@ const hasModerationTask = tasks.some(task => {
     *   `/studios/:studioId/show-run-review`
     *   `/studios/:studioId/task-setup`
     *   Studio dashboard operational-day cards.
-*   **Studio Settings UI:** A new settings page/tab in `erify_studios` (`/studios/:studioId/settings`) for authorized administrators to adjust operational day boundaries, timezones, default range days, premium show standard qualifiers, and moderation task regexes.
+*   **Studio Settings UI:** A new settings page/tab in `erify_studios` (`/studios/:studioId/settings`) for authorized administrators to adjust operational day boundaries, timezones, default range days, premium show standard qualifiers, and moderation task rules. Scene QC requires the canonical timezone before this general settings UI exists; initial values come from a reviewed migration mapping, never a browser or host default.
+*   **Scene QC Configuration:** A later settings section governs shared and studio-scoped taxonomy entries when structured Scene QC findings are promoted.
 
 ---
 
@@ -216,11 +231,12 @@ const hasModerationTask = tasks.some(task => {
 
 This consolidated topic should be promoted to a PRD and scheduled for execution when:
 1.  **High-severity False Positives:** The false alarms on the task readiness panel (e.g. missing moderation for `"Moderator Workflow"` tasks) cause significant user confusion.
-2.  **Multi-Region Onboarding:** A new studio is onboarded that does not use English text in templates (making `/moderation/i` useless) or requires a different operational day start hour or local timezone.
+2.  **Multi-Region Onboarding:** A new studio is onboarded that does not use English text in templates (making `/moderation/i` useless) or requires a different operational day start hour. The Scene QC implementation plan already owns the prerequisite to add an explicit canonical timezone for every Studio.
 3.  **Studio Settings Dashboard Epic:** The product roadmap schedules a general **Studio Settings and Preferences UI** phase.
 4.  **Operational-day drift becomes user-visible:** surfaces disagree on the same window (e.g. PR #205's report-vs-dashboard mismatch), or the performance-vs-shift-alignment boundary disagreement (gap §6) produces a wrong-day bucket in production. Each interim per-surface patch raises the cost of *not* unifying on a studio timezone.
 5.  **Mechanic enforcement requested (§7):** product defines a concrete standard for "which mechanics a show requires" (even for one client/show-standard), or repeated account-manager sign-off requests for the same client signal the manual conversation should become configuration.
 6.  **Hard lifecycle gates requested (§8):** a studio operationally needs `block`-level transition enforcement after Phase 5 item 19's warning-only delivery, or repeated transition-warning overrides signal that per-studio condition configuration is due.
+7.  **Scene QC structured findings promoted (§9):** Stage 3 begins and taxonomy ownership, extension, and retirement governance are agreed.
 
 ---
 

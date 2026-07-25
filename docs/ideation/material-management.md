@@ -2,11 +2,13 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [docs/domain/BUSINESS.md](../../docs/domain/BUSINESS.md)
+> **Related**: [docs/domain/BUSINESS.md](../../docs/domain/BUSINESS.md), [Scene Quality Control](../prd/scene-qc.md)
 
 ## What
 
 Build a `Material` / `MaterialType` / `ShowMaterial` data model and CRUD workflows to support production quality, traceability, and attachment workflows. Materials would be immutably versioned with a current-alias pointer and linkable to shows and ad-hoc tasks.
+
+Scene QC promotes a narrower Client-owned reference-material slice inside the Scene QC capability. That slice supports reusable expected-scene composition without introducing a general Material domain, ShowMaterial lifecycle, or cross-workflow attachment system.
 
 ## Why It Was Considered
 
@@ -16,7 +18,7 @@ Build a `Material` / `MaterialType` / `ShowMaterial` data model and CRUD workflo
 
 ## Why It Was Deferred
 
-1. No active production workflow is currently blocked by the absence of a material model.
+1. Scene QC needs reusable expected-scene references, but its first release can own the narrow reference-material lifecycle locally.
 2. The material model design (versioning strategy, type taxonomy, relationship to shows and tasks) has not been scoped.
 3. Cross-functional ticketing (which would use material attachments) is itself deferred.
 4. File upload infrastructure (presigned R2 flow) exists but material lifecycle on top of it has not been designed.
@@ -25,7 +27,7 @@ Build a `Material` / `MaterialType` / `ShowMaterial` data model and CRUD workflo
 
 Promote to a PRD when **any** of these are true:
 
-1. A production workflow is blocked because there is no system-of-record for production assets.
+1. A second workflow needs to consume the same material identities and version lifecycle outside Scene QC.
 2. Cross-functional ticketing is promoted and material attachments are identified as a required dependency.
 3. The material model design (versioning, type taxonomy, show linkage) is agreed with stakeholders.
 4. Audit requirements necessitate formal material traceability beyond what task content fields provide.
@@ -38,3 +40,4 @@ Promote to a PRD when **any** of these are true:
 - Immutable versioning with current-alias pointer.
 - Material-ticket integration (attachments on ad-hoc tasks).
 - Show-material linking and dedicated material UI.
+- Scene QC reference materials remain capability-local until one of the promotion gates above requires a shared Material domain.
