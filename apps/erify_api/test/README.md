@@ -22,7 +22,7 @@ Run the opt-in 1,000-item bulk schedule characterization separately:
 
 ```bash
 ERIFY_API_TEST_DATABASE_URL=postgresql://erify_test:erify_test@localhost:55432/erify_api_test \
-  node apps/erify_api/test/run-integration-tests.mjs --bulk-schedule-measurement
+  pnpm -C apps/erify_api test:integration --bulk-schedule-measurement
 ```
 
 The measurement reports create/update elapsed time, representative request
