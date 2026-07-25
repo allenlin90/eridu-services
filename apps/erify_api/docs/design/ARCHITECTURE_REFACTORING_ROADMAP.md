@@ -63,7 +63,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 ### T4 — Remove dead/duplicate module wiring
 
-- **Scope**: remove the duplicate `AuditModule` import in `studio-show.module.ts`, other unused module imports, and the unnecessary root-module re-exports (`AdminModule` / `BackdoorModule` / `MeModule` / `StudiosModule` re-export children that only `AppModule` imports — treat them as composition roots, not public barrels).
+- **Scope**: remove the duplicate `AuditModule` import in `studio-show.module.ts`, other unused module imports, and the unnecessary root-module re-exports (`AdminModule` / `BackdoorModule` / `GoogleSheetsModule` / `MeModule` / `StudiosModule` re-export children that only `AppModule` imports — treat them as composition roots, not public barrels).
 - **Gate**: none — module-wiring test plus build.
 - **Result**: the composition roots now import their child modules without
   re-exporting them as public barrels, duplicate or unused imports are removed,

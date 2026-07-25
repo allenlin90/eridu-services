@@ -5,6 +5,5 @@ import { GoogleSheetsScheduleModule } from './schedules/google-sheets-schedule.m
 
 @Module({
   imports: [GoogleSheetsScheduleModule, GoogleSheetsCreatorModule],
-  exports: [GoogleSheetsScheduleModule, GoogleSheetsCreatorModule],
 })
 export class GoogleSheetsModule {}
