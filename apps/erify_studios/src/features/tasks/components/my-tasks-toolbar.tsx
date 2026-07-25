@@ -6,7 +6,6 @@ import {
   Button,
   DatePicker,
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -19,6 +18,7 @@ import { cn } from '@eridu/ui/lib/utils';
 
 import type { MyTaskPageSize, MyTaskSort, TaskViewMode } from '../hooks/use-my-tasks-filters';
 
+import { MultiSelectCheckboxItems } from '@/components/filters/multi-select-checkbox-items';
 import { OVERLAY_MAX_H, VIEWPORT_GUTTER_W } from '@/config/layout';
 import { getTaskTypeOptions } from '@/lib/constants/task-type-labels';
 
@@ -146,16 +146,11 @@ export function MyTasksToolbar({
             >
               <DropdownMenuLabel>Task Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {STATUS_FILTERS.map((statusOption) => (
-                <DropdownMenuCheckboxItem
-                  key={statusOption.value}
-                  checked={selectedStatuses.includes(statusOption.value)}
-                  onCheckedChange={() => onToggleStatus(statusOption.value)}
-                  onSelect={(event) => event.preventDefault()}
-                >
-                  {statusOption.label}
-                </DropdownMenuCheckboxItem>
-              ))}
+              <MultiSelectCheckboxItems
+                options={STATUS_FILTERS}
+                selected={selectedStatuses}
+                onToggle={onToggleStatus}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -180,16 +175,11 @@ export function MyTasksToolbar({
             >
               <DropdownMenuLabel>Task Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {taskTypeFilters.map((taskTypeOption) => (
-                <DropdownMenuCheckboxItem
-                  key={taskTypeOption.value}
-                  checked={selectedTaskTypes.includes(taskTypeOption.value)}
-                  onCheckedChange={() => onToggleTaskType(taskTypeOption.value)}
-                  onSelect={(event) => event.preventDefault()}
-                >
-                  {taskTypeOption.label}
-                </DropdownMenuCheckboxItem>
-              ))}
+              <MultiSelectCheckboxItems
+                options={taskTypeFilters}
+                selected={selectedTaskTypes}
+                onToggle={onToggleTaskType}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
 

@@ -1,31 +1,67 @@
 # Tech Debt: Studios Filter Groups and Show-Time Cells Still Lack Cross-Feature Sharing
 
-## Current Issue
+> **Status update (2026-07-24):** The drift-prone cores of both patterns have been
+> extracted into shared, output-preserving primitives (see "Resolved" below). What
+> remains is an optional single-widget unification that would change rendered output,
+> so it stays trigger-gated.
 
-Two presentation patterns recur across `erify_studios` with no shared extraction:
+## Resolved (2026-07-24, output-preserving cleanup)
 
-1. **Multi-select filter groups + array-toggle handler.** The schedule-publish impacts toolbar now consolidates its filters and uses one local generic `CheckboxFilterGroup`, removing its two copy-pasted dropdown blocks. Comparable multi-select behavior remains independently implemented in `performance-filter-fields.tsx` and `my-tasks-toolbar.tsx`, while `toggleImpactKind`/`toggleResolutionStatus` in `src/routes/studios/$studioId/schedule-publish-impacts.tsx` remain copy-identical array-toggle callbacks.
-2. **Show start/end-time table cell.** `schedule-publish-impacts-columns.tsx` renders the show time with the same `date-fns` format strings and stacked layout as `creator-mapping-show-columns.tsx` and `studio-shows-table/columns.tsx`, with no shared cell component across the three.
+Shared primitives now back every listed call site, with **no change to rendered
+output** on any surface:
 
-## Why It Matters
+- **`toggleArrayValue`** (`src/lib/array-utils.ts`) — the copy-identical
+  `includes ? filter : [...spread]` multi-select toggle. Now used by
+  `toggleImpactKind`/`toggleResolutionStatus` (`schedule-publish-impacts.tsx`
+  route), `toggleStatus`/`toggleTaskType` (`use-my-tasks-filters.ts`), and the
+  three inline toggles in `performance-filter-fields.tsx`.
+- **`MultiSelectCheckboxItems`** (`src/components/filters/multi-select-checkbox-items.tsx`)
+  — the shared `DropdownMenuCheckboxItem` list (checked/onToggle/`preventDefault`)
+  for the dropdown-style multi-selects. Migrated: `performance-filter-fields.tsx`
+  (show type / platform / show standard) and `my-tasks-toolbar.tsx` (status / task
+  type). Callers keep their own trigger button and `DropdownMenuContent` wrapper.
+- **`CheckboxFilterGroup`** (`src/components/filters/checkbox-filter-group.tsx`) —
+  the inline (non-dropdown) consolidated group, relocated out of
+  `schedule-publish-impact-filters.tsx` into the shared `components/filters/` layer
+  so it is a discoverable cross-feature primitive for future consolidated panels.
+- **`formatShowDate` / `formatShowTime` / `formatShowTimeRange`**
+  (`src/lib/show-time-format.ts`) — the `MMM d, yyyy` / `h:mm a` format strings and
+  the `start - end` range string. Migrated: `schedule-publish-impacts-columns.tsx`,
+  `creator-mapping-show-columns.tsx`, and `studio-shows-table/columns.tsx` (both the
+  `start_time` cell and the `ShowActualsCell` time range).
 
-Each new operational surface can still re-implement these patterns by copy-paste, so label/format/behavior drift is only prevented by reviewer vigilance. The schedule-publish UX correction removed the local duplicate filter menus but did not establish a stable cross-feature filter-group API.
+This removes the format/behavior-drift risk the "Why It Matters" section called
+out — the shared source of truth can no longer diverge between surfaces. Unit tests
+cover `toggleArrayValue` and the show-time formatters.
 
-## Desired Direction
+## Remaining (trigger-gated)
 
-- Once another surface needs the same consolidated filter-group behavior, extract a generic multi-select filter group (options, selected values, onToggle) into the studios feature-shared layer — or `@eridu/ui` if `erify_creators` grows the same need per the package-extraction rule — and migrate the applicable call sites. Do not revive one-dropdown-per-filter UX merely to share the old shape.
-- Extract a shared show-time cell component (or column-helper) used by the three column files.
+The three named filter surfaces still use **two distinct UI shapes** on purpose:
+`schedule-publish` is an inline checkbox fieldset (`CheckboxFilterGroup`) while
+`performance` and `my-tasks` are dropdown-checkbox menus (`MultiSelectCheckboxItems`).
+Likewise the three show-time cells keep their own wrappers and empty states
+(`text-sm` vs `flex flex-col`, em-dash vs hyphen vs no guard). Collapsing either
+into a single widget with one canonical look would **change rendered output** on
+some surfaces, so it is not done preemptively.
 
-Per the repo rule, this is broad cleanup: do it in a dedicated scoped PR, not folded into a feature PR.
+## Trigger To Fix (remaining)
 
-## Trigger To Fix
-
-- The next PR that would add another copy of either pattern (a new multi-select filter group inside a consolidated filter surface or another show-time column) — extract first, then build the new surface on the shared piece.
+- A surface needs a new consolidated **inline** filter group → reuse
+  `CheckboxFilterGroup` from `components/filters/`.
+- A surface needs a new **dropdown** multi-select → reuse `MultiSelectCheckboxItems`.
+- A deliberate UX pass decides to normalize the filter surfaces to one shape, or the
+  show-time cells to one `ShowTimeCell` — do it then, as an intentional visual change,
+  building on the shared format helpers already in place.
 
 ## Acceptance Criteria
 
-- One shared multi-select filter-group component with applicable call sites (`schedule-publish-impacts-toolbar`, `performance-filter-fields`, `my-tasks-toolbar`) migrated without changing each surface's intended consolidated filter composition.
-- One shared show-time cell used by the three column files, same rendered output.
+- [x] Shared multi-select primitives back `schedule-publish-impacts` filters,
+      `performance-filter-fields`, and `my-tasks-toolbar` without changing each
+      surface's filter composition or rendered output.
+- [x] Shared show-time formatters back all three column files (plus the actuals
+      cell), same rendered output.
+- [ ] (Optional, trigger-gated) A single shared filter-group widget and a single
+      `ShowTimeCell`, accepted as a deliberate visual normalization.
 
 ## Related Context
 

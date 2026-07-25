@@ -36,6 +36,7 @@ Always use `@/*` imports (configured in `tsconfig.json`), never deep relative pa
 5. **Limit props**: Split components, use composition, or group related props.
 6. **No repeated magic limits**: Centralize pagination/fetch limits in named constants.
 7. **No scattered layout magic numbers**: Shell/chrome offsets like `calc(100vh-13rem)` belong in a named constant (e.g. `src/config/layout.ts` → `CONTENT_AREA_MIN_H`), not duplicated inline across files. Keep the full literal Tailwind class in the constant (the JIT scans `.ts`/`.tsx` via `@source`) — a JS-interpolated rem value won't be detected.
+8. **Reuse shared filter / show-time primitives** (erify_studios): multi-select filters reuse `components/filters/multi-select-checkbox-items` (dropdown) or `components/filters/checkbox-filter-group` (inline panel) with the `toggleArrayValue` util from `lib/array-utils`; show start/end-time table cells reuse the `lib/show-time-format` helpers (`formatShowDate` / `formatShowTime` / `formatShowTimeRange`). Do not re-implement the `includes ? filter : [...spread]` toggle, the checkbox-item `.map`, or the `MMM d, yyyy` / `h:mm a` format strings inline.
 
 ## Large Route / Component Decomposition
 

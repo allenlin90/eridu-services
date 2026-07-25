@@ -2,13 +2,14 @@
 import type { HistoryState } from '@tanstack/react-router';
 import { Link, useParams } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
 import { CheckCircle2, ChevronRight, Clock3, FileQuestion, UserMinus } from 'lucide-react';
 
 import { Badge, Checkbox, DataTableActions, DropdownMenuItem } from '@eridu/ui';
 
 import type { StudioShow } from '../../api/get-studio-shows';
 import { getShowActualsStatus, toShowActualsServerFilter } from '../../utils/show-actuals.utils';
+
+import { formatShowDate, formatShowTimeRange } from '@/lib/show-time-format';
 
 function ShowNameCell({ show }: { show: StudioShow }) {
   // Extract studioId from the current route context as a robust fallback
@@ -121,9 +122,7 @@ function ShowActualsCell({ show }: { show: StudioShow }) {
           Complete
         </Badge>
         <span className="text-xs text-muted-foreground">
-          {format(new Date(show.actual_start_time!), 'h:mm a')}
-          {' - '}
-          {format(new Date(show.actual_end_time!), 'h:mm a')}
+          {formatShowTimeRange(show.actual_start_time!, show.actual_end_time!)}
         </span>
       </div>
     );
@@ -187,10 +186,9 @@ export function getStudioShowOperationsColumns({
 
         return (
           <div className="flex flex-col gap-1">
-            <span className="text-sm">{format(new Date(startTime), 'MMM d, yyyy')}</span>
+            <span className="text-sm">{formatShowDate(startTime)}</span>
             <span className="text-xs text-muted-foreground">
-              {format(new Date(startTime), 'h:mm a')}
-              {endTime && ` - ${format(new Date(endTime), 'h:mm a')}`}
+              {formatShowTimeRange(startTime, endTime)}
             </span>
           </div>
         );
