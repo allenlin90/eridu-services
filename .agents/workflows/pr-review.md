@@ -65,6 +65,12 @@ pnpm architecture:signals
 
 Compare the output with the architecture baseline named by the affected design/canonical document. A new cycle is blocking. Edge, shallow-module, exported-repository, or runtime-closure changes are review signals that require explanation, not automatic failures.
 
+For the accepted `erify_api` refactor, the source comparison is
+[`architecture-signals-baseline.json`](../../apps/erify_api/docs/design/architecture-signals-baseline.json).
+Use the PR base for a diff-scoped comparison as well; the source snapshot shows
+the long-running program trend, while the PR base identifies regressions from
+the current architecture.
+
 ---
 
 ## erify_api gate

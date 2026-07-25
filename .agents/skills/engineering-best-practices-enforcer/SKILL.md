@@ -21,9 +21,12 @@ Staged code quality reviews and refactors aligned with monorepo architecture.
 2. Load relevant skills for affected layers
 3. Read local patterns before proposing changes
 4. Run quality scanner: `bash .agents/skills/engineering-best-practices-enforcer/scripts/scan-quality-signals.sh`
-5. Perform impact and risk assessment (classify: behavior-preserving / adjacent / changing; risk: low / medium / high)
-6. Produce severity-ordered findings with file references
-7. Execute small safe batches, verify each workspace
+5. For `erify_api` architecture work, run `pnpm architecture:signals` and
+   compare it with the committed
+   [source baseline](../../../apps/erify_api/docs/design/architecture-signals-baseline.json)
+6. Perform impact and risk assessment (classify: behavior-preserving / adjacent / changing; risk: low / medium / high)
+7. Produce severity-ordered findings with file references
+8. Execute small safe batches, verify each workspace
 
 ## Tech-Debt Registers
 

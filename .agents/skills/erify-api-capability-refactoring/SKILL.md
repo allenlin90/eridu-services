@@ -497,6 +497,8 @@ For each refactoring PR:
    pnpm architecture:signals
    ```
 
+   Compare the output with the committed
+   [source baseline](../../../apps/erify_api/docs/design/architecture-signals-baseline.json).
    Record relevant changes such as module count, graph edges, exported repositories,
    utility-module imports, and MCP closure.
 
@@ -541,7 +543,7 @@ For each refactoring PR:
 - [ ] Transaction behavior has real-database coverage when material.
 - [ ] Read paths have bounded inputs and lean projections.
 - [ ] No performance claim is made without measurement.
-- [ ] `pnpm architecture:signals` was reviewed.
+- [ ] `pnpm architecture:signals` was compared with the committed source baseline.
 
 ## Migration Priorities
 
