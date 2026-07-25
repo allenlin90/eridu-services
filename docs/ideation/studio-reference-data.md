@@ -132,4 +132,5 @@ Existing GET (lookup) endpoints remain unchanged for all roles.
 
 - Backend design: create with implementation PR under `apps/erify_api/docs/design/`
 - Frontend design: create with implementation PR under `apps/erify_studios/docs/design/`
-- Related admin controllers: `apps/erify_api/src/admin/clients/`, `apps/erify_api/src/admin/platforms/`, etc.
+- Related admin controllers: `apps/erify_api/src/admin/clients/` and
+  `apps/erify_api/src/capabilities/show-catalog/http/`.

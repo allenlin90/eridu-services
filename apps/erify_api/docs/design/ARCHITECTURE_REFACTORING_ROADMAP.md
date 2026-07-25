@@ -187,8 +187,8 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
   table/audience wrapper modules while preserving the four route prefixes.
   `PlatformRepository` is private; workflows use
   `PlatformService.findActiveByUids()`. Static signals moved from 90 to 83 Nest
-  modules, 293 to 269 module edges, and 75 to 68 modules at or below 20 lines,
-  with zero cycles.
+  modules, 293 to 269 module edges, and 74 to 68 modules at or below 20 lines,
+  while the MCP closure moved from 24 to 22 reachable modules, with zero cycles.
 
 ## Not in scope now
 

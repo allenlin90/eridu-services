@@ -164,9 +164,10 @@ transaction and restore semantics remain broken.
 
 #### 3. Small CRUD Has Too Much Ceremony
 
-`ShowStatus` demonstrates the pattern:
+At the source snapshot, `ShowStatus` demonstrated the pattern:
 
-- [`show-status.module.ts`](../../src/models/show-status/show-status.module.ts) registers a service, repository, Prisma, and utility module;
+- `models/show-status/show-status.module.ts` registered a service, repository,
+  Prisma, and utility module;
 - [`show-status.service.ts`](../../src/models/show-status/show-status.service.ts) generates a UID and delegates most methods;
 - `models/show-status/show-status.repository.ts` in the source snapshot mainly
   restates Prisma CRUD and pagination.
@@ -562,14 +563,15 @@ If the pilot succeeds, group show type, status, standard, and platform reference
 
 Move admin catalog controllers next to the capability while preserving routes and guards. The module should export only the services or queries used by other capabilities.
 
-**Result (2026-07-24): completed.** `ShowCatalogModule` owns show type,
-status, standard, and platform registration plus their four admin controllers.
+**Current structure.** `ShowCatalogModule` owns show type, status, standard,
+and platform registration plus their four admin controllers.
 It replaced eight table/audience wrapper modules without changing controller
 prefixes. The module exports only the four focused services; platform UID
 lookups now cross the boundary through `PlatformService`, leaving
 `PlatformRepository` private. Static signals improved from 90 to 83 Nest
-modules, 293 to 269 local module edges, and 75 to 68 modules at or below 20
-lines, with zero cycles before and after.
+modules, 293 to 269 local module edges, and 74 to 68 modules at or below 20
+lines. The MCP closure decreased from 24 to 22 reachable modules, with zero
+cycles before and after.
 
 ### Phase 4 — Trigger-Gated Show Operations
 
@@ -678,7 +680,8 @@ Do not use total module count as the only target. Prefer these measures:
 - No workflow service has an unexplained constructor with more than roughly eight collaborators.
 - Files above the backend size trigger have either a cohesive exception or an active split plan.
 - Public service signatures contain domain/API payloads, not Prisma query types.
-- MCP boots only read-side capability modules; its current 24-module closure materially decreases.
+- MCP boots only read-side capability modules; its closure decreases materially
+  from the 24-module source baseline.
 - High-risk workflows have real rollback and route-level characterization tests.
 - Measured query count, payload size, and latency do not regress.
 - A new engineer can locate a business rule from its route or domain term without searching across audience, model, and orchestration trees.
