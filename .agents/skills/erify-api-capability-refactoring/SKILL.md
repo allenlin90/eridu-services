@@ -472,31 +472,40 @@ hot paths except for obvious unbounded or redundant-query risks.
 
 For each refactoring PR:
 
-1. **Name the capability and use case.**
+1. **Run the refactoring-target preflight.**
+   Check
+   [`REFACTORING_TARGETS.md`](../../../apps/erify_api/docs/REFACTORING_TARGETS.md)
+   for the touched surface. Record the applicable target IDs and trigger
+   outcome in the plan and PR. Update the register in the same PR when its
+   evidence, state, scope, or exit criteria change.
+
+2. **Name the capability and use case.**
    State which business behavior owns the change.
 
-2. **Characterize behavior.**
+3. **Characterize behavior.**
    Add or identify tests for contracts, state transitions, transactions, and audit
    effects.
 
-3. **Choose the smallest valid structure.**
+4. **Choose the smallest valid structure.**
    Use the decision matrix above.
 
-4. **Move ownership before adding abstraction.**
+5. **Move ownership before adding abstraction.**
    Colocate behavior that changes together. Do not first create new interfaces, base
-   classes, or buses.
+   classes, or buses. Introduce a seam only when the current requirement needs a
+   shared operation, protected invariant or transaction, private persistence
+   policy, external adapter, or narrower runtime boundary.
 
-5. **Make persistence private.**
+6. **Make persistence private.**
    Replace cross-module repository injection with a narrow capability API.
 
-6. **Verify transaction semantics.**
+7. **Verify transaction semantics.**
    Trace every read and write to `txHost.tx` when the use case is transactional.
 
-7. **Preserve external contracts.**
+8. **Preserve external contracts.**
    Keep routes, guards, UIDs, Zod schemas, serialized shapes, and error behavior stable
    unless the PR explicitly changes them.
 
-8. **Measure architectural change.**
+9. **Measure architectural change.**
    Run:
 
    ```bash
@@ -508,7 +517,7 @@ For each refactoring PR:
    Record relevant changes such as module count, graph edges, exported repositories,
    utility-module imports, and MCP closure.
 
-9. **Keep the PR independently reviewable.**
+10. **Keep the PR independently reviewable.**
    Separate correctness fixes from structural moves when possible.
 
 ## Review Checklist
@@ -557,8 +566,12 @@ For each refactoring PR:
 This is a destination map and dependency order, not a scheduled queue. Each
 step activates only on its trigger; do not start a later step ahead of its gate.
 The current decisions live in
-[`ARCHITECTURE.md`](../../../apps/erify_api/docs/ARCHITECTURE.md), while product
-sequencing lives in [`PHASE_5.md`](../../../docs/roadmap/PHASE_5.md).
+[`ARCHITECTURE.md`](../../../apps/erify_api/docs/ARCHITECTURE.md), residual
+architecture status lives in
+[`REFACTORING_TARGETS.md`](../../../apps/erify_api/docs/REFACTORING_TARGETS.md),
+and product sequencing lives in
+[`PHASE_5.md`](../../../docs/roadmap/PHASE_5.md). Product roadmap items are
+activation evidence, not a substitute refactoring queue.
 
 1. Preserve the corrected transaction-aware `BaseRepository` behavior.
 2. Stop adding table-shaped modules and pass-through repositories (placement rule, active now).
@@ -576,6 +589,7 @@ sequencing lives in [`PHASE_5.md`](../../../docs/roadmap/PHASE_5.md).
 Primary direction:
 
 - `apps/erify_api/docs/ARCHITECTURE.md`
+- `apps/erify_api/docs/REFACTORING_TARGETS.md`
 - `scripts/measure-erify-api-architecture.mjs`
 
 Existing conventions to preserve but progressively reconcile:

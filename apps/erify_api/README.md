@@ -712,12 +712,14 @@ Comprehensive documentation is available in the `docs/` directory. Refer to spec
 | [Material Management](docs/design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for operations expansion                            |
 | [Data Warehouse Design](docs/design/DATA_WAREHOUSE_DESIGN.md)                                         | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
 
-### Roadmap
+### Reference And Roadmap
 
 | Document                                               | Use When                                                       |
 | ------------------------------------------------------ | -------------------------------------------------------------- |
 | [Documentation Index](docs/README.md)                  | Need a quick overview of all documentation                     |
 | [System Architecture Overview](../../docs/engineering/ARCHITECTURE_OVERVIEW.md)  | Understanding cross-app architecture and boundaries            |
+| [`erify_api` Architecture](docs/ARCHITECTURE.md)       | Understanding canonical capability and persistence doctrine    |
+| [`erify_api` Refactoring Targets](docs/REFACTORING_TARGETS.md) | Planning any `erify_api` feature, behavior change, or refactor |
 | [Business Domain](../../docs/domain/BUSINESS.md)                    | Understanding product/domain concepts and business rules          |
 | [Authentication Guide](docs/design/AUTHORIZATION_GUIDE.md)    | Implementing auth patterns and guard usage                     |
 | [Server-to-Server Auth](docs/design/AUTHORIZATION_GUIDE.md) | Adding service-to-service endpoints                            |

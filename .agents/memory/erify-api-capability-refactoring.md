@@ -5,6 +5,8 @@
 The T1–T13 foundation shipped through PRs #323–#336. The execution roadmap and
 visual walkthrough were retired after closeout. Current architecture lives in
 [`apps/erify_api/docs/ARCHITECTURE.md`](../../apps/erify_api/docs/ARCHITECTURE.md),
+residual target status lives in
+[`apps/erify_api/docs/REFACTORING_TARGETS.md`](../../apps/erify_api/docs/REFACTORING_TARGETS.md),
 and implementation rules live in the
 [`erify-api-capability-refactoring`](../skills/erify-api-capability-refactoring/SKILL.md)
 skill.
@@ -24,6 +26,10 @@ skill.
   refactors.
 - Do not introduce CQRS infrastructure, workers, read models, package splits,
   or database splits without their documented evidence gates.
+- Every new `erify_api` feature or refactor checks the target register and
+  records the applicable target IDs and trigger outcome.
+- Add an abstraction only for a present owned boundary; do not create a
+  speculative seam merely to ease a hypothetical future refactor.
 
 ## Safety And Reference Implementations
 
@@ -40,13 +46,12 @@ skill.
 
 ## Future Activation
 
-- Start Phase 5 with item 9, show-level issue ownership.
-- Phase 5 item 18 activates `ShowOperationsModule` as part of the lifecycle
-  transition work, never as a standalone folder move.
-- `PublishingService` decomposition activates only when item 18 integration or
-  measured risk requires it.
-- Scoped query providers and further MCP narrowing travel with the owning
-  capability work.
+- The refactoring target register is authoritative for open-target evidence,
+  activation gates, status, and exit criteria.
+- Product sequencing remains in Phase 5 and supplies activation evidence; it is
+  not the refactoring queue.
+- Do not duplicate open target state here. Update the register when evidence or
+  status changes.
 
 ## Recorded Discussion Outcomes
 
