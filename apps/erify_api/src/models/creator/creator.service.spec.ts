@@ -1,21 +1,21 @@
 import { CreatorRepository } from './creator.repository';
 import { CreatorService } from './creator.service';
 
+import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
   setupTestMocks,
 } from '@/testing/model-service-test.helper';
 import { createMockUniqueConstraintError } from '@/testing/prisma-error.helper';
-import type { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('creatorService', () => {
   let service: CreatorService;
   let creatorRepositoryMock: Partial<jest.Mocked<CreatorRepository>>;
-  let utilityMock: Partial<jest.Mocked<UtilityService>>;
+  let uidGeneratorMock: Partial<jest.Mocked<UidGeneratorService>>;
 
   beforeEach(async () => {
     creatorRepositoryMock = createMockRepository<CreatorRepository>({
@@ -26,13 +26,13 @@ describe('creatorService', () => {
       updateByUid: jest.fn(),
       findPaginated: jest.fn(),
     });
-    utilityMock = createMockUtilityService('creator_123');
+    uidGeneratorMock = createMockUidGeneratorService('creator_123');
 
     const module = await createModelServiceTestModule({
       serviceClass: CreatorService,
       repositoryClass: CreatorRepository,
       repositoryMock: creatorRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<CreatorService>(CreatorService);
@@ -54,7 +54,7 @@ describe('creatorService', () => {
 
     const result = await service.createCreator(payload);
 
-    expect(utilityMock.generateBrandedId).toHaveBeenCalledWith('creator', undefined);
+    expect(uidGeneratorMock.generateBrandedId).toHaveBeenCalledWith('creator', undefined);
     expect(creatorRepositoryMock.createCreator).toHaveBeenCalledWith({
       ...payload,
       uid: 'creator_123',

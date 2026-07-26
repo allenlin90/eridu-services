@@ -3,12 +3,12 @@ import { Module } from '@nestjs/common';
 import { StudioMembershipRepository } from './studio-membership.repository';
 import { StudioMembershipService } from './studio-membership.service';
 
+import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
 import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
-  imports: [PrismaModule, UtilityModule, UserModule],
+  imports: [PrismaModule, UidGeneratorModule, UserModule],
   providers: [StudioMembershipService, StudioMembershipRepository],
   exports: [StudioMembershipService],
 })

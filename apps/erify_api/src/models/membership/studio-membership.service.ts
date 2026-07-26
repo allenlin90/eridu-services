@@ -14,8 +14,8 @@ import { StudioMembershipRepository } from './studio-membership.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 // Type aliases for better readability and type safety
 type UserId = bigint;
@@ -30,9 +30,9 @@ export class StudioMembershipService extends BaseModelService {
   constructor(
     private readonly studioMembershipRepository: StudioMembershipRepository,
     private readonly userService: UserService,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createStudioMembership<T extends Parameters<StudioMembershipRepository['createStudioMembership']>[1]>(

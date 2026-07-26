@@ -8,7 +8,7 @@ import { ShowStandardRepository } from './show-standard.repository';
 import { SHOW_STANDARD_UID_PREFIX } from './show-standard-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class ShowStandardService extends BaseModelService {
@@ -17,9 +17,9 @@ export class ShowStandardService extends BaseModelService {
 
   constructor(
     private readonly showStandardRepository: ShowStandardRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createShowStandard(

@@ -6,10 +6,9 @@ import { ShowsService } from './shows.service';
 import { CreatorModule } from '@/models/creator/creator.module';
 import { ShowModule } from '@/models/show/show.module';
 import { ShowCreatorModule } from '@/models/show-creator/show-creator.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 @Module({
-  imports: [ShowModule, ShowCreatorModule, CreatorModule, UtilityModule],
+  imports: [ShowModule, ShowCreatorModule, CreatorModule],
   controllers: [ShowsController],
   providers: [ShowsService],
   exports: [ShowsService],

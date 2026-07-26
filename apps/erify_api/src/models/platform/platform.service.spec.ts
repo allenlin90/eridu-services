@@ -1,36 +1,36 @@
 import { PlatformRepository } from './platform.repository';
 import { PlatformService } from './platform.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
-import { UtilityService } from '@/utility/utility.service';
 
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));
 
 describe('platformService', () => {
   let service: PlatformService;
   let platformRepository: PlatformRepository;
-  let utilityService: UtilityService;
+  let uidGenerator: UidGeneratorService;
 
   beforeEach(async () => {
     const platformRepositoryMock = createMockRepository<PlatformRepository>({
       findByUids: jest.fn(),
     });
-    const utilityMock = createMockUtilityService('plt_test123');
+    const uidGeneratorMock = createMockUidGeneratorService('plt_test123');
 
     const module = await createModelServiceTestModule({
       serviceClass: PlatformService,
       repositoryClass: PlatformRepository,
       repositoryMock: platformRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
     });
 
     service = module.get<PlatformService>(PlatformService);
     platformRepository = module.get<PlatformRepository>(PlatformRepository);
-    utilityService = module.get<UtilityService>(UtilityService);
+    uidGenerator = module.get<UidGeneratorService>(UidGeneratorService);
   });
 
   it('should be defined', () => {
@@ -62,7 +62,7 @@ describe('platformService', () => {
 
       const result = await service.createPlatform(platformData);
 
-      expect(utilityService.generateBrandedId).toHaveBeenCalledWith(
+      expect(uidGenerator.generateBrandedId).toHaveBeenCalledWith(
         'plt',
         undefined,
       );

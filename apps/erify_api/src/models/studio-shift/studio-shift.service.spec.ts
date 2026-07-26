@@ -5,8 +5,8 @@ import { Prisma } from '@prisma/client';
 import { StudioShiftRepository } from './studio-shift.repository';
 import { StudioShiftService } from './studio-shift.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { UtilityService } from '@/utility/utility.service';
 
 describe('studioShiftService', () => {
   let service: StudioShiftService;
@@ -41,7 +41,7 @@ describe('studioShiftService', () => {
           },
         },
         {
-          provide: UtilityService,
+          provide: UidGeneratorService,
           useValue: {
             generateBrandedId: jest.fn((prefix: string) => `${prefix}_${++brandedIdCounter}`),
           },

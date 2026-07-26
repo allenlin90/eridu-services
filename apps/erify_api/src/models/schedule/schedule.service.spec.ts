@@ -14,7 +14,7 @@ import { ScheduleRepository } from '@/models/schedule/schedule.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
   createMockRepository,
-  createMockUtilityService,
+  createMockUidGeneratorService,
   createModelServiceTestModule,
 } from '@/testing/model-service-test.helper';
 
@@ -125,9 +125,9 @@ describe('scheduleService', () => {
       findByDateRange: jest.fn().mockResolvedValue([]),
     });
 
-    const utilityMock = createMockUtilityService();
+    const uidGeneratorMock = createMockUidGeneratorService();
     // Override generateBrandedId to use generateUid pattern for schedule
-    utilityMock.generateBrandedId = jest.fn((prefix: string) => {
+    uidGeneratorMock.generateBrandedId = jest.fn((prefix: string) => {
       const random = Math.random().toString(36).substring(2, 8);
       return `${prefix}_${random}`;
     }) as jest.Mock;
@@ -136,7 +136,7 @@ describe('scheduleService', () => {
       serviceClass: ScheduleService,
       repositoryClass: ScheduleRepository,
       repositoryMock: scheduleRepositoryMock,
-      utilityMock,
+      uidGeneratorMock,
       additionalProviders: [
         {
           provide: PrismaService,

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 
 @Injectable()
-export class UtilityService {
+export class UidGeneratorService {
   /**
    * Generates a branded ID with a prefix
    * @param prefix The prefix for the ID (e.g., 'user', 'show')

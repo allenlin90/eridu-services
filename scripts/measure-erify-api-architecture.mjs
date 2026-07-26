@@ -108,7 +108,9 @@ for (const source of moduleSources.values()) {
     }
   }
 }
+// Retain the removed module's importer count for comparison with the source baseline.
 const utilityModule = path.join(sourceRoot, 'utility/utility.module.ts');
+const uidGeneratorModule = path.join(sourceRoot, 'lib/uid/uid-generator.module.ts');
 const mcpAppModule = path.join(sourceRoot, 'mcp/mcp-app.module.ts');
 const cycles = findCycles(graph);
 
@@ -146,6 +148,9 @@ const result = {
     e2e_specs: typescriptFiles.filter((filePath) => filePath.endsWith('.e2e-spec.ts')).length,
     utility_module_importers: [...graph.values()].filter((dependencies) => dependencies.has(utilityModule))
       .length,
+    uid_generator_module_importers: [...graph.values()].filter((dependencies) =>
+      dependencies.has(uidGeneratorModule),
+    ).length,
     mcp_reachable_modules: reachableFrom(graph, mcpAppModule).size,
   },
 };

@@ -4,8 +4,8 @@ import { Test } from '@nestjs/testing';
 import { TaskReportDefinitionRepository } from './task-report-definition.repository';
 import { TaskReportDefinitionService } from './task-report-definition.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 describe('taskReportDefinitionService', () => {
   const defaultReportScope = {
@@ -38,7 +38,7 @@ describe('taskReportDefinitionService', () => {
           },
         },
         {
-          provide: UtilityService,
+          provide: UidGeneratorService,
           useValue: {
             generateBrandedId: jest.fn().mockReturnValue('trd_generated'),
           },

@@ -9,8 +9,8 @@ import { CreatorRepository } from './creator.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
-import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class CreatorService extends BaseModelService {
@@ -19,9 +19,9 @@ export class CreatorService extends BaseModelService {
 
   constructor(
     private readonly creatorRepository: CreatorRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createCreator(

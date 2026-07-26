@@ -6,14 +6,15 @@ selects shallow direct persistence, mock the model delegate through a
 
 ## Adding Extra Service Dependencies
 
-When a model service depends on more than just a repository and UtilityService, use `additionalProviders`:
+When a model service depends on more than just a repository and
+`UidGeneratorService`, use `additionalProviders`:
 
 ```typescript
 const module = await createModelServiceTestModule({
   serviceClass: ShowService,
   repositoryClass: ShowRepository,
   repositoryMock,
-  utilityMock,
+  uidGeneratorMock,
   additionalProviders: [
     {
       provide: ShowStatusService,
@@ -29,7 +30,9 @@ const module = await createModelServiceTestModule({
 
 ## Mocking nanoid
 
-Services that call `this.generateUid()` (which calls `nanoid` internally) must mock `nanoid` at the module level:
+Prefer supplying a deterministic `uidGeneratorMock` through
+`createModelServiceTestModule`. For a focused `UidGeneratorService` test, mock
+`nanoid` at the module level:
 
 ```typescript
 jest.mock('nanoid', () => ({ nanoid: () => 'test_id' }));

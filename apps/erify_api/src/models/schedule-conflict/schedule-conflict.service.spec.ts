@@ -7,9 +7,9 @@ import { ClsModule } from 'nestjs-cls';
 
 import { ScheduleConflictService } from './schedule-conflict.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { AuditService } from '@/models/audit/audit.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
 
 const emptyRelationValues = { showCreators: {}, showPlatforms: {} };
 
@@ -46,7 +46,7 @@ describe('scheduleConflictService', () => {
           create: jest.fn().mockResolvedValue({ uid: 'aud_new' }),
           findLatestScheduleConflictForShow: jest.fn().mockResolvedValue(null),
         } },
-        { provide: UtilityService, useValue: { generateBrandedId: jest.fn().mockReturnValue('conflict_fresh1') } },
+        { provide: UidGeneratorService, useValue: { generateBrandedId: jest.fn().mockReturnValue('conflict_fresh1') } },
       ],
     }).compile();
 

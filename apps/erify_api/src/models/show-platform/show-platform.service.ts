@@ -12,7 +12,7 @@ import {
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 /** Maps a performance extractor's `dbField` to its snake_case DB column. */
 const PERFORMANCE_METRIC_COLUMNS = {
@@ -29,9 +29,9 @@ export class ShowPlatformService extends BaseModelService {
 
   constructor(
     private readonly showPlatformRepository: ShowPlatformRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

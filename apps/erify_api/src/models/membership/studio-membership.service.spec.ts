@@ -4,8 +4,8 @@ import { Test } from '@nestjs/testing';
 import { StudioMembershipRepository } from './studio-membership.repository';
 import { StudioMembershipService } from './studio-membership.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 describe('studioMembershipService', () => {
   let service: StudioMembershipService;
@@ -23,7 +23,7 @@ describe('studioMembershipService', () => {
     findOne: jest.Mock;
   };
 
-  const mockUtilityService = {
+  const mockUidGeneratorService = {
     generateBrandedId: jest.fn(),
   };
 
@@ -55,8 +55,8 @@ describe('studioMembershipService', () => {
           },
         },
         {
-          provide: UtilityService,
-          useValue: mockUtilityService,
+          provide: UidGeneratorService,
+          useValue: mockUidGeneratorService,
         },
       ],
     }).compile();

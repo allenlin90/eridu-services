@@ -12,8 +12,8 @@ import {
 import { UserRepository } from './user.repository';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { CREATOR_UID_PREFIX } from '@/models/creator/creator-uid.util';
-import { UtilityService } from '@/utility/utility.service';
 
 /**
  * Service for managing User entities.
@@ -25,9 +25,9 @@ export class UserService extends BaseModelService {
 
   constructor(
     private readonly userRepository: UserRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**
@@ -48,7 +48,7 @@ export class UserService extends BaseModelService {
             name: creator.name,
             aliasName: creator.aliasName,
             metadata: creator.metadata ?? {},
-            uid: this.utilityService.generateBrandedId(CREATOR_UID_PREFIX),
+            uid: this.uidGenerator.generateBrandedId(CREATOR_UID_PREFIX),
           },
         },
       }),

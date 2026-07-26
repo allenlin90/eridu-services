@@ -12,6 +12,7 @@ import type { ScheduleWithRelations } from './publishing.types';
 import { PublishingRelationSyncService } from './publishing-relation-sync.service';
 import { ValidationService } from './validation.service';
 
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { AuditService } from '@/models/audit/audit.service';
 import { PublishRunService } from '@/models/publish-run/publish-run.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
@@ -23,7 +24,6 @@ import { ShowPlatformService } from '@/models/show-platform/show-platform.servic
 import { TaskService } from '@/models/task/task.service';
 import { TaskTargetService } from '@/models/task-target/task-target.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UtilityService } from '@/utility/utility.service';
 
 // File-scope mock transaction client (reassigned per test in beforeEach)
 let mockTransactionClient: {
@@ -296,7 +296,7 @@ describe('publishingService', () => {
           },
         },
         {
-          provide: UtilityService,
+          provide: UidGeneratorService,
           useValue: {
             generateBrandedId: jest.fn().mockReturnValue('shst_generated'),
           },

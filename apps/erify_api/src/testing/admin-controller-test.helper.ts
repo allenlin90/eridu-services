@@ -7,9 +7,6 @@ import { Test } from '@nestjs/testing';
  * Common mock services used across admin controllers
  */
 export const adminMockServices = {
-  utilityService: {
-    generateBrandedId: jest.fn(),
-  },
   configService: {
     get: jest.fn(),
   },
@@ -35,7 +32,7 @@ export type AdminControllerTestConfig<TController> = {
  *
  * Admin controllers typically:
  * - Don't use JWT auth (may use different auth mechanisms)
- * - Use common utility and config services
+ * - Use common config services
  * - Have specific service mocks
  *
  * @param config - Configuration for the test module
@@ -60,10 +57,6 @@ export async function createAdminControllerTestModule<TController>({
   const providers: Provider[] = [
     controllerClass,
     // Common services
-    {
-      provide: 'UtilityService',
-      useValue: adminMockServices.utilityService,
-    },
     {
       provide: 'ConfigService',
       useValue: adminMockServices.configService,

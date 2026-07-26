@@ -8,7 +8,7 @@ import { ClientRepository } from './client.repository';
 import { CLIENT_UID_PREFIX } from './client-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 /**
  * Service for managing Client entities.
@@ -20,9 +20,9 @@ export class ClientService extends BaseModelService {
 
   constructor(
     private readonly clientRepository: ClientRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   /**

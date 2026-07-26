@@ -926,9 +926,9 @@ class ShowQueries {
         </div>
         <div class="card reframe tick">
           <span class="reframe-tag reframe">reframed convention</span>
-          <div class="rf-was"><span>Was</span> <span class="mono">UtilityService</span> is injected everywhere so it's testable.</div>
-          <div class="rf-now"><span>Now</span> Pure time-overlap logic lives in <span class="mono">src/lib/utils</span>; nondeterministic UID generation remains injectable until its dedicated provider migration.</div>
-          <div class="rf-why">41 modules still import <span class="mono">UtilityModule</span> for UID generation; the atomic rename and removal belongs to the next slice.</div>
+          <div class="rf-was"><span>Was</span> <span class="mono">UtilityService</span> mixed UID generation and time-overlap behind generic dependency injection.</div>
+          <div class="rf-now"><span>Now</span> Pure time-overlap logic lives in <span class="mono">src/lib/utils</span>; UID generation lives in the narrow injectable <span class="mono">UidGeneratorService</span>.</div>
+          <div class="rf-why">Only provider modules that own UID-dependent services import <span class="mono">UidGeneratorModule</span>, while tests retain deterministic UID control.</div>
         </div>
         <div class="card reframe tick">
           <span class="reframe-tag reframe">refined guardrail</span>

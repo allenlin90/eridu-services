@@ -8,7 +8,7 @@ import { ShowTypeRepository } from './show-type.repository';
 import { SHOW_TYPE_UID_PREFIX } from './show-type-uid.util';
 
 import { BaseModelService } from '@/lib/services/base-model.service';
-import { UtilityService } from '@/utility/utility.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 @Injectable()
 export class ShowTypeService extends BaseModelService {
@@ -17,9 +17,9 @@ export class ShowTypeService extends BaseModelService {
 
   constructor(
     private readonly showTypeRepository: ShowTypeRepository,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   async createShowType(

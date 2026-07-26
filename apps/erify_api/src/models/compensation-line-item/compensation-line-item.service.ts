@@ -16,8 +16,8 @@ import { LineItemTargetResolver, type ResolvedLineItemTarget } from './line-item
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { UserService } from '@/models/user/user.service';
-import { UtilityService } from '@/utility/utility.service';
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
@@ -49,9 +49,9 @@ export class CompensationLineItemService extends BaseModelService {
     private readonly compensationLineItemRepository: CompensationLineItemRepository,
     private readonly targetResolver: LineItemTargetResolver,
     private readonly userService: UserService,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   @Transactional()

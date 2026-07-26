@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { AdminUserController } from './admin-user.controller';
 
 import { UserModule } from '@/models/user/user.module';
-import { UtilityModule } from '@/utility/utility.module';
 
 /**
  * Admin User Module
@@ -11,7 +10,7 @@ import { UtilityModule } from '@/utility/utility.module';
  * Manages admin endpoints for user management.
  */
 @Module({
-  imports: [UserModule, UtilityModule],
+  imports: [UserModule],
   controllers: [AdminUserController],
 })
 export class AdminUserModule {}

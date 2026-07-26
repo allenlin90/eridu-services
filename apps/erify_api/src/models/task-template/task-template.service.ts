@@ -20,8 +20,8 @@ import { TaskTemplateRepository } from './task-template.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { StudioService } from '@/models/studio/studio.service';
-import { UtilityService } from '@/utility/utility.service';
 
 @Injectable()
 export class TaskTemplateService extends BaseModelService {
@@ -31,9 +31,9 @@ export class TaskTemplateService extends BaseModelService {
   constructor(
     private readonly taskTemplateRepository: TaskTemplateRepository,
     private readonly studioService: StudioService,
-    protected readonly utilityService: UtilityService,
+    protected readonly uidGenerator: UidGeneratorService,
   ) {
-    super(utilityService);
+    super(uidGenerator);
   }
 
   generateTaskTemplateUid(): string {
