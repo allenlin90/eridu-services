@@ -47,7 +47,9 @@ Record a lightweight architecture snapshot in the review report or PR descriptio
 For `erify_api`, use the committed
 [`architecture-signals-baseline.json`](../../apps/erify_api/docs/architecture-signals-baseline.json)
 for the program-level trend and the most recent repository-health report or PR
-base for current drift.
+base for current drift. Reconcile changed evidence and status in
+[`REFACTORING_TARGETS.md`](../../apps/erify_api/docs/REFACTORING_TARGETS.md)
+instead of creating a parallel architecture backlog.
 
 If a signal is not mechanically measurable yet, record the sampled files and manual evidence. Do not invent precision.
 

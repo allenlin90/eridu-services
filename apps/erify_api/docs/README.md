@@ -12,6 +12,7 @@
 | ---------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
 | [System Architecture Overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) | ✅      | Root-level cross-app architecture overview                       |
 | [`erify_api` Architecture](./ARCHITECTURE.md)                                     | ✅      | Capability-first modular-monolith direction and persistence matrix |
+| [`erify_api` Refactoring Targets](./REFACTORING_TARGETS.md)                       | ✅      | Residual architecture targets, activation evidence, and exit criteria |
 | [Business Domain](../../../docs/domain/BUSINESS.md)                                | ✅      | Root-level business/domain model and product context             |
 | [RBAC Roles](../../../docs/features/rbac-roles.md)                                 | ✅      | Shipped role expansion — product decisions and acceptance record |
 

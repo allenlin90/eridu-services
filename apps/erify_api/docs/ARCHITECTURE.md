@@ -127,23 +127,18 @@ failures.
 
 ## Trigger-Gated Next Steps
 
-The remaining architecture directions are destination maps, not an autonomous
-refactoring backlog:
+The active
+[`REFACTORING_TARGETS.md`](./REFACTORING_TARGETS.md)
+register is authoritative for open architecture-target evidence, activation
+gates, destination boundaries, and exit criteria. RT-02, RT-03, RT-04, and
+RT-08 own the remaining show-operations, publishing, scoped-query/MCP, and
+advanced-architecture directions respectively.
 
-1. Phase 5 [item 18](../../../docs/roadmap/PHASE_5.md#18-show-lifecycle-state-machine)
-   activates a `ShowOperationsModule` only as the owning boundary for the
-   canonical lifecycle transition service. Move related code incrementally
-   behind a stable facade; do not run a standalone folder migration or create
-   another status writer.
-2. Decompose `PublishingService` only if item 18's schedule-publish integration
-   requires it, or measured query, lock, rollback, or maintainability risk
-   independently reaches the gate. Preserve the current facade and transaction
-   boundary until then.
-3. Introduce scoped show/task query providers and further narrow MCP composition
-   when the owning capability work needs them, not as speculative seams.
-4. Reconsider CQRS infrastructure, workers, read models, package extraction, or
-   database splits only after explicit coordination, scaling, or independent
-   deployment evidence exists.
+This heading remains a stable anchor for product documents, but it does not
+duplicate the open gates. Phase 5 item 18 is activation evidence under RT-02
+and potentially RT-03; update the register when that evidence or status changes.
+New feature and refactor work must record the applicable target IDs and trigger
+outcome.
 
 ## Phase 5 Handoff
 
@@ -155,6 +150,11 @@ starting the trigger-gated show-operations restructuring.
 After item 9, follow the roadmap's dependency order. Architecture changes travel
 with the product work that triggers them; there is no separate Phase 4–7
 architecture migration wave.
+
+This section is a product handoff, not the `erify_api` refactoring queue.
+Refactoring-only planning and status live in
+[`REFACTORING_TARGETS.md`](./REFACTORING_TARGETS.md); Phase 5 items appear there
+only when they activate an architecture target.
 
 ## Deferred Decisions And Known Gaps
 
@@ -169,6 +169,7 @@ architecture migration wave.
 ## Related References
 
 - [Cross-app architecture overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)
+- [`erify_api` refactoring target register](./REFACTORING_TARGETS.md)
 - [Phase 5 roadmap](../../../docs/roadmap/PHASE_5.md)
 - [Real-database integration guide](../test/README.md)
 - [`erify-api-capability-refactoring` skill](../../../.agents/skills/erify-api-capability-refactoring/SKILL.md)
