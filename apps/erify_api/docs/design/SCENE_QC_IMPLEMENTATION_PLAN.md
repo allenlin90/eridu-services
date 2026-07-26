@@ -109,7 +109,7 @@ The final cutover removes the old `features/scene-review` Task projection instea
 
 Add a required `Studio.timezone` IANA identifier as the canonical timezone for operational-date resolution. The generated migration first adds it as nullable, backfills every active Studio from an explicit reviewed Studio-to-timezone mapping, verifies no null or invalid values remain, and then makes it required. There is no silent browser, host-locale, or `UTC` fallback. The operational-day start hour remains the shared constant `06:00` in Stage 1.
 
-Prisma generates the base migration. UID fields are the only identifiers exposed through the API. PostgreSQL constraints that Prisma cannot express are added to that generated migration inside `-- CUSTOM SQL START/END` markers, following the repository migration policy.
+Prisma generates the base migration. UID fields are the only identifiers exposed through the API. UID prefixes use short, non-colliding tokens (`scmat`, `scmrev`, `scprof`, `scprev`, `scasgn`) rather than `scene_material_*`/`scene_profile_*`, since prefix matching has no delimiter and a longer family/subfamily pair (e.g. a profile revision UID) would otherwise also validate against its parent's prefix check. PostgreSQL constraints that Prisma cannot express are added to that generated migration inside `-- CUSTOM SQL START/END` markers, following the repository migration policy.
 
 ### 5.1 Scene Material
 
@@ -117,7 +117,7 @@ Prisma generates the base migration. UID fields are the only identifiers exposed
 
 | Field | Contract |
 | --- | --- |
-| `uid` | External `scene_material_*` UID |
+| `uid` | External `scmat_*` UID |
 | `clientId` | Required Client owner |
 | `name` | Operator-facing name; a partial unique index enforces one active, non-deleted material name per Client |
 | `status` | `ACTIVE` or `RETIRED` |
@@ -128,6 +128,7 @@ Prisma generates the base migration. UID fields are the only identifiers exposed
 
 | Field | Contract |
 | --- | --- |
+| `uid` | External `scmrev_*` UID |
 | `materialId`, `revision` | Unique monotonically increasing material revision |
 | `objectKey`, `fileUrl` | Durable R2 object identity and upload-time URL/locator |
 | `mimeType`, `fileSize` | Validated image metadata |
@@ -141,7 +142,7 @@ Replacing a material creates a revision. It never overwrites an earlier object r
 
 | Field | Contract |
 | --- | --- |
-| `uid` | External `scene_profile_*` UID |
+| `uid` | External `scprof_*` UID |
 | `clientId` | Required Client owner |
 | `name`, `description` | Operator-facing identity |
 | `status` | `ACTIVE` or `RETIRED` |
@@ -154,6 +155,7 @@ Replacing a material creates a revision. It never overwrites an earlier object r
 
 | Field | Contract |
 | --- | --- |
+| `uid` | External `scprev_*` UID |
 | `profileId`, `revision` | Unique monotonically increasing profile revision |
 | `profileName`, `profileDescription`, `sceneType` | Confirmation-safe display snapshots |
 | `createdById`, `createdAt` | Revision provenance |
@@ -177,6 +179,7 @@ The first release renders the applicable ordered references as a gallery. It doe
 
 | Field | Contract |
 | --- | --- |
+| `uid` | External `scasgn_*` UID |
 | `showId` | Show identity; a partial unique index permits only one non-deleted assignment per Show |
 | `profileId` | Active profile owned by the Show's Client |
 | `version` | Optimistic-lock token |
