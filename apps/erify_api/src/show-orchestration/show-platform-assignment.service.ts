@@ -5,7 +5,7 @@ import type { Show } from '@prisma/client';
 import { showWithAssignmentsInclude } from './schemas/show-orchestration.schema';
 
 import { HttpError } from '@/lib/errors/http-error.util';
-import { PlatformRepository } from '@/models/platform/platform.repository';
+import { PlatformService } from '@/models/platform/platform.service';
 import type { ShowInclude, ShowWithPayload } from '@/models/show/schemas/show.schema';
 import { ShowRepository } from '@/models/show/show.repository';
 import { ShowService } from '@/models/show/show.service';
@@ -31,7 +31,7 @@ export class ShowPlatformAssignmentService {
   constructor(
     private readonly showService: ShowService,
     private readonly showRepository: ShowRepository,
-    private readonly platformRepository: PlatformRepository,
+    private readonly platformService: PlatformService,
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly showPlatformService: ShowPlatformService,
   ) {}
@@ -41,7 +41,7 @@ export class ShowPlatformAssignmentService {
     const show = await this.showService.getShowById(uid);
     const showId = show.id;
 
-    const platforms = await this.platformRepository.findByUids(platformIds);
+    const platforms = await this.platformService.findActiveByUids(platformIds);
     const internalPlatformIds = platforms.map((p) => p.id);
     await this.showPlatformRepository.softDeleteByPlatformIds(showId, internalPlatformIds);
   }
@@ -72,7 +72,7 @@ export class ShowPlatformAssignmentService {
   ): Promise<void> {
     const platformUids = platforms.map((p) => p.platformId);
 
-    const foundPlatforms = await this.platformRepository.findByUids(platformUids);
+    const foundPlatforms = await this.platformService.findActiveByUids(platformUids);
     if (foundPlatforms.length !== platformUids.length) {
       const foundUids = foundPlatforms.map((p) => p.uid);
       const missingUids = platformUids.filter((uid) => !foundUids.includes(uid));

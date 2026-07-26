@@ -30,6 +30,13 @@
 
 ## Module Architecture
 
+The first consolidated backend capability is
+`apps/erify_api/src/capabilities/show-catalog/`. `ShowCatalogModule` owns the
+show type, status, standard, and platform providers and exports the four focused
+services; the repositories remain private. `ShowCatalogHttpModule` registers
+the colocated admin controllers only for the REST composition root, so MCP can
+reuse the providers without exposing the REST route surface.
+
 ```mermaid
 block-beta
     columns 1
@@ -120,7 +127,9 @@ Worker Processor ┘                         ├─ direct txHost
 Controllers, MCP tools, and worker processors translate transport-specific
 input/output. Business rules live in capability services/use cases. The
 selected persistence boundary remains private: direct `txHost` for shallow CRUD
-or a named provider for complex persistence.
+or a named provider for complex persistence. When runtimes expose different
+transport surfaces, the shared provider module must not register another
+runtime's controllers; use a sibling transport adapter module.
 
 ## Controller Scopes
 

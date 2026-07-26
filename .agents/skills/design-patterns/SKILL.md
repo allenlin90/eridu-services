@@ -64,6 +64,40 @@ Export capability services or intentional query APIs only. Persistence
 providers remain private. Do not add a thin service or module solely because a
 join table exists.
 
+For small reference-data capabilities, one provider module may own several
+focused services without merging the services themselves. Register transport
+adapters in a sibling transport module when the providers are shared with a
+runtime that must not expose those adapters. The show catalog is the reference:
+`ShowCatalogModule` exports only its four focused services, while
+`ShowCatalogHttpModule` registers the colocated admin controllers for the REST
+runtime. Importers use `PlatformService.findActiveByUids()` rather than
+importing `PlatformRepository`.
+
+### Consuming a Capability Module
+
+A capability exposes two doors. Import the one matching what you need:
+
+| Need | Import | Then |
+| --- | --- | --- |
+| The capability's data or behavior | the provider module (`ShowCatalogModule`) | inject an exported service in your constructor |
+| Its HTTP routes served by a runtime | the transport module (`ShowCatalogHttpModule`) | nothing else; the composition root only lists it |
+
+Rules:
+
+- Import a provider module only when a class in your module injects one of its
+  exported services. An import with no injection is dead wiring.
+- A transport module is imported by exactly one composition root — the runtime
+  that should serve those routes. Never import another capability's transport
+  module to reach its services; that is how a non-HTTP runtime inherits REST
+  routes.
+- Audience modules (`AdminModule` and siblings) compose only. They hold no
+  controllers or providers of their own.
+- New endpoints belong to the capability that owns the use case, registered in
+  that capability's transport module — not in a new audience-shaped module.
+- When the public API is too narrow, add a named service method rather than
+  exporting a repository. `PlatformService.findActiveByUids()` exists for
+  exactly this reason.
+
 ## When to Separate Join Table Modules
 
 Separate when: own lifecycle (create/restore/cascade), extra payload fields, referenced by multiple domains.

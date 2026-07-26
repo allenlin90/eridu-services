@@ -22,7 +22,7 @@ import { CorrectShowPlatformPerformanceDto } from './schemas/correct-show-platfo
 import { HttpError } from '@/lib/errors/http-error.util';
 import type { SchedulePublishImpactAuditTarget, SchedulePublishImpactQueryFilters } from '@/models/audit/audit.repository';
 import { AuditService } from '@/models/audit/audit.service';
-import { PlatformRepository } from '@/models/platform/platform.repository';
+import { PlatformService } from '@/models/platform/platform.service';
 import { PublishRunService } from '@/models/publish-run/publish-run.service';
 import { ScheduleService } from '@/models/schedule/schedule.service';
 import { ScheduleConflictService } from '@/models/schedule-conflict/schedule-conflict.service';
@@ -75,7 +75,7 @@ export class StudioShowManagementService {
     private readonly scheduleService: ScheduleService,
     private readonly showService: ShowService,
     private readonly showRepository: ShowRepository,
-    private readonly platformRepository: PlatformRepository,
+    private readonly platformService: PlatformService,
     private readonly showPlatformRepository: ShowPlatformRepository,
     private readonly showPlatformService: ShowPlatformService,
     private readonly showOrchestrationService: ShowOrchestrationService,
@@ -1203,7 +1203,7 @@ export class StudioShowManagementService {
   ): Promise<void> {
     const uniquePlatformUids = [...new Set(platformUids)];
     const foundPlatforms = uniquePlatformUids.length > 0
-      ? await this.platformRepository.findByUids(uniquePlatformUids)
+      ? await this.platformService.findActiveByUids(uniquePlatformUids)
       : [];
 
     if (foundPlatforms.length !== uniquePlatformUids.length) {

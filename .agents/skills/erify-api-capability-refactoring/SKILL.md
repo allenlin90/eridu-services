@@ -374,10 +374,14 @@ A module's `exports` array is its public API.
 - Do not export repositories as a convenience for orchestration callers.
 - When another capability needs an operation, add a narrow public method or a
   capability-owned persistence operation.
+- Keep transport registration separate from reusable providers when runtime
+  surfaces differ. A REST composition root may import a capability-owned HTTP
+  adapter module; MCP or workers import the provider/query module only.
 - Avoid importing an entire write-heavy feature into a read-only runtime.
 
 For MCP specifically, expose narrow `TaskQueries` and `ShowQueries` providers instead
-of importing full task and orchestration modules.
+of importing full task and orchestration modules. Until that narrowing lands,
+its module graph must not route-register REST controllers.
 
 ## Prisma and Type Boundaries
 
@@ -438,6 +442,8 @@ For refactoring:
    - raw SQL mappings;
    - multi-row synchronization.
 3. Add a small number of Nest application tests that boot representative module graphs.
+   For non-HTTP runtimes, assert the registered REST route set is empty unless
+   the runtime explicitly owns documented HTTP controller routes.
 4. Keep controller contract tests for validation and serialization.
 5. Test pure policies without Nest testing modules.
 
@@ -536,6 +542,7 @@ For each refactoring PR:
 - [ ] Optimistic locking behavior is preserved.
 - [ ] Audit behavior is preserved.
 - [ ] HTTP concerns do not leak into generic persistence code.
+- [ ] A non-HTTP runtime does not inherit REST controllers or their route surface through a shared provider module.
 
 ### Testing and operations
 

@@ -174,14 +174,23 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 | ID | Task | Size | Gate | Status |
 | --- | --- | --- | --- | --- |
-| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | 🔲 |
+| T13 | Phase 3: consolidate the show catalog | L | T11 · T12 pass | ✅ |
 
 ### T13 — Phase 3: consolidate the show catalog
 
-- **Scope**: group show type, status, standard, and platform reference data under one `ShowCatalogModule`; remove one-Nest-module-per-table registration where no independent public interface exists; move admin catalog controllers next to the capability with routes and guards unchanged; export only the services or queries other capabilities use.
+- **Scope**: group show type, status, standard, and platform reference data under one show-catalog capability boundary; remove one-Nest-module-per-table registration where no independent public interface exists; move admin catalog controllers next to the capability with routes and guards unchanged; export only the services or queries other capabilities use. Keep reusable providers in `ShowCatalogModule` and REST controller registration in `ShowCatalogHttpModule` so MCP does not inherit admin routes.
 - **Gate**: T11 and T12 pass.
 - **Skills**: `backend-controller-pattern-nestjs`, `design-patterns`.
 - **Knowledge sync**: `design-patterns`, `backend-controller-pattern-nestjs`, `ARCHITECTURE_OVERVIEW.md`.
+- **Result**: `ShowCatalogModule` now owns the four reference-data services and
+  private repositories; `ShowCatalogHttpModule` registers the four colocated
+  admin controllers only for REST. Together they replace eight table/audience
+  wrapper modules while preserving the route prefixes and leaving the MCP Nest
+  application-controller route set empty. `PlatformRepository` is private; workflows use
+  `PlatformService.findActiveByUids()`. Against source snapshot `f677b627`,
+  static signals moved from 90 to 84 Nest modules, 293 to 270 module edges, and
+  74 to 69 modules at or below 20 lines, while the MCP closure moved from 24 to
+  22 reachable modules, with zero cycles.
 
 ## Not in scope now
 
