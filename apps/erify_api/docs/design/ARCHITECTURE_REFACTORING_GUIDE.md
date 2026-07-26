@@ -206,10 +206,14 @@ Show changes frequently co-change across `studios/studio-show`, `show-orchestrat
 
 [`mcp-app.module.ts`](../../src/mcp/mcp-app.module.ts) imports `TaskModule` and the full `TaskOrchestrationModule`. Static reachability includes fact extraction, shift alignment, audit, task-template, membership, user, and most show-model modules. The tools are read-only.
 
-[`mcp-tool.service.ts`](../../src/mcp/mcp-tool.service.ts) also has two specific read concerns:
+At the source snapshot,
+[`mcp-tool.service.ts`](../../src/mcp/mcp-tool.service.ts) had two specific read
+concerns:
 
-- `limit` has a minimum and default but no hard maximum;
-- `getTask()` first performs a scoped read and then a second broader relation read.
+- `limit` had a minimum and default but no hard maximum; T3 caps both
+  studio-wide list tools at 100;
+- `getTask()` performed, and still performs, a scoped read followed by a second
+  broader relation read.
 
 **Direction**: introduce narrow `TaskQueries` and `ShowQueries` providers that perform scoped, DTO-shaped reads in one query. Import only those providers into MCP. This implements command/query separation without a bus and advances the existing [Backend Runtime Boundaries](../../../../docs/ideation/backend-runtime-boundaries.md) direction.
 
@@ -219,7 +223,8 @@ Architecture cleanup does not automatically improve request latency. Moving file
 
 Concrete risks to measure or constrain include:
 
-- MCP list limits have no hard maximum.
+- MCP list limits previously had no hard maximum; Phase 1 now caps both
+  studio-wide list tools at 100.
 - Bulk schedule schemas allow 1,000 items while the services intentionally execute per-item writes sequentially for partial success.
 - Schedule publishing performs multiple per-show reads and writes inside a transaction that may hold an advisory lock for up to 30 seconds.
 - Some service-layer code constructs Prisma filters or orderings, so query ownership is inconsistent.

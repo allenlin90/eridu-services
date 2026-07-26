@@ -30,7 +30,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | --- | --- | --- | --- | --- |
 | T1 | Phase 0a: isolated real-DB safety harness | L | now (blocks Wave 1–2) | ✅ |
 | T2 | Phase 0b (light): record signals baseline | S | now, parallel | ✅ |
-| T3 | MCP list hard maximums | S | now | 🔲 |
+| T3 | MCP list hard maximums | S | now | ✅ |
 | T4 | Remove dead/duplicate module wiring | S | now | ✅ |
 | T5 | Remove empty OpenAPI dynamic module | S | now | 🔲 |
 | T6 | Type the `StudioGuard` membership value | S | now | 🔲 |
@@ -66,6 +66,9 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 - **Scope**: add a hard `.max()` ceiling to the MCP `limit` parameter in `mcp-tool.service.ts` (today it has a minimum and default but no maximum). Independent live-surface fix — do not wait for T1.
 - **Gate**: none — verify with the existing MCP specs.
 - **Skills**: `service-pattern-nestjs`.
+- **Result**: both studio-wide list tools reject `limit > 100` at the shared
+  Zod tool/service boundary; focused specs prove rejection occurs before any
+  query service is called.
 
 ### T4 — Remove dead/duplicate module wiring
 
