@@ -1,6 +1,6 @@
 # PRD: Scene Quality Control
 
-> **Status**: Product requirements accepted; implementation plan ready — roadmap assignment remains
+> **Status**: Product requirements accepted; implementation plan ready — assigned to [Phase 5 item 23](../roadmap/PHASE_5.md#23-scene-qc-replacement)
 > **Workstream**: Replace the read-only Scene Review workspace with a persisted, Show-level Scene QC workflow
 > **Related**: [implementation plan](../../apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md), [Phase 5 Scene Review](../roadmap/PHASE_5.md#22-scene-review-workspace), [current frontend workflow](../../apps/erify_studios/docs/SCENE_REVIEW.md), [task and operations review](../workflows/task-and-operations-review.md), [material management ideation](../ideation/material-management.md), [studio settings ideation](../ideation/studio-config-settings.md)
 
