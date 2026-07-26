@@ -15,14 +15,14 @@ import { AdminTaskTemplateModule } from './task-templates/admin-task-template.mo
 import { AdminTaskModule } from './tasks/admin-task.module';
 import { AdminUserModule } from './users/admin-user.module';
 
-import { ShowCatalogModule } from '@/capabilities/show-catalog/show-catalog.module';
+import { ShowCatalogHttpModule } from '@/capabilities/show-catalog/show-catalog-http.module';
 
 @Module({
   imports: [
     AdminUserModule,
     AdminClientModule,
     AdminCreatorModule,
-    ShowCatalogModule,
+    ShowCatalogHttpModule,
     AdminShowModule,
     AdminShowCreatorModule,
     AdminShowPlatformModule,

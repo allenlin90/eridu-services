@@ -127,10 +127,11 @@ Guard order: Throttler → JwtAuth → Admin → Studio (role-based)
       └── index.ts
 ```
 
-This is the destination shape for new or actively consolidated work. The
-`ShowStatus` direct-persistence reference remains under
-`apps/erify_api/src/models/show-status/` until T13 consolidates the show catalog;
-do not move it independently.
+This is the destination shape for new or actively consolidated work. The show
+catalog is the first reference: providers live in `ShowCatalogModule`, while
+`ShowCatalogHttpModule` registers the colocated admin controllers only for the
+REST runtime. A provider module reused by MCP or a worker must not
+route-register REST controllers.
 
 ### Frontend (React)
 ```

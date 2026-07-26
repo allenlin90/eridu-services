@@ -1,6 +1,6 @@
 # `erify_api` Architecture Refactoring Guide
 
-> **Status**: Accepted direction with the scheduled foundation implemented through Phase 3. The `ShowStatus` pilot passed, T12 reconciled the persistence doctrine, and `ShowCatalogModule` is the first consolidated capability. Later phases remain trigger-gated.
+> **Status**: Accepted direction with the scheduled foundation implemented through Phase 3. The `ShowStatus` pilot passed, T12 reconciled the persistence doctrine, and the show catalog is the first consolidated capability boundary. Later phases remain trigger-gated.
 > **Source snapshot**: `f677b627` (original analysis baseline); implementation status is tracked in [`ARCHITECTURE_REFACTORING_ROADMAP.md`](./ARCHITECTURE_REFACTORING_ROADMAP.md)
 > **Scope**: Structure, module ownership, service and persistence boundaries, DDD, CQRS, runtime composition, testing, and performance guardrails
 > **Visual companion**: [`architecture-refactoring-visual.html`](./architecture-refactoring-visual.html) — a diagrammed walkthrough of the problem, the NestJS-vs-Rails philosophy, Nest conventions, the phased plan, and the risks. Open it in a browser.
@@ -200,7 +200,7 @@ Keep one stable public facade when it improves locality for callers. The task or
 
 Show changes frequently co-change across `studios/studio-show`, `show-orchestration`, and `models/show*`. Recent history also shows repeated co-change between schedule planning and studio show management. This is a locality problem: business rules are placed according to who calls them and which table they touch rather than who owns the use case.
 
-**Direction**: colocate HTTP controllers, application services, policies, and private persistence under the capability that changes together. Keep route prefixes and guards unchanged.
+**Direction**: colocate HTTP controllers, application services, policies, and private persistence under the capability that changes together. Keep route prefixes and guards unchanged. When runtimes expose different transport surfaces, register controllers in a capability-owned HTTP adapter module rather than the reusable provider module.
 
 #### 6. Runtime Composition Is Broader Than The Exposed MCP Surface
 
@@ -559,19 +559,21 @@ boundary.
 
 ### Phase 3 — Consolidate The Show Catalog Capability
 
-If the pilot succeeds, group show type, status, standard, and platform reference data under one `ShowCatalogModule`. Keep focused service names if callers benefit from them, but remove one-Nest-module-per-table registration where no independent public interface exists.
+If the pilot succeeds, group show type, status, standard, and platform reference data under one show-catalog capability boundary. Keep focused service names if callers benefit from them, but remove one-Nest-module-per-table registration where no independent public interface exists.
 
-Move admin catalog controllers next to the capability while preserving routes and guards. The module should export only the services or queries used by other capabilities.
+Move admin catalog controllers next to the capability while preserving routes and guards. `ShowCatalogModule` should export only the services or queries used by other capabilities; a sibling `ShowCatalogHttpModule` should register the controllers for the REST composition root so non-HTTP runtimes do not inherit them.
 
 **Current structure.** `ShowCatalogModule` owns show type, status, standard,
-and platform registration plus their four admin controllers.
-It replaced eight table/audience wrapper modules without changing controller
-prefixes. The module exports only the four focused services; platform UID
-lookups now cross the boundary through `PlatformService`, leaving
-`PlatformRepository` private. Static signals improved from 90 to 83 Nest
-modules, 293 to 269 local module edges, and 74 to 68 modules at or below 20
-lines. The MCP closure decreased from 24 to 22 reachable modules, with zero
-cycles before and after.
+and platform provider registration. `ShowCatalogHttpModule` registers their
+four colocated admin controllers only for REST. Together they replaced eight
+table/audience wrapper modules without changing controller prefixes. The
+provider module exports only the four focused services; platform UID lookups
+now cross the boundary through `PlatformService`, leaving `PlatformRepository`
+private. Against source snapshot `f677b627`, static signals improved from 90 to
+84 Nest modules, 293 to 270 local module edges, and 74 to 69 modules at or below
+20 lines. The MCP closure decreased from 24 to 22 reachable modules, its
+application-controller route set remains empty, and module cycles remain at
+zero.
 
 ### Phase 4 — Trigger-Gated Show Operations
 
@@ -649,6 +651,7 @@ Each implementation PR updates only the knowledge artifacts whose asserted patte
 - No new module cycle or `forwardRef`.
 - A capability exports a deliberate public API, not repositories or internal processors.
 - Transport adapters do not own business rules.
+- Shared provider modules do not register REST controllers into MCP or worker runtimes.
 - New TypeScript interfaces correspond to real adapters, not speculative seams.
 - The path from a controller/tool to the owning rule becomes shorter.
 
@@ -695,7 +698,8 @@ The recommended answers are included so discussion can focus on the real tradeof
 3. **Should all repositories be removed?** Recommended: no. Retain deep persistence modules and make them private.
 4. **Should `@nestjs/cqrs` be introduced during this refactor?** Recommended: no. First implement named write use cases and query providers with direct calls.
 5. **Which pilots proved the direction?** `ShowStatus` proved selective
-   repository removal; `ShowCatalogModule` proved capability consolidation.
+   repository removal; the show catalog provider/HTTP boundary proved capability
+   consolidation without leaking REST routes into MCP.
    Show-operations remains gated by roadmap item 18.
 6. **Should performance be a claimed outcome?** Recommended: only for changes with before/after query, payload, lock-duration, or latency evidence. Structural simplicity is a separate outcome.
 

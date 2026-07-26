@@ -345,7 +345,7 @@ describe('showOrchestrationService', () => {
       showCreatorRepository.findMany.mockResolvedValue([]);
       showCreatorRepository.createAssignment.mockResolvedValue({} as any);
       showCreatorService.generateShowCreatorUid.mockReturnValue('show_mc_new');
-      platformService.findActiveByUids.mockResolvedValue([mockPlatform] as any);
+      platformService.findActiveByUids.mockResolvedValue([mockPlatform]);
       showPlatformRepository.findMany.mockResolvedValue([]);
       showPlatformRepository.createAssignment.mockResolvedValue({} as any);
       showPlatformService.generateShowPlatformUid.mockReturnValue('show_plt_new');
@@ -509,7 +509,7 @@ describe('showOrchestrationService', () => {
       const mockPlt2 = { id: BigInt(2), uid: 'plt_2' };
 
       showService.getShowById.mockResolvedValue(mockShow);
-      platformService.findActiveByUids.mockResolvedValue([mockPlt1, mockPlt2] as any);
+      platformService.findActiveByUids.mockResolvedValue([mockPlt1, mockPlt2]);
       showPlatformRepository.softDeleteByPlatformIds.mockResolvedValue(undefined as any);
 
       await service.removePlatformsFromShow(uid, platformIds);
@@ -1117,7 +1117,7 @@ describe('showOrchestrationService', () => {
 
       showService.getShowById.mockResolvedValue(mockShow);
       showPlatformService.generateShowPlatformUid.mockReturnValue('show_plt_new');
-      platformService.findActiveByUids.mockResolvedValue([mockPlatform] as any);
+      platformService.findActiveByUids.mockResolvedValue([mockPlatform]);
       showPlatformRepository.findMany.mockResolvedValue([]);
       showPlatformRepository.createAssignment.mockResolvedValue({} as any);
       showRepository.findByUid.mockResolvedValue(mockShow);

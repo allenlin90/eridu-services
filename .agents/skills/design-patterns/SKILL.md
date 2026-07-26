@@ -64,12 +64,14 @@ Export capability services or intentional query APIs only. Persistence
 providers remain private. Do not add a thin service or module solely because a
 join table exists.
 
-For small reference-data capabilities, one module may own several focused
-services and their transport adapters without merging the services themselves.
-`ShowCatalogModule` is the reference: it owns show type, status, standard, and
-platform registration, colocates their admin controllers, and exports only the
-four focused services. Importers use `PlatformService.findActiveByUids()` rather
-than importing `PlatformRepository`.
+For small reference-data capabilities, one provider module may own several
+focused services without merging the services themselves. Register transport
+adapters in a sibling transport module when the providers are shared with a
+runtime that must not expose those adapters. The show catalog is the reference:
+`ShowCatalogModule` exports only its four focused services, while
+`ShowCatalogHttpModule` registers the colocated admin controllers for the REST
+runtime. Importers use `PlatformService.findActiveByUids()` rather than
+importing `PlatformRepository`.
 
 ## When to Separate Join Table Modules
 

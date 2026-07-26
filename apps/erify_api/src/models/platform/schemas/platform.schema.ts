@@ -1,3 +1,4 @@
+import type { Platform } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
@@ -119,10 +120,7 @@ export type UpdatePlatformPayload = {
   metadata?: Record<string, any>;
 };
 
-export type PlatformRecord = {
-  id: bigint;
-  uid: string;
-};
+export type PlatformRecord = Pick<Platform, 'id' | 'uid'>;
 
 /**
  * Type-safe filter options for platforms.

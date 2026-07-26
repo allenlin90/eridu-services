@@ -5,6 +5,7 @@ import { AdminShowStandardController } from './http/admin-show-standard.controll
 import { AdminShowStatusController } from './http/admin-show-status.controller';
 import { AdminShowTypeController } from './http/admin-show-type.controller';
 import { ShowCatalogModule } from './show-catalog.module';
+import { ShowCatalogHttpModule } from './show-catalog-http.module';
 
 import { PlatformRepository } from '@/models/platform/platform.repository';
 import { PlatformService } from '@/models/platform/platform.service';
@@ -26,6 +27,29 @@ describe('showCatalogModule', () => {
       ShowTypeService,
     ]);
     expect(exports).not.toContain(PlatformRepository);
+  });
+
+  it('keeps HTTP controllers out of the reusable provider module', () => {
+    const controllers = (Reflect.getMetadata(
+      MODULE_METADATA.CONTROLLERS,
+      ShowCatalogModule,
+    ) ?? []) as unknown[];
+
+    expect(controllers).toEqual([]);
+  });
+
+  it('registers the admin controllers only in the HTTP adapter module', () => {
+    const controllers = Reflect.getMetadata(
+      MODULE_METADATA.CONTROLLERS,
+      ShowCatalogHttpModule,
+    ) as unknown[];
+
+    expect(controllers).toEqual([
+      AdminPlatformController,
+      AdminShowStandardController,
+      AdminShowStatusController,
+      AdminShowTypeController,
+    ]);
   });
 
   it.each([

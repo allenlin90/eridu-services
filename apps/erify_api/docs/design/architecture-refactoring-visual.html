@@ -717,9 +717,10 @@
       </div>
 
       <div class="card tick reveal" style="animation-delay:.05s">
-        <pre class="tree"><span class="cmt"># everything that changes together lives in one module</span>
+        <pre class="tree"><span class="cmt"># everything that changes together lives in one capability boundary</span>
 show-operations/
-├─ <span class="pub">show-operations.module.ts</span>      <span class="cmt"># exports ONLY the two public providers ↓</span>
+├─ <span class="pub">show-operations.module.ts</span>      <span class="cmt"># reusable providers; exports ONLY the two APIs ↓</span>
+├─ <span class="priv">show-operations-http.module.ts</span> <span class="cmt"># REST-only controller registration</span>
 ├─ <span class="pub">show-operations.service.ts</span>     <span class="cmt"># public WRITE facade — thin, delegates</span>
 ├─ <span class="pub">show-queries.service.ts</span>        <span class="cmt"># public READ api — DTO projections</span>
 ├─ internal/
@@ -737,7 +738,7 @@ show-operations/
    └─ <span class="priv">show.schema.ts</span>               <span class="cmt"># Zod contracts + payload types (unchanged)</span></pre>
       </div>
 
-      <p class="read path-note" style="margin-top:1.2rem">The module exports exactly two things — the only surface other capabilities and runtimes may touch:</p>
+      <p class="read path-note" style="margin-top:1.2rem">The provider module exports exactly two things — the only surface other capabilities and runtimes may touch. The HTTP adapter module registers controllers only for REST:</p>
       <div class="card tick reveal" style="animation-delay:.08s; margin-top:.6rem">
         <pre class="code"><span class="cmt">// write side — task-oriented methods, never CRUD verbs</span>
 class ShowOperationsService {
@@ -992,7 +993,7 @@ class ShowQueries {
               <tr><td class="ph">0b</td><td>Signals baseline recorded (perf instrumentation deferred to pre-Phase-5)</td><td class="eff">~2–3 days</td><td class="when-now">now · parallel</td></tr>
               <tr><td class="ph">1</td><td>Correctness + cleanup: MCP max, dup import, OpenAPI, StudioGuard, restore/delegate, UtilityService</td><td class="eff">~1–1.5 wk · 4–6 PRs</td><td class="when-now">now (indep.) / after 0a (gated)</td></tr>
               <tr><td class="ph">2</td><td>ShowStatus pilot + persistence-matrix acceptance (all doctrine surfaces reconciled)</td><td class="eff">~1 wk · 1–2 PRs</td><td class="when-now">done</td></tr>
-              <tr><td class="ph">3</td><td>Consolidate show catalog (4 reference models) into one module</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-now">done</td></tr>
+              <tr><td class="ph">3</td><td>Consolidate show catalog (4 reference models) behind provider + HTTP adapter modules</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-now">done</td></tr>
               <tr><td class="ph">4</td><td>Dissolve <span class="mono">studio-show-management</span> into show-operations, 4 slices</td><td class="eff">~3–5 wk · 4–6 PRs</td><td class="when-gate">on roadmap item 18</td></tr>
               <tr><td class="ph">5</td><td>Decompose <span class="mono">publishing.service</span>, atomic boundary preserved</td><td class="eff">~2–4 wk · 3–5 PRs</td><td class="when-gate">on item 18 publish / perf evidence</td></tr>
               <tr><td class="ph">6</td><td>ShowQueries/TaskQueries providers; MCP imports read-only</td><td class="eff">~1–2 wk · 2–3 PRs</td><td class="when-later">with / after 4</td></tr>
