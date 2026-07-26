@@ -315,6 +315,48 @@ show-operations/
 
 For a small capability, keep files flat. Do not create `application/`, `domain/`, `infrastructure/`, `commands/`, and `queries/` folders when each would contain one file.
 
+### How Capability Boundaries Are Chosen
+
+Capability boundaries are discovered, not foreseen. Nobody can name the right
+set of capabilities before writing the code, and attempting it produces worse
+boundaries than starting coarse.
+
+**Prefer being wrong in the cheaper direction.** Splitting a module later is a
+small diff; merging modules later is a large one, because every importer has
+already named the thing it imports. T13 collapsed eight modules into one and
+touched 43 files for that reason. Start with few, coarse modules and split when
+evidence arrives.
+
+This is why one Nest module per database table is not a neutral default. It
+looks like deferring the decision, but it commits to the database's shape as the
+capability boundary — the earliest and least informed choice available.
+
+**Signals that a boundary has actually formed:**
+
+- **Co-change** — files that keep appearing together in the same commit belong
+  together. Readable from `git log` without guessing.
+- **Language** — when the team says "the catalog" or "publishing" without
+  qualifying it, a context has formed.
+- **Import direction** — one-way imports are a layer; mutual imports mean one
+  thing modelled as two.
+- **The `exports` test** — if the module's public API cannot be stated in a
+  sentence, it is not a boundary yet. Leave it merged.
+- **Constructor width** — a service with roughly eight or more collaborators
+  usually signals a missing capability, not a large service.
+
+**Refactor on trigger, not on schedule.** A capability moves when a change is
+already touching it and a signal fires, which is why Phases 4–7 are
+trigger-gated rather than sequenced. Some of them may never activate; that is a
+valid outcome, not unfinished work.
+
+**One boundary is worth having from day one: transport separate from
+providers.** Domain boundaries are discovered, but runtime boundaries are known
+in advance — the entrypoints that will exist are knowable before the domain is.
+Keeping controller registration in a sibling transport module costs nothing
+upfront and is expensive to retrofit; see Phase 3's `ShowCatalogHttpModule`
+split, which was added after the shared provider module put admin routes inside
+the MCP runtime graph.
+
 ### Candidate Bounded Contexts
 
 These are working boundaries to validate through language, ownership, and co-change—not final microservice boundaries.
