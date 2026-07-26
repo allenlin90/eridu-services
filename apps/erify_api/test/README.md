@@ -25,9 +25,10 @@ ERIFY_API_TEST_DATABASE_URL=postgresql://erify_test:erify_test@localhost:55432/e
   pnpm -C apps/erify_api test:integration --bulk-schedule-measurement
 ```
 
-The measurement reports create/update elapsed time, representative request
-size, and ordered partial-success counts. It is opt-in so the 2,000 sequential
-item operations do not slow the normal safety gate.
+The measurement reports service-layer create/update elapsed time, computed
+synthetic wire-payload size, and ordered partial-success counts. It excludes
+HTTP body parsing and request-pipe validation. It is opt-in so the 2,000
+sequential item operations do not slow the normal safety gate.
 
 Stop the database:
 

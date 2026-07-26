@@ -165,11 +165,12 @@ lifecycle:
 - **Gate**: T1 (isolated safety harness).
 - **Skills**: `database-patterns`, `schedule-continuity-workflow`.
 - **Result**: PR [#336](https://github.com/allenlin90/eridu-services/pull/336)
-  retains the 1,000-item maximum and sequential partial-success contract. Three
-  isolated PostgreSQL runs with a forced failure at item 500 completed create
-  in 2.31–4.78 seconds and update in 1.82–3.85 seconds; every run returned 999
-  successes and committed items after the failure. Representative request
-  bodies were about 325 KB for create and 131 KB for update, so
+  retains the 1,000-item maximum and sequential partial-success contract. Five
+  isolated PostgreSQL service-layer runs with a forced failure at item 500
+  completed create in 2.28–4.78 seconds and update in 1.82–3.85 seconds; every
+  run returned 999 successes and committed items after the failure. These
+  timings exclude HTTP body parsing and request-pipe validation. Computed
+  synthetic wire payloads were about 325 KB for create and 131 KB for update, so
   `BODY_PARSER_LIMIT` remains an independent byte-size gate: the 100 KB
   application default cannot carry this representative maximum, while a 2 MB
   configuration would. The opt-in measurement is reproducible through the

@@ -3,10 +3,10 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const testDatabaseUrl = process.env.ERIFY_API_TEST_DATABASE_URL;
+const userArguments = process.argv.slice(2);
 const bulkScheduleMeasurement
-  = process.argv.includes('--bulk-schedule-measurement');
-const unknownArguments = process.argv
-  .slice(2)
+  = userArguments.includes('--bulk-schedule-measurement');
+const unknownArguments = userArguments
   .filter((argument) => argument !== '--bulk-schedule-measurement');
 
 if (unknownArguments.length > 0) {

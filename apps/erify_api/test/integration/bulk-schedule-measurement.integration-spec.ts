@@ -100,7 +100,7 @@ describeMeasurement('bulk schedule maximum measurement', () => {
   });
 
   it(
-    'measures the 1,000-item create/update paths and preserves ordered partial success',
+    'measures the 1,000-item service paths and preserves ordered partial success',
     async () => {
       const createWirePayload = {
         schedules: Array.from({ length: BATCH_SIZE }, (_, index) => ({
@@ -140,6 +140,7 @@ describeMeasurement('bulk schedule maximum measurement', () => {
       expect(createResult.results[FAILURE_INDEX]).toMatchObject({
         index: FAILURE_INDEX,
         success: false,
+        error_code: 'UNKNOWN_ERROR',
       });
       expect(createResult.results[FAILURE_INDEX + 1]).toMatchObject({
         index: FAILURE_INDEX + 1,
@@ -199,11 +200,13 @@ describeMeasurement('bulk schedule maximum measurement', () => {
         `BULK_SCHEDULE_MEASUREMENT ${JSON.stringify({
           batch_size: BATCH_SIZE,
           failure_index: FAILURE_INDEX,
+          measurement_scope: 'service_layer',
+          excludes: ['http_body_parsing', 'request_pipe_validation'],
           create: {
             duration_ms: createDurationMs,
             successful: createResult.successful,
             failed: createResult.failed,
-            request_bytes: Buffer.byteLength(
+            synthetic_wire_payload_bytes: Buffer.byteLength(
               JSON.stringify(createWirePayload),
             ),
           },
@@ -211,7 +214,7 @@ describeMeasurement('bulk schedule maximum measurement', () => {
             duration_ms: updateDurationMs,
             successful: updateResult.successful,
             failed: updateResult.failed,
-            request_bytes: Buffer.byteLength(
+            synthetic_wire_payload_bytes: Buffer.byteLength(
               JSON.stringify(updateWirePayload),
             ),
           },
