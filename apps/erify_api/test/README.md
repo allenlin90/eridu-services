@@ -18,6 +18,18 @@ ERIFY_API_TEST_DATABASE_URL=postgresql://erify_test:erify_test@localhost:55432/e
   pnpm -C apps/erify_api test:integration
 ```
 
+Run the opt-in 1,000-item bulk schedule characterization separately:
+
+```bash
+ERIFY_API_TEST_DATABASE_URL=postgresql://erify_test:erify_test@localhost:55432/erify_api_test \
+  pnpm -C apps/erify_api test:integration --bulk-schedule-measurement
+```
+
+The measurement reports service-layer create/update elapsed time, computed
+synthetic wire-payload size, and ordered partial-success counts. It excludes
+HTTP body parsing and request-pipe validation. It is opt-in so the 2,000
+sequential item operations do not slow the normal safety gate.
+
 Stop the database:
 
 ```bash
@@ -40,3 +52,5 @@ non-local host, or a URL equal to the existing `DATABASE_URL`.
 - a late schedule-publish failure rolls back the publish run and status writes;
 - the HTTP application composition root boots with all child modules;
 - the MCP runtime module graph boots with real Prisma and CLS providers.
+- an opt-in maximum-size schedule bulk measurement verifies that a failed
+  middle item does not stop later create/update items.

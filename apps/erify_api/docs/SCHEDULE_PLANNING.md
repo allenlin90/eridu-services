@@ -89,6 +89,12 @@ Immutable version history, created automatically on every update. Snapshot reaso
 | `POST` | `/admin/schedules/bulk` | Bulk create (one per client) |
 | `PATCH` | `/admin/schedules/bulk` | Bulk update |
 
+Bulk create and update accept at most 1,000 schedules. Items run sequentially
+and return ordered per-item results; one failure does not roll back successful
+items before it or prevent later items from running. The item maximum does not
+override the configured `BODY_PARSER_LIMIT`, so payloads with large plan
+documents may reach the byte-size limit with fewer items.
+
 ### Google Sheets Integration
 
 | Method | Endpoint | Purpose |
