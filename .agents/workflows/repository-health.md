@@ -45,7 +45,7 @@ Record a lightweight architecture snapshot in the review report or PR descriptio
 - public service signatures that expose ORM query types.
 
 For `erify_api`, use the committed
-[`architecture-signals-baseline.json`](../../apps/erify_api/docs/design/architecture-signals-baseline.json)
+[`architecture-signals-baseline.json`](../../apps/erify_api/docs/architecture-signals-baseline.json)
 for the program-level trend and the most recent repository-health report or PR
 base for current drift.
 
