@@ -1,5 +1,6 @@
 {
   "snapshot_commit": "f677b627d9e93574db069594ff78aec699d52a8e",
+  "purpose": "Source comparison for the completed erify_api capability-refactoring foundation and future architecture reviews.",
   "method": {
     "files": "apps/erify_api/src/**/*.ts",
     "lines": "physical lines including blanks and comments",

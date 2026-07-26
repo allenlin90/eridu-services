@@ -55,7 +55,7 @@ protects the workflow's invariants.
 
 Snapshot reviewed: `fe2124364809776a345b8e1cb687a9e90f0fbbca`.
 
-The existing architecture guide correctly identifies the main structural problem:
+The current architecture assessment identifies the main structural problem:
 
 - `models/` largely mirrors database tables.
 - audience folders such as `admin/`, `studios/`, and `me/` organize transport callers;
@@ -504,7 +504,7 @@ For each refactoring PR:
    ```
 
    Compare the output with the committed
-   [source baseline](../../../apps/erify_api/docs/design/architecture-signals-baseline.json).
+   [source baseline](../../../apps/erify_api/docs/architecture-signals-baseline.json).
    Record relevant changes such as module count, graph edges, exported repositories,
    utility-module imports, and MCP closure.
 
@@ -554,24 +554,28 @@ For each refactoring PR:
 
 ## Migration Priorities
 
-This is a destination map and dependency order, not a scheduled queue. Each step activates only on its trigger; do not start a later step ahead of its gate. [`ARCHITECTURE_REFACTORING_ROADMAP.md`](../../../apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_ROADMAP.md) is the authoritative task and gate list.
+This is a destination map and dependency order, not a scheduled queue. Each
+step activates only on its trigger; do not start a later step ahead of its gate.
+The current decisions live in
+[`ARCHITECTURE.md`](../../../apps/erify_api/docs/ARCHITECTURE.md), while product
+sequencing lives in [`PHASE_5.md`](../../../docs/roadmap/PHASE_5.md).
 
-1. Preserve the corrected transaction-aware `BaseRepository` behavior (roadmap T9).
+1. Preserve the corrected transaction-aware `BaseRepository` behavior.
 2. Stop adding table-shaped modules and pass-through repositories (placement rule, active now).
-3. Use the accepted persistence matrix proven by the `ShowStatus` pilot (roadmap T11/T12); migrate other capabilities only when touched and only when the matrix selects a simpler boundary.
-4. Consolidate show reference data into a coherent catalog capability.
+3. Use the accepted persistence matrix proven by the `ShowStatus` pilot; migrate other capabilities only when touched and only when the matrix selects a simpler boundary.
+4. Preserve the consolidated show catalog capability and its provider/HTTP split.
 5. Decompose studio show management by use case behind a stable facade — a destination map, not a standalone move; activates when Phase 5 show-lifecycle work (roadmap item 18) starts or an earlier change already requires the same decomposition.
 6. Decompose schedule publishing into planning, application, reconciliation, and query
    responsibilities — activates only when item 18 touches `PublishingService` or measured evidence justifies it; until then preserve the current publishing facade and transactional boundary.
 7. Narrow MCP composition to read-only query providers.
-8. Add real-database transaction and module-wiring tests.
+8. Extend real-database transaction and module-wiring coverage when a material boundary changes.
 9. Re-evaluate `@nestjs/cqrs` only after explicit commands and queries are established.
 
 ## Existing Repository References
 
 Primary direction:
 
-- `apps/erify_api/docs/design/ARCHITECTURE_REFACTORING_GUIDE.md`
+- `apps/erify_api/docs/ARCHITECTURE.md`
 - `scripts/measure-erify-api-architecture.mjs`
 
 Existing conventions to preserve but progressively reconcile:

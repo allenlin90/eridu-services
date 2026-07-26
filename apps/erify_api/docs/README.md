@@ -11,6 +11,7 @@
 | Document                                                                           | Status | Description                                                      |
 | ---------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
 | [System Architecture Overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md) | ✅      | Root-level cross-app architecture overview                       |
+| [`erify_api` Architecture](./ARCHITECTURE.md)                                     | ✅      | Capability-first modular-monolith direction and persistence matrix |
 | [Business Domain](../../../docs/domain/BUSINESS.md)                                | ✅      | Root-level business/domain model and product context             |
 | [RBAC Roles](../../../docs/features/rbac-roles.md)                                 | ✅      | Shipped role expansion — product decisions and acceptance record |
 
@@ -45,7 +46,6 @@
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for the operations-expansion track                  |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
 | [Show-Level Issue Ownership](./design/SHOW_ISSUE_OWNERSHIP_DESIGN.md)                              | 📐      | Locked Phase 5 item 9 issue workflow and transactional reconciliation design   |
-| [`erify_api` Architecture Refactoring Guide](./design/ARCHITECTURE_REFACTORING_GUIDE.md)           | 📐      | Capability-first modular-monolith direction, selective DDD, and CQRS decision gates |
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
 
@@ -57,7 +57,7 @@ Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.
 | [Phase 2 Overall](../../../docs/roadmap/PHASE_2.md) | ✅      | Closed task-management foundation phase                         |
 | [Phase 3 Overall](../../../docs/roadmap/PHASE_3.md) | ✅      | Closed summary after scope reset                                |
 | [Phase 4 Overall](../../../docs/roadmap/PHASE_4.md) | ✅      | P&L implementation on top of completed creator cutover baseline — closed |
-| [Phase 5 Overall](../../../docs/roadmap/PHASE_5.md) | 🔲      | Show Production Lifecycle Gap Closure — planned, next up        |
+| [Phase 5 Overall](../../../docs/roadmap/PHASE_5.md) | 🚧      | Show Production Lifecycle Gap Closure — in progress; item 9 ready |
 
 ## Quick Start
 
