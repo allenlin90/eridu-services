@@ -89,7 +89,7 @@ Task remains the source of submitted evidence. Show remains the review anchor. C
 Place implementation by capability:
 
 ```text
-apps/erify_api/src/scene-qc/
+apps/erify_api/src/capabilities/scene-qc/
 packages/api-types/src/scene-qc/
 apps/erify_studios/src/features/scene-qc/
 apps/erify_studios/src/routes/studios/$studioId/scene-review.tsx
