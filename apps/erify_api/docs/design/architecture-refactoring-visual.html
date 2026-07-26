@@ -927,8 +927,8 @@ class ShowQueries {
         <div class="card reframe tick">
           <span class="reframe-tag reframe">reframed convention</span>
           <div class="rf-was"><span>Was</span> <span class="mono">UtilityService</span> is injected everywhere so it's testable.</div>
-          <div class="rf-now"><span>Now</span> Pure deterministic functions (UID, time-overlap) don't need DI to be tested; fold them into <span class="mono">shared/util</span>.</div>
-          <div class="rf-why">48 modules import it purely for two pure functions.</div>
+          <div class="rf-now"><span>Now</span> Pure time-overlap logic lives in <span class="mono">src/lib/utils</span>; nondeterministic UID generation remains injectable until its dedicated provider migration.</div>
+          <div class="rf-why">41 modules still import <span class="mono">UtilityModule</span> for UID generation; the atomic rename and removal belongs to the next slice.</div>
         </div>
         <div class="card reframe tick">
           <span class="reframe-tag reframe">refined guardrail</span>
@@ -945,7 +945,7 @@ class ShowQueries {
         <div class="card reframe tick">
           <span class="reframe-tag process">process fix</span>
           <div class="rf-was"><span>Was</span> Treat the reorg as a scheduled big-bang migration and this doc as a parallel backlog.</div>
-          <div class="rf-now"><span>Now</span> Trigger-gated phases executed through the <span class="mono">codebase-hardening-program</span> lifecycle — one PR per item, behavior-preserving.</div>
+          <div class="rf-now"><span>Now</span> Trigger-gated phases executed through the <span class="mono">codebase-hardening-program</span> lifecycle — one or more scoped, independently reviewable PRs per item, behavior-preserving.</div>
           <div class="rf-why">Avoids a half-migrated tree and a second, competing process authority.</div>
         </div>
       </div>

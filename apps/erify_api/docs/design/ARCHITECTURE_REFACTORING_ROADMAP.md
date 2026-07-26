@@ -8,7 +8,10 @@ This is the follow-up task list for the direction concluded in PR #313. It exist
 
 ## How every task is executed
 
-Each task is one reviewable PR, run through the [`codebase-hardening-program`](../../../../.agents/skills/codebase-hardening-program/SKILL.md) lifecycle:
+Each task is delivered through one or more scoped, independently reviewable
+PRs, run through the
+[`codebase-hardening-program`](../../../../.agents/skills/codebase-hardening-program/SKILL.md)
+lifecycle:
 
 - Confirm the finding, keep the baseline green, and characterize behavior **before** any structural change; the change stays behavior-preserving unless the task is explicitly a correctness fix.
 - Load the implementation skills listed on the task.
@@ -34,7 +37,7 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 | T4 | Remove dead/duplicate module wiring | S | now | ✅ |
 | T5 | Remove empty OpenAPI dynamic module | S | now | ✅ |
 | T6 | Type the `StudioGuard` membership value | S | now | ✅ |
-| T7 | `UtilityService` simplification | M | now | 🔲 |
+| T7 | `UtilityService` simplification | M | now | 🟡 |
 
 ### T1 — Phase 0a: isolated real-DB safety harness
 
@@ -102,10 +105,18 @@ Each task is one reviewable PR, run through the [`codebase-hardening-program`](.
 
 ### T7 — `UtilityService` simplification
 
-- **Scope**: replace the injected two-function service (`generateBrandedId`, `isTimeOverlapping`) with pure functions in `shared/util`, or narrow it to a real injectable adapter only if deterministic ID injection is actually required. Touches ~48 importers and the `BaseModelService` UID-generation constructor contract — land it as one mechanical PR.
+- **Scope**: move deterministic time-overlap logic to
+  `src/lib/utils/time-overlap.util.ts`, then narrow the remaining
+  nondeterministic UID boundary to `UidGeneratorService` /
+  `UidGeneratorModule`. PR #333 owns the pure-function extraction; PR #334
+  owns the atomic provider-token and module migration across the 41 current
+  importers and the `BaseModelService` constructor contract.
 - **Gate**: none — existing unit baseline plus focused utility/service specs; no real-DB dependency.
 - **Skills**: `service-pattern-nestjs`.
 - **Knowledge sync**: `service-pattern-nestjs` (the UtilityService / `BaseModelService` UID rule).
+- **Progress**: extracted `isTimeOverlapping` as a pure function and replaced
+  mock-driven overlap assertions with direct algorithm coverage. T7 remains
+  open until the UID-only provider and its import graph are narrowed.
 
 ## Adjacent — startable now (roadmap correctness, not an architecture phase)
 
