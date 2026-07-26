@@ -60,6 +60,9 @@ export class SceneProfileRepository extends BaseRepository<
    * Finds a profile by UID scoped to its owning Client. Returns `null` when
    * the profile does not exist or belongs to a different Client. Mirrors
    * `SceneMaterialRepository.findByUidForClient`.
+   *
+   * Engineering decision: canonical Client-scoped unique lookup reused by
+   * every mutation and by cross-Client authorization checks.
    */
   async findByUidForClient(params: {
     uid: string;
@@ -78,6 +81,9 @@ export class SceneProfileRepository extends BaseRepository<
   /**
    * Lists a Client's profiles with pagination, status filter, and a
    * free-text search across name / UID.
+   *
+   * Engineering decision: non-trivial where building (multi-field `OR`
+   * search, status filter, soft-delete toggle) plus paired data/count reads.
    */
   async findPaginated(
     params: ListSceneProfilesParams,
@@ -155,6 +161,9 @@ export class SceneProfileRepository extends BaseRepository<
    * The Client's single active, non-deleted default profile, if any. The
    * partial unique index `scene_profiles_client_id_default_active_key`
    * (migration custom SQL) guarantees at most one row matches.
+   *
+   * Engineering decision: canonical default-resolution lookup shared by
+   * profile resolution and the default-swap advisory-lock workflow.
    */
   async findActiveDefaultForClient(clientId: bigint): Promise<SceneProfileWithDefaultInclude | null> {
     return this.txHost.tx.sceneProfile.findFirst({
@@ -169,6 +178,9 @@ export class SceneProfileRepository extends BaseRepository<
    * deleted profile does not silently keep winning resolution — see
    * `repository-pattern-nestjs` "Relation Filters Must Respect Soft-Deleted
    * Join Rows").
+   *
+   * Engineering decision: the soft-deleted-join-row hazard above requires an
+   * explicit nested relation filter, not a bounded single-model query.
    */
   async findActiveAssignedProfileForShow(showId: bigint): Promise<SceneProfileWithDefaultInclude | null> {
     const assignment = await this.txHost.tx.sceneProfileAssignment.findFirst({

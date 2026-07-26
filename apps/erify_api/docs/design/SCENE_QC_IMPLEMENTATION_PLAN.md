@@ -312,6 +312,8 @@ Continue using the standard `Audit` envelope, but do not add five more nullable 
 
 This follows the open/extensible-target side-table rule while acknowledging the five-FK/index cost inside the Scene QC capability instead of imposing it on every generic audit query. Child PR 1 must receive architecture review from the `erify_api` refactor program before this persistence boundary lands; widening `audit_targets` is not the fallback.
 
+**Architecture acceptance record**: the Child PR 1 PR review accepted this capability-owned side-table design — incremental FK columns (3 of the eventual 5, widened by Child PR 3/4's own generated migrations), the `CHECK (num_nonnulls(...) = 1)` exclusive-arc constraint, and cascade-into-junction-only semantics — as satisfying this gate. No separate architecture-decision document was created; the reviewed PR itself is the acceptance record.
+
 Audit creation, semantic edits, default or assignment changes, review saves, and confirmation. Store business fields in normalized tables, not audit metadata. Use the standard `reason` column only for future reasoned amendment commands.
 
 ### 5.7 Producer and Consumer Matrix

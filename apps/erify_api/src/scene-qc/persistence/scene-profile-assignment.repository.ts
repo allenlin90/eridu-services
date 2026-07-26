@@ -26,6 +26,8 @@ export class SceneProfileAssignmentRepository extends BaseRepository<
     super(new PrismaModelWrapper(() => txHost.tx.sceneProfileAssignment));
   }
 
+  // Engineering decision: canonical findOne-equivalent for this model — the
+  // active, non-deleted assignment row scoped by the soft-delete boundary.
   /** The Show's active, non-deleted assignment, if any (by internal id). */
   async findActiveByShowId(showId: bigint): Promise<SceneProfileAssignmentWithDefaultInclude | null> {
     return this.txHost.tx.sceneProfileAssignment.findFirst({
@@ -34,6 +36,8 @@ export class SceneProfileAssignmentRepository extends BaseRepository<
     });
   }
 
+  // Engineering decision: canonical findOne-equivalent for this model, keyed
+  // by external UID for callers that only have the Show's UID on hand.
   /** The Show's active, non-deleted assignment, if any (by UID). */
   async findActiveByShowUid(showUid: string): Promise<SceneProfileAssignmentWithDefaultInclude | null> {
     return this.txHost.tx.sceneProfileAssignment.findFirst({
