@@ -34,6 +34,12 @@ Multiple gates apply when a PR spans layers. Run all that match.
 
 Run this audit against the changed code and the canonical tech-debt, ideation, and design documents related to that surface. A threshold is normally a prompt for review, not an automatic instruction to introduce a pattern or broaden the PR.
 
+For every `erify_api` feature, behavior change, or refactor, also check
+[`REFACTORING_TARGETS.md`](../../apps/erify_api/docs/REFACTORING_TARGETS.md).
+Record the applicable target IDs, or explicitly state that no registered target
+is affected. A feature may activate a target, but proximity to a target does
+not authorize speculative abstraction or a broader migration.
+
 Classify each applicable signal:
 
 | Signal class | Examples | Required outcome |
@@ -52,6 +58,7 @@ Record one result for every trigger affected by the diff:
 - `BLOCKING` — the diff violates a hard invariant or crosses an explicit mandatory gate without a response.
 
 - [ ] Related tech-debt, ideation, and active design documents were checked for triggers changed by this PR.
+- [ ] `erify_api` changes record the applicable refactoring target IDs and trigger outcome, or state that no target is affected.
 - [ ] Size and collaborator thresholds were treated as cohesion-review signals, not automatic refactor mandates.
 - [ ] Any new repository export, cross-capability persistence dependency, module cycle/`forwardRef`, or runtime import-closure expansion has an explicit architectural justification.
 - [ ] Advanced patterns were introduced only against their documented evidence gates.

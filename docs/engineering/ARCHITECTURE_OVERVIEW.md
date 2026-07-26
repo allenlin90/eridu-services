@@ -4,7 +4,7 @@
 
 > Root-level reference for high-level architecture decisions and cross-app terminology. For backend implementation patterns, see the skills listed below and the `erify_api` implementation docs.
 
-> **Direction (2026-07):** new `erify_api` work follows capability-first placement and the accepted persistence matrix (`erify-api-capability-refactoring`, per [`ARCHITECTURE.md`](../../apps/erify_api/docs/ARCHITECTURE.md)). Shallow bounded CRUD may live in a capability service through `TransactionHost.tx`; complex or reusable persistence stays private behind a repository, store, or query provider.
+> **Direction (2026-07):** new `erify_api` work follows capability-first placement and the accepted persistence matrix (`erify-api-capability-refactoring`, per [`ARCHITECTURE.md`](../../apps/erify_api/docs/ARCHITECTURE.md)). Before planning a touched surface, check the [`erify_api` refactoring targets](../../apps/erify_api/docs/REFACTORING_TARGETS.md) and record the applicable target and trigger outcome. Shallow bounded CRUD may live in a capability service through `TransactionHost.tx`; complex or reusable persistence stays private behind a repository, store, or query provider.
 
 ---
 

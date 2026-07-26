@@ -145,6 +145,12 @@ refactoring backlog:
    database splits only after explicit coordination, scaling, or independent
    deployment evidence exists.
 
+The active
+[`REFACTORING_TARGETS.md`](./REFACTORING_TARGETS.md)
+register records the current evidence, activation gate, destination boundary,
+and exit criteria for each residual target. New feature and refactor work must
+consult that register and record the applicable target IDs and trigger outcome.
+
 ## Phase 5 Handoff
 
 Phase 5 is already in progress. The next ready product slice is
@@ -155,6 +161,11 @@ starting the trigger-gated show-operations restructuring.
 After item 9, follow the roadmap's dependency order. Architecture changes travel
 with the product work that triggers them; there is no separate Phase 4–7
 architecture migration wave.
+
+This section is a product handoff, not the `erify_api` refactoring queue.
+Refactoring-only planning and status live in
+[`REFACTORING_TARGETS.md`](./REFACTORING_TARGETS.md); Phase 5 items appear there
+only when they activate an architecture target.
 
 ## Deferred Decisions And Known Gaps
 
@@ -169,6 +180,7 @@ architecture migration wave.
 ## Related References
 
 - [Cross-app architecture overview](../../../docs/engineering/ARCHITECTURE_OVERVIEW.md)
+- [`erify_api` refactoring target register](./REFACTORING_TARGETS.md)
 - [Phase 5 roadmap](../../../docs/roadmap/PHASE_5.md)
 - [Real-database integration guide](../test/README.md)
 - [`erify-api-capability-refactoring` skill](../../../.agents/skills/erify-api-capability-refactoring/SKILL.md)
