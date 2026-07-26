@@ -77,6 +77,13 @@ For workflow actions (e.g., show resolution), authorization must be scope-specif
 
 **DON'T:** Add permissions to JWT, create roles for every edge case, use coarse permissions (`admin:read`), duplicate logic between frontend and backend.
 
+Within `StudioGuard`, authorization-critical request context must stay typed.
+Derive the membership type from `UserService.getStudioMembership`, then narrow
+both `AuthenticatedRequest.user` and the possibly undefined membership result
+with assertion functions before access. Attach only the narrowed membership to
+`AuthenticatedRequest.studioMembership`. Do not use `any` or non-null
+assertions in the guard's authentication, membership, or role checks.
+
 ## Related Skills
 
 - [Authentication Authorization NestJS](../authentication-authorization-nestjs/SKILL.md) — Comprehensive auth patterns

@@ -258,7 +258,9 @@ The largest production files generally have sibling specs, and guards, controlle
   module, one local module edge, and one module at or below 20 lines; cycles and
   the MCP closure are unchanged.
 - Several public service signatures still expose Prisma types, including generic task includes and `Prisma.Decimal`, despite the documented service convention.
-- `StudioGuard` uses `any` for membership even though membership is an authorization-critical value.
+- `StudioGuard` previously used `any` for its authorization-critical
+  membership value; Phase 1 now derives the type from the membership query and
+  narrows absence explicitly before role checks.
 - The canonical examples in [Read-Path Optimization](../READ_PATH_OPTIMIZATION.md) still point to task-orchestration methods that have since moved behind concern services, showing normal documentation drift after structural refactors.
 
 These are worthwhile cleanup tasks, but they should not delay the transaction-safety and capability-boundary work.
