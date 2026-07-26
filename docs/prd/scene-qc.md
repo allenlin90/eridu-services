@@ -6,7 +6,7 @@
 
 ## Summary
 
-Scene QC is a daily operational workflow for reviewing the visual setup of livestream Shows. An authorized Scene QC operator examines all eligible evidence for one Show, compares it with the expected scene resolved from reusable reference materials when available, records Pass, Minor, or Fail, and supplies feedback for every Minor or Fail result.
+Scene QC is a daily operational workflow for reviewing the visual setup of livestream Shows. An authorized Scene QC operator examines all eligible evidence for one Show, compares it with the Client's expected-scene reference image when available, records Pass, Minor, or Fail, and supplies feedback for every Minor or Fail result.
 
 The operational day is the completion boundary. When every expected Show has been reviewed, an authorized Scene QC operator confirms the day and makes its manager report available. Confirmed results remain queryable by date range, Client, platform, and outcome.
 
@@ -17,7 +17,7 @@ Scene QC is advisory. It does not approve or reject Tasks, change Show lifecycle
 The current `/studios/:studioId/scene-review` route provides secure screenshot inspection but persists no QC outcome. Reviewers cannot:
 
 - record a Show-level scene result;
-- compare evidence with a reusable, versioned expected scene;
+- compare evidence with the Client's expected-scene reference;
 - explain a Minor or Fail decision;
 - measure completion across an operational day;
 - confirm a completed day;
@@ -30,13 +30,13 @@ The replacement workflow must add these capabilities without coupling visual QC 
 
 - Give Scene QC operators a fast daily workflow for reviewing scene setup one Show at a time.
 - Keep the review boundary at the Show while supporting multiple evidence assets.
-- Compare evidence with a Client-owned Scene Profile composed from reusable materials.
+- Compare evidence with the Client's single active Scene Profile reference image.
 - Require actionable feedback for every Minor or Fail result.
 - Make operational-day review coverage explicit and confirmable.
 - Gate manager report availability on complete daily review coverage.
 - Preserve secure, queryable, auditable review history.
 - Reuse existing Show, Client, platform, Task evidence, R2 upload, operational-day, and authorization infrastructure.
-- Establish one canonical Studio timezone so every operator and server caller resolves the same durable operational day.
+- Resolve every operational day from one canonical shared operational-timezone constant so every operator and server caller agrees on the same durable window; promote to a per-Studio column only when a second timezone studio actually appears ([Studio Configuration & Settings](../ideation/studio-config-settings.md) §6).
 - Leave clear extension points for profile composition, amendments, taxonomy, structured findings, and analytics.
 
 ## Non-Goals
@@ -46,6 +46,8 @@ The replacement workflow must add these capabilities without coupling visual QC 
 - Automatically creating a `ShowIssue` for every Minor or Fail result.
 - Using CSV upload as the source of Shows.
 - Building a general-purpose material management domain in the first release.
+- Reusable, versioned, or composed Scene Materials distinct from a Client's single active reference image, and any per-Show or per-platform Scene Profile override. Stage 1 gives each Client exactly one active, replaceable reference image and scene type.
+- A required per-Studio `timezone` column. Stage 1 uses one shared, hardcoded operational-timezone constant (`Asia/Bangkok`); promotion criteria live in [Studio Configuration & Settings](../ideation/studio-config-settings.md) §6.
 - Shipping user-managed QC taxonomy, trend analytics, or PDF export in the first release.
 - Preserving the PoC's localStorage, Google Apps Script, dark-only theme, simulated phone frame, or swipe gestures.
 - Migrating legacy QC outcomes. The current Scene Review implementation persists no QC decisions.
@@ -54,13 +56,12 @@ The replacement workflow must add these capabilities without coupling visual QC 
 
 | Term | Meaning |
 | --- | --- |
-| Operational day | One studio business day, resolved server-side as 06:00 through 05:59 from the Studio's canonical IANA timezone |
+| Operational day | One studio business day, resolved server-side as 06:00 through 05:59 from one canonical shared operational-timezone constant (Stage 1: `Asia/Bangkok`; promoted to a per-Studio column per [Studio Configuration & Settings](../ideation/studio-config-settings.md) §6 when a second timezone studio appears) |
 | Scene QC operator | A user with Designer, Manager, or Admin role performing this workflow |
 | Daily review | The collection of expected Show reviews for one operational day |
 | Show review | One effective QC outcome for one Show, covering all evidence selected for that review |
 | Evidence | One or more explicitly eligible scene images associated with a Show, commonly supplied through a Task |
-| Scene Material | A reusable reference asset or configuration contribution, such as a logo, campaign header, platform safe area, backdrop, or studio fixture |
-| Scene Profile | A Client-owned composition that resolves the expected scene from applicable reusable materials |
+| Scene Profile | A Client's single active reference image and scene type, used as the expected-scene comparison target |
 | Daily confirmation | The authorized Scene QC operator's sign-off that all expected Shows in the operational day have an outcome |
 | Manager report | A read-only summary available only after the daily review is complete and confirmed |
 | Amendment | A reasoned, audited correction to confirmed QC data |
@@ -69,13 +70,13 @@ The replacement workflow must add these capabilities without coupling visual QC 
 
 | Role | Scene QC access | Initial workflow |
 | --- | --- | --- |
-| `DESIGNER` | Yes | Manage Scene Profiles and materials, review Shows, edit draft results, confirm a completed operational day, and inspect records and reports |
+| `DESIGNER` | Yes | Manage Client Scene Profiles, review Shows, edit draft results, confirm a completed operational day, and inspect records and reports |
 | `MANAGER` | Yes | Same Scene QC workflow as Designer |
 | `ADMIN` | Yes | Same Scene QC workflow as Designer |
 | `MODERATION_MANAGER` | No | No Scene QC route or API access |
 | Other studio roles | No | No Scene QC route or API access |
 
-Designer, Manager, and Admin have the same Stage 1 Scene QC permissions, including the minimum profile and material management needed by the workflow. Daily confirmation attests that the advisory Scene QC dataset is complete; it is not an independent quality approval and does not require segregation between reviewer and confirmer. The confirmation preserves the actor and time for accountability.
+Designer, Manager, and Admin have the same Stage 1 Scene QC permissions, including the minimum Client Scene Profile management needed by the workflow. Daily confirmation attests that the advisory Scene QC dataset is complete; it is not an independent quality approval and does not require segregation between reviewer and confirmer. The confirmation preserves the actor and time for accountability.
 
 Existing Task Template administration permissions remain unchanged: designating a Task field as Scene QC evidence is part of Task Template management, not Scene QC review access. A Manager performing Scene QC is not performing the separate Manager Review process. Scene QC never grants Task Review mutations or changes the semantics of Manager Review.
 
@@ -86,7 +87,7 @@ Existing Task Template administration permissions remain unchanged: designating 
 - One QC result belongs to one Show.
 - A Show review can contain multiple evidence assets.
 - Evidence selection and navigation do not create separate outcomes.
-- A result applies to the evidence set and, when available, the Scene Profile version used for that review.
+- A result applies to the evidence set and, when available, the exact expected image and scene type shown for that review.
 - A Show must not receive multiple competing effective results for the same operational-day review scope.
 - Every review pins its operational date and server-resolved window. A review from a prior date is not effective after the Show moves across the operational-day boundary.
 
@@ -102,7 +103,7 @@ Existing Task Template administration permissions remain unchanged: designating 
 
 ### Daily Completion
 
-- Daily Review sends a date-only operational date; the server resolves its exact boundary from the Studio timezone.
+- Daily Review sends a date-only operational date; the server resolves its exact boundary from the shared operational-timezone constant.
 - A scheduled Show is eligible unless it is in terminal `cancelled` state.
 - `cancelled_pending_resolution` remains eligible because production may have occurred and the cancellation is not final.
 - The queue shows total, reviewed, and remaining Show counts.
@@ -124,7 +125,7 @@ Existing Task Template administration permissions remain unchanged: designating 
 - Required filters are date range, Client, platform, and outcome.
 - Records show the Show, operational day, Client, platform, outcome, feedback, reviewer, and current revision state.
 - List responses are paginated and exclude heavy evidence and audit payloads.
-- Record detail loads the evidence, resolved profile version, review history, and amendments only when requested.
+- Record detail loads the evidence, the expected-scene reference shown at review time, review history, and amendments only when requested.
 
 ### Manager Report
 
@@ -133,7 +134,7 @@ Existing Task Template administration permissions remain unchanged: designating 
 - Report identity includes studio, operational date and timezone, confirmation status, confirming operator, confirmation time, report generation time, and confirmation revision.
 - Confirmed scope includes the total confirmed Shows and Pass/Minor/Fail totals and percentages.
 - Breakdowns summarize results by Client and platform.
-- Show-level detail includes scheduled time, Show, Client, platform, result, reviewer, reviewer feedback, evidence count, and Scene Profile name, type, and revision when available.
+- Show-level detail includes scheduled time, Show, Client, platform, result, reviewer, reviewer feedback, evidence count, and the expected scene type shown, when available.
 - An exceptions section lists every Minor and Fail result, its feedback, and whether the confirmed result was later amended.
 - A report identifies its confirmation and any later amendments honestly.
 - Report identity and breakdown dimensions are pinned at confirmation so later Show, Client, platform, or Scene Profile label changes do not rewrite a historical report.
@@ -142,32 +143,27 @@ Existing Task Template administration permissions remain unchanged: designating 
 - The Stage 1 report implementation keeps cross-day trends, taxonomy issue breakdowns, heatmaps, period comparisons, and PDF export out of scope.
 - The report module must contain an actionable `TODO(scene-qc-reporting)` comment naming those deferred extensions so later reporting work stays discoverable in the same capability.
 
-## Scene Profiles and Reusable Materials
+## Scene Profile
 
 ### Ownership
 
-- Scene Profiles are owned by a Client.
-- A Client can have multiple Scene Profiles.
-- A Show resolves one applicable Scene Profile for review when available.
-- Profiles can compose different reusable materials according to Client, platform, studio, campaign, or other explicit applicability dimensions.
-- The system must not assume that one Client has one benchmark image or one scene layout.
-- A profile declares whether its physical setup is `GRAPHIC_BG` or `REAL_BACKDROP`; different profiles for one Client may use different scene types.
+- A Scene Profile is owned by a Client.
+- A Client has at most one active Scene Profile: one reference image plus a required scene type.
+- A Show resolves the Client's active Scene Profile for review when available. Stage 1 has no per-Show, per-platform, or per-Studio override — a Client's Scene Profile applies everywhere that Client is reviewed.
+- A profile declares whether its physical setup is `GRAPHIC_BG` or `REAL_BACKDROP`.
 
-### Composition
+### Replacement Behavior
 
-- A Scene Profile is a composition, not a single mutable image field.
-- Materials can be reused across more than one profile where their ownership and applicability allow it.
-- Profile resolution must be deterministic when an applicable profile exists.
-- The review pins any resolved profile and material revisions used for comparison.
-- The profile revision pins its scene type so later structured findings can apply the correct vocabulary without rewriting history.
-- Replacing a material does not silently rewrite previously confirmed review context.
+- A Scene Profile is a single mutable reference, not a composition or a version history.
+- Replacing the reference image or scene type updates the Client's Scene Profile in place.
+- Replacing a Scene Profile does not silently rewrite previously confirmed review context: each Show review snapshots the exact expected image and scene type it was shown at save time, not a pointer back to the Client's current or historical Scene Profile.
 
 ### First-Release Boundary
 
-- Stage 1 supports the minimum profile and material administration required to supply expected-scene references.
-- Stage 1 does not create a general Material, MaterialType, ShowMaterial, ticket-attachment, or production-asset workflow.
-- Broader material lifecycle and cross-workflow reuse remain in [Material Management](../ideation/material-management.md).
-- A Client-owned material/profile mutation that affects more than one Studio requires the actor to hold an allowed Scene QC role in every impacted Studio.
+- Stage 1 supports the minimum profile administration required to supply one expected-scene reference per Client: upload, replace, and retire.
+- Stage 1 does not create a reusable Material identity, immutable material/profile revision history, ordered multi-reference composition, per-Studio/per-platform applicability, or a general Material, MaterialType, ShowMaterial, ticket-attachment, or production-asset workflow.
+- Broader material lifecycle, reuse across profiles, and per-Show/platform overrides remain in [Material Management](../ideation/material-management.md); promote when its decision gates are met.
+- Because Stage 1 has no cross-Studio applicability, a Scene Profile mutation only ever affects the owning Client's own Studios through the normal Studio-membership Scene QC role check — there is no separate cross-Studio-impact authorization step.
 
 ## Evidence Requirements
 
@@ -243,7 +239,7 @@ No QC history is publicly deletable.
 
 Structured taxonomy findings and self-service taxonomy configuration are deferred from the first release. Stage 1 free-text feedback provides the actionable explanation required for Minor and Fail without fixing catalog ownership, retirement, or shared-versus-studio governance prematurely. It is not expected to produce a better vocabulary than the source specification.
 
-The source specification's two axes—scene element and defect type—plus the optional related element remain the seed candidate for Stage 3. Stage 1 stores `GRAPHIC_BG` or `REAL_BACKDROP` on each versioned Scene Profile so that adding structured findings does not require a profile-history migration.
+The source specification's two axes—scene element and defect type—plus the optional related element remain the seed candidate for Stage 3. Stage 1 stores `GRAPHIC_BG` or `REAL_BACKDROP` on each Client's Scene Profile so that adding structured findings does not require a profile-history migration.
 
 When promoted:
 
@@ -265,12 +261,12 @@ The deferred configuration scope is tracked in [Studio Configuration and Setting
 - Replace the read-only Scene Review workflow with persisted Show-level outcomes.
 - Preserve Designer, Manager, and Admin access and exclude Moderation Manager.
 - Give Designer, Manager, and Admin the same Stage 1 Scene QC permissions without entering the separate Manager Review flow.
-- Add the canonical Studio timezone required for server-authoritative operational-day resolution.
-- Provide the minimum Scene Profile and reusable-material manager required to supply expected-scene references.
-- Record Graphic BG or Real Backdrop on each versioned Scene Profile.
+- Resolve operational-day boundaries from the shared operational-timezone constant.
+- Provide the minimum Scene Profile manager required to supply one expected-scene reference per Client.
+- Record Graphic BG or Real Backdrop on each Client's Scene Profile.
 - Load one operational-day Show queue with Client, platform, and state filters.
 - Support multiple explicit evidence assets per Show.
-- Resolve a Client Scene Profile and reusable expected-scene materials when available.
+- Resolve the Client's active Scene Profile when available.
 - Present evidence/reference comparison with the review form immediately adjacent.
 - Require feedback for Minor and Fail.
 - Track daily completion and authorized-operator confirmation.
@@ -280,7 +276,8 @@ The deferred configuration scope is tracked in [Studio Configuration and Setting
 
 ### Stage 2 — Governance and Advanced Profile Operations
 
-- Add richer Scene Profile composition and applicability dimensions beyond the Stage 1 ordered reference gallery.
+- Add reusable, versioned Scene Materials distinct from a Client's single Stage 1 reference, ordered multi-reference composition, and per-Studio/per-platform applicability (see Non-Goals and [Material Management](../ideation/material-management.md)).
+- Add per-Show or per-platform Scene Profile overrides beyond the Stage 1 Client-wide default.
 - Add confirmed-result amendment, reason, and audit workflows.
 - Add record detail with revision timeline.
 
@@ -297,7 +294,7 @@ The deferred configuration scope is tracked in [Studio Configuration and Setting
 - Scene QC is a business capability, not another Task model view.
 - Task supplies evidence context but does not own QC outcome persistence.
 - Show is the review anchor.
-- Scene Profile and material composition remain Client-owned product concepts.
+- Scene Profile remains a Client-owned product concept, not a Task or Show field.
 - Standard `Audit` records history; audit metadata is not the primary QC data store.
 - `ShowIssue` remains an optional escalation target for actionable follow-up, not the storage model for every Minor or Fail result.
 - Review commands and report queries are separate capability-owned paths.
@@ -322,14 +319,14 @@ The current heuristic extraction of any image field and provisional Task-content
 ## Stage 1 Acceptance Criteria
 
 - [ ] Designer, Manager, and Admin can create and edit Scene QC outcomes and confirm a completed day; Moderation Manager cannot access Scene QC.
-- [ ] Designer, Manager, and Admin can manage the Stage 1 Client-owned Scene Profiles and reusable materials.
+- [ ] Designer, Manager, and Admin can manage the Stage 1 Client-owned Scene Profile (single reference image and scene type).
 - [ ] Existing Task Template permissions, rather than Scene QC role access alone, control who can designate a Task image field as Scene QC evidence.
 - [ ] Scene QC activity by a Manager does not enter or mutate the separate Manager Review flow.
 - [ ] The default queue covers exactly one operational day.
 - [ ] Shows come from existing persisted schedule data without CSV upload.
 - [ ] One Show appears once in the review queue and can expose multiple eligible evidence assets.
-- [ ] The selected Show resolves a Client-owned Scene Profile and pinned expected-scene materials when available.
-- [ ] Every Scene Profile records Graphic BG or Real Backdrop and each revision pins that value.
+- [ ] The selected Show resolves the Client's active Scene Profile when available.
+- [ ] Every Scene Profile records Graphic BG or Real Backdrop.
 - [ ] A missing Scene Profile is visible as a warning but does not block review.
 - [ ] Every eligible Show remains in the daily completion denominator.
 - [ ] Terminally cancelled Shows are excluded; `cancelled_pending_resolution` Shows remain eligible.
@@ -354,7 +351,6 @@ The current heuristic extraction of any image field and provisional Task-content
 - [ ] Records can be filtered by date range, Client, platform, and result with server pagination.
 - [ ] A review remains bound to its pinned operational date when its Show is later rescheduled.
 - [ ] Historical evidence remains viewable through a freshly signed URL derived from its pinned object key.
-- [ ] A material/profile mutation cannot affect a Studio where the actor lacks an allowed Scene QC role.
 - [ ] Confirmed records cannot be deleted.
 
 ## Engineering Handoff Boundary

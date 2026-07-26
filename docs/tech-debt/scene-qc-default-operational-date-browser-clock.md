@@ -5,10 +5,10 @@
 
 ## Context
 
-PR #339 made Scene QC's operational day server-authoritative. `Studio.timezone`
-becomes a required canonical IANA column, Scene QC write contracts no longer
-accept `window_start`/`window_end`/`timezone` from the client, and the backend
-resolves the exact 06:00–05:59 window for a date-only `operational_date`.
+PR #339 made Scene QC's operational day server-authoritative. Scene QC write
+contracts no longer accept `window_start`/`window_end`/`timezone` from the
+client; the backend resolves the exact 06:00–05:59 window for a date-only
+`operational_date` from a shared operational-timezone constant (`Asia/Bangkok`).
 
 One path was left unresolved: **which date the Daily Review requests on first
 load, before any date is present in the URL.** The plan specifies that date
@@ -44,7 +44,8 @@ the one place it survives inside Scene QC.
   which does not exist yet.
 - **Blast radius is a default, not a durable record.** The value is a URL search
   param the operator can change, and it never reaches a confirmation as scope —
-  the server re-resolves bounds from `Studio.timezone` regardless. No signed
+  the server re-resolves bounds from the shared operational-timezone constant
+  regardless. No signed
   artifact can be wrong because of it.
 - **The clean fix belongs with the broader migration.** PR #339 §11 deliberately
   scopes server-authoritative resolution to durable confirmations and leaves
