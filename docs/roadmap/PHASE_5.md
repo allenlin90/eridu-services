@@ -44,6 +44,7 @@ Each row is one workstream or deliverable. Items are numbered in execution order
 | 11  | [Advisory planning readiness checklist](#11-advisory-planning-readiness-checklist) — aggregate current planning readiness signals without enforcing a status transition                                    | 1, 2                                      | 🔲 Planned     |
 | 12  | [Post-production completion review checklist](#12-post-production-completion-review-checklist) — show-level closure review over task, actual, import, correction, and issue records                        | 6, 9, 10                                  | 🔲 Planned     |
 | 22  | [Scene Review workspace](#22-scene-review-workspace) — dedicated read-only screenshot analysis and advisory QC inbox for `DESIGNER`, `MANAGER`, and `ADMIN`                                               | —                                          | ✅ Done        |
+| 23  | [Scene QC replacement](#23-scene-qc-replacement) — persisted, Show-level Scene QC workflow (daily review, Client-owned profiles, confirmation, records, manager report) replacing item 22's read-only workspace | 22                                         | 🚧 In progress |
 
 ### Operational Efficiency (Candidates)
 
@@ -326,6 +327,26 @@ The delivered boundary is:
 - [x] Client search uses the shared asynchronous combobox; platform and date range are server-filtered and URL-persisted.
 
 **Scope boundary**: `DESIGNER` gains no access to `/task-review`, `/costs`, or `/task-setup`. QC Inbox is advisory and is not a state-machine gate in Phase 5. The current implementation reuses the existing role value and changes no other surface's access rules.
+
+### 23. Scene QC replacement
+
+**Source**: [Scene Quality Control PRD](../prd/scene-qc.md); [implementation plan](../../apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md)
+
+Replaces item 22's read-only Scene Review workspace with a persisted, Show-level Scene QC capability. Designer, Manager, and Admin record `PASS`/`MINOR`/`FAIL` with required feedback for Minor/Fail against a resolved Client-owned Scene Profile, track daily review completion for one operational day, confirm or reconfirm the day, and inspect filtered historical Records and a confirmed manager report (in-app and CSV). Scene QC stays advisory: it never changes Task, Task Review, Manager Review, or Show lifecycle state.
+
+Delivered via [integration PR delivery](../../.agents/workflows/integration-pr-delivery.md): one integration branch, four reviewable child PRs, and one atomic main PR to `master` that also removes the PR #319 heuristic implementation.
+
+1. **Child PR 1 — Contracts and Persistence Foundation**: `@eridu/api-types/scene-qc`, canonical `Studio.timezone`, Prisma models and migration, private repositories.
+2. **Child PR 2 — Profiles, Materials, and Explicit Evidence Feeder**: Client-owned Scene Profile/Material APIs, Task Template `evidence_purpose` binding, snapshot evidence-ref backfill.
+3. **Child PR 3 — Daily Review Journey**: summary/items/context queries, review create/update, Daily Review UI (desktop side-by-side, mobile Live/Expected toggle).
+4. **Child PR 4 — Confirmation, Records, and Manager Report**: append-only confirmation/staleness, Records query/table/detail, in-app + CSV manager report.
+5. **Main Integration PR**: atomic cutover, removes the old Scene Review Task-anchored implementation, doc/skill reconciliation.
+
+Structured taxonomy findings, cross-day trend analytics, heatmaps, and PDF export are deferred to Stage 2/3 of the PRD; Stage 1 ships free-text Minor/Fail feedback.
+
+**Status**: 🚧 In progress — Child PR 1 underway.
+
+**Acceptance record**: see [Stage 1 Acceptance Criteria](../prd/scene-qc.md#stage-1-acceptance-criteria) in the PRD.
 
 ---
 
