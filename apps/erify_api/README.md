@@ -769,7 +769,7 @@ The API documentation is powered by:
 - **zod-openapi**: Zod to OpenAPI schema conversion
 - **swagger-ui-express**: Swagger UI Express integration
 
-The OpenAPI setup is configured in `src/common/openapi/openapi.config.ts` and provides:
+The OpenAPI setup is configured in `src/lib/openapi/openapi.config.ts` and provides:
 
 - Interactive documentation at `/api-reference`
 - OpenAPI JSON specification at `/swagger-json`
