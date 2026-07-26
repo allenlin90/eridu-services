@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
 /**
+ * Creation-time seed default for `Studio.timezone` while every operating
+ * Studio is in a single region (Asia/Bangkok). This is NOT an operational-day
+ * fallback — every read resolves the persisted, per-Studio `timezone` column,
+ * never this constant. Remove this default (and require an explicit value on
+ * create) when a second region is onboarded. See
+ * docs/tech-debt/scene-qc-studio-timezone-no-write-path.md.
+ */
+export const DEFAULT_STUDIO_TIMEZONE = 'Asia/Bangkok';
+
+/**
  * Studio API Response Schema (snake_case - matches backend API output)
  */
 export const studioApiResponseSchema = z.object({

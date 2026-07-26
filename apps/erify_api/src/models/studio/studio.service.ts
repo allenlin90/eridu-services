@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Studio } from '@prisma/client';
 
+import { DEFAULT_STUDIO_TIMEZONE } from '@eridu/api-types/studios';
 import { type SharedField, sharedFieldsListSchema } from '@eridu/api-types/task-management';
 
 import type {
@@ -15,6 +16,7 @@ import { STUDIO_UID_PREFIX } from './studio-uid.util';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
+import { isValidIanaTimeZone } from '@/lib/utils/studio-operational-window.util';
 
 /**
  * Service for managing Studio entities.
@@ -32,13 +34,21 @@ export class StudioService extends BaseModelService {
   }
 
   /**
-   * Creates a new studio.
+   * Creates a new studio. `timezone` defaults to `DEFAULT_STUDIO_TIMEZONE`
+   * when the payload omits it — the single explicit default site for the
+   * canonical Studio timezone (see
+   * docs/tech-debt/scene-qc-studio-timezone-no-write-path.md; no public
+   * route currently sets this field).
    */
   async createStudio(
     payload: CreateStudioPayload,
   ): Promise<Studio> {
     const uid = this.generateUid();
-    return this.studioRepository.create({ ...payload, uid });
+    return this.studioRepository.create({
+      ...payload,
+      uid,
+      timezone: payload.timezone ?? DEFAULT_STUDIO_TIMEZONE,
+    });
   }
 
   /**
@@ -79,12 +89,17 @@ export class StudioService extends BaseModelService {
   }
 
   /**
-   * Updates a studio.
+   * Updates a studio. Validates `timezone` as a resolvable IANA identifier
+   * when present; no current public route sets this field (see
+   * docs/tech-debt/scene-qc-studio-timezone-no-write-path.md).
    */
   async updateStudio(
     uid: string,
     payload: UpdateStudioPayload,
   ): Promise<Studio> {
+    if (payload.timezone !== undefined && !isValidIanaTimeZone(payload.timezone)) {
+      throw HttpError.badRequest(`Invalid IANA timezone: ${payload.timezone}`);
+    }
     return this.studioRepository.update({ uid }, payload);
   }
 

@@ -41,6 +41,10 @@
       "types": "./dist/pagination/index.d.ts",
       "default": "./dist/pagination/index.js"
     },
+    "./scene-qc": {
+      "types": "./dist/scene-qc/index.d.ts",
+      "default": "./dist/scene-qc/index.js"
+    },
     "./memberships": {
       "types": "./dist/memberships/index.d.ts",
       "default": "./dist/memberships/index.js"

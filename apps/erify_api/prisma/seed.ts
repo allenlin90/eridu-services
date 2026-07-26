@@ -5,6 +5,8 @@ import type { Prisma, Studio, User } from '@prisma/client';
 import { PrismaClient, TaskStatus, TaskType } from '@prisma/client';
 import { Pool } from 'pg';
 
+import { DEFAULT_STUDIO_TIMEZONE } from '@eridu/api-types/studios';
+
 import { fixtures, getClientUidByName } from './fixtures';
 
 // Initialize Prisma Client with adapter
@@ -1488,6 +1490,7 @@ async function main() {
             uid: fixtures.studios.mainStudio,
             name: 'Main Studio',
             address: '123 Production Street, Entertainment District',
+            timezone: DEFAULT_STUDIO_TIMEZONE,
             metadata: mergeSeedSharedFields({
               description: 'Main production studio facility',
               location: 'Downtown',
@@ -1499,6 +1502,9 @@ async function main() {
         studio = await tx.studio.update({
           where: { id: existingStudio.id },
           data: {
+            // Self-heals a DB restored from before the timezone migration; a
+            // no-op once the column is already backfilled.
+            timezone: existingStudio.timezone ?? DEFAULT_STUDIO_TIMEZONE,
             metadata: mergeSeedSharedFields(existingStudio.metadata) as Prisma.InputJsonValue,
           },
         });

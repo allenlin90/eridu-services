@@ -28,6 +28,7 @@ import { MeModule } from '@/me/me.module';
 import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
+import { SceneQcModule } from '@/scene-qc/scene-qc.module';
 import { StudiosModule } from '@/studios/studios.module';
 import { UploadModule } from '@/uploads/upload.module';
 
@@ -118,6 +119,7 @@ import { UploadModule } from '@/uploads/upload.module';
     HealthModule,
     UserModule,
     MeModule,
+    SceneQcModule,
     StudiosModule,
     UploadModule,
   ],

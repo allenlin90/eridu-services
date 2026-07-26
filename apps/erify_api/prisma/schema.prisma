@@ -9,29 +9,31 @@ datasource db {
 }
 
 model User {
-  id                           BigInt                 @id @default(autoincrement())
-  uid                          String                 @unique
-  extId                        String?                @unique @map("ext_id") // For SSO integration
-  email                        String                 @unique
+  id                           BigInt                  @id @default(autoincrement())
+  uid                          String                  @unique
+  extId                        String?                 @unique @map("ext_id") // For SSO integration
+  email                        String                  @unique
   name                         String
-  isBanned                     Boolean                @default(false) @map("is_banned")
-  isSystemAdmin                Boolean                @default(false) @map("is_system_admin") // System-level admin flag
-  profileUrl                   String?                @map("profile_url")
-  metadata                     Json                   @default("{}")
+  isBanned                     Boolean                 @default(false) @map("is_banned")
+  isSystemAdmin                Boolean                 @default(false) @map("is_system_admin") // System-level admin flag
+  profileUrl                   String?                 @map("profile_url")
+  metadata                     Json                    @default("{}")
   creator                      Creator? // Optional creator profile linkage
   studioMemberships            StudioMembership[]
   studioShifts                 StudioShift[]
-  schedules                    Schedule[]             @relation("ScheduleCreator")
-  publishedSchedules           Schedule[]             @relation("SchedulePublisher")
+  schedules                    Schedule[]              @relation("ScheduleCreator")
+  publishedSchedules           Schedule[]              @relation("SchedulePublisher")
   scheduleSnapshots            ScheduleSnapshot[]
   assignedTasks                Task[]
-  createdTaskReportDefinitions TaskReportDefinition[] @relation("TaskReportDefinitionCreatedBy")
-  createdCompensationLineItems CompensationLineItem[] @relation("CompensationLineItemCreatedBy")
+  createdTaskReportDefinitions TaskReportDefinition[]  @relation("TaskReportDefinitionCreatedBy")
+  createdCompensationLineItems CompensationLineItem[]  @relation("CompensationLineItemCreatedBy")
   audits                       Audit[]
-  publishRuns                  PublishRun[]           @relation("PublishRunTrigger")
-  createdAt                    DateTime               @default(now()) @map("created_at")
-  updatedAt                    DateTime               @updatedAt @map("updated_at")
-  deletedAt                    DateTime?              @map("deleted_at")
+  publishRuns                  PublishRun[]            @relation("PublishRunTrigger")
+  sceneMaterialRevisions       SceneMaterialRevision[] @relation("SceneMaterialRevisionCreatedBy")
+  sceneProfileRevisions        SceneProfileRevision[]  @relation("SceneProfileRevisionCreatedBy")
+  createdAt                    DateTime                @default(now()) @map("created_at")
+  updatedAt                    DateTime                @updatedAt @map("updated_at")
+  deletedAt                    DateTime?               @map("deleted_at")
 
   @@index([uid])
   @@index([email])
@@ -75,19 +77,21 @@ model Creator {
 }
 
 model Client {
-  id            BigInt           @id @default(autoincrement())
-  uid           String           @unique
-  name          String           @unique
-  contactPerson String           @map("contact_person")
-  contactEmail  String           @map("contact_email")
-  metadata      Json             @default("{}")
-  shows         Show[]
-  schedules     Schedule[]
-  mechanics     ClientMechanic[]
-  taskTemplates TaskTemplate[]
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  deletedAt     DateTime?        @map("deleted_at")
+  id             BigInt           @id @default(autoincrement())
+  uid            String           @unique
+  name           String           @unique
+  contactPerson  String           @map("contact_person")
+  contactEmail   String           @map("contact_email")
+  metadata       Json             @default("{}")
+  shows          Show[]
+  schedules      Schedule[]
+  mechanics      ClientMechanic[]
+  taskTemplates  TaskTemplate[]
+  sceneMaterials SceneMaterial[]
+  sceneProfiles  SceneProfile[]
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  deletedAt      DateTime?        @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -130,15 +134,16 @@ model ClientMechanic {
 }
 
 model Platform {
-  id            BigInt         @id @default(autoincrement())
-  uid           String         @unique
-  name          String
-  apiConfig     Json           @map("api_config")
-  metadata      Json           @default("{}")
-  showPlatforms ShowPlatform[]
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  deletedAt     DateTime?      @map("deleted_at")
+  id                            BigInt                         @id @default(autoincrement())
+  uid                           String                         @unique
+  name                          String
+  apiConfig                     Json                           @map("api_config")
+  metadata                      Json                           @default("{}")
+  showPlatforms                 ShowPlatform[]
+  sceneProfileRevisionMaterials SceneProfileRevisionMaterial[]
+  createdAt                     DateTime                       @default(now()) @map("created_at")
+  updatedAt                     DateTime                       @updatedAt @map("updated_at")
+  deletedAt                     DateTime?                      @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -175,6 +180,7 @@ model Show {
   taskTargets                 TaskTarget[]
   compensationLineItemTargets CompensationLineItemTarget[]
   auditTargets                AuditTarget[]
+  sceneProfileAssignments     SceneProfileAssignment[]
   createdAt                   DateTime                     @default(now()) @map("created_at")
   updatedAt                   DateTime                     @updatedAt @map("updated_at")
   deletedAt                   DateTime?                    @map("deleted_at")
@@ -284,26 +290,31 @@ model ShowPlatform {
 }
 
 model Studio {
-  id                    BigInt                 @id @default(autoincrement())
-  uid                   String                 @unique
-  name                  String                 @unique
-  address               String
-  metadata              Json                   @default("{}")
-  shows                 Show[]
-  schedules             Schedule[]
-  studioRooms           StudioRoom[]
-  studioMemberships     StudioMembership[]
-  studioCreators        StudioCreator[]
-  taskTemplates         TaskTemplate[]
-  taskReportDefinitions TaskReportDefinition[]
-  tasks                 Task[]
-  taskTargets           TaskTarget[]
-  studioShifts          StudioShift[]
-  compensationLineItems CompensationLineItem[]
-  publishRuns           PublishRun[]
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
-  deletedAt             DateTime?              @map("deleted_at")
+  id                            BigInt                         @id @default(autoincrement())
+  uid                           String                         @unique
+  name                          String                         @unique
+  address                       String
+  // Canonical IANA identifier used to resolve every server-authoritative
+  // operational day (06:00–05:59 local). No browser, host-locale, or UTC
+  // fallback exists — see docs/prd/scene-qc.md and the Scene QC plan §5.
+  timezone                      String
+  metadata                      Json                           @default("{}")
+  shows                         Show[]
+  schedules                     Schedule[]
+  studioRooms                   StudioRoom[]
+  studioMemberships             StudioMembership[]
+  studioCreators                StudioCreator[]
+  taskTemplates                 TaskTemplate[]
+  taskReportDefinitions         TaskReportDefinition[]
+  tasks                         Task[]
+  taskTargets                   TaskTarget[]
+  studioShifts                  StudioShift[]
+  compensationLineItems         CompensationLineItem[]
+  publishRuns                   PublishRun[]
+  sceneProfileRevisionMaterials SceneProfileRevisionMaterial[]
+  createdAt                     DateTime                       @default(now()) @map("created_at")
+  updatedAt                     DateTime                       @updatedAt @map("updated_at")
+  deletedAt                     DateTime?                      @map("deleted_at")
 
   @@index([uid])
   @@index([name])
@@ -880,29 +891,30 @@ model ShowPlatformViolation {
 // apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md §2.B.
 
 model Audit {
-  id        BigInt        @id @default(autoincrement())
-  uid       String        @unique
+  id             BigInt               @id @default(autoincrement())
+  uid            String               @unique
   // "CREATE" | "UPDATE" | "DELETE" | "OVERRIDE" | "SKIPPED_LOWER_PRIORITY"
-  action    String        @map("action")
+  action         String               @map("action")
   // Null for engine writes (extraction pipeline); populated for manager-initiated overrides.
-  actorId   BigInt?       @map("actor_id")
-  actor     User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  ipAddress String?       @map("ip_address")
-  userAgent String?       @map("user_agent")
+  actorId        BigInt?              @map("actor_id")
+  actor          User?                @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  ipAddress      String?              @map("ip_address")
+  userAgent      String?              @map("user_agent")
   // Free-text justification supplied by the actor on OVERRIDE-class writes.
   // Nullable because engine writes never carry a reason. Required-ness is
   // enforced per writer (see studio-shift hourly_rate, show-creator
   // compensation, etc.) — not at the schema level. Mirrors the legacy
   // `snapshot_overrides[].reason` shape so the sidecar merger maps 1:1.
-  reason    String?       @map("reason")
+  reason         String?              @map("reason")
   // Stores old/new values, ingestion_source, task_uid, task_field_id, etc.
-  metadata  Json          @default("{}")
+  metadata       Json                 @default("{}")
   // Set on schedule_publish_impact rows written during a publish call; null for
   // all other audits and for impact rows that predate PublishRun (no backfill).
-  publishRunId BigInt?     @map("publish_run_id")
-  publishRun   PublishRun? @relation(fields: [publishRunId], references: [id], onDelete: SetNull)
-  targets   AuditTarget[]
-  createdAt DateTime      @default(now()) @map("created_at")
+  publishRunId   BigInt?              @map("publish_run_id")
+  publishRun     PublishRun?          @relation(fields: [publishRunId], references: [id], onDelete: SetNull)
+  targets        AuditTarget[]
+  sceneQcTargets SceneQcAuditTarget[]
+  createdAt      DateTime             @default(now()) @map("created_at")
 
   @@index([action])
   @@index([actorId])
@@ -936,6 +948,203 @@ model AuditTarget {
   @@index([showPlatformId])
   @@index([studioShiftId])
   @@map("audit_targets")
+}
+
+// ============================================
+// SCENE QC
+// ============================================
+// Capability-owned persistence for the Scene QC workflow. Owners:
+// Client owns materials/profiles, Show is the review anchor, Studio and
+// Platform describe applicability only. See
+// apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md §5.
+//
+// These tables intentionally carry no `metadata` JSONB column: every Stage 1
+// fact is normalized (database-patterns §10/§11).
+
+enum SceneQcStatus {
+  ACTIVE
+  RETIRED
+}
+
+// Physical setup of a Scene Profile. Pinned on every profile revision so
+// Stage 3 structured findings can apply the right vocabulary without a
+// profile-history migration (PRD "Taxonomy and Structured Findings").
+enum SceneType {
+  GRAPHIC_BG
+  REAL_BACKDROP
+}
+
+// Client-owned reusable reference identity (logo, campaign header, safe area,
+// backdrop, fixture). The image itself lives on immutable revisions.
+model SceneMaterial {
+  id           BigInt                  @id @default(autoincrement())
+  uid          String                  @unique
+  clientId     BigInt                  @map("client_id")
+  client       Client                  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name         String
+  status       SceneQcStatus           @default(ACTIVE)
+  version      Int                     @default(1)
+  revisions    SceneMaterialRevision[]
+  auditTargets SceneQcAuditTarget[]
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @updatedAt @map("updated_at")
+  deletedAt    DateTime?               @map("deleted_at")
+
+  // One active, non-deleted name per Client is a partial unique index added as
+  // CUSTOM SQL in the migration; Prisma cannot express `WHERE`-scoped uniqueness.
+  @@index([deletedAt])
+  @@index([clientId, deletedAt])
+  @@index([clientId, status, deletedAt])
+  @@map("scene_materials")
+}
+
+// Immutable uploaded image version. Replacing a material appends a revision and
+// never overwrites an earlier object reference. Historical reads re-sign
+// `objectKey`; `fileUrl` is the upload-time locator, not the render source.
+model SceneMaterialRevision {
+  id           BigInt                         @id @default(autoincrement())
+  uid          String                         @unique
+  materialId   BigInt                         @map("material_id")
+  material     SceneMaterial                  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  revision     Int
+  objectKey    String                         @map("object_key")
+  fileUrl      String                         @map("file_url")
+  mimeType     String                         @map("mime_type")
+  fileSize     Int                            @map("file_size")
+  createdById  BigInt?                        @map("created_by_id")
+  createdBy    User?                          @relation("SceneMaterialRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  profileLinks SceneProfileRevisionMaterial[]
+  createdAt    DateTime                       @default(now()) @map("created_at")
+
+  @@unique([materialId, revision])
+  @@index([materialId, revision])
+  @@index([createdById])
+  @@map("scene_material_revisions")
+}
+
+// Client-owned expected-scene composition identity.
+model SceneProfile {
+  id           BigInt                   @id @default(autoincrement())
+  uid          String                   @unique
+  clientId     BigInt                   @map("client_id")
+  client       Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  status       SceneQcStatus            @default(ACTIVE)
+  isDefault    Boolean                  @default(false) @map("is_default")
+  sceneType    SceneType                @map("scene_type")
+  version      Int                      @default(1)
+  revisions    SceneProfileRevision[]
+  assignments  SceneProfileAssignment[]
+  auditTargets SceneQcAuditTarget[]
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+  deletedAt    DateTime?                @map("deleted_at")
+
+  // At most one active, non-deleted default per Client: partial unique index in
+  // the migration. No unconditional @unique here.
+  @@index([deletedAt])
+  @@index([clientId, deletedAt])
+  @@index([clientId, status, deletedAt])
+  @@index([clientId, status, isDefault, deletedAt])
+  @@map("scene_profiles")
+}
+
+// Immutable composition revision. Snapshots its display facts so a later
+// profile rename does not rewrite a confirmed review's context.
+model SceneProfileRevision {
+  id                 BigInt                         @id @default(autoincrement())
+  uid                String                         @unique
+  profileId          BigInt                         @map("profile_id")
+  profile            SceneProfile                   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  revision           Int
+  profileName        String                         @map("profile_name")
+  profileDescription String?                        @map("profile_description")
+  sceneType          SceneType                      @map("scene_type")
+  materials          SceneProfileRevisionMaterial[]
+  createdById        BigInt?                        @map("created_by_id")
+  createdBy          User?                          @relation("SceneProfileRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime                       @default(now()) @map("created_at")
+
+  @@unique([profileId, revision])
+  @@index([profileId, revision])
+  @@index([createdById])
+  @@map("scene_profile_revisions")
+}
+
+// Ordered expected-reference gallery entry. `studioId` / `platformId` are
+// optional applicability filters: an unscoped link applies everywhere within
+// the owning Client. onDelete: Restrict on all three — SetNull would silently
+// widen a scoped link, and Cascade would destroy pinned review history. These
+// parents are soft-deleted in practice, so Restrict never fires normally.
+model SceneProfileRevisionMaterial {
+  id                 BigInt                @id @default(autoincrement())
+  profileRevisionId  BigInt                @map("profile_revision_id")
+  profileRevision    SceneProfileRevision  @relation(fields: [profileRevisionId], references: [id], onDelete: Cascade)
+  materialRevisionId BigInt                @map("material_revision_id")
+  materialRevision   SceneMaterialRevision @relation(fields: [materialRevisionId], references: [id], onDelete: Restrict)
+  sortOrder          Int                   @map("sort_order")
+  studioId           BigInt?               @map("studio_id")
+  studio             Studio?               @relation(fields: [studioId], references: [id], onDelete: Restrict)
+  platformId         BigInt?               @map("platform_id")
+  platform           Platform?             @relation(fields: [platformId], references: [id], onDelete: Restrict)
+  label              String
+
+  @@unique([profileRevisionId, sortOrder])
+  @@index([profileRevisionId])
+  @@index([materialRevisionId])
+  @@index([studioId])
+  @@index([platformId])
+  @@map("scene_profile_revision_materials")
+}
+
+// Optional explicit Show -> Profile override. Absence falls back to the
+// Client's active default; absence of that produces a warning, not a blocker.
+model SceneProfileAssignment {
+  id           BigInt               @id @default(autoincrement())
+  uid          String               @unique
+  showId       BigInt               @map("show_id")
+  show         Show                 @relation(fields: [showId], references: [id], onDelete: Cascade)
+  profileId    BigInt               @map("profile_id")
+  profile      SceneProfile         @relation(fields: [profileId], references: [id], onDelete: Restrict)
+  version      Int                  @default(1)
+  auditTargets SceneQcAuditTarget[]
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+  deletedAt    DateTime?            @map("deleted_at")
+
+  // One non-deleted assignment per Show: partial unique index in the migration.
+  @@index([deletedAt])
+  @@index([showId, deletedAt])
+  @@index([profileId, deletedAt])
+  @@map("scene_profile_assignments")
+}
+
+// Capability-owned typed audit-target side table. Keeps five Scene QC nullable
+// FKs and their indexes out of the shared `audit_targets` junction (plan §5.6).
+// Cascade from the target row cleans up only this junction; the parent Audit
+// envelope is preserved, matching AuditTarget's contract.
+//
+// CONTRACT FOR LATER CHILD PRs: Child PR 3 adds `scene_qc_review_id` and Child
+// PR 4 adds `scene_qc_daily_confirmation_id`. Each must DROP and re-ADD
+// `scene_qc_audit_targets_exactly_one_target` with the widened num_nonnulls()
+// list inside its own generated migration. Do not widen `audit_targets`.
+model SceneQcAuditTarget {
+  id                       BigInt                  @id @default(autoincrement())
+  auditId                  BigInt                  @map("audit_id")
+  audit                    Audit                   @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  sceneMaterialId          BigInt?                 @map("scene_material_id")
+  sceneMaterial            SceneMaterial?          @relation(fields: [sceneMaterialId], references: [id], onDelete: Cascade)
+  sceneProfileId           BigInt?                 @map("scene_profile_id")
+  sceneProfile             SceneProfile?           @relation(fields: [sceneProfileId], references: [id], onDelete: Cascade)
+  sceneProfileAssignmentId BigInt?                 @map("scene_profile_assignment_id")
+  sceneProfileAssignment   SceneProfileAssignment? @relation(fields: [sceneProfileAssignmentId], references: [id], onDelete: Cascade)
+
+  @@index([auditId])
+  @@index([sceneMaterialId])
+  @@index([sceneProfileId])
+  @@index([sceneProfileAssignmentId])
+  @@map("scene_qc_audit_targets")
 }
 
 enum CreatorType {

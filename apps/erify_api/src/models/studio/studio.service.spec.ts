@@ -1,3 +1,5 @@
+import type { Studio } from '@prisma/client';
+
 import { StudioRepository } from './studio.repository';
 import { StudioService } from './studio.service';
 
@@ -50,6 +52,7 @@ describe('studioService', () => {
         uid: 'std_00000001',
         name: 'Test Studio',
         address: '123 Test Street',
+        timezone: 'Asia/Bangkok',
         metadata: { test: 'data' },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -67,8 +70,33 @@ describe('studioService', () => {
       expect(studioRepository.create).toHaveBeenCalledWith({
         ...studioData,
         uid: 'std_test123',
+        timezone: 'Asia/Bangkok',
       });
       expect(result).toEqual(expectedResult);
+    });
+
+    it('defaults timezone to Asia/Bangkok when the payload omits it', async () => {
+      jest.spyOn(studioRepository, 'create').mockResolvedValue({} as Studio);
+
+      await service.createStudio({ name: 'Test Studio', address: '123 Test Street' });
+
+      expect(studioRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ timezone: 'Asia/Bangkok' }),
+      );
+    });
+
+    it('persists an explicit timezone when the payload supplies one', async () => {
+      jest.spyOn(studioRepository, 'create').mockResolvedValue({} as Studio);
+
+      await service.createStudio({
+        name: 'Test Studio',
+        address: '123 Test Street',
+        timezone: 'America/New_York',
+      });
+
+      expect(studioRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ timezone: 'America/New_York' }),
+      );
     });
   });
 
@@ -145,6 +173,27 @@ describe('studioService', () => {
       jest.spyOn(studioRepository, 'update').mockRejectedValue(new Error('Update failed'));
 
       await expect(service.updateStudio(uid, updateData)).rejects.toThrow();
+    });
+
+    it('rejects an update with an invalid IANA timezone', async () => {
+      const uid = 'std_00000001';
+
+      await expect(
+        service.updateStudio(uid, { timezone: 'Not/AZone' }),
+      ).rejects.toMatchObject({ status: 400 });
+      expect(studioRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('accepts an update with a valid IANA timezone', async () => {
+      const uid = 'std_00000001';
+      jest.spyOn(studioRepository, 'update').mockResolvedValue({} as Studio);
+
+      await service.updateStudio(uid, { timezone: 'America/New_York' });
+
+      expect(studioRepository.update).toHaveBeenCalledWith(
+        { uid },
+        { timezone: 'America/New_York' },
+      );
     });
   });
 

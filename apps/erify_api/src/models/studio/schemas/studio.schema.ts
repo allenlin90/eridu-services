@@ -26,6 +26,10 @@ export const studioSchema = z.object({
   uid: z.string().startsWith(StudioService.UID_PREFIX),
   name: z.string(),
   address: z.string(),
+  // Canonical IANA timezone (Scene QC operational-day resolution). Not yet a
+  // public response field in this PR — see
+  // docs/tech-debt/scene-qc-studio-timezone-no-write-path.md.
+  timezone: z.string(),
   metadata: z.record(z.string(), z.any()),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -111,6 +115,10 @@ export class ListStudiosQueryDto extends createZodDto(listStudiosQuerySchema) {
 export type CreateStudioPayload = {
   name: string;
   address: string;
+  // Optional: `StudioService.createStudio` defaults to `DEFAULT_STUDIO_TIMEZONE`
+  // when omitted. No current public route sets this field; see
+  // docs/tech-debt/scene-qc-studio-timezone-no-write-path.md.
+  timezone?: string;
   metadata?: Record<string, any>;
 };
 
@@ -120,6 +128,10 @@ export type CreateStudioPayload = {
 export type UpdateStudioPayload = {
   name?: string;
   address?: string;
+  // Optional: validated as an IANA identifier by `StudioService.updateStudio`
+  // when present. No current public route sets this field; see
+  // docs/tech-debt/scene-qc-studio-timezone-no-write-path.md.
+  timezone?: string;
   metadata?: Record<string, any>;
 };
 
