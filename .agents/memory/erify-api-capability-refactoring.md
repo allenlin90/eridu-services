@@ -46,13 +46,12 @@ skill.
 
 ## Future Activation
 
-- Product sequencing remains in Phase 5 and is not the refactoring queue.
-- Phase 5 item 18 activates `ShowOperationsModule` as part of the lifecycle
-  transition work, never as a standalone folder move.
-- `PublishingService` decomposition activates only when item 18 integration or
-  measured risk requires it.
-- Scoped query providers and further MCP narrowing travel with the owning
-  capability work.
+- The refactoring target register is authoritative for open-target evidence,
+  activation gates, status, and exit criteria.
+- Product sequencing remains in Phase 5 and supplies activation evidence; it is
+  not the refactoring queue.
+- Do not duplicate open target state here. Update the register when evidence or
+  status changes.
 
 ## Recorded Discussion Outcomes
 

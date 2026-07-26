@@ -20,6 +20,11 @@ It does not own product sequencing. [`PHASE_5.md`](../../../docs/roadmap/PHASE_5
 and later product roadmaps define behavior and delivery order. A product item
 appears here only when it supplies evidence or activates an architecture target.
 
+Use `docs/tech-debt/` for an accepted implementation defect or gap with a fix
+trigger, and `docs/ideation/` for a future mechanism that still needs discovery
+or a decision. Use this register for a desired architecture boundary and its
+activation evidence; link related entries instead of duplicating their scope.
+
 ## Feature And Refactor Preflight
 
 Before planning or implementing any `erify_api` feature, behavior change, or
@@ -77,17 +82,17 @@ and have one named capability owner.
 [`architecture-signals-baseline.json`](./architecture-signals-baseline.json),
 reports:
 
-| Signal | Current |
-| --- | ---: |
-| Nest modules | 83 |
-| Static local module edges | 253 |
-| Static module cycles | 0 |
-| Modules at or below 20 lines | 70 |
-| Model modules | 23 |
-| Repositories | 29 |
-| Exported repositories | 5 |
-| MCP-reachable modules | 22 |
-| Specs | 165 |
+| Signal | Source `f677b627` | Current `09fde432` |
+| --- | ---: | ---: |
+| Nest modules | 90 | 83 |
+| Static local module edges | 293 | 253 |
+| Static module cycles | 0 | 0 |
+| Modules at or below 20 lines | 74 | 70 |
+| Model modules | 27 | 23 |
+| Repositories | 30 | 29 |
+| Exported repositories | 6 | 5 |
+| MCP-reachable modules | 24 | 22 |
+| Specs | 156 | 165 |
 
 These signals aid navigation and trend review. Zero modules, repositories, or
 small files is not the target.

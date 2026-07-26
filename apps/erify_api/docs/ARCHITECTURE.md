@@ -127,29 +127,18 @@ failures.
 
 ## Trigger-Gated Next Steps
 
-The remaining architecture directions are destination maps, not an autonomous
-refactoring backlog:
-
-1. Phase 5 [item 18](../../../docs/roadmap/PHASE_5.md#18-show-lifecycle-state-machine)
-   activates a `ShowOperationsModule` only as the owning boundary for the
-   canonical lifecycle transition service. Move related code incrementally
-   behind a stable facade; do not run a standalone folder migration or create
-   another status writer.
-2. Decompose `PublishingService` only if item 18's schedule-publish integration
-   requires it, or measured query, lock, rollback, or maintainability risk
-   independently reaches the gate. Preserve the current facade and transaction
-   boundary until then.
-3. Introduce scoped show/task query providers and further narrow MCP composition
-   when the owning capability work needs them, not as speculative seams.
-4. Reconsider CQRS infrastructure, workers, read models, package extraction, or
-   database splits only after explicit coordination, scaling, or independent
-   deployment evidence exists.
-
 The active
 [`REFACTORING_TARGETS.md`](./REFACTORING_TARGETS.md)
-register records the current evidence, activation gate, destination boundary,
-and exit criteria for each residual target. New feature and refactor work must
-consult that register and record the applicable target IDs and trigger outcome.
+register is authoritative for open architecture-target evidence, activation
+gates, destination boundaries, and exit criteria. RT-02, RT-03, RT-04, and
+RT-08 own the remaining show-operations, publishing, scoped-query/MCP, and
+advanced-architecture directions respectively.
+
+This heading remains a stable anchor for product documents, but it does not
+duplicate the open gates. Phase 5 item 18 is activation evidence under RT-02
+and potentially RT-03; update the register when that evidence or status changes.
+New feature and refactor work must record the applicable target IDs and trigger
+outcome.
 
 ## Phase 5 Handoff
 
