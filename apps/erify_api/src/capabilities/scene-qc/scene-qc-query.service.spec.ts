@@ -1,10 +1,9 @@
-import type { ResolvedSceneQcEvidence } from './scene-qc-evidence.resolver';
-import type { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
-import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
+import type { EligibleShowRow, ReviewHeadRow } from './schemas/scene-qc-review.schema';
 import type { SceneProfileService } from './scene-profile.service';
+import type { ResolvedSceneQcEvidence, SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
+import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
 import { SceneQcQueryService } from './scene-qc-query.service';
 import type { SceneQcRepository } from './scene-qc-review.repository';
-import type { EligibleShowRow, ReviewHeadRow } from './schemas/scene-qc-review.schema';
 
 const STUDIO_UID = 'std_abc';
 const OPERATIONAL_DATE = '2026-06-01';
@@ -54,8 +53,7 @@ function buildReviewHead(overrides: Partial<ReviewHeadRow> = {}): ReviewHeadRow 
 }
 
 describe('sceneQcQueryService', () => {
-  let repository: jest.Mocked<Pick<SceneQcRepository,
-    'findEligibleShowsInWindow' | 'findEligibleShowForReview' | 'findReviewHeadsForShows' | 'findReviewByShowAndDate' | 'findClientIdsWithActiveProfile'>>;
+  let repository: jest.Mocked<Pick<SceneQcRepository, 'findEligibleShowsInWindow' | 'findEligibleShowForReview' | 'findReviewHeadsForShows' | 'findReviewByShowAndDate' | 'findClientIdsWithActiveProfile'>>;
   let evidenceResolver: jest.Mocked<Pick<SceneQcEvidenceResolver, 'resolveForShows'>>;
   let sceneProfileService: jest.Mocked<Pick<SceneProfileService, 'getActiveProfileForClient'>>;
   let service: SceneQcQueryService;

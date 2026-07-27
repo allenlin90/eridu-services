@@ -1,14 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import type { SceneQcDailySummary, SceneQcDailyItemDetail } from '@eridu/api-types/scene-qc';
+import type { SceneQcDailyItemDetail, SceneQcDailySummary } from '@eridu/api-types/scene-qc';
 import { SCENE_QC_REVIEW_STATE } from '@eridu/api-types/scene-qc';
 
-import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
-import { isShowEligibleForSceneQc } from './scene-qc-eligibility-policy';
-import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
-import { SceneQcRepository } from './scene-qc-review.repository';
-import { SceneProfileService } from './scene-profile.service';
-import type { EligibleShowRow, ReviewHeadRow } from './schemas/scene-qc-review.schema';
+import type { SceneQcDailyItemInput, SceneQcItemsQueryDto } from './schemas/scene-qc-daily.schema';
 import {
   classifySceneQcReviewState,
   resolveSceneQcBlockedReason,
@@ -16,7 +11,12 @@ import {
   toSceneQcDailySummaryDto,
   toSceneQcExpectedReferenceDto,
 } from './schemas/scene-qc-daily.schema';
-import type { SceneQcDailyItemInput, SceneQcItemsQueryDto } from './schemas/scene-qc-daily.schema';
+import type { EligibleShowRow, ReviewHeadRow } from './schemas/scene-qc-review.schema';
+import { SceneProfileService } from './scene-profile.service';
+import { isShowEligibleForSceneQc } from './scene-qc-eligibility-policy';
+import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
+import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
+import { SceneQcRepository } from './scene-qc-review.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 
@@ -54,9 +54,12 @@ export class SceneQcQueryService {
     let minorCount = 0;
     let failCount = 0;
     for (const review of reviewHeads) {
-      if (review.result === 'PASS') passCount += 1;
-      else if (review.result === 'MINOR') minorCount += 1;
-      else if (review.result === 'FAIL') failCount += 1;
+      if (review.result === 'PASS')
+        passCount += 1;
+      else if (review.result === 'MINOR')
+        minorCount += 1;
+      else if (review.result === 'FAIL')
+        failCount += 1;
     }
     const blockedNoEvidenceCount = shows.filter(
       (show) => (evidenceByShow.get(show.id)?.length ?? 0) === 0,
