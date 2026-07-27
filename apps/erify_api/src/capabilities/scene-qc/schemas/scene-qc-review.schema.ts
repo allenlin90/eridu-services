@@ -175,12 +175,19 @@ export type CreateReviewPersistenceInput = ReviewMutablePersistenceFields & {
   evidence: PinnedEvidenceInput[];
 };
 
-/** Lean projection of a Show eligible for Scene QC within a resolved window. */
+/**
+ * Lean projection of a Show eligible for Scene QC within a resolved window.
+ * `deletedAt` is always `null` here -- both repository read methods already
+ * filter `deletedAt: null` at the DB level -- kept on the type only so this
+ * row satisfies `SceneQcShowEligibilityInput` without a manual cast at every
+ * `isShowEligibleForSceneQc` call site.
+ */
 export type EligibleShowRow = {
   id: bigint;
   uid: string;
   name: string;
   startTime: Date;
+  deletedAt: null;
   statusSystemKey: string | null;
   client: { id: bigint; uid: string; name: string } | null;
   platforms: Array<{ uid: string; name: string }>;

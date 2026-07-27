@@ -3,7 +3,6 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import type { Prisma } from '@prisma/client';
 
-import { SCENE_QC_EXCLUDED_SHOW_STATUS_SYSTEM_KEYS } from './scene-qc-eligibility-policy';
 import type {
   CreateReviewPersistenceInput,
   EligibleShowRow,
@@ -13,6 +12,7 @@ import type {
   SceneQcReviewRecord,
 } from './schemas/scene-qc-review.schema';
 import { sceneQcReviewDefaultInclude } from './schemas/scene-qc-review.schema';
+import { SCENE_QC_EXCLUDED_SHOW_STATUS_SYSTEM_KEYS } from './scene-qc-eligibility-policy';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 
@@ -40,6 +40,7 @@ function toEligibleShowRow(show: RawEligibleShow): EligibleShowRow {
     uid: show.uid,
     name: show.name,
     startTime: show.startTime,
+    deletedAt: null,
     statusSystemKey: show.showStatus?.systemKey ?? null,
     client: show.client ? { id: show.client.id, uid: show.client.uid, name: show.client.name } : null,
     platforms: show.showPlatforms.map((entry) => entry.platform),
