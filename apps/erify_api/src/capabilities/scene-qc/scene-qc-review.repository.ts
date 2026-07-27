@@ -120,6 +120,26 @@ export class SceneQcRepository {
     return show ? toEligibleShowRow(show) : null;
   }
 
+  /**
+   * Bulk existence check backing the daily item list's `has_scene_profile`
+   * field. `SceneProfile` is Scene QC's own table (owned by this module, not
+   * a cross-capability read like `show`/`task`), so a direct bulk
+   * `txHost.tx.sceneProfile` read here avoids an N+1 loop over
+   * `SceneProfileService.getActiveProfileForClient` per row -- that
+   * per-Client method exists for the single-Client detail/profile-editor
+   * path, not bulk list projections.
+   */
+  async findClientIdsWithActiveProfile(clientIds: bigint[]): Promise<Set<bigint>> {
+    if (clientIds.length === 0) {
+      return new Set();
+    }
+    const profiles = await this.txHost.tx.sceneProfile.findMany({
+      where: { clientId: { in: clientIds }, deletedAt: null },
+      select: { clientId: true },
+    });
+    return new Set(profiles.map((profile) => profile.clientId));
+  }
+
   async findReviewHeadsForShows(input: {
     showIds: bigint[];
     operationalDate: Date;
