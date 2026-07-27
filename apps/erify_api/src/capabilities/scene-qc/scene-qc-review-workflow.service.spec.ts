@@ -6,14 +6,14 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma } from '@prisma/client';
 import { ClsModule } from 'nestjs-cls';
 
-import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
+import type { EligibleShowRow, SceneQcReviewRecord } from './schemas/scene-qc-review.schema';
 import { SceneProfileService } from './scene-profile.service';
 import { SceneQcAuditWriter } from './scene-qc-audit.writer';
 import type { ResolvedSceneQcEvidence } from './scene-qc-evidence.resolver';
 import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
+import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
 import { SceneQcRepository } from './scene-qc-review.repository';
 import { SceneQcWorkflowService } from './scene-qc-review-workflow.service';
-import type { EligibleShowRow, SceneQcReviewRecord } from './schemas/scene-qc-review.schema';
 
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
@@ -95,8 +95,7 @@ class MockPrismaModule {}
 
 describe('sceneQcWorkflowService', () => {
   let service: SceneQcWorkflowService;
-  let repository: jest.Mocked<Pick<SceneQcRepository,
-    'findEligibleShowForReview' | 'createReviewWithEvidence' | 'findReviewForUpdate' | 'replaceReviewWithEvidence'>>;
+  let repository: jest.Mocked<Pick<SceneQcRepository, 'findEligibleShowForReview' | 'createReviewWithEvidence' | 'findReviewForUpdate' | 'replaceReviewWithEvidence'>>;
   let evidenceResolver: jest.Mocked<Pick<SceneQcEvidenceResolver, 'resolveForShows'>>;
   let sceneProfileService: jest.Mocked<Pick<SceneProfileService, 'getActiveProfileForClient'>>;
   let auditWriter: jest.Mocked<Pick<SceneQcAuditWriter, 'recordSceneQcReviewChange'>>;
