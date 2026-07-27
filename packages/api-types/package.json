@@ -49,6 +49,10 @@
       "types": "./dist/platforms/index.d.ts",
       "default": "./dist/platforms/index.js"
     },
+    "./scene-qc": {
+      "types": "./dist/scene-qc/index.d.ts",
+      "default": "./dist/scene-qc/index.js"
+    },
     "./show-standards": {
       "types": "./dist/show-standards/index.d.ts",
       "default": "./dist/show-standards/index.js"

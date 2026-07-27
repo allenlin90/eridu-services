@@ -54,3 +54,13 @@ non-local host, or a URL equal to the existing `DATABASE_URL`.
 - the MCP runtime module graph boots with real Prisma and CLS providers.
 - an opt-in maximum-size schedule bulk measurement verifies that a failed
   middle item does not stop later create/update items.
+- the Scene Profile partial unique index rejects a second non-deleted profile
+  per Client, and retire-then-recreate leaves one non-deleted and one
+  soft-deleted row (`scene_profiles_active_client_key`, invisible to Prisma);
+- the Scene QC audit-target `CHECK` constraint rejects a row with no typed
+  target set, and hard-deleting a Scene Profile cascades its audit-target
+  junction rows while the parent `Audit` envelope survives;
+- direct `SceneProfileService` persistence reads its own uncommitted write
+  inside the ambient CLS transaction, rolls back with it, and its
+  version-checked replace increments 1 -> 2 while a replayed stale version
+  409s.
