@@ -20,6 +20,20 @@ function makeFile(name: string, type: string, size: number): File {
   return new File([buffer], name, { type });
 }
 
+/**
+ * A File reporting `size` without actually allocating that many bytes.
+ * `prepareImageForUpload`/`requestPresignedUpload`/`uploadFileToPresignedUrl`
+ * are mocked in every test here, so nothing ever reads the real content — only
+ * `.size` and `.type` matter. A real multi-MB `Uint8Array` backing (via
+ * `makeFile`) reliably pushes this file's tests over vitest's default timeout
+ * under full-suite worker-pool contention even though it's fast in isolation.
+ */
+function makeOversizedFile(name: string, type: string, size: number): File {
+  const file = makeFile(name, type, 1);
+  Object.defineProperty(file, 'size', { value: size });
+  return file;
+}
+
 const PRESIGNED = {
   upload_url: 'https://r2.example.com/put',
   upload_method: 'PUT' as const,
@@ -71,7 +85,7 @@ describe('uploadSceneReference', () => {
     vi.mocked(requestPresignedUpload).mockResolvedValue(PRESIGNED);
     vi.mocked(uploadFileToPresignedUrl).mockResolvedValue(undefined);
 
-    const oversized = makeFile('ref.png', 'image/png', 20 * 1024 * 1024);
+    const oversized = makeOversizedFile('ref.png', 'image/png', 20 * 1024 * 1024);
     await uploadSceneReference(oversized);
 
     expect(prepareImageForUpload).toHaveBeenCalledWith(oversized, expect.objectContaining({
@@ -81,13 +95,13 @@ describe('uploadSceneReference', () => {
 
   it('throws and never presigns when compression cannot meet the target', async () => {
     vi.mocked(prepareImageForUpload).mockResolvedValue({
-      file: makeFile('ref.png', 'image/png', 15 * 1024 * 1024),
+      file: makeOversizedFile('ref.png', 'image/png', 15 * 1024 * 1024),
       wasCompressed: true,
       usedWorker: false,
       metTarget: false,
     });
 
-    const oversized = makeFile('ref.png', 'image/png', 20 * 1024 * 1024);
+    const oversized = makeOversizedFile('ref.png', 'image/png', 20 * 1024 * 1024);
     await expect(uploadSceneReference(oversized)).rejects.toThrow(/too large after compression/);
     expect(requestPresignedUpload).not.toHaveBeenCalled();
   });
