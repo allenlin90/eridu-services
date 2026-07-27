@@ -74,4 +74,35 @@ describe('sceneQcAuditWriter', () => {
 
     expect(auditCreate.mock.calls[0][0].data.action).toBe(action);
   });
+
+  describe('recordSceneQcReviewChange', () => {
+    it('writes exactly one audit.create call with the nested SceneQcAuditTarget junction pointed at sceneQcReview, and no reason key', async () => {
+      await writer.recordSceneQcReviewChange({
+        action: 'CREATE',
+        actorId: 42n,
+        sceneQcReviewId: 9n,
+        metadata: { event: 'scene_qc_review_saved' },
+      });
+
+      expect(auditCreate).toHaveBeenCalledTimes(1);
+      const callArgs = auditCreate.mock.calls[0][0];
+      expect(callArgs.data.action).toBe('CREATE');
+      expect(callArgs.data.actor).toEqual({ connect: { id: 42n } });
+      expect(callArgs.data.sceneQcTargets).toEqual({
+        create: [{ sceneQcReview: { connect: { id: 9n } } }],
+      });
+      expect(callArgs.data).not.toHaveProperty('reason');
+    });
+
+    it.each(['CREATE', 'UPDATE'] as const)('accepts action %s', async (action) => {
+      await writer.recordSceneQcReviewChange({
+        action,
+        actorId: 1n,
+        sceneQcReviewId: 2n,
+        metadata: {},
+      });
+
+      expect(auditCreate.mock.calls[0][0].data.action).toBe(action);
+    });
+  });
 });
