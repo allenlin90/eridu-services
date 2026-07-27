@@ -85,6 +85,7 @@ model Client {
   schedules     Schedule[]
   mechanics     ClientMechanic[]
   taskTemplates TaskTemplate[]
+  sceneProfiles SceneProfile[]
   createdAt     DateTime         @default(now()) @map("created_at")
   updatedAt     DateTime         @updatedAt @map("updated_at")
   deletedAt     DateTime?        @map("deleted_at")
@@ -880,29 +881,30 @@ model ShowPlatformViolation {
 // apps/erify_api/docs/TASK_INPUT_FACT_BINDING.md §2.B.
 
 model Audit {
-  id        BigInt        @id @default(autoincrement())
-  uid       String        @unique
+  id             BigInt               @id @default(autoincrement())
+  uid            String               @unique
   // "CREATE" | "UPDATE" | "DELETE" | "OVERRIDE" | "SKIPPED_LOWER_PRIORITY"
-  action    String        @map("action")
+  action         String               @map("action")
   // Null for engine writes (extraction pipeline); populated for manager-initiated overrides.
-  actorId   BigInt?       @map("actor_id")
-  actor     User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  ipAddress String?       @map("ip_address")
-  userAgent String?       @map("user_agent")
+  actorId        BigInt?              @map("actor_id")
+  actor          User?                @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  ipAddress      String?              @map("ip_address")
+  userAgent      String?              @map("user_agent")
   // Free-text justification supplied by the actor on OVERRIDE-class writes.
   // Nullable because engine writes never carry a reason. Required-ness is
   // enforced per writer (see studio-shift hourly_rate, show-creator
   // compensation, etc.) — not at the schema level. Mirrors the legacy
   // `snapshot_overrides[].reason` shape so the sidecar merger maps 1:1.
-  reason    String?       @map("reason")
+  reason         String?              @map("reason")
   // Stores old/new values, ingestion_source, task_uid, task_field_id, etc.
-  metadata  Json          @default("{}")
+  metadata       Json                 @default("{}")
   // Set on schedule_publish_impact rows written during a publish call; null for
   // all other audits and for impact rows that predate PublishRun (no backfill).
-  publishRunId BigInt?     @map("publish_run_id")
-  publishRun   PublishRun? @relation(fields: [publishRunId], references: [id], onDelete: SetNull)
-  targets   AuditTarget[]
-  createdAt DateTime      @default(now()) @map("created_at")
+  publishRunId   BigInt?              @map("publish_run_id")
+  publishRun     PublishRun?          @relation(fields: [publishRunId], references: [id], onDelete: SetNull)
+  targets        AuditTarget[]
+  sceneQcTargets SceneQcAuditTarget[]
+  createdAt      DateTime             @default(now()) @map("created_at")
 
   @@index([action])
   @@index([actorId])
@@ -942,4 +944,73 @@ enum CreatorType {
   STANDARD
   FLEXIBLE
   OTHER
+}
+
+// ============================================
+// SCENE QC
+// ============================================
+// Stage 1 Scene QC persistence. See
+// apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md sections 5.1 and 5.5.
+
+enum SceneType {
+  GRAPHIC_BG
+  REAL_BACKDROP
+}
+
+// A Client's single mutable expected-scene reference image.
+//
+// At most one NON-DELETED row per Client. That rule is a DB-only PARTIAL unique
+// index (`scene_profiles_active_client_key` on `client_id` WHERE
+// `deleted_at IS NULL`) created in the `scene_qc_foundation` migration, because
+// Prisma cannot express partial indexes. Do NOT add an unconditional
+// `@@unique([clientId])` here — it would break retire-then-recreate.
+//
+// WARNING: because that index is invisible to Prisma, a later
+// `prisma migrate dev` will try to emit
+// `DROP INDEX "scene_profiles_active_client_key"`. Delete that statement from
+// the generated migration if this ever runs again. An integration test asserts
+// the index still exists.
+//
+// Lifecycle: retire IS soft delete (`deletedAt`). There is intentionally no
+// reversible `status` column and no restore path — recreate is the way back.
+// Replacing the image or scene type is a version-checked in-place update, never
+// a revision row.
+model SceneProfile {
+  id           BigInt               @id @default(autoincrement())
+  uid          String               @unique
+  clientId     BigInt               @map("client_id")
+  client       Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  objectKey    String               @map("object_key")
+  fileUrl      String               @map("file_url")
+  mimeType     String               @map("mime_type")
+  fileSize     Int                  @map("file_size")
+  sceneType    SceneType            @map("scene_type")
+  version      Int                  @default(1)
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+  deletedAt    DateTime?            @map("deleted_at")
+  auditTargets SceneQcAuditTarget[]
+
+  @@index([deletedAt])
+  @@index([clientId, deletedAt])
+  @@map("scene_profiles")
+}
+
+// Capability-owned audit-target junction. Scene QC's target growth stays off the
+// shared `audit_targets` table (see plan section 5.5): Child PR 3 adds
+// `sceneQcReviewId`, Child PR 4 adds `sceneQcDailyConfirmationId`, each widening
+// the `scene_qc_audit_targets_single_target_check` CHECK in its own migration.
+//
+// No `targetType` discriminator: the typed FK IS the discriminator, and the
+// CHECK guarantees exactly one is set. Cascade runs from the target row into
+// this junction only; the parent `Audit` envelope is preserved.
+model SceneQcAuditTarget {
+  id             BigInt        @id @default(autoincrement())
+  auditId        BigInt        @map("audit_id")
+  audit          Audit         @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  sceneProfileId BigInt?       @map("scene_profile_id")
+  sceneProfile   SceneProfile? @relation(fields: [sceneProfileId], references: [id], onDelete: Cascade)
+
+  @@index([sceneProfileId])
+  @@map("scene_qc_audit_targets")
 }
