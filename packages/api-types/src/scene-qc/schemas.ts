@@ -62,6 +62,11 @@ export const sceneProfileApiResponseSchema = z.object({
 export const saveSceneProfileInputSchema = z.object({
   object_key: z.string().min(1),
   file_url: z.url(),
+  // Pre-flight 400 only: the service re-derives the stored mime_type/file_size
+  // from R2's own HeadObject response and discards these client-claimed
+  // values rather than persisting them. See scene-profile.service.ts
+  // (assertSceneReferenceUpload) and the file-upload-presign skill's
+  // "Scene Profile Write-Path Validation" section.
   mime_type: sceneProfileMimeTypeSchema,
   file_size: z.number().int().positive().max(SCENE_PROFILE_MAX_FILE_SIZE_BYTES),
   scene_type: sceneTypeSchema,
