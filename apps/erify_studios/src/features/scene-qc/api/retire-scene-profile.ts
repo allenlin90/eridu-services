@@ -27,6 +27,9 @@ export function useRetireSceneProfile(studioId: string, clientId: string | undef
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: sceneQcKeys.profile(studioId, clientId) });
+      // Retiring a Scene Profile should surface the "no Scene Profile" warning
+      // on the Daily Review workspace for Shows of this Client (§3.6).
+      void queryClient.invalidateQueries({ queryKey: sceneQcKeys.dailyPrefix(studioId) });
     },
   });
 }
