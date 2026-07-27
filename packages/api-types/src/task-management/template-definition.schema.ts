@@ -167,6 +167,81 @@ export const MechanicRefSchema = z.object({
   content_revision: z.number().int().positive(),
 });
 
+/**
+ * Explicit downstream purpose a file field's uploads serve. Scene QC's evidence
+ * resolver reads ONLY fields carrying `scene_qc` — never a filename heuristic or
+ * a recursive URL scan. Lives on FieldItemBaseSchema (not v2-only) because the
+ * cutover backfill must bind pre-existing v1 snapshots too.
+ * See apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md section 5.2.
+ */
+export const EVIDENCE_PURPOSE = { SCENE_QC: 'scene_qc' } as const;
+export type EvidencePurpose = (typeof EVIDENCE_PURPOSE)[keyof typeof EVIDENCE_PURPOSE];
+export const EvidencePurposeEnum = z.enum(
+  Object.values(EVIDENCE_PURPOSE) as [EvidencePurpose, ...EvidencePurpose[]],
+);
+
+/**
+ * Accept tokens that can ONLY resolve to an image. A mixed rule (e.g.
+ * "image/*,.pdf") is rejected for evidence fields: the resolver would have to
+ * silently drop the non-image upload at review time, which is exactly the
+ * "arbitrary field became evidence" failure the explicit binding removes.
+ */
+const IMAGE_ONLY_ACCEPT_TOKENS: ReadonlySet<string> = new Set([
+  'image/*',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+]);
+
+export function isImageOnlyAcceptRule(accept: string | undefined | null): boolean {
+  if (!accept)
+    return false; // empty accept = "allow all file types" -> not image-only
+  const tokens = accept.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+  if (tokens.length === 0)
+    return false;
+  return tokens.every((t) => IMAGE_ONLY_ACCEPT_TOKENS.has(t));
+}
+
+type EvidencePurposeCompatibleField = {
+  evidence_purpose?: EvidencePurpose;
+  type?: z.infer<typeof FieldTypeEnum>;
+  validation?: { accept?: string } | undefined;
+};
+
+export function validateEvidencePurposeCompatibility(
+  data: EvidencePurposeCompatibleField,
+  ctx: z.RefinementCtx,
+) {
+  if (!data.evidence_purpose)
+    return;
+
+  if (data.type !== 'file') {
+    ctx.issues.push({
+      code: 'custom',
+      message: `evidence_purpose "${data.evidence_purpose}" requires field type "file"`,
+      path: ['type'],
+      input: data,
+    });
+    return;
+  }
+
+  if (!isImageOnlyAcceptRule(data.validation?.accept)) {
+    ctx.issues.push({
+      code: 'custom',
+      message:
+        `evidence_purpose "${data.evidence_purpose}" requires validation.accept to allow images only `
+        + `(e.g. "image/*" or ".png,.jpg")`,
+      path: ['validation', 'accept'],
+      input: data,
+    });
+  }
+}
+
 export const FieldItemBaseSchema = z
   .object({
     id: z.string().describe('Stable unique ID for each field item'),
@@ -186,6 +261,9 @@ export const FieldItemBaseSchema = z
     description: z.string().max(500).optional(),
     group: z.string().optional().describe('Loop / visual grouping identifier'),
     mechanic_ref: MechanicRefSchema.optional().describe('Frozen reference to the catalog mechanic this field was assigned from'),
+    evidence_purpose: EvidencePurposeEnum.optional().describe(
+      'Marks this image field as an explicit downstream evidence source (Scene QC)',
+    ),
     required: z.boolean().optional().default(true),
     options: z
       .array(
@@ -230,7 +308,10 @@ export function validateFieldOptions(data: any, ctx: z.RefinementCtx) {
   }
 }
 
-export const FieldItemSchema = FieldItemBaseSchema.superRefine(validateFieldOptions);
+export const FieldItemSchema = FieldItemBaseSchema.superRefine((data, ctx) => {
+  validateFieldOptions(data, ctx);
+  validateEvidencePurposeCompatibility(data, ctx);
+});
 
 export const LoopMetadataSchema = z.object({
   id: z.string().min(1),
@@ -302,6 +383,7 @@ export const FieldItemV2BaseSchema = FieldItemBaseSchema.omit({ standard: true }
 export const FieldItemV2Schema = FieldItemV2BaseSchema.superRefine((data, ctx) => {
   validateFieldOptions(data, ctx);
   validateSystemFactKeyCompatibility(data, ctx);
+  validateEvidencePurposeCompatibility(data, ctx);
 });
 export type FieldItemV2 = z.infer<typeof FieldItemV2Schema>;
 

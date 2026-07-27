@@ -175,5 +175,22 @@
   "scene_review_reference_missing": "No scene reference is configured. Layout QC uses generic composition guides.",
   "scene_review_metrics": "Performance context",
   "scene_review_metrics_missing": "No performance metrics are available for this submission.",
-  "scene_review_close": "Close scene review"
+  "scene_review_close": "Close scene review",
+  "scene_profiles_title": "Scene Profiles",
+  "scene_profiles_description": "Manage each Client's single expected-scene reference image used by Scene Review.",
+  "scene_profiles_manage_action": "Manage Scene Profiles",
+  "scene_profiles_select_client": "Select a Client to manage its Scene Profile.",
+  "scene_profiles_empty_title": "No Scene Profile",
+  "scene_profiles_empty_description": "This Client has no expected-scene reference yet. Upload one to enable layout QC.",
+  "scene_profiles_upload_action": "Upload Reference",
+  "scene_profiles_replace_action": "Replace Reference",
+  "scene_profiles_scene_type_label": "Scene type",
+  "scene_profiles_scene_type_graphic_bg": "Graphic background",
+  "scene_profiles_scene_type_real_backdrop": "Real backdrop",
+  "scene_profiles_retire_action": "Retire",
+  "scene_profiles_retire_confirm_title": "Retire this Scene Profile?",
+  "scene_profiles_retire_confirm_description": "The Client will have no expected-scene reference until a new one is uploaded. This cannot be undone directly -- recreate is the way back.",
+  "scene_profiles_save_action": "Save",
+  "scene_profiles_conflict_message": "This Scene Profile changed since you loaded it. Refresh to see the latest version before retrying.",
+  "scene_profiles_preview_unavailable": "Preview unavailable"
 }

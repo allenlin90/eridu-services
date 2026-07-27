@@ -664,25 +664,26 @@ model ScheduleSnapshot {
 // ============================================
 
 model TaskTemplate {
-  id            BigInt                    @id @default(autoincrement())
-  uid           String                    @unique
-  studioId      BigInt                    @map("studio_id")
-  clientId      BigInt?                   @map("client_id")
-  name          String
-  description   String?
-  isActive      Boolean                   @default(true) @map("is_active")
+  id                  BigInt                           @id @default(autoincrement())
+  uid                 String                           @unique
+  studioId            BigInt                           @map("studio_id")
+  clientId            BigInt?                          @map("client_id")
+  name                String
+  description         String?
+  isActive            Boolean                          @default(true) @map("is_active")
   // Current version (denormalized for convenience)
-  currentSchema Json                      @map("current_schema")
-  version       Int                       @default(1)
+  currentSchema       Json                             @map("current_schema")
+  version             Int                              @default(1)
   // Relations
-  studio        Studio                    @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  client        Client?                   @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  snapshots     TaskTemplateSnapshot[]
-  tasks         Task[]
-  mechanicRefs  TaskTemplateMechanicRef[]
-  createdAt     DateTime                  @default(now()) @map("created_at")
-  updatedAt     DateTime                  @updatedAt @map("updated_at")
-  deletedAt     DateTime?                 @map("deleted_at")
+  studio              Studio                           @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  client              Client?                          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  snapshots           TaskTemplateSnapshot[]
+  tasks               Task[]
+  mechanicRefs        TaskTemplateMechanicRef[]
+  sceneQcEvidenceRefs TaskTemplateSceneQcEvidenceRef[]
+  createdAt           DateTime                         @default(now()) @map("created_at")
+  updatedAt           DateTime                         @updatedAt @map("updated_at")
+  deletedAt           DateTime?                        @map("deleted_at")
 
   @@index([uid])
   @@index([studioId])
@@ -693,15 +694,16 @@ model TaskTemplate {
 }
 
 model TaskTemplateSnapshot {
-  id           BigInt                    @id @default(autoincrement())
-  templateId   BigInt                    @map("template_id")
-  template     TaskTemplate              @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  version      Int // 1, 2, 3, etc.
-  schema       Json // Immutable schema at this version
-  metadata     Json                      @default("{}") // Change notes, author, etc.
-  tasks        Task[]
-  mechanicRefs TaskTemplateMechanicRef[]
-  createdAt    DateTime                  @default(now()) @map("created_at")
+  id                  BigInt                           @id @default(autoincrement())
+  templateId          BigInt                           @map("template_id")
+  template            TaskTemplate                     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  version             Int // 1, 2, 3, etc.
+  schema              Json // Immutable schema at this version
+  metadata            Json                             @default("{}") // Change notes, author, etc.
+  tasks               Task[]
+  mechanicRefs        TaskTemplateMechanicRef[]
+  sceneQcEvidenceRefs TaskTemplateSceneQcEvidenceRef[]
+  createdAt           DateTime                         @default(now()) @map("created_at")
 
   @@unique([templateId, version])
   @@index([templateId, version])
@@ -723,6 +725,39 @@ model TaskTemplateMechanicRef {
   @@index([snapshotId])
   @@index([mechanicId])
   @@map("task_template_mechanic_refs")
+}
+
+// Denormalized "which fields of this immutable snapshot are Scene QC evidence"
+// projection. Mirrors TaskTemplateMechanicRef: written from the validated schema
+// JSON on every Task Template create/publish (TaskTemplateRepository
+// .syncSceneQcEvidenceRefsForTemplate), never the source of truth -- the JSON
+// `items[].evidence_purpose` is. Holds no Scene QC FK at all, so it is Task
+// Template's projection and Scene QC is a read-only consumer.
+//
+// snapshotId is REQUIRED (unlike TaskTemplateMechanicRef.snapshotId, which is
+// nullable to carry a `currentSchema` draft row set). Plan section 5.2 specifies
+// "Required immutable snapshot used by Tasks", and the resolver only ever joins
+// through a Task's pinned snapshot -- a null-snapshot row would have no reader.
+//
+// The reviewed cutover backfill writes rows for HISTORICAL snapshots directly.
+// Because the sync deletes only within one (templateId, snapshotId) scope, a
+// later template edit can never wipe a backfilled historical binding.
+model TaskTemplateSceneQcEvidenceRef {
+  id         BigInt               @id @default(autoincrement())
+  templateId BigInt               @map("template_id")
+  template   TaskTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  snapshotId BigInt               @map("snapshot_id")
+  snapshot   TaskTemplateSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  // Exact Task content key: v1 -> item.key, v2 -> item.id (getFieldContentKey).
+  fieldKey   String               @map("field_key")
+  // Snapshot-time display label. Never re-read from the live template.
+  label      String               @map("label")
+  createdAt  DateTime             @default(now()) @map("created_at")
+
+  @@unique([snapshotId, fieldKey])
+  @@index([templateId])
+  @@index([snapshotId])
+  @@map("task_template_scene_qc_evidence_refs")
 }
 
 model TaskReportDefinition {
@@ -1011,6 +1046,10 @@ model SceneQcAuditTarget {
   sceneProfileId BigInt?       @map("scene_profile_id")
   sceneProfile   SceneProfile? @relation(fields: [sceneProfileId], references: [id], onDelete: Cascade)
 
+  // PostgreSQL does not automatically index the referencing side of a FK;
+  // without this, loading an Audit's targets (history/detail paths) scans
+  // this table.
+  @@index([auditId])
   @@index([sceneProfileId])
   @@map("scene_qc_audit_targets")
 }

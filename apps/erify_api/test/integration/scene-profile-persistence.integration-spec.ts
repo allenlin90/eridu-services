@@ -13,21 +13,31 @@ import { ClsModule, ClsService } from 'nestjs-cls';
 
 import { SceneProfileService } from '@/capabilities/scene-qc/scene-profile.service';
 import { SceneQcModule } from '@/capabilities/scene-qc/scene-qc.module';
-import type { SaveSceneProfilePayload } from '@/capabilities/scene-qc/schemas/scene-profile.schema';
+import type {
+  SaveSceneProfilePayload,
+  SceneProfileMutationContext,
+} from '@/capabilities/scene-qc/schemas/scene-profile.schema';
 import { sceneProfileDto } from '@/capabilities/scene-qc/schemas/scene-profile.schema';
+import { StorageService } from '@/lib/storage/storage.service';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
 
 const INTEGRATION_NAME_PREFIX = 'integration-scene-qc:';
+const CDN_BASE = 'https://cdn.example.com';
 
 function uniqueSuffix(): string {
   return `${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
 }
 
+function objectKeyFor(name: string): string {
+  return `scene_reference/integration/${name}`;
+}
+
 function buildSavePayload(overrides: Partial<SaveSceneProfilePayload> = {}): SaveSceneProfilePayload {
+  const objectKey = objectKeyFor('reference.png');
   return {
-    objectKey: 'scene-profiles/integration/reference.png',
-    fileUrl: 'https://cdn.example.com/scene-profiles/integration/reference.png',
+    objectKey,
+    fileUrl: `${CDN_BASE}/${objectKey}`,
     mimeType: 'image/png',
     fileSize: 12345,
     sceneType: 'GRAPHIC_BG',
@@ -35,19 +45,37 @@ function buildSavePayload(overrides: Partial<SaveSceneProfilePayload> = {}): Sav
   };
 }
 
+// Deterministic stub matching buildSavePayload's fileUrl derivation and
+// objectKeyFor's hardcoded "integration" actor segment -- StorageService's
+// real R2 config isn't the concern of these persistence tests, only the
+// transaction/cascade/constraint semantics are.
+class FakeStorageService {
+  resolvePublicFileUrl(objectKey: string): string {
+    return `${CDN_BASE}/${objectKey}`;
+  }
+
+  sanitizeActorIdForObjectKey(): string {
+    return 'integration';
+  }
+
+  async headObject(): Promise<{ contentType: string; contentLength: number }> {
+    return { contentType: 'image/png', contentLength: 12345 };
+  }
+}
+
 @Injectable()
 class SceneProfileTransactionProbe {
   constructor(private readonly sceneProfileService: SceneProfileService) {}
 
   @Transactional<TransactionalAdapterPrisma>()
-  async saveAndReadBack(clientUid: string, payload: SaveSceneProfilePayload) {
-    await this.sceneProfileService.saveProfileForClient(clientUid, payload);
+  async saveAndReadBack(clientUid: string, payload: SaveSceneProfilePayload, context: SceneProfileMutationContext) {
+    await this.sceneProfileService.saveProfileForClient(clientUid, payload, context);
     return this.sceneProfileService.getActiveProfileForClient(clientUid);
   }
 
   @Transactional<TransactionalAdapterPrisma>()
-  async saveAndFail(clientUid: string, payload: SaveSceneProfilePayload): Promise<never> {
-    await this.sceneProfileService.saveProfileForClient(clientUid, payload);
+  async saveAndFail(clientUid: string, payload: SaveSceneProfilePayload, context: SceneProfileMutationContext): Promise<never> {
+    await this.sceneProfileService.saveProfileForClient(clientUid, payload, context);
     throw new Error('scene profile rollback probe');
   }
 }
@@ -58,7 +86,8 @@ describe('real database Scene Profile persistence safety', () => {
   let prisma: PrismaService;
   let sceneProfileService: SceneProfileService;
   let probe: SceneProfileTransactionProbe;
-  const createdAuditUids: string[] = [];
+  let actor: { uid: string; extId: string };
+  let context: SceneProfileMutationContext;
 
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({
@@ -81,7 +110,10 @@ describe('real database Scene Profile persistence safety', () => {
         SceneQcModule,
       ],
       providers: [SceneProfileTransactionProbe],
-    }).compile();
+    })
+      .overrideProvider(StorageService)
+      .useClass(FakeStorageService)
+      .compile();
 
     await moduleRef.init();
 
@@ -91,16 +123,28 @@ describe('real database Scene Profile persistence safety', () => {
     probe = moduleRef.get(SceneProfileTransactionProbe);
   });
 
+  beforeEach(async () => {
+    const suffix = uniqueSuffix();
+    const user = await prisma.user.create({
+      data: {
+        uid: `user_it_${suffix}`,
+        extId: `ext_it_${suffix}`,
+        email: `${INTEGRATION_NAME_PREFIX}${suffix}@example.com`,
+        name: 'Integration Actor',
+      },
+    });
+    actor = { uid: user.uid, extId: user.extId! };
+    context = { actorExtId: actor.extId, studioUid: 'studio_it_fake' };
+  });
+
   afterEach(async () => {
-    if (createdAuditUids.length > 0) {
-      await prisma.audit.deleteMany({ where: { uid: { in: createdAuditUids } } });
-      createdAuditUids.length = 0;
-    }
     // Cascades scene_profiles (and, transitively, any scene_qc_audit_targets
     // pointing at them) via the Client -> SceneProfile onDelete: Cascade FK.
     await prisma.client.deleteMany({
       where: { name: { startsWith: INTEGRATION_NAME_PREFIX } },
     });
+    await prisma.audit.deleteMany({ where: { actorId: { not: null }, actor: { email: { startsWith: INTEGRATION_NAME_PREFIX } } } });
+    await prisma.user.deleteMany({ where: { email: { startsWith: INTEGRATION_NAME_PREFIX } } });
   });
 
   afterAll(async () => {
@@ -120,15 +164,13 @@ describe('real database Scene Profile persistence safety', () => {
   }
 
   async function createTestAudit(suffix: string) {
-    const audit = await prisma.audit.create({
+    return prisma.audit.create({
       data: {
         uid: `aud_it_${suffix}`,
         action: 'CREATE',
         metadata: {},
       },
     });
-    createdAuditUids.push(audit.uid);
-    return audit;
   }
 
   it('rejects a second non-deleted Scene Profile for the same Client via the partial unique index', async () => {
@@ -166,9 +208,13 @@ describe('real database Scene Profile persistence safety', () => {
     const suffix = uniqueSuffix();
     const client = await createTestClient(suffix);
 
-    const first = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload());
-    await sceneProfileService.retireProfileForClient(client.uid);
-    const second = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload({ objectKey: 'reference-2.png' }));
+    const first = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
+    await sceneProfileService.retireProfileForClient(client.uid, context, first.version);
+    const second = await sceneProfileService.saveProfileForClient(
+      client.uid,
+      buildSavePayload({ objectKey: objectKeyFor('reference-2.png'), fileUrl: `${CDN_BASE}/${objectKeyFor('reference-2.png')}` }),
+      context,
+    );
 
     expect(first.uid).not.toBe(second.uid);
 
@@ -186,8 +232,8 @@ describe('real database Scene Profile persistence safety', () => {
     const suffix = uniqueSuffix();
     const client = await createTestClient(suffix);
 
-    await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload());
-    await sceneProfileService.retireProfileForClient(client.uid);
+    const saved = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
+    await sceneProfileService.retireProfileForClient(client.uid, context, saved.version);
 
     await expect(
       sceneProfileService.getActiveProfileForClient(client.uid),
@@ -201,14 +247,16 @@ describe('real database Scene Profile persistence safety', () => {
 
     const profileA = await sceneProfileService.saveProfileForClient(
       clientA.uid,
-      buildSavePayload({ objectKey: 'a.png' }),
+      buildSavePayload({ objectKey: objectKeyFor('a.png'), fileUrl: `${CDN_BASE}/${objectKeyFor('a.png')}` }),
+      context,
     );
     const profileB = await sceneProfileService.saveProfileForClient(
       clientB.uid,
-      buildSavePayload({ objectKey: 'b.png' }),
+      buildSavePayload({ objectKey: objectKeyFor('b.png'), fileUrl: `${CDN_BASE}/${objectKeyFor('b.png')}` }),
+      context,
     );
 
-    await sceneProfileService.retireProfileForClient(clientA.uid);
+    await sceneProfileService.retireProfileForClient(clientA.uid, context, profileA.version);
 
     await expect(
       sceneProfileService.getActiveProfileForClient(clientA.uid),
@@ -240,6 +288,8 @@ describe('real database Scene Profile persistence safety', () => {
         data: { auditId: audit.id, sceneProfileId: null },
       }),
     ).rejects.toThrow();
+
+    await prisma.audit.delete({ where: { id: audit.id } });
   });
 
   it('accepts a scene_qc_audit_targets row with a non-null scene_profile_id', async () => {
@@ -264,6 +314,7 @@ describe('real database Scene Profile persistence safety', () => {
     });
 
     expect(target.sceneProfileId).toBe(profile.id);
+    await prisma.audit.delete({ where: { id: audit.id } });
   });
 
   it('cascades scene_qc_audit_targets on Scene Profile hard-delete while the parent audits row survives', async () => {
@@ -294,6 +345,8 @@ describe('real database Scene Profile persistence safety', () => {
     await expect(
       prisma.audit.findUnique({ where: { id: audit.id } }),
     ).resolves.toMatchObject({ uid: audit.uid });
+
+    await prisma.audit.delete({ where: { id: audit.id } });
   });
 
   it('reads its own write through the ambient CLS transaction', async () => {
@@ -301,7 +354,7 @@ describe('real database Scene Profile persistence safety', () => {
     const client = await createTestClient(suffix);
 
     const readBack = await clsService.run(
-      () => probe.saveAndReadBack(client.uid, buildSavePayload()),
+      () => probe.saveAndReadBack(client.uid, buildSavePayload(), context),
     );
 
     expect(readBack).toMatchObject({ uid: expect.stringMatching(/^scprof_/) });
@@ -312,7 +365,7 @@ describe('real database Scene Profile persistence safety', () => {
     const client = await createTestClient(suffix);
 
     await expect(
-      clsService.run(() => probe.saveAndFail(client.uid, buildSavePayload())),
+      clsService.run(() => probe.saveAndFail(client.uid, buildSavePayload(), context)),
     ).rejects.toThrow('scene profile rollback probe');
 
     await expect(
@@ -324,7 +377,7 @@ describe('real database Scene Profile persistence safety', () => {
     const suffix = uniqueSuffix();
     const client = await createTestClient(suffix);
 
-    const created = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload());
+    const created = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
     const dto = sceneProfileDto.parse(created);
 
     expect(dto.id).toMatch(/^scprof_/);
@@ -337,20 +390,87 @@ describe('real database Scene Profile persistence safety', () => {
     const suffix = uniqueSuffix();
     const client = await createTestClient(suffix);
 
-    const created = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload());
+    const created = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
     expect(created.version).toBe(1);
 
+    const replacedKey = objectKeyFor('replaced.png');
     const replaced = await sceneProfileService.saveProfileForClient(
       client.uid,
-      buildSavePayload({ objectKey: 'replaced.png', version: created.version }),
+      buildSavePayload({ objectKey: replacedKey, fileUrl: `${CDN_BASE}/${replacedKey}`, version: created.version }),
+      context,
     );
     expect(replaced.version).toBe(2);
 
+    const staleKey = objectKeyFor('stale.png');
     await expect(
       sceneProfileService.saveProfileForClient(
         client.uid,
-        buildSavePayload({ objectKey: 'stale.png', version: created.version }),
+        buildSavePayload({ objectKey: staleKey, fileUrl: `${CDN_BASE}/${staleKey}`, version: created.version }),
+        context,
       ),
     ).rejects.toMatchObject({ status: 409 });
+  });
+
+  describe('audit envelope + junction atomicity', () => {
+    it('commits the Scene Profile row, the Audit envelope, and the SceneQcAuditTarget junction together on a successful save', async () => {
+      const suffix = uniqueSuffix();
+      const client = await createTestClient(suffix);
+
+      const created = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
+
+      const targets = await prisma.sceneQcAuditTarget.findMany({
+        where: { sceneProfileId: created.id },
+        include: { audit: true },
+      });
+      expect(targets).toHaveLength(1);
+      expect(targets[0].audit.action).toBe('CREATE');
+      expect(targets[0].audit.actorId).toBe(
+        (await prisma.user.findUniqueOrThrow({ where: { extId: actor.extId } })).id,
+      );
+
+      await prisma.audit.delete({ where: { id: targets[0].auditId } });
+    });
+
+    it('rolls back the Audit envelope and junction together with the Scene Profile row when the enclosing transaction later throws', async () => {
+      const suffix = uniqueSuffix();
+      const client = await createTestClient(suffix);
+
+      await expect(
+        clsService.run(() => probe.saveAndFail(client.uid, buildSavePayload(), context)),
+      ).rejects.toThrow('scene profile rollback probe');
+
+      await expect(
+        prisma.audit.count({
+          where: { metadata: { path: ['client_uid'], equals: client.uid } },
+        }),
+      ).resolves.toBe(0);
+    });
+
+    it('preserves the retire Audit envelope after a later hard-delete of the Scene Profile row (junction cascades, envelope survives)', async () => {
+      const suffix = uniqueSuffix();
+      const client = await createTestClient(suffix);
+
+      const created = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
+      const retired = await sceneProfileService.retireProfileForClient(client.uid, context, created.version);
+      expect(retired).not.toBeNull();
+
+      const retireTarget = await prisma.sceneQcAuditTarget.findFirst({
+        where: { sceneProfileId: created.id, audit: { action: 'DELETE' } },
+      });
+      expect(retireTarget).not.toBeNull();
+
+      await prisma.sceneProfile.delete({ where: { id: created.id } });
+
+      await expect(
+        prisma.sceneQcAuditTarget.findMany({ where: { sceneProfileId: created.id } }),
+      ).resolves.toHaveLength(0);
+      await expect(
+        prisma.audit.findUnique({ where: { id: retireTarget!.auditId } }),
+      ).resolves.toMatchObject({ action: 'DELETE' });
+
+      await prisma.audit.deleteMany({
+        where: { sceneQcTargets: { some: { sceneProfileId: created.id } } },
+      });
+    });
   });
 });
