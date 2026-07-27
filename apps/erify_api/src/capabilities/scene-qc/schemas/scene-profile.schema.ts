@@ -71,6 +71,19 @@ export const saveSceneProfileSchema = saveSceneProfileInputSchema.transform((dat
 export class SaveSceneProfileDto extends createZodDto(saveSceneProfileSchema) {}
 export class SceneProfileDto extends createZodDto(sceneProfileDto) {}
 
+// Required (not optional): an omitted version would make retire last-writer-
+// wins with no stale-write protection at all, unlike the create-or-replace
+// PUT where omission has a real meaning ("I believe there is no profile").
+// There is no such alternate meaning for DELETE, so there is no fallback to
+// preserve.
+export const retireSceneProfileQuerySchema = z.object({
+  version: z.coerce.number().int().positive(),
+});
+export class RetireSceneProfileQueryDto extends createZodDto(retireSceneProfileQuerySchema) {}
+
+/** Request-derived context every Scene Profile mutation needs for audit provenance. */
+export type SceneProfileMutationContext = { actorExtId: string; studioUid: string };
+
 /**
  * Payload for creating or replacing a Client's Scene Profile (service layer).
  * `version` omitted means "create"; `version` present means "replace at

@@ -14,6 +14,8 @@ import { StudioTaskModule } from './studio-task/studio-task.module';
 import { StudioTaskReportModule } from './studio-task-report/studio-task-report.module';
 import { StudioTaskTemplateModule } from './studio-task-template/studio-task-template.module';
 
+import { SceneQcHttpModule } from '@/capabilities/scene-qc/scene-qc-http.module';
+
 @Module({
   imports: [
     StudioLookupModule,
@@ -29,6 +31,7 @@ import { StudioTaskTemplateModule } from './studio-task-template/studio-task-tem
     StudioCostsModule,
     StudioPerformanceModule,
     StudioClientMechanicModule,
+    SceneQcHttpModule,
   ],
 })
 export class StudiosModule {}

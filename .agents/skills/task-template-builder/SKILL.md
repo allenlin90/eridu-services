@@ -60,7 +60,16 @@ Unlike `system_fact_key`/`shared_field_key`, `mechanic_ref` is **not** v2-exclus
 - Per-loop `(mechanic_id, group)` uniqueness is enforced at the same validation layer, not as a DB constraint — `TaskTemplateMechanicRef` is a denormalized, write-on-save link table (S2) for coverage queries, not the source of truth (that's the JSON `mechanic_ref` inside `currentSchema.items[]`).
 - The repository syncs `TaskTemplateMechanicRef` with a transactional delete-then-recreate per `(templateId, snapshotId)` on every create/update — see `TaskTemplateRepository.syncMechanicRefsForTemplate`.
 
-### 9. Builder Composition Boundaries
+### 9. Explicit Evidence Designation (`evidence_purpose`) — Scene QC (Child PR 2)
+
+Like `mechanic_ref`, `evidence_purpose` lives on `FieldItemBaseSchema` (not v2-only): evidence designation is schema-version-agnostic, and the cutover backfill must bind pre-existing v1 snapshots too. It marks a `file` field's uploads as explicit Scene QC evidence (`EVIDENCE_PURPOSE.SCENE_QC = 'scene_qc'`), so the evidence resolver (Child PR 3) never falls back to a filename heuristic or a recursive content scan.
+
+- Requires `type === 'file'` AND a strictly image-only `validation.accept` rule (`isImageOnlyAcceptRule()`) — a mixed rule like `image/*,.pdf` is rejected by `validateEvidencePurposeCompatibility` in `template-definition.schema.ts`.
+- The builder toggle (`scene-qc-evidence-toggle.tsx`, wired into `field-editor.tsx`) clears the marker whenever the field stops being a `file` type or its accept rule stops being image-only — mirrored client-side so the toggle's disabled state agrees with what the backend would reject.
+- `TaskTemplateSceneQcEvidenceRef.syncSceneQcEvidenceRefsForTemplate` mirrors `syncMechanicRefsForTemplate`'s transactional delete-then-recreate per `(templateId, snapshotId)`, but `snapshotId` is REQUIRED (no `currentSchema`-only draft row set) — the resolver only ever joins through a Task's pinned snapshot.
+- No new authorization boundary: designating a field as evidence rides the existing Task Template write-route permissions (`StudioTaskTemplateController`'s `[ADMIN, MANAGER]` guard); do not add a Scene QC role check to the builder.
+
+### 10. Builder Composition Boundaries
 
 Keep [`task-template-builder.tsx`](../../../apps/erify_studios/src/components/task-templates/builder/task-template-builder.tsx) as the stable composition root and state/query owner. Feature-local modules own cohesive concerns:
 
@@ -86,3 +95,4 @@ Keep `template` and `onChange` in the composition root's latest-props ref so DnD
 - [ ] Shared-field load failures surfaced in UI
 - [ ] No duplicate validation logic between frontend and backend
 - [ ] New builder behavior lands in the matching feature-local boundary instead of regrowing the composition root
+- [ ] `evidence_purpose` insertions require `type: 'file'` + an image-only `accept` rule, and are cleared client-side the moment either condition stops holding

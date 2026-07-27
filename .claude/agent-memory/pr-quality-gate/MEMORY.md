@@ -8,13 +8,9 @@
 - `moderation-workflow-patterns.md` — Moderation loop, idb-keyval draft persistence
 - `studio-member-roster-patterns.md` — Studio member roster CRUD (PR #28), isSelf logic, version descope, filterFn dead code
 - `studio-creator-roster-patterns.md` — Creator roster CRUD (PR #30), duplicate validation, updateWithVersionCheck 3-query pattern
-- `studio-creator-onboarding-patterns.md` — Creator onboarding (PR #32, distinct from roster CRUD #30), onboardCreator transaction, UX split
 - `scene-qc-child-pr-patterns.md` — Scene QC program (PR #343 umbrella); Child PR 1 was rescoped 2026-07-27 (no Material/Assignment tables, no repository, no Studio.timezone column) — read the scope-correction note before reviewing
 - `backend-verified-conventions.md` — Cross-cutting erify_api conventions confirmed across many reviews: Prisma leakage, CLS/txHost, version field, repo-method necessity judgment calls
-- `task-reporting-patterns.md` — Task Submission Reporting feature, merged final state
 - `task-template-script-exceptions.md` — Internal operator/script services' accepted Prisma-in-service exception; templateKind JSONB filter
-- `studio-show-management-patterns.md` — Studio Show Management (PR #36), full review history + final APPROVED state, backend+frontend
-- `phase4-merge-program.md` — Phase 4 cross-session merge program tracker and policy
 
 ## Quick-Reference Rules (read topic files for detail/evidence)
 - Services must never import `Prisma.*` types in public signatures; repositories may use Prisma internally. See `backend-verified-conventions.md`.

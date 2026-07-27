@@ -2,7 +2,9 @@
 import { z } from 'zod';
 
 import {
+  EVIDENCE_PURPOSE,
   getSchemaEngine,
+  isImageOnlyAcceptRule,
   FieldItemBaseSchema as SharedFieldItemBaseSchema,
   FieldItemV2Schema as SharedFieldItemV2Schema,
   FieldTypeEnum as SharedFieldTypeEnum,
@@ -12,6 +14,7 @@ import {
   TemplateMetadataV2Schema as SharedTemplateMetadataV2Schema,
   SYSTEM_FACT_KEY_DEFINITIONS,
   TASK_TYPE,
+  validateEvidencePurposeCompatibility,
   validateFieldOptions,
 } from '@eridu/api-types/task-management';
 
@@ -20,10 +23,16 @@ export type FieldType = z.infer<typeof FieldTypeEnum>;
 export const SystemFactKeyEnum = SharedSystemFactKeyEnum;
 export type SystemFactKey = z.infer<typeof SystemFactKeyEnum>;
 export { SYSTEM_FACT_KEY_DEFINITIONS };
+// Builder convention: re-export shared symbols from this module rather than
+// import `@eridu/api-types` directly in components.
+export { EVIDENCE_PURPOSE, isImageOnlyAcceptRule };
 
 // ID is now required in the shared schema
 
-export const FieldItemSchema = SharedFieldItemBaseSchema.superRefine(validateFieldOptions);
+export const FieldItemSchema = SharedFieldItemBaseSchema.superRefine((data, ctx) => {
+  validateFieldOptions(data, ctx);
+  validateEvidencePurposeCompatibility(data, ctx);
+});
 
 export type FieldItem = z.infer<typeof FieldItemSchema> | z.infer<typeof SharedFieldItemV2Schema>;
 

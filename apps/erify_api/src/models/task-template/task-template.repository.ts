@@ -3,7 +3,13 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, TaskStatus, TaskTemplate } from '@prisma/client';
 
-import { TASK_TEMPLATE_KIND, type TaskTemplateKind } from '@eridu/api-types/task-management';
+import {
+  EVIDENCE_PURPOSE,
+  getFieldContentKey,
+  safeParseTemplateSchema,
+  TASK_TEMPLATE_KIND,
+  type TaskTemplateKind,
+} from '@eridu/api-types/task-management';
 
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { VersionConflictError } from '@/lib/errors/version-conflict.error';
@@ -70,6 +76,7 @@ export class TaskTemplateRepository extends BaseRepository<
     if (template.snapshots && template.snapshots.length > 0) {
       const snapshot = template.snapshots[0];
       await this.syncMechanicRefsForTemplate(template.id, snapshot.schema, snapshot.id, template.clientId);
+      await this.syncSceneQcEvidenceRefsForTemplate(template.id, snapshot.schema, snapshot.id);
     }
 
     return template;
@@ -133,6 +140,7 @@ export class TaskTemplateRepository extends BaseRepository<
         const newSnapshot = template.snapshots.find((s) => s.version === template.version);
         if (newSnapshot) {
           await this.syncMechanicRefsForTemplate(template.id, newSnapshot.schema, newSnapshot.id, template.clientId);
+          await this.syncSceneQcEvidenceRefsForTemplate(template.id, newSnapshot.schema, newSnapshot.id);
         }
       }
 
@@ -234,6 +242,54 @@ export class TaskTemplateRepository extends BaseRepository<
 
     await this.txHost.tx.taskTemplateMechanicRef.createMany({
       data: createData,
+    });
+  }
+
+  /**
+   * Projects `items[].evidence_purpose === 'scene_qc'` from a validated,
+   * already-persisted snapshot schema into TaskTemplateSceneQcEvidenceRef.
+   * Mirrors syncMechanicRefsForTemplate's transactional delete-then-recreate,
+   * scoped to exactly one (templateId, snapshotId) pair -- so backfilled rows on
+   * OTHER snapshots are never touched.
+   *
+   * Only ever called with a real snapshotId: the ref table has no null-snapshot
+   * row set. Unlike mechanic refs, no client-scoped lookup is needed here --
+   * evidence designation reads only the field's own `evidence_purpose` and
+   * `label`, so this method (unlike syncMechanicRefsForTemplate) does not take
+   * a templateClientId parameter. The schema is trusted here because
+   * TaskTemplateService.validateSchema already ran safeParseTemplateSchema,
+   * which enforces file-type + image-only-accept for every evidence field.
+   */
+  private async syncSceneQcEvidenceRefsForTemplate(
+    templateId: bigint,
+    schema: unknown,
+    snapshotId: bigint,
+  ): Promise<void> {
+    await this.txHost.tx.taskTemplateSceneQcEvidenceRef.deleteMany({
+      where: { templateId, snapshotId },
+    });
+
+    const parsed = safeParseTemplateSchema(schema);
+    if (!parsed.success) {
+      return;
+    }
+
+    const rows = parsed.data.items
+      .filter((item) => item.evidence_purpose === EVIDENCE_PURPOSE.SCENE_QC)
+      .map((item) => ({
+        templateId,
+        snapshotId,
+        fieldKey: getFieldContentKey(parsed.data, item),
+        label: item.label,
+      }));
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    await this.txHost.tx.taskTemplateSceneQcEvidenceRef.createMany({
+      data: rows,
+      skipDuplicates: true,
     });
   }
 

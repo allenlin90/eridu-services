@@ -18,6 +18,7 @@ description: Implement Cloudflare R2 presigned uploads with validation, compress
 | Compression worker          | `packages/browser-upload/src/image-compress.worker.ts`        |
 | Frontend API utils          | `apps/erify_studios/src/features/tasks/api/presign-upload.ts` |
 | Frontend form               | `apps/erify_studios/src/components/json-form/json-form.tsx`   |
+| Scene Profile consumer (`SCENE_REFERENCE`) | `apps/erify_studios/src/features/scene-qc/lib/upload-scene-reference.ts` (frontend), `apps/erify_api/src/capabilities/scene-qc/scene-reference-upload.policy.ts` (backend write-path check) |
 
 ## How It Works (Summary)
 
@@ -93,6 +94,20 @@ Additional rules:
 - Uploaded file URL cache (by per-field fingerprint `name:size:type:lastModified`) can reuse URLs and skip duplicate uploads within one form session.
 - Keep upload cache across retries/partial-success uploads, and clear it only after successful submit API completion.
 - Per-field cache entries should still be removed when that field file is replaced/cleared.
+
+## Scene Profile Write-Path Validation (Structural Checks Plus an R2 Existence Probe)
+
+`SCENE_REFERENCE` uploads (Scene Profile reference images, Stage 1 Scene QC) reuse this presign flow verbatim — no second presign client. The Scene Profile save endpoint (`PUT /studios/:studioId/scene-profiles/:clientId`) accepts a client-supplied `{object_key, file_url, mime_type, file_size}` payload and must not trust it blindly. `assertSceneReferenceUpload()` in `scene-profile.service.ts` layers two stages:
+
+1. **Structural checks** — `checkSceneReferenceUpload()` in `scene-reference-upload.policy.ts` pins, purely from the strings in the payload:
+   - `object_key` starts with the `scene_reference/` namespace the presign flow owns, with no traversal sequence.
+   - `object_key`'s embedded actor segment (`StorageService.sanitizeActorIdForObjectKey(actorExtId)`) matches the calling actor — a key minted for a different actor is rejected as `object_key_actor_mismatch`.
+   - `file_url` equals `StorageService.resolvePublicFileUrl(object_key)` — the deterministic public URL derived from the key, not an attacker-chosen value.
+2. **R2 existence probe** — once the structural checks pass, `StorageService.headObject(objectKey)` performs a real `HeadObjectCommand` against R2 and returns `null` for a missing object (rejected as not-found) or the R2-observed `{contentType, contentLength}` for an existing one. The service then validates that pair against `SCENE_PROFILE_ALLOWED_MIME_TYPES`/`SCENE_PROFILE_MAX_FILE_SIZE_BYTES` and uses the **R2-observed** values — not the client's claimed `mime_type`/`file_size` — as what gets persisted. The client-claimed values still earn a cheap pre-flight 400 (schema validation) before the network round-trip, but the stored record reflects what R2 actually has.
+
+Together this means a forged payload can only ever point at a real, actor-owned key in the presign-owned namespace, rendered through the canonical public URL, and it must exist in R2 with an allowed content type/size before it is accepted. `StorageService.resolvePublicFileUrl` is the promoted-public form of the private `buildPublicFileUrl` used internally by `generatePresignedUploadUrl`; `sanitizeActorIdForObjectKey` and `headObject` are the promoted-public forms used to verify a client-supplied key/URL against the calling actor and against real R2 state. Reuse all three for any future write path that needs the same guarantee.
+
+`assertSceneReferenceUpload` runs inside `saveProfileForClient`'s `@Transactional()` boundary, so the R2 round-trip currently happens before Prisma writes but still inside the open transaction — see [`scene-qc-profile-save-r2-probe-inside-transaction.md`](../../../docs/tech-debt/scene-qc-profile-save-r2-probe-inside-transaction.md) before copying this pattern into a new transactional write path; prefer verifying the upload before entering the transactional boundary for new code.
 
 ## Checklist: Adding a New Use Case
 
