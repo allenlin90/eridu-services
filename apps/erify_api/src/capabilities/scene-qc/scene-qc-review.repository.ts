@@ -287,12 +287,17 @@ export class SceneQcRepository {
   }
 }
 
+/**
+ * Plain scalar `sourceTaskId` (not a nested `sourceTask: { connect }`)
+ * deliberately -- this shape must work identically inside a nested
+ * `evidence: { create: [...] }` (createReviewWithEvidence) AND inside a flat
+ * `createMany` (replaceReviewWithEvidence), and `createMany` cannot accept a
+ * nested relation `connect` at all.
+ */
 function toEvidenceCreateInput(evidence: PinnedEvidenceInput) {
   return {
     sortOrder: evidence.sortOrder,
-    ...(evidence.sourceTaskId !== null
-      ? { sourceTask: { connect: { id: evidence.sourceTaskId } } }
-      : {}),
+    sourceTaskId: evidence.sourceTaskId,
     sourceTaskUid: evidence.sourceTaskUid,
     sourceTaskVersion: evidence.sourceTaskVersion,
     sourceFieldKey: evidence.sourceFieldKey,
