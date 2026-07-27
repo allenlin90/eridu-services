@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHost } from '@nestjs-cls/transactional';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma } from '@prisma/client';
 
@@ -7,14 +7,19 @@ import { UID_PREFIXES } from '@eridu/api-types/constants';
 
 import type {
   SaveSceneProfilePayload,
+  SceneProfileMutationContext,
   SceneProfileRecord,
 } from './schemas/scene-profile.schema';
 import { sceneProfileDefaultInclude } from './schemas/scene-profile.schema';
+import { SceneQcAuditWriter } from './scene-qc-audit.writer';
+import { checkSceneReferenceUpload, SCENE_REFERENCE_OBJECT_KEY_PREFIX } from './scene-reference-upload.policy';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { BaseModelService } from '@/lib/services/base-model.service';
+import { StorageService } from '@/lib/storage/storage.service';
 import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
+import { UserService } from '@/models/user/user.service';
 
 /**
  * Manages a Client's single mutable Scene Profile (Stage 1 Scene QC). This is
@@ -34,6 +39,9 @@ export class SceneProfileService extends BaseModelService {
   constructor(
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     protected readonly uidGenerator: UidGeneratorService,
+    private readonly storageService: StorageService,
+    private readonly userService: UserService,
+    private readonly auditWriter: SceneQcAuditWriter,
   ) {
     super(uidGenerator);
   }
@@ -61,10 +69,15 @@ export class SceneProfileService extends BaseModelService {
    * caller's belief and the current state — never silently creates a second
    * row or silently overwrites an unrelated version.
    */
+  @Transactional()
   async saveProfileForClient(
     clientUid: string,
     payload: SaveSceneProfilePayload,
+    context: SceneProfileMutationContext,
   ): Promise<SceneProfileRecord> {
+    const actor = await this.resolveActor(context.actorExtId);
+    this.assertSceneReferenceUpload(payload);
+
     const existing = await this.getActiveProfileForClient(clientUid);
 
     if (!existing) {
@@ -73,7 +86,9 @@ export class SceneProfileService extends BaseModelService {
           'Scene profile no longer exists. Please refresh your record and try again.',
         );
       }
-      return this.createProfile(clientUid, payload);
+      const created = await this.createProfile(clientUid, payload);
+      await this.writeAudit('CREATE', created, null, actor, context.studioUid);
+      return created;
     }
 
     if (payload.version === undefined) {
@@ -82,7 +97,9 @@ export class SceneProfileService extends BaseModelService {
       );
     }
 
-    return this.replaceProfile(clientUid, existing, payload, payload.version);
+    const replaced = await this.replaceProfile(clientUid, existing, payload, payload.version);
+    await this.writeAudit('UPDATE', replaced, existing, actor, context.studioUid);
+    return replaced;
   }
 
   /**
@@ -92,14 +109,26 @@ export class SceneProfileService extends BaseModelService {
    * incremented: retire is a terminal write with no reader that would need to
    * detect a subsequent change.
    */
-  async retireProfileForClient(clientUid: string): Promise<SceneProfileRecord | null> {
+  @Transactional()
+  async retireProfileForClient(
+    clientUid: string,
+    context: SceneProfileMutationContext,
+    expectedVersion?: number,
+  ): Promise<SceneProfileRecord | null> {
+    const actor = await this.resolveActor(context.actorExtId);
     const existing = await this.getActiveProfileForClient(clientUid);
     if (!existing) {
       return null;
     }
 
+    if (expectedVersion !== undefined && expectedVersion !== existing.version) {
+      throw HttpError.conflict(
+        'Scene profile is out of date. Please refresh your record and try again.',
+      );
+    }
+
     try {
-      return await this.txHost.tx.sceneProfile.update({
+      const retired = await this.txHost.tx.sceneProfile.update({
         where: {
           uid: existing.uid,
           version: existing.version,
@@ -109,6 +138,8 @@ export class SceneProfileService extends BaseModelService {
         data: { deletedAt: new Date() },
         include: sceneProfileDefaultInclude,
       });
+      await this.writeAudit('DELETE', retired, existing, actor, context.studioUid);
+      return retired;
     } catch (error) {
       if (this.isRecordNotFoundError(error)) {
         throw HttpError.conflict(
@@ -117,6 +148,61 @@ export class SceneProfileService extends BaseModelService {
       }
       throw error;
     }
+  }
+
+  private async resolveActor(actorExtId: string): Promise<{ id: bigint; uid: string }> {
+    const actor = await this.userService.getUserByExtId(actorExtId);
+    if (!actor) {
+      throw HttpError.unauthorized('ACTOR_NOT_FOUND');
+    }
+    return { id: actor.id, uid: actor.uid };
+  }
+
+  private assertSceneReferenceUpload(payload: SaveSceneProfilePayload): void {
+    const violation = checkSceneReferenceUpload({
+      objectKey: payload.objectKey,
+      fileUrl: payload.fileUrl,
+      expectedFileUrl: this.storageService.resolvePublicFileUrl(payload.objectKey),
+    });
+    if (violation === 'file_url_does_not_match_object_key') {
+      throw HttpError.badRequest('file_url does not match object_key');
+    }
+    if (violation !== null) {
+      throw HttpError.badRequest(
+        `object_key must be a ${SCENE_REFERENCE_OBJECT_KEY_PREFIX} upload created through the presign flow`,
+      );
+    }
+  }
+
+  private async writeAudit(
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    profile: SceneProfileRecord,
+    previous: SceneProfileRecord | null,
+    actor: { id: bigint; uid: string },
+    studioUid: string,
+  ): Promise<void> {
+    await this.auditWriter.recordSceneProfileChange({
+      action,
+      actorId: actor.id,
+      sceneProfileId: profile.id,
+      metadata: {
+        event: action === 'DELETE' ? 'scene_profile_retired' : 'scene_profile_saved',
+        scene_profile_uid: profile.uid,
+        client_uid: profile.client.uid,
+        studio_uid: studioUid,
+        actor_uid: actor.uid,
+        // Only the two semantic fields. file_url is a derived locator and file
+        // size/mime are upload metadata -- neither is a business decision.
+        // Old values are recorded because an in-place replace is the ONLY place
+        // the prior reference survives.
+        old_value: previous
+          ? { object_key: previous.objectKey, scene_type: previous.sceneType }
+          : null,
+        new_value: action === 'DELETE'
+          ? null
+          : { object_key: profile.objectKey, scene_type: profile.sceneType },
+      },
+    });
   }
 
   private async createProfile(

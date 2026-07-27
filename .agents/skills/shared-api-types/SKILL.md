@@ -45,6 +45,18 @@ PR 12 system fact bindings are defined in `packages/api-types/src/task-managemen
 
 Do not duplicate the fact-key list in frontend or backend code. A v2 template may bind each `system_fact_key` at most once; cross-task collisions for tasks assigned to the same show are handled by the runtime assignment/ingestion guard, not by duplicating template schema rules. Use the existing `require_reason` sidecar flow for creator attendance explanations instead of adding a separate reason fact key.
 
+## Task Template Evidence Designation (Scene QC Child PR 2)
+
+`evidence_purpose` lives on `FieldItemBaseSchema` (not v2-only, unlike `system_fact_key`) — schema-version-agnostic like `mechanic_ref`, because the cutover backfill must bind existing v1 snapshots too. Exported from `packages/api-types/src/task-management/template-definition.schema.ts` via `@eridu/api-types/task-management`:
+
+| Export | Use |
+|---|---|
+| `EVIDENCE_PURPOSE` / `EvidencePurposeEnum` | Closed wire enum for `FieldItemBase.evidence_purpose` (currently only `'scene_qc'`) |
+| `isImageOnlyAcceptRule(accept)` | True only when every token in a `validation.accept` string resolves exclusively to an image |
+| `validateEvidencePurposeCompatibility(data, ctx)` | Refinement requiring `type: 'file'` + an image-only accept rule whenever `evidence_purpose` is set |
+
+Do not add a Scene QC-specific evidence schema in `@eridu/api-types/scene-qc` for this — the field-attribute lives with the other Task Template field-item concerns, not the Scene QC domain package, because Task Template schema/validation is the single source of truth for field-item shape.
+
 ## Key Rules
 
 1. **Schemas define wire format** — `snake_case` for API JSON

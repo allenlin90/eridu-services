@@ -218,6 +218,25 @@ A **mechanic** is a client-owned reusable moderation instruction (`ClientMechani
 - **`TaskTemplateMechanicRef`** is a denormalized link table (`template_id` / `snapshot_id` ↔ `mechanic_id` + `group`), written on template save. Coverage resolvers (PR 20.6/20.7) query this table directly — never a JSONB scan of `currentSchema`.
 - **Matrix view forces Cards on mobile.** The Loop × Mechanic matrix is a wide grid; small viewports render Cards only.
 
+## Explicit Evidence Designation (`evidence_purpose`)
+
+A `file` field can be marked `evidence_purpose: 'scene_qc'` to explicitly designate its uploads as Scene QC evidence — the Scene QC evidence resolver (Child PR 3) reads ONLY fields carrying this marker, never a filename heuristic or a recursive URL scan of `task.content`.
+
+```jsonc
+// FieldItemBase.evidence_purpose (present on both v1 and v2 field items)
+{
+  "type": "file",
+  "validation": { "accept": "image/*" },
+  "evidence_purpose": "scene_qc"
+}
+```
+
+- **Lives on `FieldItemBaseSchema`, not v2-only.** Evidence designation is schema-version-agnostic, and the cutover backfill must bind existing v1 snapshots too — unlike `mechanic_ref`'s eventual v2-first direction, this one field-attribute intentionally applies to both engines.
+- **Requires a strictly image-only `validation.accept` rule.** `image/*,.pdf` is rejected — the resolver would otherwise have to silently drop a non-image upload at review time, exactly the "arbitrary field became evidence" failure the explicit binding removes. See `isImageOnlyAcceptRule()` in `template-definition.schema.ts`.
+- **`TaskTemplateSceneQcEvidenceRef`** is a denormalized projection (`template_id` / `snapshot_id` ↔ `field_key` + snapshot-time `label`), written by `TaskTemplateRepository.syncSceneQcEvidenceRefsForTemplate` on every snapshot-creating template save — mirrors `syncMechanicRefsForTemplate`, but `snapshotId` is REQUIRED (no `currentSchema`-only draft row set), since the resolver only ever joins through a Task's pinned snapshot.
+- **Governed by existing Task Template permissions.** Designating a field as evidence does not introduce a new authorization boundary; it rides `StudioTaskTemplateController`'s existing write-route roles.
+- See [`apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md`](../../apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md) section 5.2 for the full Scene QC evidence-binding design.
+
 ## Downstream Consumers
 
 | Consumer                            | What it reads                                                      | Reference                                                                                                                                    |
@@ -280,6 +299,8 @@ Feature-specific artifact list:
 | Shared schema skill          | [.agents/skills/shared-api-types/SKILL.md](../../.agents/skills/shared-api-types/SKILL.md)                                                           | `template-definition.schema.ts` or task-management exports change             |
 | Shared schema source         | [packages/api-types/src/task-management/template-definition.schema.ts](../../packages/api-types/src/task-management/template-definition.schema.ts) | Field item shape, validation, or schema engine envelope changes               |
 | Seed                         | [apps/erify_api/prisma/seed.ts](../../apps/erify_api/prisma/seed.ts)                                                                               | New canonical patterns; deprecation of old patterns (e.g., `_l2` workarounds) |
+| Scene QC design reference    | [apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md](../../apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md)                     | `evidence_purpose` binding rules, evidence resolver scope change              |
+| Upload presign skill         | [.agents/skills/file-upload-presign/SKILL.md](../../.agents/skills/file-upload-presign/SKILL.md)                                                    | Scene Profile / Scene Reference upload consumer changes                       |
 
 **Definition of done for refactor/redesign PRs in this area**: every artifact above either has its update committed in the same PR, or has an explicit "no change needed" line in the PR description. Reviewers should treat a missing update as a blocking finding.
 
@@ -293,3 +314,4 @@ Feature-specific artifact list:
 - [x] Builder UX (drag-and-drop, live preview, clone-loop)
 - [x] Snapshot-driven downstream readers (form, uploader, reporting)
 - [x] System-admin cross-studio template management
+- [x] Explicit Scene QC evidence designation (`evidence_purpose`) with immutable snapshot projection

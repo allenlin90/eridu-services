@@ -58,7 +58,7 @@ export class StorageService {
       uploadMethod: 'PUT',
       uploadHeaders: { contentType: input.contentType },
       objectKey: input.objectKey,
-      fileUrl: this.buildPublicFileUrl(input.objectKey),
+      fileUrl: this.resolvePublicFileUrl(input.objectKey),
       expiresInSeconds,
     };
   }
@@ -95,7 +95,12 @@ export class StorageService {
     return parsed;
   }
 
-  private buildPublicFileUrl(objectKey: string): string {
+  /**
+   * The single canonical browser URL for an object key. Public so write paths
+   * that accept a client-supplied `file_url` can verify it against the key
+   * instead of trusting it (Scene Profile save).
+   */
+  resolvePublicFileUrl(objectKey: string): string {
     const publicBaseUrl = this.configService.get('R2_PUBLIC_BASE_URL', { infer: true });
     if (!publicBaseUrl || typeof publicBaseUrl !== 'string') {
       throw HttpError.internalServerError(

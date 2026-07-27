@@ -18,6 +18,7 @@ description: Implement Cloudflare R2 presigned uploads with validation, compress
 | Compression worker          | `packages/browser-upload/src/image-compress.worker.ts`        |
 | Frontend API utils          | `apps/erify_studios/src/features/tasks/api/presign-upload.ts` |
 | Frontend form               | `apps/erify_studios/src/components/json-form/json-form.tsx`   |
+| Scene Profile consumer (`SCENE_REFERENCE`) | `apps/erify_studios/src/features/scene-qc/lib/upload-scene-reference.ts` (frontend), `apps/erify_api/src/capabilities/scene-qc/scene-reference-upload.policy.ts` (backend write-path check) |
 
 ## How It Works (Summary)
 
@@ -93,6 +94,15 @@ Additional rules:
 - Uploaded file URL cache (by per-field fingerprint `name:size:type:lastModified`) can reuse URLs and skip duplicate uploads within one form session.
 - Keep upload cache across retries/partial-success uploads, and clear it only after successful submit API completion.
 - Per-field cache entries should still be removed when that field file is replaced/cleared.
+
+## Scene Profile Write-Path Validation (No R2 Existence Probe)
+
+`SCENE_REFERENCE` uploads (Scene Profile reference images, Stage 1 Scene QC) reuse this presign flow verbatim — no second presign client. The Scene Profile save endpoint (`PUT /studios/:studioId/scene-profiles/:clientId`) accepts a client-supplied `{object_key, file_url}` pair and must not trust it blindly, but it also does NOT perform an R2 `HeadObject` existence probe on the write path. Instead `checkSceneReferenceUpload()` in `scene-reference-upload.policy.ts` pins two structural properties:
+
+1. `object_key` starts with the `scene_reference/` namespace the presign flow owns (and contains no traversal sequence).
+2. `file_url` equals `StorageService.resolvePublicFileUrl(object_key)` — the deterministic public URL derived from the key, not an attacker-chosen value.
+
+This makes a forged payload harmless (it can only ever point at a real key in the presign-owned namespace, rendered through the canonical public URL) without adding a synchronous R2 round-trip to every save. `StorageService.resolvePublicFileUrl` is the promoted-public form of the private `buildPublicFileUrl` used internally by `generatePresignedUploadUrl` — reuse it for any future write path that needs to verify a client-supplied URL against an object key.
 
 ## Checklist: Adding a New Use Case
 

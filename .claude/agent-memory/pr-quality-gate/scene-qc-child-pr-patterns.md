@@ -112,6 +112,78 @@ exists — cross-check the current `apps/erify_api/docs/design/SCENE_QC_IMPLEMEN
 - The "5-FK audit-target side table" framing — it's a 1-FK table now, growing to
   3 across Child PR 3/4, not 5.
 
+## PR #346 — Child PR 1 (v2), READY, merged as first implementation of the 2026-07-27 rescope
+
+Reviewed 2026-07-27 against `origin/feat/scene-qc-integration`. This is the
+actual first implementation of the rescoped design described above (the
+rescope notes were written the same day, ahead of this PR). Verdict: READY,
+no blocking findings. Confirms the rescoped design works end to end:
+
+- `SceneProfileService` (`apps/erify_api/src/capabilities/scene-qc/scene-profile.service.ts`)
+  calls `txHost.tx.sceneProfile` directly, zero repository files anywhere in
+  the capability folder. `scene-qc.module.spec.ts` asserts this at runtime
+  (`provider.name.endsWith('Repository') === false`) in addition to the
+  static absence.
+- No `Studio.timezone` anywhere in the schema diff; `scene-qc-operational-window.util.ts`
+  hardcodes `OPERATIONAL_TIMEZONE = 'Asia/Bangkok'` as an exported constant
+  and takes timezone as a required parameter to `resolveOperationalWindow`/`resolveOperationalDate`.
+- No `status` field on `SceneProfile` — `deletedAt` is the only lifecycle
+  marker, and in this PR's scope literally nothing but `SceneProfileService`
+  itself reads `sceneProfile` rows (grep-verified), so "a retired profile has
+  no reader" holds trivially true for now.
+- Migration `20260726235634_scene_qc_foundation` (purpose-only name, no PR/phase
+  in the folder name): partial unique index (`scene_profiles_active_client_key`
+  on `client_id` WHERE `deleted_at IS NULL`) and the `num_nonnulls(scene_profile_id) = 1`
+  CHECK both live inside `-- CUSTOM SQL START/END` markers, both with widening
+  comments for later child PRs.
+- `saveProfileForClient` correctly implements all four version-check cases
+  (no-profile/no-version→create, no-profile/version→409, profile/no-version→409,
+  profile/version→version-checked replace); retire guards version in the
+  `where` but never increments it; unique-constraint (create race) and
+  record-not-found (replace/retire race) both map to 409, never 500/unhandled.
+  All four cases have individual unit tests plus a real-DB integration spec
+  exercising the actual constraints.
+- `SCENE_QC_EXCLUDED_SHOW_STATUS_SYSTEM_KEYS = ['CANCELLED']` only — the spec
+  file even cross-checks against the real `CANCELLATION_GATE_OWNED_SHOW_STATUS_SYSTEM_KEYS`
+  constant to prove the two lists are deliberately different, not a stale copy.
+- Operational window util is genuinely `Intl`-based two-pass wall-clock↔UTC
+  (no fixed offset, no host-local `Date` accessors) with explicit 23h
+  spring-forward / 25h fall-back assertions and a describe-block title
+  ("no TZ env pinning required") backing the TZ-independence claim.
+- `scene-qc.module.spec.ts`'s non-registration check reads `app.module.ts` as
+  raw text (`readFileSync` + `.not.toContain('SceneQcModule')`) instead of
+  importing `AppModule`, because importing it triggers `ConfigModule.forRoot`
+  needing a full `.env`. Judged this an acceptable substitution: a literal
+  substring `.not.toContain` is if anything *stricter* than a real import
+  check (it fails on a stray comment mentioning the name too), and an
+  independent repo-wide grep for `SceneQcModule`/`SceneProfileService` outside
+  the `scene-qc/` folder confirmed zero references anywhere, including the MCP
+  module graph. Minor gap noted, not blocking: `app-runtime.integration-spec.ts`
+  (the real-DB gate's AppModule-boots test) doesn't itself assert
+  `SceneQcModule`'s absence — it just happens to pass either way.
+- `@eridu/api-types/scene-qc/schemas.ts`: `SCENE_PROFILE_ALLOWED_MIME_TYPES`
+  (`image/jpeg`/`png`/`webp`) is confirmed narrower than the shared
+  `FILE_UPLOAD_USE_CASE_RULES.SCENE_REFERENCE` rule (which also allows
+  `application/pdf`); `SCENE_PROFILE_MAX_FILE_SIZE_BYTES` is derived via
+  `getUploadMaxFileSizeBytes(FILE_UPLOAD_USE_CASE.SCENE_REFERENCE)`, no
+  duplicated byte-size literal.
+- UID prefix `scprof` doesn't collide (isn't a string-prefix of, and has no
+  existing prefix as its own string-prefix) with any entry in `UID_PREFIXES`.
+- Nice idiom worth reusing: a compile-time-only unit test that assigns
+  `{} as Prisma.SceneProfileUpdateInput` to the payload type under
+  `@ts-expect-error`, proving the public payload type structurally rejects a
+  raw Prisma input type (`scene-profile.service.spec.ts:260`). Good pattern
+  for any future "services must not accept Prisma types" claim — asserts it
+  at the type checker rather than only via convention/comment.
+- All verification independently re-run and green: `db:validate`; api-types
+  lint/typecheck/build; erify_api lint/typecheck (174 suites/1722 tests
+  passed, including all 5 new scene-qc spec files)/build; erify_studios
+  typecheck; `architecture:signals` (0 cycles, no new exported repositories);
+  `agents:validate`; `lint:markdown`; `sherif`; and the guarded real-DB
+  integration gate (migration applied cleanly, partial index and CHECK both
+  observed rejecting bad writes in the Prisma error log, cascade/CLS/rollback
+  specs all passed).
+
 ## Recurring minor pattern to watch for regardless of scope
 
 When a repository/service is genuinely justified (multi-row, optimistic-lock,

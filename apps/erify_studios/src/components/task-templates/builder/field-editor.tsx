@@ -24,8 +24,16 @@ import {
   SYSTEM_FACT_NONE_VALUE,
 } from './field-editor.utils';
 import { OptionsEditor } from './options-editor';
+import { SceneQcEvidenceToggle } from './scene-qc-evidence-toggle';
 import type { FieldItem, FieldType, SystemFactKey } from './schema';
-import { FieldTypeEnum, isMechanicField, isSharedField, SYSTEM_FACT_KEY_DEFINITIONS } from './schema';
+import {
+  EVIDENCE_PURPOSE,
+  FieldTypeEnum,
+  isImageOnlyAcceptRule,
+  isMechanicField,
+  isSharedField,
+  SYSTEM_FACT_KEY_DEFINITIONS,
+} from './schema';
 import { SystemFactCombobox } from './system-fact-combobox';
 import { ValidationRulesEditor } from './validation-rules-editor';
 
@@ -73,6 +81,11 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
       type: newType as FieldType,
       default_value: '', // Reset default value to avoid type mismatches
     };
+
+    // A field that stops being a file field can no longer be Scene QC evidence.
+    if (newType !== 'file') {
+      updates.evidence_purpose = undefined;
+    }
 
     // Reset validation rules that might be incompatible
     const newValidation: NonNullable<FieldItem['validation']> = { ...item.validation };
@@ -135,8 +148,11 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
   }, [handleChange]);
 
   const handleValidationChange = useCallback((val: FieldItem['validation']) => {
-    handleChange('validation', val);
-  }, [handleChange]);
+    // Clear the Scene QC evidence marker the moment the accept rule stops
+    // being image-only -- an evidence field must always resolve to an image.
+    const clearsEvidence = item.evidence_purpose !== undefined && !isImageOnlyAcceptRule(val?.accept);
+    onUpdate(clearsEvidence ? { validation: val, evidence_purpose: undefined } : { validation: val });
+  }, [item.evidence_purpose, onUpdate]);
 
   return (
     <div className="space-y-4 pt-4">
@@ -240,6 +256,21 @@ export const FieldEditor = memo(({ item, onUpdate }: FieldEditorProps) => {
           </div>
         </div>
       </div>
+
+      {item.type === 'file' && (
+        <SceneQcEvidenceToggle
+          id={`scene-qc-evidence-${item.id}`}
+          checked={item.evidence_purpose === EVIDENCE_PURPOSE.SCENE_QC}
+          disabled={fieldIsMechanic || !isImageOnlyAcceptRule(item.validation?.accept)}
+          disabledReason={
+            fieldIsMechanic
+              ? 'Mechanic fields cannot be Scene QC evidence.'
+              : 'Select image-only file types below to allow Scene QC evidence.'
+          }
+          onChange={(next) =>
+            handleChange('evidence_purpose', next ? EVIDENCE_PURPOSE.SCENE_QC : undefined)}
+        />
+      )}
 
       <div className="space-y-2">
         <Label htmlFor={`desc-${item.id}`}>Description / Help Text</Label>
