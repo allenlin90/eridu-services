@@ -138,4 +138,37 @@ describe('storageService', () => {
       ).rejects.toThrow('boom');
     });
   });
+
+  describe('deriveObjectKeyFromPublicUrl', () => {
+    it('round-trips a key resolvePublicFileUrl produced, including percent-encoded segments', () => {
+      const objectKey = 'scene_reference/ext_abc/2026-01-01/my file (final)!.png';
+      const fileUrl = service.resolvePublicFileUrl(objectKey);
+
+      expect(service.deriveObjectKeyFromPublicUrl(fileUrl)).toBe(objectKey);
+    });
+
+    it('round-trips a plain, unencoded key', () => {
+      const objectKey = 'scene_reference/ext_abc/2026-01-01/plain.png';
+      const fileUrl = service.resolvePublicFileUrl(objectKey);
+
+      expect(service.deriveObjectKeyFromPublicUrl(fileUrl)).toBe(objectKey);
+    });
+
+    it('returns null for a URL whose base does not match the configured public base', () => {
+      expect(
+        service.deriveObjectKeyFromPublicUrl('https://legacy-cdn.example.net/some/key.png'),
+      ).toBeNull();
+    });
+
+    it('returns null for a URL that only matches the base with no key remainder', () => {
+      expect(service.deriveObjectKeyFromPublicUrl('https://cdn.example.com/')).toBeNull();
+      expect(service.deriveObjectKeyFromPublicUrl('https://cdn.example.com')).toBeNull();
+    });
+
+    it('returns null rather than throwing for malformed percent-encoding', () => {
+      expect(
+        service.deriveObjectKeyFromPublicUrl('https://cdn.example.com/bad%segment'),
+      ).toBeNull();
+    });
+  });
 });
