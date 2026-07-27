@@ -214,18 +214,6 @@ export async function runBackfill({
       result.templatesAlreadyMarked++;
       logger(`  ${binding.templateUid}: already marked -- skipping version bump`);
     } else {
-      const nextItems = items.map((item) => {
-        let contentKey: string;
-        try {
-          contentKey = getFieldContentKey(parsed.data, item as { key: string; id?: string });
-        } catch {
-          return item;
-        }
-        return binding.fieldKeys.includes(contentKey)
-          ? { ...item, evidence_purpose: 'scene_qc' }
-          : item;
-      });
-
       const resolvedKeys = new Set(
         items
           .map((item) => {
@@ -237,30 +225,48 @@ export async function runBackfill({
           })
           .filter((k): k is string => k !== null),
       );
-      for (const fieldKey of binding.fieldKeys) {
-        if (!resolvedKeys.has(fieldKey)) {
-          result.unresolvedFieldKeys.push({ templateUid: binding.templateUid, fieldKey });
-          logger(`  ${binding.templateUid}: field key "${fieldKey}" not found in current schema`);
-        }
-      }
+      const missingFieldKeys = binding.fieldKeys.filter((fieldKey) => !resolvedKeys.has(fieldKey));
 
-      if (apply) {
-        try {
-          await taskTemplateService.updateTemplateWithSnapshot(binding.templateUid, template.studio.uid, {
-            version: template.version,
-            clientUid: template.client?.uid,
-            currentSchema: { ...(template.currentSchema as object), items: nextItems },
-          });
-          result.snapshotsBound++;
-          logger(`  ${binding.templateUid}: marked current schema and created a new snapshot`);
-        } catch (err) {
-          result.templatesFailed++;
-          logger(`  FAILED to update ${binding.templateUid}: ${(err as Error).message}`);
-          continue;
+      if (missingFieldKeys.length > 0) {
+        // Fail closed: applying a mapping that only partially resolves would
+        // silently mark some fields and skip others while still reporting
+        // this template as bound. Abort the current-snapshot pass entirely
+        // for this template rather than writing a half-applied binding.
+        result.templatesFailed++;
+        for (const fieldKey of missingFieldKeys) {
+          result.unresolvedFieldKeys.push({ templateUid: binding.templateUid, fieldKey });
+          logger(`  ${binding.templateUid}: field key "${fieldKey}" not found in current schema -- ABORTING current-snapshot binding for this template`);
         }
       } else {
-        result.snapshotsBound++;
-        logger(`  ${binding.templateUid}: would mark current schema and create a new snapshot`);
+        const nextItems = items.map((item) => {
+          let contentKey: string;
+          try {
+            contentKey = getFieldContentKey(parsed.data, item as { key: string; id?: string });
+          } catch {
+            return item;
+          }
+          return binding.fieldKeys.includes(contentKey)
+            ? { ...item, evidence_purpose: 'scene_qc' }
+            : item;
+        });
+
+        if (apply) {
+          try {
+            await taskTemplateService.updateTemplateWithSnapshot(binding.templateUid, template.studio.uid, {
+              version: template.version,
+              clientUid: template.client?.uid,
+              currentSchema: { ...(template.currentSchema as object), items: nextItems },
+            });
+            result.snapshotsBound++;
+            logger(`  ${binding.templateUid}: marked current schema and created a new snapshot`);
+          } catch (err) {
+            result.templatesFailed++;
+            logger(`  FAILED to update ${binding.templateUid}: ${(err as Error).message}`);
+          }
+        } else {
+          result.snapshotsBound++;
+          logger(`  ${binding.templateUid}: would mark current schema and create a new snapshot`);
+        }
       }
     }
     result.templatesProcessed++;
@@ -332,6 +338,20 @@ export async function runBackfill({
   return result;
 }
 
+/**
+ * True when any binding failed, aborted (unresolved field key), or referenced
+ * a template that no longer exists. `main()` uses this to fail the process
+ * even though `runBackfill` itself never throws for a per-template problem --
+ * a script whose exit code is always 0 is not a safe cutover gate.
+ */
+export function hasUnresolvedOrFailedBindings(result: BackfillResult): boolean {
+  return (
+    result.templatesFailed > 0
+    || result.unresolvedFieldKeys.length > 0
+    || result.unresolvedMapEntries.length > 0
+  );
+}
+
 @Module({
   imports: [
     PrismaModule,
@@ -370,21 +390,27 @@ async function main() {
         console.log(`  ${row.templateUid} "${row.templateName}" v${row.version} [${row.engine}] :: ${row.fieldKey} ("${row.label}") -- ${row.taskCount} task(s)`);
       }
       console.log('\n--- Current map dry-run plan ---');
-      await runBackfill({
+      const reportResult = await runBackfill({
         prisma,
         taskTemplateService: app.get(TaskTemplateService),
         bindings: SCENE_QC_EVIDENCE_BINDINGS,
         apply: false,
       });
+      if (hasUnresolvedOrFailedBindings(reportResult)) {
+        process.exitCode = 1;
+      }
       return;
     }
 
-    await runBackfill({
+    const result = await runBackfill({
       prisma,
       taskTemplateService: app.get(TaskTemplateService),
       bindings: SCENE_QC_EVIDENCE_BINDINGS,
       apply,
     });
+    if (hasUnresolvedOrFailedBindings(result)) {
+      process.exitCode = 1;
+    }
   } finally {
     await app.close();
   }

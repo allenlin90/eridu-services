@@ -1,6 +1,7 @@
 import {
   ensureLocalDatabase,
   findCandidateEvidenceFields,
+  hasUnresolvedOrFailedBindings,
   runBackfill,
 } from './backfill-scene-qc-evidence-refs';
 import type { SceneQcEvidenceBinding } from './scene-qc-evidence-binding-map';
@@ -192,6 +193,56 @@ describe('backfill-scene-qc-evidence-refs script', () => {
       expect(result.unresolvedFieldKeys).toEqual([{ templateUid: 'ttpl_1', fieldKey: 'does_not_exist' }]);
     });
 
+    it('fails closed in --apply mode: aborts the current-snapshot write entirely when any mapped field key is unresolved, rather than partially applying the resolved ones', async () => {
+      const prisma = makePrisma();
+      const taskTemplateService = { updateTemplateWithSnapshot: jest.fn().mockResolvedValue({}) };
+      const missingKeyBindings: SceneQcEvidenceBinding[] = [
+        { templateUid: 'ttpl_1', fieldKeys: ['scene_photo', 'does_not_exist'], note: 'x' },
+      ];
+
+      const result = await runBackfill({ prisma: prisma as any, taskTemplateService, bindings: missingKeyBindings, apply: true });
+
+      // The resolved field ("scene_photo") must NOT get silently marked while
+      // "does_not_exist" is dropped -- a template with a partially-resolved
+      // mapping is a failure, not a bind.
+      expect(taskTemplateService.updateTemplateWithSnapshot).not.toHaveBeenCalled();
+      expect(result.snapshotsBound).toBe(0);
+      expect(result.templatesFailed).toBe(1);
+      expect(result.unresolvedFieldKeys).toEqual([{ templateUid: 'ttpl_1', fieldKey: 'does_not_exist' }]);
+    });
+
+    it('still runs the historical pass for a template whose current-snapshot pass was aborted for unresolved keys', async () => {
+      const historicalSnapshot = {
+        id: 99n,
+        version: 1,
+        schema: {
+          items: [
+            { id: 'a', key: 'scene_photo', type: 'file', label: 'Old label', validation: { accept: 'image/*' } },
+          ],
+        },
+      };
+      const prisma = makePrisma({
+        taskTemplateSnapshot: { findMany: jest.fn().mockResolvedValue([historicalSnapshot]) },
+        taskTemplateSceneQcEvidenceRef: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      });
+      const taskTemplateService = { updateTemplateWithSnapshot: jest.fn() };
+      const missingKeyBindings: SceneQcEvidenceBinding[] = [
+        { templateUid: 'ttpl_1', fieldKeys: ['scene_photo', 'does_not_exist'], note: 'x' },
+      ];
+
+      const result = await runBackfill({ prisma: prisma as any, taskTemplateService, bindings: missingKeyBindings, apply: true });
+
+      expect(taskTemplateService.updateTemplateWithSnapshot).not.toHaveBeenCalled();
+      expect(result.templatesFailed).toBe(1);
+      // The historical (past-snapshot) pass is independent of the aborted
+      // current-snapshot pass and still binds what it can resolve.
+      expect(prisma.taskTemplateSceneQcEvidenceRef.createMany).toHaveBeenCalledWith({
+        data: [{ templateId: 1n, snapshotId: 99n, fieldKey: 'scene_photo', label: 'Old label' }],
+        skipDuplicates: true,
+      });
+      expect(result.rowsCreated).toBe(1);
+    });
+
     it('reports an unresolved map entry when the template no longer exists', async () => {
       const prisma = makePrisma({ taskTemplate: { findFirst: jest.fn().mockResolvedValue(null) } });
       const taskTemplateService = { updateTemplateWithSnapshot: jest.fn() };
@@ -211,9 +262,13 @@ describe('backfill-scene-qc-evidence-refs script', () => {
       const result = await runBackfill({ prisma: prisma as any, taskTemplateService, bindings, apply: true });
 
       // A failed write is reported and the loop moves on to the next binding
-      // rather than throwing -- it does not count as "processed".
+      // rather than throwing. It still counts as "processed" (an attempt was
+      // made) and as "failed" -- consistent with how an unresolved-field-key
+      // abort is counted, and unlike an unresolved MAP ENTRY (template not
+      // found at all), which never reaches an attempt.
       expect(result.templatesFailed).toBe(1);
-      expect(result.templatesProcessed).toBe(0);
+      expect(result.templatesProcessed).toBe(1);
+      expect(result.snapshotsBound).toBe(0);
     });
 
     it('binds a historical snapshot referenced by a live Task without rewriting its schema', async () => {
@@ -240,6 +295,37 @@ describe('backfill-scene-qc-evidence-refs script', () => {
         skipDuplicates: true,
       });
       expect(result.rowsCreated).toBe(1);
+    });
+  });
+
+  describe('hasUnresolvedOrFailedBindings', () => {
+    const CLEAN_RESULT = {
+      templatesProcessed: 1,
+      templatesAlreadyMarked: 0,
+      templatesFailed: 0,
+      snapshotsBound: 1,
+      rowsCreated: 0,
+      unresolvedFieldKeys: [],
+      unresolvedMapEntries: [],
+    };
+
+    it('is false when nothing failed or went unresolved', () => {
+      expect(hasUnresolvedOrFailedBindings(CLEAN_RESULT)).toBe(false);
+    });
+
+    it('is true when any template failed', () => {
+      expect(hasUnresolvedOrFailedBindings({ ...CLEAN_RESULT, templatesFailed: 1 })).toBe(true);
+    });
+
+    it('is true when any field key is unresolved', () => {
+      expect(hasUnresolvedOrFailedBindings({
+        ...CLEAN_RESULT,
+        unresolvedFieldKeys: [{ templateUid: 'ttpl_1', fieldKey: 'x' }],
+      })).toBe(true);
+    });
+
+    it('is true when any map entry is unresolved (template not found)', () => {
+      expect(hasUnresolvedOrFailedBindings({ ...CLEAN_RESULT, unresolvedMapEntries: ['ttpl_1'] })).toBe(true);
     });
   });
 });

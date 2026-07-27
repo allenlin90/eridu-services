@@ -55,7 +55,7 @@ describe('scene-qc mutation invalidation scope', () => {
     const { Wrapper, invalidateSpy } = createWrapper();
 
     const { result } = renderHook(() => useRetireSceneProfile('studio_abc', 'client_xyz'), { wrapper: Wrapper });
-    await result.current.mutateAsync(undefined);
+    await result.current.mutateAsync(3);
 
     await waitFor(() => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.profile('studio_abc', 'client_xyz') });

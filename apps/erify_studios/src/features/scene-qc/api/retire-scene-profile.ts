@@ -7,11 +7,11 @@ import { apiClient } from '@/lib/api/client';
 export async function retireSceneProfile(
   studioId: string,
   clientId: string,
-  version?: number,
+  version: number,
 ): Promise<void> {
   await apiClient.delete(
     `/studios/${studioId}/scene-profiles/${clientId}`,
-    { params: version !== undefined ? { version } : undefined },
+    { params: { version } },
   );
 }
 
@@ -19,7 +19,7 @@ export function useRetireSceneProfile(studioId: string, clientId: string | undef
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (version?: number) => {
+    mutationFn: (version: number) => {
       if (!clientId) {
         return Promise.reject(new Error('clientId is required'));
       }

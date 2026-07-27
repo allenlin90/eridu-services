@@ -17,20 +17,26 @@ export type SceneReferenceUploadCheckInput = {
   fileUrl: string;
   /** StorageService.resolvePublicFileUrl(objectKey) */
   expectedFileUrl: string;
+  /**
+   * StorageService.sanitizeActorIdForObjectKey(context.actorExtId) -- the
+   * exact key segment the presign flow would have embedded for the current
+   * actor. Objects presigned by a different actor must not be adoptable.
+   */
+  expectedActorSegment: string;
 };
 
 export type SceneReferenceUploadViolation =
   | 'object_key_outside_scene_reference_namespace'
   | 'object_key_traversal'
+  | 'object_key_actor_mismatch'
   | 'file_url_does_not_match_object_key';
 
 /**
- * Stage 1 does NOT probe R2 for object existence (no HeadObject on the write
- * path). It DOES pin the two properties that make a forged payload harmless:
- *   1. the key lives in the SCENE_REFERENCE namespace the presign flow owns; and
- *   2. the stored render URL is the deterministic public URL for that exact key,
- *      so no attacker-chosen external URL becomes a rendered <img> source or a
- *      later re-signing input.
+ * Format/ownership checks only -- shape, namespace, and which actor's
+ * presign issued the key. This does NOT prove the object exists or that its
+ * real content matches what the caller claims: the service layer must follow
+ * a `null` result here with `StorageService.headObject` and persist the
+ * R2-observed content type/size, never the caller's claimed values.
  */
 export function checkSceneReferenceUpload(
   input: SceneReferenceUploadCheckInput,
@@ -40,6 +46,11 @@ export function checkSceneReferenceUpload(
   }
   if (input.objectKey.includes('..') || input.objectKey.startsWith('/')) {
     return 'object_key_traversal';
+  }
+  // Key shape: scene_reference/{actorSegment}/{date}/{random}-{filename}.
+  const actorSegment = input.objectKey.split('/')[1];
+  if (actorSegment !== input.expectedActorSegment) {
+    return 'object_key_actor_mismatch';
   }
   if (input.fileUrl !== input.expectedFileUrl) {
     return 'file_url_does_not_match_object_key';

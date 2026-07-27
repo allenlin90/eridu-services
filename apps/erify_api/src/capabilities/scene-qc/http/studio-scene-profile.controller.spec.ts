@@ -161,7 +161,7 @@ describe('studioSceneProfileController', () => {
       clientService.getClientByUid.mockResolvedValue(null);
 
       await expect(
-        controller.retire(user, studioId, clientId, {} as any),
+        controller.retire(user, studioId, clientId, { version: 1 } as any),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(sceneProfileService.retireProfileForClient).not.toHaveBeenCalled();
     });
@@ -170,7 +170,7 @@ describe('studioSceneProfileController', () => {
       showService.countShows.mockResolvedValue(0);
 
       await expect(
-        controller.retire(user, studioId, clientId, {} as any),
+        controller.retire(user, studioId, clientId, { version: 1 } as any),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(sceneProfileService.retireProfileForClient).not.toHaveBeenCalled();
     });
@@ -179,11 +179,11 @@ describe('studioSceneProfileController', () => {
       sceneProfileService.retireProfileForClient.mockResolvedValue(null);
 
       await expect(
-        controller.retire(user, studioId, clientId, {} as any),
+        controller.retire(user, studioId, clientId, { version: 1 } as any),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it('delegates to retireProfileForClient with context and the optional version query param', async () => {
+    it('delegates to retireProfileForClient with context and the required version query param', async () => {
       const retired = { uid: 'scprof_1' } as any;
       sceneProfileService.retireProfileForClient.mockResolvedValue(retired);
 
@@ -201,7 +201,7 @@ describe('studioSceneProfileController', () => {
       sceneProfileService.retireProfileForClient.mockRejectedValue(conflict);
 
       await expect(
-        controller.retire(user, studioId, clientId, {} as any),
+        controller.retire(user, studioId, clientId, { version: 1 } as any),
       ).rejects.toBe(conflict);
     });
   });

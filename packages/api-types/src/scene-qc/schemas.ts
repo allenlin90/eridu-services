@@ -65,7 +65,11 @@ export const saveSceneProfileInputSchema = z.object({
   mime_type: sceneProfileMimeTypeSchema,
   file_size: z.number().int().positive().max(SCENE_PROFILE_MAX_FILE_SIZE_BYTES),
   scene_type: sceneTypeSchema,
-  version: z.number().int().nonnegative().optional(),
+  // Omitted means "I believe this Client has no profile yet" (create).
+  // Present means "I am replacing at exactly this version" (replace) -- a
+  // stored version is always >= 1, so 0 or a negative value can never be a
+  // legitimate belief and is rejected rather than silently accepted.
+  version: z.number().int().positive().optional(),
 });
 
 export type SceneProfileApiResponse = z.infer<typeof sceneProfileApiResponseSchema>;

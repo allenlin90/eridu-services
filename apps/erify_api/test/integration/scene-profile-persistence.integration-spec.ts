@@ -45,12 +45,21 @@ function buildSavePayload(overrides: Partial<SaveSceneProfilePayload> = {}): Sav
   };
 }
 
-// Deterministic stub matching buildSavePayload's fileUrl derivation --
-// StorageService's real R2 config isn't the concern of these persistence
-// tests, only the transaction/cascade/constraint semantics are.
+// Deterministic stub matching buildSavePayload's fileUrl derivation and
+// objectKeyFor's hardcoded "integration" actor segment -- StorageService's
+// real R2 config isn't the concern of these persistence tests, only the
+// transaction/cascade/constraint semantics are.
 class FakeStorageService {
   resolvePublicFileUrl(objectKey: string): string {
     return `${CDN_BASE}/${objectKey}`;
+  }
+
+  sanitizeActorIdForObjectKey(): string {
+    return 'integration';
+  }
+
+  async headObject(): Promise<{ contentType: string; contentLength: number }> {
+    return { contentType: 'image/png', contentLength: 12345 };
   }
 }
 
@@ -200,7 +209,7 @@ describe('real database Scene Profile persistence safety', () => {
     const client = await createTestClient(suffix);
 
     const first = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
-    await sceneProfileService.retireProfileForClient(client.uid, context);
+    await sceneProfileService.retireProfileForClient(client.uid, context, first.version);
     const second = await sceneProfileService.saveProfileForClient(
       client.uid,
       buildSavePayload({ objectKey: objectKeyFor('reference-2.png'), fileUrl: `${CDN_BASE}/${objectKeyFor('reference-2.png')}` }),
@@ -223,8 +232,8 @@ describe('real database Scene Profile persistence safety', () => {
     const suffix = uniqueSuffix();
     const client = await createTestClient(suffix);
 
-    await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
-    await sceneProfileService.retireProfileForClient(client.uid, context);
+    const saved = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
+    await sceneProfileService.retireProfileForClient(client.uid, context, saved.version);
 
     await expect(
       sceneProfileService.getActiveProfileForClient(client.uid),
@@ -247,7 +256,7 @@ describe('real database Scene Profile persistence safety', () => {
       context,
     );
 
-    await sceneProfileService.retireProfileForClient(clientA.uid, context);
+    await sceneProfileService.retireProfileForClient(clientA.uid, context, profileA.version);
 
     await expect(
       sceneProfileService.getActiveProfileForClient(clientA.uid),
@@ -442,7 +451,7 @@ describe('real database Scene Profile persistence safety', () => {
       const client = await createTestClient(suffix);
 
       const created = await sceneProfileService.saveProfileForClient(client.uid, buildSavePayload(), context);
-      const retired = await sceneProfileService.retireProfileForClient(client.uid, context);
+      const retired = await sceneProfileService.retireProfileForClient(client.uid, context, created.version);
       expect(retired).not.toBeNull();
 
       const retireTarget = await prisma.sceneQcAuditTarget.findFirst({

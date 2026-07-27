@@ -1046,6 +1046,10 @@ model SceneQcAuditTarget {
   sceneProfileId BigInt?       @map("scene_profile_id")
   sceneProfile   SceneProfile? @relation(fields: [sceneProfileId], references: [id], onDelete: Cascade)
 
+  // PostgreSQL does not automatically index the referencing side of a FK;
+  // without this, loading an Audit's targets (history/detail paths) scans
+  // this table.
+  @@index([auditId])
   @@index([sceneProfileId])
   @@map("scene_qc_audit_targets")
 }

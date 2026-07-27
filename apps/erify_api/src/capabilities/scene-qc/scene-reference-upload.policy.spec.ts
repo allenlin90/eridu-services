@@ -6,17 +6,19 @@ import {
 describe('sceneReferenceUploadPolicy', () => {
   const VALID_KEY = 'scene_reference/user_abc/2026-07-27/deadbeef-reference.png';
   const VALID_URL = `https://cdn.example.com/${VALID_KEY}`;
+  const ACTOR_SEGMENT = 'user_abc';
 
   it('exposes the exact scene_reference/ namespace prefix', () => {
     expect(SCENE_REFERENCE_OBJECT_KEY_PREFIX).toBe('scene_reference/');
   });
 
-  it('accepts a well-formed scene_reference key whose file_url matches the expected derived URL', () => {
+  it('accepts a well-formed scene_reference key issued to the current actor whose file_url matches the expected derived URL', () => {
     expect(
       checkSceneReferenceUpload({
         objectKey: VALID_KEY,
         fileUrl: VALID_URL,
         expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
       }),
     ).toBeNull();
   });
@@ -27,6 +29,7 @@ describe('sceneReferenceUploadPolicy', () => {
         objectKey: 'qc_screenshot/user_abc/2026-07-27/x.png',
         fileUrl: VALID_URL,
         expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
       }),
     ).toBe('object_key_outside_scene_reference_namespace');
   });
@@ -37,6 +40,7 @@ describe('sceneReferenceUploadPolicy', () => {
         objectKey: 'scene_reference/../../etc/passwd',
         fileUrl: VALID_URL,
         expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
       }),
     ).toBe('object_key_traversal');
   });
@@ -47,6 +51,7 @@ describe('sceneReferenceUploadPolicy', () => {
         objectKey: '/scene_reference/user_abc/x.png',
         fileUrl: VALID_URL,
         expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
       }),
     ).toBe('object_key_outside_scene_reference_namespace');
   });
@@ -57,8 +62,31 @@ describe('sceneReferenceUploadPolicy', () => {
         objectKey: 'scene_reference/user_abc/../../etc/passwd',
         fileUrl: VALID_URL,
         expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
       }),
     ).toBe('object_key_traversal');
+  });
+
+  it('rejects an object_key whose actor segment does not belong to the current actor', () => {
+    expect(
+      checkSceneReferenceUpload({
+        objectKey: 'scene_reference/user_other/2026-07-27/deadbeef-reference.png',
+        fileUrl: 'https://cdn.example.com/scene_reference/user_other/2026-07-27/deadbeef-reference.png',
+        expectedFileUrl: 'https://cdn.example.com/scene_reference/user_other/2026-07-27/deadbeef-reference.png',
+        expectedActorSegment: ACTOR_SEGMENT,
+      }),
+    ).toBe('object_key_actor_mismatch');
+  });
+
+  it('checks actor ownership before the URL match, so a foreign key never reports only a URL-mismatch reason', () => {
+    expect(
+      checkSceneReferenceUpload({
+        objectKey: 'scene_reference/user_other/2026-07-27/deadbeef-reference.png',
+        fileUrl: 'https://evil.example.com/steal.png',
+        expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
+      }),
+    ).toBe('object_key_actor_mismatch');
   });
 
   it('rejects a file_url that does not match the expected derived URL for the object_key', () => {
@@ -67,6 +95,7 @@ describe('sceneReferenceUploadPolicy', () => {
         objectKey: VALID_KEY,
         fileUrl: 'https://evil.example.com/steal.png',
         expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
       }),
     ).toBe('file_url_does_not_match_object_key');
   });
@@ -77,6 +106,7 @@ describe('sceneReferenceUploadPolicy', () => {
         objectKey: 'qc_screenshot/user_abc/x.png',
         fileUrl: 'https://evil.example.com/steal.png',
         expectedFileUrl: VALID_URL,
+        expectedActorSegment: ACTOR_SEGMENT,
       }),
     ).toBe('object_key_outside_scene_reference_namespace');
   });

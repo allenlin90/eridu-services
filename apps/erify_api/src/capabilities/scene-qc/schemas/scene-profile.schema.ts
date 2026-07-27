@@ -71,8 +71,13 @@ export const saveSceneProfileSchema = saveSceneProfileInputSchema.transform((dat
 export class SaveSceneProfileDto extends createZodDto(saveSceneProfileSchema) {}
 export class SceneProfileDto extends createZodDto(sceneProfileDto) {}
 
+// Required (not optional): an omitted version would make retire last-writer-
+// wins with no stale-write protection at all, unlike the create-or-replace
+// PUT where omission has a real meaning ("I believe there is no profile").
+// There is no such alternate meaning for DELETE, so there is no fallback to
+// preserve.
 export const retireSceneProfileQuerySchema = z.object({
-  version: z.coerce.number().int().nonnegative().optional(),
+  version: z.coerce.number().int().positive(),
 });
 export class RetireSceneProfileQueryDto extends createZodDto(retireSceneProfileQuerySchema) {}
 

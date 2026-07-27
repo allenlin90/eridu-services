@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SceneType } from '@eridu/api-types/scene-qc';
 import { SCENE_TYPE } from '@eridu/api-types/scene-qc';
@@ -45,18 +45,63 @@ export function useSceneProfileEditor(studioId: string, clientId: string | undef
   const loadError = !hasNoProfile && profileQuery.isError ? profileQuery.error : null;
   const profile = profileQuery.data ?? null;
 
+  // "Latest ref" so an in-flight upload started for one Client can detect
+  // that the operator has since switched to a different Client and discard
+  // its result, instead of attaching a stale draft to the new Client.
+  const clientIdRef = useRef(clientId);
+  clientIdRef.current = clientId;
+
+  // Client changed: discard any in-progress draft. Without this, an upload
+  // started for Client A (and its selected scene type) would remain
+  // attachable to a `save()` call against Client B. Also clears isUploading:
+  // an in-flight upload's own completion is guarded against updating state
+  // for a Client it was no longer started for (see selectFile), so nothing
+  // else would ever clear this flag.
+  useEffect(() => {
+    setSelectedFile(null);
+    setUploaded(null);
+    setUploadError(null);
+    setConflictMessage(null);
+    setIsUploading(false);
+  }, [clientId]);
+
+  // Initialize/sync the displayed scene type from the loaded profile whenever
+  // the Client changes or the profile (re)loads -- but never while the
+  // operator has a draft in progress (a selected or already-uploaded file),
+  // so a 409-retry refetch cannot silently overwrite an in-flight choice.
+  // Without this, sceneType always started at GRAPHIC_BG even for an
+  // existing REAL_BACKDROP profile, and the next save would silently change
+  // its type back.
+  useEffect(() => {
+    if (selectedFile || uploaded) {
+      return;
+    }
+    setSceneType(profile?.scene_type ?? SCENE_TYPE.GRAPHIC_BG);
+  }, [clientId, profile?.scene_type, selectedFile, uploaded]);
+
   const selectFile = useCallback(async (file: File) => {
+    const targetClientId = clientIdRef.current;
     setUploadError(null);
     setSelectedFile(file);
     setIsUploading(true);
     try {
       const result = await uploadSceneReference(file);
+      if (clientIdRef.current !== targetClientId) {
+        // The operator switched Clients while this upload was in flight --
+        // the client-change effect above already reset the draft; discard
+        // this result rather than attaching it to the new Client's draft.
+        return;
+      }
       setUploaded(result);
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Failed to upload reference image');
-      setUploaded(null);
+      if (clientIdRef.current === targetClientId) {
+        setUploadError(err instanceof Error ? err.message : 'Failed to upload reference image');
+        setUploaded(null);
+      }
     } finally {
-      setIsUploading(false);
+      if (clientIdRef.current === targetClientId) {
+        setIsUploading(false);
+      }
     }
   }, []);
 
@@ -102,9 +147,12 @@ export function useSceneProfileEditor(studioId: string, clientId: string | undef
   }, [uploaded, sceneType, profile?.version, saveMutation, profileQuery]);
 
   const retire = useCallback(async () => {
+    if (!profile) {
+      return;
+    }
     setConflictMessage(null);
     try {
-      await retireMutation.mutateAsync(profile?.version);
+      await retireMutation.mutateAsync(profile.version);
     } catch (err) {
       if (isConflict(err)) {
         setConflictMessage(getMutationErrorMessage(err, 'This Scene Profile changed since you loaded it.'));
@@ -113,7 +161,7 @@ export function useSceneProfileEditor(studioId: string, clientId: string | undef
       }
       throw err;
     }
-  }, [profile?.version, retireMutation, profileQuery]);
+  }, [profile, retireMutation, profileQuery]);
 
   return {
     profile,

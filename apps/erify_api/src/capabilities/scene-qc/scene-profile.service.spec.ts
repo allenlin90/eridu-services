@@ -57,9 +57,12 @@ function createRecordNotFoundError() {
   });
 }
 
+// The actor segment ("ext_actor_1") must match CONTEXT.actorExtId below —
+// the service now verifies a saved object_key was actually issued to the
+// current actor.
 const SAVE_PAYLOAD: SaveSceneProfilePayload = {
-  objectKey: 'scene_reference/client_abc/2026-01-01/deadbeef-reference.png',
-  fileUrl: 'https://cdn.example.com/scene_reference/client_abc/2026-01-01/deadbeef-reference.png',
+  objectKey: 'scene_reference/ext_actor_1/2026-01-01/deadbeef-reference.png',
+  fileUrl: 'https://cdn.example.com/scene_reference/ext_actor_1/2026-01-01/deadbeef-reference.png',
   mimeType: 'image/png',
   fileSize: 12345,
   sceneType: 'GRAPHIC_BG',
@@ -88,7 +91,7 @@ describe('sceneProfileService', () => {
   let service: SceneProfileService;
   let delegate: ReturnType<typeof createSceneProfileDelegateMock>;
   let uidGenerator: jest.Mocked<Pick<UidGeneratorService, 'generateBrandedId'>>;
-  let storageService: jest.Mocked<Pick<StorageService, 'resolvePublicFileUrl'>>;
+  let storageService: jest.Mocked<Pick<StorageService, 'resolvePublicFileUrl' | 'sanitizeActorIdForObjectKey' | 'headObject'>>;
   let userService: jest.Mocked<Pick<UserService, 'getUserByExtId'>>;
   let auditWriter: jest.Mocked<Pick<SceneQcAuditWriter, 'recordSceneProfileChange'>>;
 
@@ -105,6 +108,14 @@ describe('sceneProfileService', () => {
     };
     storageService = {
       resolvePublicFileUrl: jest.fn((key: string) => `https://cdn.example.com/${key}`),
+      // Identity sanitization for the clean ext-id fixtures used in this file
+      // — StorageService.sanitizeActorIdForObjectKey's own transform rules
+      // are covered in storage.service.spec.ts.
+      sanitizeActorIdForObjectKey: jest.fn((actorId: string) => actorId),
+      // Default "happy path": the R2-observed content matches what the
+      // fixtures claim, so existing assertions against SAVE_PAYLOAD's
+      // mime_type/file_size continue to hold for the server-verified values.
+      headObject: jest.fn().mockResolvedValue({ contentType: 'image/png', contentLength: 12345 }),
     };
     userService = {
       getUserByExtId: jest.fn().mockResolvedValue({ id: ACTOR.id, uid: ACTOR.uid }),
@@ -208,6 +219,90 @@ describe('sceneProfileService', () => {
 
       expect(delegate.create).not.toHaveBeenCalled();
       expect(auditWriter.recordSceneProfileChange).not.toHaveBeenCalled();
+      expect(storageService.headObject).not.toHaveBeenCalled();
+    });
+
+    it('rejects with 403 and writes no audit when object_key was not issued to the current actor', async () => {
+      await expect(
+        service.saveProfileForClient(
+          'client_abc',
+          {
+            ...SAVE_PAYLOAD,
+            objectKey: 'scene_reference/ext_someone_else/2026-01-01/deadbeef-reference.png',
+            fileUrl: 'https://cdn.example.com/scene_reference/ext_someone_else/2026-01-01/deadbeef-reference.png',
+          },
+          CONTEXT,
+        ),
+      ).rejects.toMatchObject({ status: 403 });
+
+      expect(delegate.create).not.toHaveBeenCalled();
+      expect(auditWriter.recordSceneProfileChange).not.toHaveBeenCalled();
+      expect(storageService.headObject).not.toHaveBeenCalled();
+    });
+
+    it('rejects with 400 and writes no audit when the object does not actually exist in storage', async () => {
+      storageService.headObject.mockResolvedValueOnce(null);
+
+      await expect(
+        service.saveProfileForClient('client_abc', SAVE_PAYLOAD, CONTEXT),
+      ).rejects.toMatchObject({
+        status: 400,
+        response: expect.objectContaining({ message: expect.stringContaining('could not be found') }),
+      });
+
+      expect(delegate.create).not.toHaveBeenCalled();
+      expect(auditWriter.recordSceneProfileChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects with 400 when the R2-observed content type is not an accepted image type, regardless of the claimed mime_type', async () => {
+      storageService.headObject.mockResolvedValueOnce({ contentType: 'application/pdf', contentLength: 12345 });
+
+      await expect(
+        service.saveProfileForClient('client_abc', SAVE_PAYLOAD, CONTEXT),
+      ).rejects.toMatchObject({
+        status: 400,
+        response: expect.objectContaining({ message: expect.stringContaining('accepted image types') }),
+      });
+
+      expect(delegate.create).not.toHaveBeenCalled();
+      expect(auditWriter.recordSceneProfileChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects with 400 when the R2-observed size is zero or negative', async () => {
+      storageService.headObject.mockResolvedValueOnce({ contentType: 'image/png', contentLength: 0 });
+
+      await expect(
+        service.saveProfileForClient('client_abc', SAVE_PAYLOAD, CONTEXT),
+      ).rejects.toMatchObject({ status: 400 });
+
+      expect(delegate.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects with 400 when the R2-observed size exceeds the accepted ceiling', async () => {
+      storageService.headObject.mockResolvedValueOnce({ contentType: 'image/png', contentLength: 999_999_999 });
+
+      await expect(
+        service.saveProfileForClient('client_abc', SAVE_PAYLOAD, CONTEXT),
+      ).rejects.toMatchObject({ status: 400 });
+
+      expect(delegate.create).not.toHaveBeenCalled();
+    });
+
+    it('persists the R2-observed mime_type/file_size, not the caller-claimed values, when they differ', async () => {
+      delegate.findFirst.mockResolvedValue(null);
+      storageService.headObject.mockResolvedValueOnce({ contentType: 'image/webp', contentLength: 999 });
+      const created = createSceneProfileRecord({ mimeType: 'image/webp', fileSize: 999 });
+      delegate.create.mockResolvedValue(created);
+
+      await service.saveProfileForClient(
+        'client_abc',
+        { ...SAVE_PAYLOAD, mimeType: 'image/png', fileSize: 12345 },
+        CONTEXT,
+      );
+
+      expect(delegate.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ mimeType: 'image/webp', fileSize: 999 }),
+      }));
     });
   });
 
@@ -288,13 +383,13 @@ describe('sceneProfileService', () => {
     it('sends the exact version-guarded where-clause, an atomic increment, and records an UPDATE audit with old+new values', async () => {
       const existing = createSceneProfileRecord({ version: 5 });
       delegate.findFirst.mockResolvedValue(existing);
-      const replaced = createSceneProfileRecord({ version: 6, objectKey: 'scene_reference/client_abc/2026-01-02/newfile.png', fileUrl: 'https://cdn.example.com/scene_reference/client_abc/2026-01-02/newfile.png' });
+      const replaced = createSceneProfileRecord({ version: 6, objectKey: 'scene_reference/ext_actor_1/2026-01-02/newfile.png', fileUrl: 'https://cdn.example.com/scene_reference/ext_actor_1/2026-01-02/newfile.png' });
       delegate.update.mockResolvedValue(replaced);
 
       const payload = {
         ...SAVE_PAYLOAD,
-        objectKey: 'scene_reference/client_abc/2026-01-02/newfile.png',
-        fileUrl: 'https://cdn.example.com/scene_reference/client_abc/2026-01-02/newfile.png',
+        objectKey: 'scene_reference/ext_actor_1/2026-01-02/newfile.png',
+        fileUrl: 'https://cdn.example.com/scene_reference/ext_actor_1/2026-01-02/newfile.png',
         version: 3,
       };
 
@@ -355,7 +450,7 @@ describe('sceneProfileService', () => {
       delegate.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.retireProfileForClient('client_abc', CONTEXT),
+        service.retireProfileForClient('client_abc', CONTEXT, 1),
       ).resolves.toBeNull();
       expect(delegate.update).not.toHaveBeenCalled();
       expect(auditWriter.recordSceneProfileChange).not.toHaveBeenCalled();
@@ -368,7 +463,7 @@ describe('sceneProfileService', () => {
       delegate.update.mockResolvedValue(retired);
 
       await expect(
-        service.retireProfileForClient('client_abc', CONTEXT),
+        service.retireProfileForClient('client_abc', CONTEXT, 2),
       ).resolves.toEqual(retired);
 
       expect(delegate.update).toHaveBeenCalledWith({
@@ -411,7 +506,7 @@ describe('sceneProfileService', () => {
       delegate.update.mockRejectedValue(createRecordNotFoundError());
 
       await expect(
-        service.retireProfileForClient('client_abc', CONTEXT),
+        service.retireProfileForClient('client_abc', CONTEXT, 2),
       ).rejects.toMatchObject({ status: 409 });
     });
   });

@@ -27,6 +27,31 @@ import {
 
 import * as m from '@/paraglide/messages';
 
+/**
+ * Owns its own failed-to-load state, keyed by the parent on `fileUrl` --
+ * remounting on a new URL resets `imageFailed` for free (React's own
+ * recommended "resetting state when a prop changes" pattern) instead of an
+ * effect that calls `setState`, which the react-hooks lint rule flags as a
+ * cascading-render risk. Without SOME reset mechanism, one failed preview
+ * would stay "unavailable" for every subsequently loaded/replaced profile.
+ */
+function SceneProfileReferenceImage({ fileUrl, alt }: { fileUrl: string; alt: string }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (imageFailed) {
+    return <p className="py-8 text-sm text-muted-foreground">{m.scene_profiles_preview_unavailable()}</p>;
+  }
+
+  return (
+    <img
+      src={fileUrl}
+      alt={alt}
+      className="max-h-64 rounded-md object-contain"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
 type SceneProfileEditorCardProps = {
   profile: SceneProfileApiResponse;
   sceneType: SceneType;
@@ -56,7 +81,6 @@ export function SceneProfileEditorCard({
   canSave,
   uploadError,
 }: SceneProfileEditorCardProps) {
-  const [imageFailed, setImageFailed] = useState(false);
   const [retireOpen, setRetireOpen] = useState(false);
 
   return (
@@ -66,18 +90,7 @@ export function SceneProfileEditorCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-center rounded-md border bg-muted/30 p-2">
-          {imageFailed
-            ? (
-                <p className="py-8 text-sm text-muted-foreground">{m.scene_profiles_preview_unavailable()}</p>
-              )
-            : (
-                <img
-                  src={profile.file_url}
-                  alt={m.scene_profiles_title()}
-                  className="max-h-64 rounded-md object-contain"
-                  onError={() => setImageFailed(true)}
-                />
-              )}
+          <SceneProfileReferenceImage key={profile.file_url} fileUrl={profile.file_url} alt={m.scene_profiles_title()} />
         </div>
 
         <div className="space-y-2">

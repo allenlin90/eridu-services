@@ -4,6 +4,7 @@ import { AxiosError, AxiosHeaders } from 'axios';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { uploadSceneReference } from '../../lib/upload-scene-reference';
 import { useSceneProfileEditor } from '../use-scene-profile-editor';
 
 const mockUseSceneProfileQuery = vi.fn();
@@ -142,6 +143,125 @@ describe('useSceneProfileEditor', () => {
     expect(result.current.canSave).toBe(true);
     // Only the one save() call happened -- no automatic retry.
     expect(mockSaveMutateAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('initializes/syncs the displayed scene type from a loaded REAL_BACKDROP profile, not the GRAPHIC_BG default', async () => {
+    mockUseSceneProfileQuery.mockReturnValue({
+      data: {
+        id: 'scprof_1',
+        client_id: 'client_xyz',
+        object_key: 'scene_reference/x/y.png',
+        file_url: 'https://cdn.example.com/scene_reference/x/y.png',
+        mime_type: 'image/png',
+        file_size: 100,
+        scene_type: 'REAL_BACKDROP',
+        version: 3,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+      },
+      error: null,
+      isError: false,
+      isLoading: false,
+      refetch: mockRefetch,
+    });
+
+    const { result } = renderHook(() => useSceneProfileEditor('studio_abc', 'client_xyz'), { wrapper: Wrapper });
+
+    // Without the profile-sync effect, this stayed at the GRAPHIC_BG default
+    // regardless of what the loaded profile actually recorded, and the next
+    // save would silently flip an existing REAL_BACKDROP profile's type.
+    await waitFor(() => {
+      expect(result.current.sceneType).toBe('REAL_BACKDROP');
+    });
+  });
+
+  it('resets the draft (selected/uploaded file, scene type) when the operator switches to a different Client', async () => {
+    mockUseSceneProfileQuery.mockReturnValue({
+      data: {
+        id: 'scprof_1',
+        client_id: 'client_a',
+        object_key: 'scene_reference/x/y.png',
+        file_url: 'https://cdn.example.com/scene_reference/x/y.png',
+        mime_type: 'image/png',
+        file_size: 100,
+        scene_type: 'REAL_BACKDROP',
+        version: 3,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+      },
+      error: null,
+      isError: false,
+      isLoading: false,
+      refetch: mockRefetch,
+    });
+
+    const { result, rerender } = renderHook(
+      ({ clientId }: { clientId: string }) => useSceneProfileEditor('studio_abc', clientId),
+      { wrapper: Wrapper, initialProps: { clientId: 'client_a' } },
+    );
+
+    await act(async () => {
+      await result.current.selectFile(new File([], 'ref.png', { type: 'image/png' }));
+    });
+    expect(result.current.canSave).toBe(true);
+    expect(result.current.sceneType).toBe('REAL_BACKDROP');
+
+    // Client B has no profile yet (default query mock: data undefined).
+    mockUseSceneProfileQuery.mockReturnValue({
+      data: undefined,
+      error: null,
+      isError: false,
+      isLoading: false,
+      refetch: mockRefetch,
+    });
+
+    act(() => {
+      rerender({ clientId: 'client_b' });
+    });
+
+    // The draft uploaded for Client A must not be attachable to Client B, and
+    // the scene type must not carry over from Client A's profile either.
+    expect(result.current.canSave).toBe(false);
+    expect(result.current.sceneType).toBe('GRAPHIC_BG');
+  });
+
+  it('discards an in-flight upload result when the operator switches Clients before it resolves', async () => {
+    let resolveUpload!: (value: unknown) => void;
+    const pendingUpload = new Promise((resolve) => {
+      resolveUpload = resolve;
+    });
+    vi.mocked(uploadSceneReference).mockReturnValueOnce(pendingUpload as ReturnType<typeof uploadSceneReference>);
+
+    const { result, rerender } = renderHook(
+      ({ clientId }: { clientId: string }) => useSceneProfileEditor('studio_abc', clientId),
+      { wrapper: Wrapper, initialProps: { clientId: 'client_a' } },
+    );
+
+    act(() => {
+      void result.current.selectFile(new File([], 'ref.png', { type: 'image/png' }));
+    });
+    expect(result.current.isUploading).toBe(true);
+
+    // Operator switches to a different Client while Client A's upload is
+    // still in flight.
+    act(() => {
+      rerender({ clientId: 'client_b' });
+    });
+    expect(result.current.isUploading).toBe(false);
+
+    await act(async () => {
+      resolveUpload({
+        object_key: 'scene_reference/x/y.png',
+        file_url: 'https://cdn.example.com/scene_reference/x/y.png',
+        mime_type: 'image/png',
+        file_size: 100,
+      });
+      await pendingUpload;
+    });
+
+    // The stale result must never attach to Client B's draft.
+    expect(result.current.canSave).toBe(false);
+    expect(result.current.isUploading).toBe(false);
   });
 
   it('dismissConflict clears the conflict message', async () => {

@@ -4,6 +4,7 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 import { Prisma } from '@prisma/client';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
+import { SCENE_PROFILE_ALLOWED_MIME_TYPES, SCENE_PROFILE_MAX_FILE_SIZE_BYTES } from '@eridu/api-types/scene-qc';
 
 import type {
   SaveSceneProfilePayload,
@@ -76,7 +77,12 @@ export class SceneProfileService extends BaseModelService {
     context: SceneProfileMutationContext,
   ): Promise<SceneProfileRecord> {
     const actor = await this.resolveActor(context.actorExtId);
-    this.assertSceneReferenceUpload(payload);
+    const verified = await this.assertSceneReferenceUpload(payload, context.actorExtId);
+    const verifiedPayload: SaveSceneProfilePayload = {
+      ...payload,
+      mimeType: verified.mimeType,
+      fileSize: verified.fileSize,
+    };
 
     const existing = await this.getActiveProfileForClient(clientUid);
 
@@ -86,7 +92,7 @@ export class SceneProfileService extends BaseModelService {
           'Scene profile no longer exists. Please refresh your record and try again.',
         );
       }
-      const created = await this.createProfile(clientUid, payload);
+      const created = await this.createProfile(clientUid, verifiedPayload);
       await this.writeAudit('CREATE', created, null, actor, context.studioUid);
       return created;
     }
@@ -97,7 +103,7 @@ export class SceneProfileService extends BaseModelService {
       );
     }
 
-    const replaced = await this.replaceProfile(clientUid, existing, payload, payload.version);
+    const replaced = await this.replaceProfile(clientUid, existing, verifiedPayload, payload.version);
     await this.writeAudit('UPDATE', replaced, existing, actor, context.studioUid);
     return replaced;
   }
@@ -108,12 +114,17 @@ export class SceneProfileService extends BaseModelService {
    * the way back (see plan section 0). `version` is guarded but not
    * incremented: retire is a terminal write with no reader that would need to
    * detect a subsequent change.
+   *
+   * `expectedVersion` is required, not optional: unlike PUT (where an omitted
+   * version has a real meaning, "I believe there is no profile"), DELETE has
+   * no alternate meaning for omission -- an optional guard here would make
+   * retire last-writer-wins for any caller that simply doesn't pass one.
    */
   @Transactional()
   async retireProfileForClient(
     clientUid: string,
     context: SceneProfileMutationContext,
-    expectedVersion?: number,
+    expectedVersion: number,
   ): Promise<SceneProfileRecord | null> {
     const actor = await this.resolveActor(context.actorExtId);
     const existing = await this.getActiveProfileForClient(clientUid);
@@ -121,7 +132,7 @@ export class SceneProfileService extends BaseModelService {
       return null;
     }
 
-    if (expectedVersion !== undefined && expectedVersion !== existing.version) {
+    if (expectedVersion !== existing.version) {
       throw HttpError.conflict(
         'Scene profile is out of date. Please refresh your record and try again.',
       );
@@ -158,20 +169,47 @@ export class SceneProfileService extends BaseModelService {
     return { id: actor.id, uid: actor.uid };
   }
 
-  private assertSceneReferenceUpload(payload: SaveSceneProfilePayload): void {
+  /**
+   * Validates the object-key/URL shape and ownership, then confirms the
+   * object actually exists in R2 and returns its real, server-observed
+   * content type and size. The caller must persist these returned values,
+   * never `payload.mimeType`/`payload.fileSize` -- those are only the
+   * client's claim, and a forged or mismatched claim must not reach storage.
+   */
+  private async assertSceneReferenceUpload(
+    payload: SaveSceneProfilePayload,
+    actorExtId: string,
+  ): Promise<{ mimeType: string; fileSize: number }> {
     const violation = checkSceneReferenceUpload({
       objectKey: payload.objectKey,
       fileUrl: payload.fileUrl,
       expectedFileUrl: this.storageService.resolvePublicFileUrl(payload.objectKey),
+      expectedActorSegment: this.storageService.sanitizeActorIdForObjectKey(actorExtId),
     });
     if (violation === 'file_url_does_not_match_object_key') {
       throw HttpError.badRequest('file_url does not match object_key');
+    }
+    if (violation === 'object_key_actor_mismatch') {
+      throw HttpError.forbidden('object_key was not issued to the current actor');
     }
     if (violation !== null) {
       throw HttpError.badRequest(
         `object_key must be a ${SCENE_REFERENCE_OBJECT_KEY_PREFIX} upload created through the presign flow`,
       );
     }
+
+    const uploaded = await this.storageService.headObject(payload.objectKey);
+    if (!uploaded) {
+      throw HttpError.badRequest('The uploaded file could not be found. Please upload again.');
+    }
+    if (!(SCENE_PROFILE_ALLOWED_MIME_TYPES as readonly string[]).includes(uploaded.contentType)) {
+      throw HttpError.badRequest('The uploaded file is not one of the accepted image types.');
+    }
+    if (uploaded.contentLength <= 0 || uploaded.contentLength > SCENE_PROFILE_MAX_FILE_SIZE_BYTES) {
+      throw HttpError.badRequest('The uploaded file size is invalid.');
+    }
+
+    return { mimeType: uploaded.contentType, fileSize: uploaded.contentLength };
   }
 
   private async writeAudit(
