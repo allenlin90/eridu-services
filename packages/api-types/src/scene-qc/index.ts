@@ -4,4 +4,5 @@
  * `apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md`.
  */
 
+export * from './daily-review.schemas.js';
 export * from './schemas.js';

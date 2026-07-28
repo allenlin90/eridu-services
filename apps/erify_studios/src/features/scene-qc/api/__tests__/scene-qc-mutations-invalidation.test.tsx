@@ -5,12 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useRetireSceneProfile } from '../retire-scene-profile';
 import { useSaveSceneProfile } from '../save-scene-profile';
+import { useCreateSceneQcReview, useUpdateSceneQcReview } from '../save-scene-qc-review';
 import { sceneQcKeys } from '../scene-qc-query-keys';
 
 import { apiClient } from '@/lib/api/client';
 
 vi.mock('@/lib/api/client', () => ({
-  apiClient: { put: vi.fn(), delete: vi.fn() },
+  apiClient: { put: vi.fn(), delete: vi.fn(), post: vi.fn(), patch: vi.fn() },
 }));
 
 // The global test setup mocks `useQueryClient` to return `{}`, which is fine
@@ -60,5 +61,101 @@ describe('scene-qc mutation invalidation scope', () => {
     await waitFor(() => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.profile('studio_abc', 'client_xyz') });
     });
+  });
+
+  const REVIEW_RESPONSE = {
+    id: 'scqcr_1',
+    show_id: 'show_1',
+    operational_date: '2026-06-01',
+    window_start: '2026-05-31T23:00:00.000Z',
+    window_end: '2026-06-01T23:00:00.000Z',
+    timezone: 'Asia/Bangkok',
+    result: 'PASS',
+    feedback: null,
+    reviewed_by: { id: 'user_1', name: 'Reviewer' },
+    reviewed_at: '2026-06-01T10:00:00.000Z',
+    expected_reference: null,
+    version: 1,
+    confirmed_at: null,
+    created_at: '2026-06-01T10:00:00.000Z',
+    updated_at: '2026-06-01T10:00:00.000Z',
+    evidence: [],
+  };
+
+  it('useCreateSceneQcReview invalidates exactly the summary/items/detail key families for the review\'s date and Show -- never Task or Show caches', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: REVIEW_RESPONSE });
+    const { Wrapper, invalidateSpy } = createWrapper();
+
+    const { result } = renderHook(() => useCreateSceneQcReview('studio_abc'), { wrapper: Wrapper });
+    await result.current.mutateAsync({
+      show_id: 'show_1',
+      operational_date: '2026-06-01',
+      result: 'PASS',
+      feedback: null,
+    });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.summary('studio_abc', '2026-06-01') });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.itemsPrefix('studio_abc', '2026-06-01') });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: sceneQcKeys.itemDetail('studio_abc', '2026-06-01', 'show_1'),
+      });
+    });
+
+    const invalidatedKeys = invalidateSpy.mock.calls.map((call) => JSON.stringify(call[0]?.queryKey));
+    const flatQueryKeys = invalidatedKeys.join('|');
+    expect(flatQueryKeys).not.toContain('"task"');
+    expect(flatQueryKeys).not.toContain('"show"');
+  });
+
+  it('useUpdateSceneQcReview invalidates exactly the summary/items/detail key families for the review\'s date and Show', async () => {
+    vi.mocked(apiClient.patch).mockResolvedValue({ data: REVIEW_RESPONSE });
+    const { Wrapper, invalidateSpy } = createWrapper();
+
+    const { result } = renderHook(() => useUpdateSceneQcReview('studio_abc', 'scqcr_1'), { wrapper: Wrapper });
+    await result.current.mutateAsync({ result: 'PASS', feedback: null, version: 1 });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.summary('studio_abc', '2026-06-01') });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.itemsPrefix('studio_abc', '2026-06-01') });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: sceneQcKeys.itemDetail('studio_abc', '2026-06-01', 'show_1'),
+      });
+    });
+  });
+
+  it('useCreateSceneQcReview\'s mutateAsync does not resolve until invalidation settles, so a caller driving saveAndNext off it sees a refetched itemsQuery rather than the pre-mutation cache', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: REVIEW_RESPONSE });
+
+    let resolveInvalidate!: () => void;
+    const invalidateGate = new Promise<void>((resolve) => {
+      resolveInvalidate = resolve;
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    vi.spyOn(queryClient, 'invalidateQueries').mockReturnValue(invalidateGate);
+    function GatedWrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    }
+
+    const { result } = renderHook(() => useCreateSceneQcReview('studio_abc'), { wrapper: GatedWrapper });
+
+    let settled = false;
+    const mutatePromise = result.current.mutateAsync({
+      show_id: 'show_1',
+      operational_date: '2026-06-01',
+      result: 'PASS',
+      feedback: null,
+    }).then(() => {
+      settled = true;
+    });
+
+    // The API call has resolved, but invalidation is still gated -- mutateAsync must not settle yet.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(settled).toBe(false);
+
+    resolveInvalidate();
+    await mutatePromise;
+    expect(settled).toBe(true);
   });
 });

@@ -27,4 +27,5 @@ export const UID_PREFIXES = {
   AUDIT: 'aud',
   CLIENT_MECHANIC: 'cmech',
   SCENE_PROFILE: 'scprof',
+  SCENE_QC_REVIEW: 'scqcr',
 } as const;

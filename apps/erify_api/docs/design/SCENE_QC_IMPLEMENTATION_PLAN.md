@@ -182,14 +182,14 @@ A bounded, operator-reviewed cutover mapping populates evidence-ref rows for exi
 | Field | Contract |
 | --- | --- |
 | `reviewId`, `sortOrder` | Owning review and stable display order |
-| `sourceTaskId` | Source Task |
+| `sourceTaskId` | Source Task; nullable with `SetNull` plus a denormalized `sourceTaskUid`, since Task hard-delete on Show cancellation must not erase a historical pinned-evidence row |
 | `sourceTaskVersion` | Task version at review time |
 | `sourceFieldKey`, `sourceLabel` | Explicit evidence binding identity |
-| `objectKey`, `fileUrl` | Durable R2 object identity plus the URL observed at review time |
+| `objectKey`, `fileUrl` | `fileUrl` is the durable, permanent public URL observed at review time and the render source. `objectKey` is derived from `fileUrl` (Task content stores only the public URL, not the object key) and required for a value to be resolved as evidence at all — a value the storage service cannot derive an object key from is foreign content and is excluded rather than pinned unverified. The column stays nullable at the schema level only as a defensive/legacy allowance |
 
 The database enforces one review head per `(showId, operationalDate)`. The server derives the date and bounds from the Show's scheduled start and the shared operational-timezone constant; a review from another operational date is never effective for the selected day. If an unconfirmed Show moves across the boundary, the old draft remains historical and a new review head is created for the new date. A confirmed review remains pinned to its original date and confirmation.
 
-On every draft save, the workflow re-resolves the current evidence and the Client's current Scene Profile (if any), snapshotting its image and scene type onto the review, validates that at least one evidence image exists, replaces the draft's pinned evidence set transactionally, and increments `version`. Historical reads re-sign `objectKey` through the storage service; persisted `fileUrl` is never the sole render source. After `confirmedAt` is set, the normal update command rejects edits. Stage 2 introduces explicit amendment records rather than weakening this command.
+On every draft save, the workflow re-resolves the current evidence and the Client's current Scene Profile (if any), snapshotting its image and scene type onto the review, validates that at least one evidence image exists, replaces the draft's pinned evidence set transactionally, and increments `version`. Persisted `fileUrl` is a permanent public R2 URL and is the render source; `StorageService` has no presigned-GET path in Stage 1, so there is nothing to re-sign. If the bucket ever stops being publicly readable, add presigned-GET reads as a forwarded follow-up rather than assuming it today. After `confirmedAt` is set, the normal update command rejects edits. Stage 2 introduces explicit amendment records rather than weakening this command.
 
 An image record may be marked Fail when it appears blank, corrupt, or non-viewable. The persisted state remains the normal `FAIL` result plus required feedback; Stage 1 does not need a separate unusable-image enum.
 
@@ -735,7 +735,7 @@ Also run Prisma format, validate, generate, and the official migration command r
 - a Show with zero evidence is counted as blocked and review create fails;
 - Pass accepts empty feedback; Minor and Fail reject empty feedback;
 - a draft update pins current evidence and the Client's current Scene Profile snapshot and increments version;
-- pinned evidence can be re-signed from `objectKey` after its stored URL expires;
+- a designated evidence value whose `objectKey` cannot be derived from the storage service's public URL convention is excluded from resolved evidence rather than pinned unverified, consistent with rule 4 above;
 - moving a Show across the 06:00 boundary makes its prior-date review ineffective and permits a new review for the new operational date;
 - a confirmed review rejects normal edits;
 - terminal `cancelled` is excluded and `cancelled_pending_resolution` remains included;
