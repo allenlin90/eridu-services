@@ -57,17 +57,20 @@ export const operationalDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 // Shared object shapes
 // ============================================================================
 
-const sceneQcClientRefSchema = z.object({
+// Exported (not local-only) so `confirmation.schemas.ts` and
+// `records.schemas.ts` can share the same ref shapes -- Child PR 4 breakdown
+// section 2.2.
+export const sceneQcClientRefSchema = z.object({
   id: z.string().startsWith(UID_PREFIXES.CLIENT),
   name: z.string(),
 });
 
-const sceneQcPlatformRefSchema = z.object({
+export const sceneQcPlatformRefSchema = z.object({
   id: z.string().startsWith(UID_PREFIXES.PLATFORM),
   name: z.string(),
 });
 
-const sceneQcUserRefSchema = z.object({
+export const sceneQcUserRefSchema = z.object({
   id: z.string().startsWith(UID_PREFIXES.USER),
   name: z.string(),
 });
@@ -112,15 +115,17 @@ export const sceneQcDailySummarySchema = sceneQcOperationalWindowSchema.extend({
   fail_count: z.number().int().min(0),
   blocked_no_evidence_count: z.number().int().min(0),
   remaining_count: z.number().int().min(0),
-  // Child PR 4 populates these fields for real. PR 3 always returns
-  // UNCONFIRMED / nulls so the contract is additive-stable across the branch.
-  // TODO(scene-qc-confirmation): populate from SceneQcDailyConfirmation once
-  // Child PR 4 ships confirmation persistence.
   confirmation: sceneQcConfirmationStateSchema,
   confirmation_id: z.string().nullable(),
   confirmation_revision: z.number().int().nullable(),
   confirmed_by: sceneQcUserRefSchema.nullable(),
   confirmed_at: z.iso.datetime().nullable(),
+  // Non-null only when `confirmation === 'STALE'`. §7.3 requires the stale
+  // banner to list added/removed scope counts; there is no other source for
+  // them on the client, which cannot see the pinned confirmation scope.
+  confirmation_added_show_count: z.number().int().min(0).nullable(),
+  confirmation_removed_show_count: z.number().int().min(0).nullable(),
+  confirmation_changed_review_count: z.number().int().min(0).nullable(),
 });
 
 export const sceneQcDailyItemSchema = z.object({
