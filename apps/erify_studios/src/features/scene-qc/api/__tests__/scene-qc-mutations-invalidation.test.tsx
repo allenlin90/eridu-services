@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useConfirmSceneQcDay } from '../confirm-scene-qc-day';
 import { useRetireSceneProfile } from '../retire-scene-profile';
 import { useSaveSceneProfile } from '../save-scene-profile';
 import { useCreateSceneQcReview, useUpdateSceneQcReview } from '../save-scene-qc-review';
@@ -151,6 +152,69 @@ describe('scene-qc mutation invalidation scope', () => {
     });
 
     // The API call has resolved, but invalidation is still gated -- mutateAsync must not settle yet.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(settled).toBe(false);
+
+    resolveInvalidate();
+    await mutatePromise;
+    expect(settled).toBe(true);
+  });
+
+  const CONFIRMATION_RESPONSE = {
+    id: 'scqcc_1',
+    operational_date: '2026-06-01',
+    window_start: '2026-05-31T23:00:00.000Z',
+    window_end: '2026-06-01T23:00:00.000Z',
+    timezone: 'Asia/Bangkok',
+    revision: 1,
+    confirmed_by: { id: 'user_1', name: 'Manager' },
+    confirmed_at: '2026-06-01T10:00:00.000Z',
+    show_count: 3,
+    pass_count: 3,
+    minor_count: 0,
+    fail_count: 0,
+  };
+
+  it('useConfirmSceneQcDay invalidates exactly the summary/items/records key families -- never Task or Show caches', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: CONFIRMATION_RESPONSE });
+    const { Wrapper, invalidateSpy } = createWrapper();
+
+    const { result } = renderHook(() => useConfirmSceneQcDay('studio_abc'), { wrapper: Wrapper });
+    await result.current.mutateAsync({ operational_date: '2026-06-01' });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.summary('studio_abc', '2026-06-01') });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.itemsPrefix('studio_abc', '2026-06-01') });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.recordsPrefix('studio_abc') });
+    });
+
+    const invalidatedKeys = invalidateSpy.mock.calls.map((call) => JSON.stringify(call[0]?.queryKey));
+    const flatQueryKeys = invalidatedKeys.join('|');
+    expect(flatQueryKeys).not.toContain('"task"');
+    expect(flatQueryKeys).not.toContain('"show"');
+  });
+
+  it('useConfirmSceneQcDay\'s mutateAsync does not resolve until invalidation settles', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: CONFIRMATION_RESPONSE });
+
+    let resolveInvalidate!: () => void;
+    const invalidateGate = new Promise<void>((resolve) => {
+      resolveInvalidate = resolve;
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    vi.spyOn(queryClient, 'invalidateQueries').mockReturnValue(invalidateGate);
+    function GatedWrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    }
+
+    const { result } = renderHook(() => useConfirmSceneQcDay('studio_abc'), { wrapper: GatedWrapper });
+
+    let settled = false;
+    const mutatePromise = result.current.mutateAsync({ operational_date: '2026-06-01' }).then(() => {
+      settled = true;
+    });
+
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(settled).toBe(false);
 
