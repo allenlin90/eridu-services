@@ -86,6 +86,10 @@ KB_DESCRIPTION = (
 )
 # NOTE: this description is a retrieval surface - query_knowledge_bases /
 # search_knowledge_bases match on name+description semantics. Keep it rich.
+# It is only applied when the KB is CREATED; an existing KB keeps its own.
+# Pass --description when uploading a different collection with this script
+# (e.g. ai/openwebui/knowledge/erisa-platform-ops/), otherwise the new KB
+# inherits the creator-services surface above and routes badly.
 
 
 class Api:
@@ -133,12 +137,12 @@ def _extract_id(obj):
     return None
 
 
-def find_or_create_kb(api, name):
+def find_or_create_kb(api, name, description=KB_DESCRIPTION):
     for kb in _as_items(api.get("list_kb")):
         if isinstance(kb, dict) and kb.get("name") == name:
             print(f"Using existing knowledge base '{name}' ({kb['id']})")
             return kb["id"]
-    created = api.post("create_kb", json_body={"name": name, "description": KB_DESCRIPTION})
+    created = api.post("create_kb", json_body={"name": name, "description": description})
     kb_id = _extract_id(created)
     if not kb_id:
         sys.exit(f"create_kb returned an unexpected shape: {created!r}")
@@ -236,6 +240,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--kb-name", default="creator-services-tiktok-shop")
     ap.add_argument("--dir", default=".", help="folder containing the .md files")
+    ap.add_argument("--full-context-file", default=None,
+                    help="Filename this collection wants attached in FULL "
+                         "CONTEXT mode, printed in the closing next-steps hint. "
+                         "Omit to print collection-neutral next steps.")
+    ap.add_argument("--description", default=KB_DESCRIPTION,
+                    help="KB description, applied only when the KB is created. "
+                         "This is a retrieval surface (query_knowledge_bases "
+                         "matches on name+description) - keep it rich and "
+                         "always set it when uploading a non-creator-services "
+                         "collection.")
     args = ap.parse_args()
 
     base = os.environ.get("OPENWEBUI_URL") or os.environ.get("OPEN_WEBUI_HOST")
@@ -261,7 +275,8 @@ def main():
     print(f"{len(md_files)} knowledge files to sync")
 
     api = Api(base, token)
-    kb_id = find_or_create_kb(api, args.kb_name)
+    full_context_file = args.full_context_file
+    kb_id = find_or_create_kb(api, args.kb_name, args.description)
     present = existing_files(api, kb_id)
     dirs = existing_dirs(api, kb_id)
     remaining = dict(present)  # names left in the KB once we've accounted for local files
@@ -334,10 +349,20 @@ def main():
           f"removed={removed} failed={failed}")
     print("Next steps:")
     print("  1. Attach the KB to the assistant model (Workspace > Models > edit > Knowledge).")
-    print("  2. ALSO attach 00-escalation-guide.md as a standalone file in FULL CONTEXT")
-    print("     mode (click the attached item to toggle) so escalation rules are always")
-    print("     injected and never depend on the model choosing to retrieve them.")
+    print("     Do this in the UI: it sets meta.knowledge[].type = \"collection\", which a")
+    print("     raw API attach omits, and retrieval then silently skips the collection.")
+    if full_context_file:
+        print(f"  2. ALSO attach {full_context_file} as a standalone file in FULL CONTEXT")
+        print("     mode (click the attached item to toggle) so its rules are always")
+        print("     injected and never depend on the model choosing to retrieve them.")
+    else:
+        print("  2. If this collection designates a file that must always be injected,")
+        print("     attach it as a standalone item in FULL CONTEXT mode too. See the")
+        print("     collection's own README; pass --full-context-file to name it here.")
     print("  3. Keep the KB itself on Focused Retrieval (default).")
+    print("  4. Verify access grants NOW: a newly created KB has none, which is")
+    print("     unrestricted on 0.10.x. Set them via")
+    print("     POST /api/v1/knowledge/{id}/access/update with an access_grants list.")
     if failed:
         sys.exit(1)
 
