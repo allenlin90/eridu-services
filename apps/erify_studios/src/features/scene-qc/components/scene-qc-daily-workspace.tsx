@@ -3,27 +3,35 @@ import { useCallback } from 'react';
 import { Card } from '@eridu/ui';
 
 import type { SceneQcDailySearch } from '../config/scene-qc-daily-search-schema';
+import { useSceneQcConfirmation } from '../hooks/use-scene-qc-confirmation';
 import { useSceneQcDaily } from '../hooks/use-scene-qc-daily';
 import { useSceneQcReviewForm } from '../hooks/use-scene-qc-review-form';
 
+import { SCENE_QC_CONFIRMATION_ACTION_ID } from './scene-qc-confirmation-card';
 import { SceneQcDailyToolbar } from './scene-qc-daily-toolbar';
 import { SceneQcFilterFields } from './scene-qc-filter-fields';
 import { SceneQcMobileDrawer } from './scene-qc-mobile-drawer';
 import { SceneQcReviewPanel } from './scene-qc-review-panel';
 import { SceneQcShowQueue } from './scene-qc-show-queue';
 import { SceneQcSummaryCards } from './scene-qc-summary-cards';
-import { SceneQcTabs } from './scene-qc-tabs';
 
 type SceneQcDailyWorkspaceProps = {
   studioId: string;
   search: SceneQcDailySearch;
   onSearchChange: (next: Partial<SceneQcDailySearch>) => void;
+  onOpenReport: (confirmationId: string) => void;
 };
 
 /** Container: composes only. Queries live in useSceneQcDaily; presentation config lives in the child components. */
-export function SceneQcDailyWorkspace({ studioId, search, onSearchChange }: SceneQcDailyWorkspaceProps) {
+export function SceneQcDailyWorkspace({ studioId, search, onSearchChange, onOpenReport }: SceneQcDailyWorkspaceProps) {
   const controller = useSceneQcDaily({ studioId, search, onSearchChange });
   const { summaryQuery, itemsQuery, detailQuery } = controller;
+
+  const confirmation = useSceneQcConfirmation({
+    studioId,
+    operationalDate: controller.effectiveDate,
+    summary: summaryQuery.data,
+  });
 
   const form = useSceneQcReviewForm({
     studioId,
@@ -36,10 +44,13 @@ export function SceneQcDailyWorkspace({ studioId, search, onSearchChange }: Scen
   const handleSave = useCallback(async () => {
     const saved = await form.save();
     if (saved) {
-      controller.saveAndNext();
+      const movedToNext = controller.saveAndNext();
+      // If no unreviewed Show remains, focus moves to the confirmation
+      // region's action (§7.2 step 8, §7.8).
+      if (!movedToNext) {
+        document.getElementById(SCENE_QC_CONFIRMATION_ACTION_ID)?.focus();
+      }
     }
-    // If no unreviewed Show remains, focus moves to the confirmation region
-    // once Child PR 4 ships it -- nothing further to do here in PR 3.
   }, [controller, form]);
 
   const filtersActive = Boolean(search.client_id || search.platform_id || search.search || search.review_state !== 'all');
@@ -62,9 +73,12 @@ export function SceneQcDailyWorkspace({ studioId, search, onSearchChange }: Scen
         }}
       />
 
-      <SceneQcTabs tab={search.tab} onTabChange={(tab) => onSearchChange({ tab })} />
-
-      <SceneQcSummaryCards summary={summaryQuery.data} isLoading={summaryQuery.isLoading} />
+      <SceneQcSummaryCards
+        summary={summaryQuery.data}
+        isLoading={summaryQuery.isLoading}
+        confirmation={confirmation}
+        onOpenReport={onOpenReport}
+      />
 
       {dayIsEmpty
         ? (
