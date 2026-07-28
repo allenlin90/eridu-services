@@ -5,11 +5,8 @@ import { useCallback } from 'react';
 import { Button } from '@eridu/ui';
 
 import { PageLayout } from '@/components/layouts/page-layout';
-import { SceneQcDailyWorkspace } from '@/features/scene-qc/components/scene-qc-daily-workspace';
-import {
-  type SceneQcDailySearch,
-  sceneQcDailySearchSchema,
-} from '@/features/scene-qc/config/scene-qc-daily-search-schema';
+import { SceneQcWorkspace } from '@/features/scene-qc/components/scene-qc-workspace';
+import { type SceneQcSearch, sceneQcSearchSchema } from '@/features/scene-qc/config/scene-qc-search-schema';
 import * as m from '@/paraglide/messages';
 
 const sceneReviewIndexRouteApi = getRouteApi('/studios/$studioId/scene-review/');
@@ -18,7 +15,7 @@ function StudioSceneReviewPage() {
   const { studioId } = sceneReviewIndexRouteApi.useParams();
   const search = sceneReviewIndexRouteApi.useSearch();
   const navigate = sceneReviewIndexRouteApi.useNavigate();
-  const updateSearch = useCallback((next: Partial<SceneQcDailySearch>) => {
+  const updateSearch = useCallback((next: Partial<SceneQcSearch>) => {
     void navigate({
       search: (previous) => ({ ...previous, ...next }),
       replace: true,
@@ -38,12 +35,12 @@ function StudioSceneReviewPage() {
         </Button>
       )}
     >
-      <SceneQcDailyWorkspace studioId={studioId} search={search} onSearchChange={updateSearch} />
+      <SceneQcWorkspace studioId={studioId} search={search} onSearchChange={updateSearch} />
     </PageLayout>
   );
 }
 
 export const Route = createFileRoute('/studios/$studioId/scene-review/')({
   component: StudioSceneReviewPage,
-  validateSearch: (search) => sceneQcDailySearchSchema.parse(search),
+  validateSearch: (search) => sceneQcSearchSchema.parse(search),
 });
