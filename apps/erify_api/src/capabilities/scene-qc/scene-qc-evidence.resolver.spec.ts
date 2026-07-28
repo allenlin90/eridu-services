@@ -118,8 +118,7 @@ describe('sceneQcEvidenceResolver', () => {
     expect(result.get(10n)).toEqual([]);
   });
 
-  it('derives objectKey via StorageService and tolerates a null result', async () => {
-    deriveObjectKeyMock.mockReturnValueOnce(null);
+  it('derives objectKey via StorageService for a legitimate R2 URL', async () => {
     setTasks([
       {
         id: 1n,
@@ -132,8 +131,25 @@ describe('sceneQcEvidenceResolver', () => {
     ]);
 
     const result = await resolver.resolveForShows([10n]);
-    expect(result.get(10n)![0].objectKey).toBeNull();
+    expect(result.get(10n)![0].objectKey).toBe('derived/object/key.png');
     expect(deriveObjectKeyMock).toHaveBeenCalledWith('https://cdn.example.com/a.png');
+  });
+
+  it('excludes a designated value whose object key cannot be derived (foreign/non-R2 URL) rather than pinning it unverified', async () => {
+    deriveObjectKeyMock.mockReturnValueOnce(null);
+    setTasks([
+      {
+        id: 1n,
+        uid: 'task_a',
+        version: 1,
+        content: { field_a: 'https://not-our-storage.example.com/a.png' },
+        targets: [{ showId: 10n }],
+        snapshot: { sceneQcEvidenceRefs: [{ fieldKey: 'field_a', label: 'A' }] },
+      },
+    ]);
+
+    const result = await resolver.resolveForShows([10n]);
+    expect(result.get(10n)).toEqual([]);
   });
 
   it('orders evidence deterministically by (sourceTaskUid ASC, sourceFieldKey ASC)', async () => {

@@ -185,7 +185,7 @@ A bounded, operator-reviewed cutover mapping populates evidence-ref rows for exi
 | `sourceTaskId` | Source Task; nullable with `SetNull` plus a denormalized `sourceTaskUid`, since Task hard-delete on Show cancellation must not erase a historical pinned-evidence row |
 | `sourceTaskVersion` | Task version at review time |
 | `sourceFieldKey`, `sourceLabel` | Explicit evidence binding identity |
-| `objectKey`, `fileUrl` | `fileUrl` is the durable, permanent public URL observed at review time and the render source. `objectKey` is nullable, best-effort provenance derived from `fileUrl` — Task content stores only the public URL, not the object key |
+| `objectKey`, `fileUrl` | `fileUrl` is the durable, permanent public URL observed at review time and the render source. `objectKey` is derived from `fileUrl` (Task content stores only the public URL, not the object key) and required for a value to be resolved as evidence at all — a value the storage service cannot derive an object key from is foreign content and is excluded rather than pinned unverified. The column stays nullable at the schema level only as a defensive/legacy allowance |
 
 The database enforces one review head per `(showId, operationalDate)`. The server derives the date and bounds from the Show's scheduled start and the shared operational-timezone constant; a review from another operational date is never effective for the selected day. If an unconfirmed Show moves across the boundary, the old draft remains historical and a new review head is created for the new date. A confirmed review remains pinned to its original date and confirmation.
 
@@ -735,7 +735,7 @@ Also run Prisma format, validate, generate, and the official migration command r
 - a Show with zero evidence is counted as blocked and review create fails;
 - Pass accepts empty feedback; Minor and Fail reject empty feedback;
 - a draft update pins current evidence and the Client's current Scene Profile snapshot and increments version;
-- pinned evidence with no derivable `objectKey` still renders and reviews from its durable `fileUrl`, and is never treated as blocking;
+- a designated evidence value whose `objectKey` cannot be derived from the storage service's public URL convention is excluded from resolved evidence rather than pinned unverified, consistent with rule 4 above;
 - moving a Show across the 06:00 boundary makes its prior-date review ineffective and permits a new review for the new operational date;
 - a confirmed review rejects normal edits;
 - terminal `cancelled` is excluded and `cancelled_pending_resolution` remains included;

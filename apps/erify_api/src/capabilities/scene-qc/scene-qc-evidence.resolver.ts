@@ -118,7 +118,16 @@ export class SceneQcEvidenceResolver {
           continue;
         }
 
+        // The only legitimate producer of a Scene QC evidence value is the
+        // presign-backed file upload widget, which always writes a public R2
+        // URL. A URL that doesn't derive back to an R2 object key is foreign
+        // content -- exclude it rather than pinning and rendering it
+        // unverified in the reviewer's browser (resolved, not decided
+        // silently: see SCENE_QC_CHILD_PR_3_BREAKDOWN.md OQ-1).
         const objectKey = this.storageService.deriveObjectKeyFromPublicUrl(value);
+        if (objectKey === null) {
+          continue;
+        }
         const resolved: ResolvedSceneQcEvidence = {
           sourceTaskId: task.id,
           sourceTaskUid: task.uid,
