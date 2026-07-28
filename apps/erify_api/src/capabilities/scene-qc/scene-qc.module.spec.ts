@@ -4,14 +4,20 @@ import { join } from 'node:path';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 
 import { StudioSceneProfileController } from './http/studio-scene-profile.controller';
+import { StudioSceneQcConfirmationController } from './http/studio-scene-qc-confirmation.controller';
 import { StudioSceneQcQueryController } from './http/studio-scene-qc-query.controller';
+import { StudioSceneQcRecordsController } from './http/studio-scene-qc-records.controller';
 import { StudioSceneQcReviewController } from './http/studio-scene-qc-review.controller';
 import { SceneProfileService } from './scene-profile.service';
 import { SceneQcModule } from './scene-qc.module';
 import { SceneQcAuditWriter } from './scene-qc-audit.writer';
+import { SceneQcConfirmationRepository } from './scene-qc-confirmation.repository';
+import { SceneQcConfirmationWorkflowService } from './scene-qc-confirmation-workflow.service';
 import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
 import { SceneQcHttpModule } from './scene-qc-http.module';
 import { SceneQcQueryService } from './scene-qc-query.service';
+import { SceneQcRecordsQueryService } from './scene-qc-records.query.service';
+import { SceneQcReportService } from './scene-qc-report.service';
 import { SceneQcRepository } from './scene-qc-review.repository';
 import { SceneQcWorkflowService } from './scene-qc-review-workflow.service';
 
@@ -23,13 +29,20 @@ import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 describe('sceneQcModule', () => {
-  it('exports exactly the Scene Profile, Scene QC query, and Scene QC workflow capability services', () => {
+  it('exports exactly the Scene Profile, Scene QC query/workflow, and Child PR 4 confirmation/records/report capability services', () => {
     const exports = Reflect.getMetadata(
       MODULE_METADATA.EXPORTS,
       SceneQcModule,
     ) as unknown[];
 
-    expect(exports).toEqual([SceneProfileService, SceneQcQueryService, SceneQcWorkflowService]);
+    expect(exports).toEqual([
+      SceneProfileService,
+      SceneQcQueryService,
+      SceneQcWorkflowService,
+      SceneQcConfirmationWorkflowService,
+      SceneQcRecordsQueryService,
+      SceneQcReportService,
+    ]);
   });
 
   it('registers no HTTP controllers -- the HTTP module owns that', () => {
@@ -51,7 +64,7 @@ describe('sceneQcModule', () => {
     expect(imports.map((m: any) => m.name)).not.toContain('AuditModule');
   });
 
-  it('provides SceneQcAuditWriter, SceneQcRepository, and SceneQcEvidenceResolver privately -- present in providers, absent from exports', () => {
+  it('provides SceneQcAuditWriter, SceneQcRepository, SceneQcConfirmationRepository, and SceneQcEvidenceResolver privately -- present in providers, absent from exports', () => {
     const providers = Reflect.getMetadata(
       MODULE_METADATA.PROVIDERS,
       SceneQcModule,
@@ -63,9 +76,11 @@ describe('sceneQcModule', () => {
 
     expect(providers).toContain(SceneQcAuditWriter);
     expect(providers).toContain(SceneQcRepository);
+    expect(providers).toContain(SceneQcConfirmationRepository);
     expect(providers).toContain(SceneQcEvidenceResolver);
     expect(exports).not.toContain(SceneQcAuditWriter);
     expect(exports).not.toContain(SceneQcRepository);
+    expect(exports).not.toContain(SceneQcConfirmationRepository);
     expect(exports).not.toContain(SceneQcEvidenceResolver);
   });
 
@@ -82,7 +97,7 @@ describe('sceneQcModule', () => {
 });
 
 describe('sceneQcHttpModule', () => {
-  it('registers exactly the Scene Profile, Scene QC query, and Scene QC review controllers', () => {
+  it('registers exactly the Scene Profile, Scene QC query/review, and Child PR 4 confirmation/records controllers', () => {
     const controllers = Reflect.getMetadata(
       MODULE_METADATA.CONTROLLERS,
       SceneQcHttpModule,
@@ -92,6 +107,8 @@ describe('sceneQcHttpModule', () => {
       StudioSceneProfileController,
       StudioSceneQcQueryController,
       StudioSceneQcReviewController,
+      StudioSceneQcConfirmationController,
+      StudioSceneQcRecordsController,
     ]);
   });
 

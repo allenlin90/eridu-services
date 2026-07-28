@@ -3,6 +3,7 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import type { Prisma } from '@prisma/client';
 
+import type { ReviewAuditEntry, ReviewRecordRow } from './schemas/scene-qc-records.schema';
 import type {
   CreateReviewPersistenceInput,
   EligibleShowRow,
@@ -220,6 +221,153 @@ export class SceneQcRepository {
         show: { studio: { uid: input.studioUid } },
       },
       include: sceneQcReviewDefaultInclude,
+    });
+  }
+
+  // --- Records reads (Child PR 4) -----------------------------------------
+
+  private buildRecordsWhere(input: {
+    studioUid: string;
+    operationalDateFrom: Date;
+    operationalDateTo: Date;
+    clientUid?: string;
+    platformUid?: string;
+    result?: Prisma.SceneQcReviewWhereInput['result'];
+  }): Prisma.SceneQcReviewWhereInput {
+    return {
+      operationalDate: { gte: input.operationalDateFrom, lte: input.operationalDateTo },
+      show: {
+        deletedAt: null,
+        studio: { uid: input.studioUid },
+        // Records is review-anchored, not confirmation-anchored: it does NOT
+        // apply the eligibility deny-list (a review pinned to a Show later
+        // cancelled is still a historical record). Client/platform filters
+        // match the Show's LIVE relations -- see breakdown section 1.7.
+        ...(input.clientUid ? { client: { uid: input.clientUid } } : {}),
+        ...(input.platformUid
+          ? { showPlatforms: { some: { deletedAt: null, platform: { uid: input.platformUid } } } }
+          : {}),
+      },
+      ...(input.result ? { result: input.result } : {}),
+    };
+  }
+
+  /** SQL-level `skip`/`take` -- all Records filters are SQL-expressible, unlike listDailyItems' evidence-dependent filter (OQ-28). */
+  async findReviewRecords(input: {
+    studioUid: string;
+    operationalDateFrom: Date;
+    operationalDateTo: Date;
+    clientUid?: string;
+    platformUid?: string;
+    result?: Prisma.SceneQcReviewWhereInput['result'];
+    skip: number;
+    take: number;
+  }): Promise<ReviewRecordRow[]> {
+    const reviews = await this.txHost.tx.sceneQcReview.findMany({
+      where: this.buildRecordsWhere(input),
+      select: {
+        id: true,
+        uid: true,
+        operationalDate: true,
+        result: true,
+        feedback: true,
+        version: true,
+        reviewedBy: { select: { uid: true, name: true } },
+        reviewedAt: true,
+        show: {
+          select: {
+            uid: true,
+            name: true,
+            startTime: true,
+            client: { select: { uid: true, name: true } },
+            showPlatforms: { where: { deletedAt: null }, select: { platform: { select: { uid: true, name: true } } } },
+          },
+        },
+        _count: { select: { evidence: true } },
+      },
+      orderBy: [{ operationalDate: 'desc' }, { reviewedAt: 'desc' }],
+      skip: input.skip,
+      take: input.take,
+    });
+
+    return reviews.map((review) => ({
+      id: review.id,
+      uid: review.uid,
+      operationalDate: review.operationalDate,
+      showUid: review.show.uid,
+      showName: review.show.name,
+      scheduledStartTime: review.show.startTime,
+      client: review.show.client,
+      platforms: review.show.showPlatforms.map((entry) => entry.platform),
+      result: review.result,
+      feedback: review.feedback,
+      reviewedBy: review.reviewedBy,
+      reviewedAt: review.reviewedAt,
+      version: review.version,
+      evidenceCount: review._count.evidence,
+    }));
+  }
+
+  async countReviewRecords(input: {
+    studioUid: string;
+    operationalDateFrom: Date;
+    operationalDateTo: Date;
+    clientUid?: string;
+    platformUid?: string;
+    result?: Prisma.SceneQcReviewWhereInput['result'];
+  }): Promise<number> {
+    return this.txHost.tx.sceneQcReview.count({ where: this.buildRecordsWhere(input) });
+  }
+
+  async findReviewRecordDetail(input: {
+    studioUid: string;
+    reviewUid: string;
+  }): Promise<SceneQcReviewRecord & { show: EligibleShowRow } | null> {
+    const review = await this.txHost.tx.sceneQcReview.findFirst({
+      where: { uid: input.reviewUid, show: { deletedAt: null, studio: { uid: input.studioUid } } },
+      include: { ...sceneQcReviewDefaultInclude, show: { select: ELIGIBLE_SHOW_SELECT } },
+    });
+    return review ? { ...review, show: toEligibleShowRow(review.show) } : null;
+  }
+
+  /**
+   * Curated audit projection -- see OQ-18. Never selects `ipAddress` /
+   * `userAgent`; only `old_value`/`new_value` are extracted from `metadata`
+   * in memory and the rest is discarded before mapping to the API response.
+   */
+  async findReviewAuditHistory(reviewId: bigint): Promise<ReviewAuditEntry[]> {
+    const targets = await this.txHost.tx.sceneQcAuditTarget.findMany({
+      where: { sceneQcReviewId: reviewId },
+      select: {
+        audit: {
+          select: {
+            uid: true,
+            action: true,
+            actor: { select: { uid: true, name: true } },
+            metadata: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: { audit: { createdAt: 'asc' } },
+    });
+
+    return targets.map(({ audit }) => {
+      const metadata = audit.metadata as {
+        old_value?: { result?: string; feedback_present?: boolean } | null;
+        new_value?: { result?: string; feedback_present?: boolean };
+      };
+      const oldValue = metadata.old_value ?? null;
+      const newValue = metadata.new_value ?? null;
+      return {
+        uid: audit.uid,
+        action: audit.action as 'CREATE' | 'UPDATE',
+        actor: audit.actor,
+        createdAt: audit.createdAt,
+        oldResult: (oldValue?.result as SceneQcReviewRecord['result'] | undefined) ?? null,
+        newResult: (newValue?.result as SceneQcReviewRecord['result'] | undefined) ?? null,
+        feedbackChanged: oldValue !== null && oldValue.feedback_present !== newValue?.feedback_present,
+      };
     });
   }
 
