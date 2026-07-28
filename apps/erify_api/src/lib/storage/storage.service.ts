@@ -161,6 +161,42 @@ export class StorageService {
     return `${this.trimEndSlashes(publicBaseUrl)}/${this.encodeObjectKey(objectKey)}`;
   }
 
+  /**
+   * Best-effort inverse of {@link resolvePublicFileUrl}: strips the
+   * configured public base and decodes each path segment back to an object
+   * key. Returns `null` (never throws) when `fileUrl` does not sit under
+   * `R2_PUBLIC_BASE_URL` -- an env change, a legacy asset, or an
+   * externally-pasted URL. Callers must treat `null` as "provenance
+   * unavailable", not as a validation failure; `fileUrl` remains the durable
+   * render source regardless. See Scene QC Child PR 3 breakdown OQ-1.
+   */
+  deriveObjectKeyFromPublicUrl(fileUrl: string): string | null {
+    const publicBaseUrl = this.configService.get('R2_PUBLIC_BASE_URL', { infer: true });
+    if (!publicBaseUrl || typeof publicBaseUrl !== 'string') {
+      return null;
+    }
+
+    const normalizedBase = `${this.trimEndSlashes(publicBaseUrl)}/`;
+    if (!fileUrl.startsWith(normalizedBase)) {
+      return null;
+    }
+
+    const encodedKey = fileUrl.slice(normalizedBase.length);
+    if (!encodedKey) {
+      return null;
+    }
+
+    try {
+      return encodedKey
+        .split('/')
+        .map((segment) => decodeURIComponent(segment))
+        .join('/');
+    } catch {
+      // Malformed percent-encoding (e.g. a bare `%`) -- not a derivable key.
+      return null;
+    }
+  }
+
   private sanitizeFileName(fileName: string): string {
     const cleaned = fileName
       .trim()

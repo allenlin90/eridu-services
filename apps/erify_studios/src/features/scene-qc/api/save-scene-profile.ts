@@ -31,6 +31,9 @@ export function useSaveSceneProfile(studioId: string, clientId: string | undefin
     onSuccess: (profile) => {
       queryClient.setQueryData(sceneQcKeys.profile(studioId, clientId), profile);
       void queryClient.invalidateQueries({ queryKey: sceneQcKeys.profile(studioId, clientId) });
+      // A newly created/replaced Scene Profile clears any "no Scene Profile"
+      // warning on the Daily Review workspace for Shows of this Client (§3.6).
+      void queryClient.invalidateQueries({ queryKey: sceneQcKeys.dailyPrefix(studioId) });
     },
   });
 }

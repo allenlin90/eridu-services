@@ -57,4 +57,31 @@ export class SceneQcAuditWriter {
       select: { uid: true },
     });
   }
+
+  /**
+   * Same identical nested-create shape as `recordSceneProfileChange` so the
+   * widened `scene_qc_audit_targets_single_target_check` CHECK is
+   * structurally satisfied (exactly one typed target FK set). Metadata stays
+   * thin -- business fields (result, feedback) live in the normalized
+   * `SceneQcReview` row, never duplicated into audit metadata (plan section 5.5).
+   */
+  async recordSceneQcReviewChange(input: {
+    action: Extract<AuditAction, 'CREATE' | 'UPDATE'>;
+    actorId: bigint;
+    sceneQcReviewId: bigint;
+    metadata: AuditMetadata;
+  }): Promise<{ uid: string }> {
+    return this.txHost.tx.audit.create({
+      data: {
+        uid: this.uidGenerator.generateBrandedId(UID_PREFIXES.AUDIT),
+        action: input.action,
+        actor: { connect: { id: input.actorId } },
+        metadata: input.metadata as Prisma.InputJsonValue,
+        sceneQcTargets: {
+          create: [{ sceneQcReview: { connect: { id: input.sceneQcReviewId } } }],
+        },
+      },
+      select: { uid: true },
+    });
+  }
 }
