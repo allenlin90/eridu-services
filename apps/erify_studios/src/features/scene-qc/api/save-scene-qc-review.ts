@@ -28,13 +28,24 @@ export async function updateSceneQcReview(
  * Invalidates EXACTLY the Scene QC daily key families for the review's
  * pinned Show/date -- never Task or Show caches (§8.4). Shared by both
  * mutations below so their invalidation scope stays identical.
+ *
+ * Awaited (not fire-and-forget): `useMutation` awaits a Promise returned from
+ * `onSuccess` before settling, so callers driving `saveAndNext` off the
+ * mutation's resolution see a refetched `itemsQuery` rather than the
+ * pre-mutation stale cache.
  */
-function invalidateSceneQcDailyQueries(queryClient: QueryClient, studioId: string, review: SceneQcReview): void {
-  void queryClient.invalidateQueries({ queryKey: sceneQcKeys.summary(studioId, review.operational_date) });
-  void queryClient.invalidateQueries({ queryKey: sceneQcKeys.itemsPrefix(studioId, review.operational_date) });
-  void queryClient.invalidateQueries({
-    queryKey: sceneQcKeys.itemDetail(studioId, review.operational_date, review.show_id),
-  });
+function invalidateSceneQcDailyQueries(
+  queryClient: QueryClient,
+  studioId: string,
+  review: SceneQcReview,
+): Promise<void> {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: sceneQcKeys.summary(studioId, review.operational_date) }),
+    queryClient.invalidateQueries({ queryKey: sceneQcKeys.itemsPrefix(studioId, review.operational_date) }),
+    queryClient.invalidateQueries({
+      queryKey: sceneQcKeys.itemDetail(studioId, review.operational_date, review.show_id),
+    }),
+  ]).then(() => undefined);
 }
 
 export function useCreateSceneQcReview(studioId: string) {

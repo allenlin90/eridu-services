@@ -51,6 +51,7 @@ function SceneQcMobileReviewContent({ detail, form, onSave }: SceneQcMobileRevie
   const activeEvidence = detail.evidence[Math.min(evidenceIndex, Math.max(detail.evidence.length - 1, 0))];
   const isBlocked = detail.allowed_actions.blocked_reason === 'NO_EVIDENCE';
   const isConfirmed = detail.allowed_actions.blocked_reason === 'CONFIRMED';
+  const isNotEligible = detail.allowed_actions.blocked_reason === 'NOT_ELIGIBLE';
 
   return (
     <div className="flex flex-1 flex-col gap-3 p-3">
@@ -89,22 +90,29 @@ function SceneQcMobileReviewContent({ detail, form, onSave }: SceneQcMobileRevie
         ? <SceneQcBlockedPanel />
         : isConfirmed
           ? <div className="rounded-md border p-3 text-sm text-muted-foreground">This review has been confirmed and can no longer be edited.</div>
-          : (
-              <div className="sticky bottom-0 -mx-3 mt-auto border-t bg-background p-3">
-                <SceneQcResultForm
-                  result={form.result}
-                  onResultChange={form.setResult}
-                  feedback={form.feedback}
-                  onFeedbackChange={form.setFeedback}
-                  feedbackRequired={form.feedbackRequired}
-                  feedbackMissing={form.feedbackMissing}
-                  canSave={form.canSave}
-                  isSaving={form.isSaving}
-                  onSave={onSave}
-                  onSelectUnusableImage={form.selectUnusableImage}
-                />
-              </div>
-            )}
+          : isNotEligible
+            ? (
+                <div className="rounded-md border p-3 text-sm text-muted-foreground">
+                  This Show has moved outside the selected operational day and cannot be reviewed here. Select the
+                  operational date it now falls on to review it.
+                </div>
+              )
+            : (
+                <div className="sticky bottom-0 -mx-3 mt-auto border-t bg-background p-3">
+                  <SceneQcResultForm
+                    result={form.result}
+                    onResultChange={form.setResult}
+                    feedback={form.feedback}
+                    onFeedbackChange={form.setFeedback}
+                    feedbackRequired={form.feedbackRequired}
+                    feedbackMissing={form.feedbackMissing}
+                    canSave={form.canSave}
+                    isSaving={form.isSaving}
+                    onSave={onSave}
+                    onSelectUnusableImage={form.selectUnusableImage}
+                  />
+                </div>
+              )}
     </div>
   );
 }

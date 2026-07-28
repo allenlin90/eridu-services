@@ -192,3 +192,80 @@ skip the literal `// Engineering decision:` comment tag even when a justifying
 docstring exists. Treat as a non-blocking consistency note, not a blocker, when
 the reasoning is evident from the docstring or from being the model's canonical
 findOne/findByUid-equivalent lookup.
+
+## PR #348 — Child PR 3 (Daily Review Journey), reviewed 2026-07-28
+
+Diffed against `feat/scene-qc-integration` (merge-base `6a2ec632`), not
+`master`. Implementation matches SCENE_QC_CHILD_PR_3_BREAKDOWN.md almost
+exactly — schema, migration (including the documented spurious DROP INDEX
+strip and the CHECK-widen custom SQL), repository, evidence resolver
+(bulk, deterministic sortOrder `(taskUid, fieldKey)`, dedup by fileUrl),
+workflow service (§8.2 chain, order of operations, 409-vs-403 re-read on
+update conflict), query service (unfiltered summary vs filtered items,
+in-memory blocked-state filtering per OQ-11, 500-cap loud failure),
+controllers, module wiring, audit writer, `StorageService.deriveObjectKeyFromPublicUrl`,
+route swap (OQ-8, no temp route), and the `SCENE_QC_IMPLEMENTATION_PLAN.md`
+OQ-2 re-sign-claim correction were all verified line-by-line against the
+breakdown's decisions table (§6.0) and found correct. All gates independently
+re-run and green: api-types lint/typecheck/build (no test script — pre-existing,
+not this PR's gap); erify_api lint/typecheck/build, test (185 suites/1880
+tests); erify_studios lint/typecheck/build, test (217 files/1039 tests);
+guarded real-DB integration gate (all 6 required §4.2 scenarios present and
+passing, including rollback-leaves-no-partial-rows and the
+`scene_profiles_active_client_key` regression guard); `architecture:signals`
+(0 cycles, `SceneQcRepository` correctly absent from `exported_repositories`);
+`lint:markdown`.
+
+Two real, previously-unflagged findings (both WARNING, not blocking):
+
+1. **`saveAndNext()` race against invalidation** (`use-scene-qc-daily.ts`
+   + `scene-qc-daily-workspace.tsx`'s `handleSave`): `useCreateSceneQcReview`/
+   `useUpdateSceneQcReview`'s `onSuccess` calls `void queryClient.invalidateQueries(...)`
+   (fire-and-forget, not awaited) — so `form.save()`'s resolved promise does
+   NOT wait for `itemsQuery` to refetch. `handleSave` then synchronously calls
+   `controller.saveAndNext()`, which reads `itemsQuery.data` — still the
+   pre-mutation stale cache at that instant. `saveAndNext`'s logic
+   (`items.slice(currentIndex + 1).find(isUnreviewed) ?? items.find(isUnreviewed)`)
+   falls back to searching from the start including the current item when
+   nothing unreviewed remains after it — so if the just-saved item was the
+   last unreviewed one in the queue, the stale cache still shows it as
+   unreviewed and `saveAndNext` reselects the SAME item instead of correctly
+   returning `false` (no more items). Self-heals once the background refetch
+   lands a moment later (summary/queue update correctly), so no data
+   integrity impact — just a one-tick UX glitch at the end of a review
+   session. The hook's own unit tests don't catch this because they inject
+   `itemsQuery.data` already reflecting the post-save state, which glosses
+   over the real timing gap between mutation resolution and cache
+   invalidation. Not caught by any of the "known deviations" the PR
+   description called out.
+
+2. **`SceneQcReviewPanel` / `SceneQcMobileDrawer` don't branch on
+   `blocked_reason === 'NOT_ELIGIBLE'`** — both only check `NO_EVIDENCE`
+   (blocked panel) and `CONFIRMED` (read-only banner); `NOT_ELIGIBLE` falls
+   through to rendering the normal editable result form even though
+   `can_review` is `false`. Reachable when the URL still carries a `show_id`
+   whose window no longer matches the current `operational_date` (e.g. after
+   a Show's start time moved, or stale back/forward navigation) — the detail
+   endpoint's `findEligibleShowForReview` only filters `deletedAt`/`studio`,
+   not the window, so `NOT_ELIGIBLE` really can come back from the API. Not a
+   security/data-integrity gap — `SceneQcWorkflowService.createReview`/
+   `updateReview` independently re-check eligibility and would reject the
+   save server-side — but it lets an operator fill out and attempt a doomed
+   save instead of seeing a clear reason up front. The breakdown's own §3.4
+   state-mapping table never assigns `NOT_ELIGIBLE` a UI treatment either, so
+   this is a spec gap inherited by the implementation, not a regression
+   introduced by this PR specifically — still worth a WARNING since the
+   response schema explicitly enumerates the value.
+
+Payload types in `schemas/scene-qc-review.schema.ts`
+(`CreateSceneQcReviewPayload.result: PrismaSceneQcResult`,
+`UpdateSceneQcReviewPayload.result`) import the Prisma-generated enum
+directly rather than the `@eridu/api-types/scene-qc` domain `SceneQcResult`
+type, and these payload types flow into the *exported* `SceneQcWorkflowService`'s
+public signature. Judged non-blocking: this mirrors the already-reviewed-READY
+precedent in `scene-profile.schema.ts` (`sceneType: SceneType` from
+`@prisma/client`), and the project's "schemas may import Prisma types" rule
+does not distinguish enum re-exports (plain string-literal unions, no ORM
+query DSL) from the `Prisma.*Input`/`Prisma.*WhereInput` shapes the rule is
+actually guarding against. Flag as a 💡 suggestion only if asked to be
+stricter than existing precedent.

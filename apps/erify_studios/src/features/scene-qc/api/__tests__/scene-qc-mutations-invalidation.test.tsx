@@ -123,4 +123,39 @@ describe('scene-qc mutation invalidation scope', () => {
       });
     });
   });
+
+  it('useCreateSceneQcReview\'s mutateAsync does not resolve until invalidation settles, so a caller driving saveAndNext off it sees a refetched itemsQuery rather than the pre-mutation cache', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({ data: REVIEW_RESPONSE });
+
+    let resolveInvalidate!: () => void;
+    const invalidateGate = new Promise<void>((resolve) => {
+      resolveInvalidate = resolve;
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    vi.spyOn(queryClient, 'invalidateQueries').mockReturnValue(invalidateGate);
+    function GatedWrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    }
+
+    const { result } = renderHook(() => useCreateSceneQcReview('studio_abc'), { wrapper: GatedWrapper });
+
+    let settled = false;
+    const mutatePromise = result.current.mutateAsync({
+      show_id: 'show_1',
+      operational_date: '2026-06-01',
+      result: 'PASS',
+      feedback: null,
+    }).then(() => {
+      settled = true;
+    });
+
+    // The API call has resolved, but invalidation is still gated -- mutateAsync must not settle yet.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(settled).toBe(false);
+
+    resolveInvalidate();
+    await mutatePromise;
+    expect(settled).toBe(true);
+  });
 });
