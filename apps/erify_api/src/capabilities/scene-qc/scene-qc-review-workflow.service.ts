@@ -63,7 +63,7 @@ export class SceneQcWorkflowService {
   ): Promise<SceneQcReviewRecord> {
     const actor = await this.resolveActor(context.actorExtId);
 
-    const show = await this.sceneQcRepository.findEligibleShowForReview({
+    const show = await this.sceneQcRepository.findShowForReview({
       studioUid,
       showUid: payload.showId,
     });
@@ -138,7 +138,7 @@ export class SceneQcWorkflowService {
       throw HttpError.conflict(CONFIRMED_MESSAGE);
     }
 
-    const show = await this.sceneQcRepository.findEligibleShowForReview({
+    const show = await this.sceneQcRepository.findShowForReview({
       studioUid,
       showUid: existing.show.uid,
     });

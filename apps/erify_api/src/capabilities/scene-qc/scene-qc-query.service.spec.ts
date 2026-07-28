@@ -53,7 +53,7 @@ function buildReviewHead(overrides: Partial<ReviewHeadRow> = {}): ReviewHeadRow 
 }
 
 describe('sceneQcQueryService', () => {
-  let repository: jest.Mocked<Pick<SceneQcRepository, 'findEligibleShowsInWindow' | 'findEligibleShowForReview' | 'findReviewHeadsForShows' | 'findReviewByShowAndDate' | 'findClientIdsWithActiveProfile'>>;
+  let repository: jest.Mocked<Pick<SceneQcRepository, 'findEligibleShowsInWindow' | 'findShowForReview' | 'findReviewHeadsForShows' | 'findReviewByShowAndDate' | 'findClientIdsWithActiveProfile'>>;
   let evidenceResolver: jest.Mocked<Pick<SceneQcEvidenceResolver, 'resolveForShows'>>;
   let sceneProfileService: jest.Mocked<Pick<SceneProfileService, 'getActiveProfileForClient'>>;
   let service: SceneQcQueryService;
@@ -61,7 +61,7 @@ describe('sceneQcQueryService', () => {
   beforeEach(() => {
     repository = {
       findEligibleShowsInWindow: jest.fn().mockResolvedValue([buildShow()]),
-      findEligibleShowForReview: jest.fn().mockResolvedValue(buildShow()),
+      findShowForReview: jest.fn().mockResolvedValue(buildShow()),
       findReviewHeadsForShows: jest.fn().mockResolvedValue([]),
       findReviewByShowAndDate: jest.fn().mockResolvedValue(null),
       findClientIdsWithActiveProfile: jest.fn().mockResolvedValue(new Set()),
@@ -226,7 +226,7 @@ describe('sceneQcQueryService', () => {
 
   describe('getDailyItemDetail', () => {
     it('throws 404 when the Show is not found/eligible for the studio', async () => {
-      repository.findEligibleShowForReview.mockResolvedValue(null);
+      repository.findShowForReview.mockResolvedValue(null);
 
       await expect(
         service.getDailyItemDetail(STUDIO_UID, 'show_missing', OPERATIONAL_DATE),

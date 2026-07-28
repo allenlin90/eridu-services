@@ -95,7 +95,7 @@ class MockPrismaModule {}
 
 describe('sceneQcWorkflowService', () => {
   let service: SceneQcWorkflowService;
-  let repository: jest.Mocked<Pick<SceneQcRepository, 'findEligibleShowForReview' | 'createReviewWithEvidence' | 'findReviewForUpdate' | 'replaceReviewWithEvidence'>>;
+  let repository: jest.Mocked<Pick<SceneQcRepository, 'findShowForReview' | 'createReviewWithEvidence' | 'findReviewForUpdate' | 'replaceReviewWithEvidence'>>;
   let evidenceResolver: jest.Mocked<Pick<SceneQcEvidenceResolver, 'resolveForShows'>>;
   let sceneProfileService: jest.Mocked<Pick<SceneProfileService, 'getActiveProfileForClient'>>;
   let auditWriter: jest.Mocked<Pick<SceneQcAuditWriter, 'recordSceneQcReviewChange'>>;
@@ -106,7 +106,7 @@ describe('sceneQcWorkflowService', () => {
     mockPrismaForCls = { $transaction: jest.fn(async (callback: any) => callback(mockPrismaForCls)) };
 
     repository = {
-      findEligibleShowForReview: jest.fn().mockResolvedValue(buildShow()),
+      findShowForReview: jest.fn().mockResolvedValue(buildShow()),
       createReviewWithEvidence: jest.fn().mockResolvedValue(buildReviewRecord()),
       findReviewForUpdate: jest.fn(),
       replaceReviewWithEvidence: jest.fn(),
@@ -188,7 +188,7 @@ describe('sceneQcWorkflowService', () => {
     });
 
     it('rejects with 404 when the Show is not eligible/found for the studio', async () => {
-      repository.findEligibleShowForReview.mockResolvedValue(null);
+      repository.findShowForReview.mockResolvedValue(null);
 
       await expect(service.createReview(STUDIO_UID, PAYLOAD, CONTEXT)).rejects.toThrow();
       expect(repository.createReviewWithEvidence).not.toHaveBeenCalled();
@@ -211,7 +211,7 @@ describe('sceneQcWorkflowService', () => {
     });
 
     it('rejects a Show outside the resolved operational window', async () => {
-      repository.findEligibleShowForReview.mockResolvedValue(
+      repository.findShowForReview.mockResolvedValue(
         buildShow({ startTime: new Date(WINDOW.windowEnd.getTime() + 1000) }),
       );
 
@@ -307,7 +307,7 @@ describe('sceneQcWorkflowService', () => {
     });
 
     it('rejects an update once the Show has moved outside the review\'s pinned window', async () => {
-      repository.findEligibleShowForReview.mockResolvedValue(
+      repository.findShowForReview.mockResolvedValue(
         buildShow({ startTime: new Date(WINDOW.windowEnd.getTime() + 1000) }),
       );
 

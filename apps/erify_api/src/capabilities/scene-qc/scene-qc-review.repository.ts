@@ -52,7 +52,7 @@ function toEligibleShowRow(show: RawEligibleShow): EligibleShowRow {
  * All access through `txHost.tx`. PRIVATE to SceneQcModule -- providers only,
  * never `exports`. See SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 1.6.
  *
- * `findEligibleShowsInWindow` and `findEligibleShowForReview` read
+ * `findEligibleShowsInWindow` and `findShowForReview` read
  * `txHost.tx.show` directly -- a deliberate, capability-local, read-only,
  * purpose-shaped projection (OQ-9), the same pattern Child PR 1 used for the
  * audit side table. Scene QC never writes the Show table.
@@ -105,7 +105,18 @@ export class SceneQcRepository {
     return shows.map(toEligibleShowRow);
   }
 
-  async findEligibleShowForReview(input: {
+  /**
+   * Resolves a Show by UID scoped to the studio, for a caller that still
+   * needs its own `isShowEligibleForSceneQc(show, window)` check. This
+   * method deliberately does NOT enforce status or operational-window
+   * eligibility itself -- it only confirms the Show exists, is not
+   * soft-deleted, and belongs to the studio. `SceneQcWorkflowService` and
+   * `SceneQcQueryService.getDailyItemDetail` both call
+   * `isShowEligibleForSceneQc` separately afterward; a future caller (e.g.
+   * Child PR 4's Records surface) must do the same rather than assuming this
+   * method already gates eligibility.
+   */
+  async findShowForReview(input: {
     studioUid: string;
     showUid: string;
   }): Promise<EligibleShowRow | null> {

@@ -129,7 +129,7 @@ export class SceneQcQueryService {
     showUid: string,
     operationalDate: string,
   ): Promise<SceneQcDailyItemDetail> {
-    const show = await this.sceneQcRepository.findEligibleShowForReview({ studioUid, showUid });
+    const show = await this.sceneQcRepository.findShowForReview({ studioUid, showUid });
     if (!show) {
       throw HttpError.notFound('Show');
     }

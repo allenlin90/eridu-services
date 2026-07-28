@@ -231,7 +231,7 @@ Authorization is uniform: `@StudioProtected([STUDIO_ROLE.DESIGNER, STUDIO_ROLE.M
 | --- | --- | --- | --- |
 | `GET /studios/:studioId/scene-qc/summary` | `StudioSceneQcQueryController.summary` | `SceneQcQueryService.getDailySummary(studioUid, operationalDate)` | `resolveOperationalWindow` → `SceneQcRepository.findEligibleShowsInWindow` (unfiltered) → `SceneQcRepository.findReviewHeadsForShows` → `SceneQcEvidenceResolver.resolveForShows` (blocked count) |
 | `GET /studios/:studioId/scene-qc/items` | `.items` | `SceneQcQueryService.listDailyItems(studioUid, query)` | same window resolution → `findEligibleShowsInWindow` **with** `client_id` / `platform_id` / `search` predicates → evidence resolve → in-memory `review_state` filter + sort + page slice |
-| `GET /studios/:studioId/scene-qc/items/:showId` | `.itemDetail` | `SceneQcQueryService.getDailyItemDetail(studioUid, showUid, operationalDate)` | `findEligibleShowForReview` → `SceneQcEvidenceResolver.resolveForShows([showId])` → `SceneProfileService.getActiveProfileForClient` → `findReviewByShowAndDate(..., { includeEvidence: true })` |
+| `GET /studios/:studioId/scene-qc/items/:showId` | `.itemDetail` | `SceneQcQueryService.getDailyItemDetail(studioUid, showUid, operationalDate)` | `findShowForReview` → `SceneQcEvidenceResolver.resolveForShows([showId])` → `SceneProfileService.getActiveProfileForClient` → `findReviewByShowAndDate(..., { includeEvidence: true })` |
 | `POST /studios/:studioId/scene-qc-reviews` | `StudioSceneQcReviewController.create` | `SceneQcWorkflowService.createReview(studioUid, payload, context)` | §8.2 chain below |
 | `PATCH /studios/:studioId/scene-qc-reviews/:reviewId` | `.update` | `SceneQcWorkflowService.updateReview(studioUid, reviewUid, payload, context)` | §8.2 chain below |
 
@@ -254,7 +254,7 @@ findEligibleShowsInWindow(input: {
                                         // statusSystemKey, client{id,uid,name},
                                         // platforms[{uid,name}]
 
-findEligibleShowForReview(input: {
+findShowForReview(input: {
   studioUid: string; showUid: string;
 }): Promise<EligibleShowRow | null>
 
@@ -327,7 +327,7 @@ No recursive URL discovery, no filename matching, no metric-label matching. The 
 | §8.2 step | Class / function |
 | --- | --- |
 | 1. Lock or optimistic-check the review head | **create**: no head yet; the `@@unique([showId, operationalDate])` constraint is the race guard (`P2002` → 409). **update**: `SceneQcRepository.findReviewForUpdate` then `replaceReviewWithEvidence`'s `where: { version: expectedVersion }` conditional write. No `SELECT … FOR UPDATE` and no advisory lock — a single-row optimistic check is sufficient here; the advisory lock belongs to Child PR 4's cross-row confirmation. |
-| 2. Resolve and authorize the Show within the studio | `@StudioProtected` guard (role) + `SceneQcRepository.findEligibleShowForReview({ studioUid, showUid })` → `null` ⇒ `HttpError.notFound('Show')` |
+| 2. Resolve and authorize the Show within the studio | `@StudioProtected` guard (role) + `SceneQcRepository.findShowForReview({ studioUid, showUid })` → `null` ⇒ `HttpError.notFound('Show')` |
 | 3. Resolve and pin operational date/window; reject terminally cancelled or out-of-window context | `resolveOperationalWindow(...)` + `isShowEligibleForSceneQc(show, window)` (pure, Child PR 1) ⇒ `HttpError.badRequest`/`conflict` on failure. Pins `windowStart`, `windowEnd`, `timezone`, `operationalDate` onto the row. |
 | 4. Resolve explicit image evidence; require ≥ 1 | `SceneQcEvidenceResolver.resolveForShows([show.id])` ⇒ empty ⇒ `HttpError.unprocessableEntity`/`badRequest` ("This Show has no Scene QC evidence and cannot be reviewed") |
 | 5. Resolve the Client's current Scene Profile and snapshot it | `SceneProfileService.getActiveProfileForClient(show.client.uid)` → copy `objectKey` / `fileUrl` / `sceneType` into `expected*`; `null` ⇒ all three stay `null` |
