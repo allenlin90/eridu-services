@@ -29,13 +29,26 @@ function createAxios409(message = 'This review changed since you loaded it.') {
 function buildDetail(overrides: Partial<SceneQcDailyItemDetail> = {}): SceneQcDailyItemDetail {
   return {
     show: {
-      id: 'show_1', name: 'Show 1', scheduled_start_time: '2026-06-01T10:00:00.000Z', client: null, platforms: [],
+      id: 'show_1',
+      name: 'Show 1',
+      scheduled_start_time: '2026-06-01T10:00:00.000Z',
+      client: null,
+      platforms: [],
     },
     operational_window: {
-      operational_date: '2026-06-01', window_start: '2026-05-31T23:00:00.000Z', window_end: '2026-06-01T23:00:00.000Z', timezone: 'Asia/Bangkok',
+      operational_date: '2026-06-01',
+      window_start: '2026-05-31T23:00:00.000Z',
+      window_end: '2026-06-01T23:00:00.000Z',
+      timezone: 'Asia/Bangkok',
     },
     evidence: [{
-      sort_order: 0, source_task_id: 'task_1', source_task_version: 1, source_field_key: 'field_a', label: 'Screenshot', object_key: null, file_url: 'https://cdn.example.com/a.png',
+      sort_order: 0,
+      source_task_id: 'task_1',
+      source_task_version: 1,
+      source_field_key: 'field_a',
+      label: 'Screenshot',
+      object_key: null,
+      file_url: 'https://cdn.example.com/a.png',
     }],
     scene_profile: null,
     review: null,
@@ -85,7 +98,11 @@ describe('useSceneQcReviewForm', () => {
     const onSaved = vi.fn();
     const { result } = renderHook(
       () => useSceneQcReviewForm({
-        studioId: 'studio_abc', showId: 'show_1', operationalDate: '2026-06-01', detail: buildDetail(), onSaved,
+        studioId: 'studio_abc',
+        showId: 'show_1',
+        operationalDate: '2026-06-01',
+        detail: buildDetail(),
+        onSaved,
       }),
       { wrapper: Wrapper },
     );
@@ -96,7 +113,10 @@ describe('useSceneQcReviewForm', () => {
     });
 
     expect(mockCreateMutateAsync).toHaveBeenCalledWith({
-      show_id: 'show_1', operational_date: '2026-06-01', result: 'PASS', feedback: null,
+      show_id: 'show_1',
+      operational_date: '2026-06-01',
+      result: 'PASS',
+      feedback: null,
     });
     expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
     expect(onSaved).toHaveBeenCalledTimes(1);
@@ -106,7 +126,22 @@ describe('useSceneQcReviewForm', () => {
     mockUpdateMutateAsync.mockResolvedValue({ id: 'scqcr_1', version: 2 });
     const detail = buildDetail({
       review: {
-        id: 'scqcr_1', show_id: 'show_1', operational_date: '2026-06-01', window_start: '2026-05-31T23:00:00.000Z', window_end: '2026-06-01T23:00:00.000Z', timezone: 'Asia/Bangkok', result: 'PASS', feedback: null, reviewed_by: { id: 'user_1', name: 'A' }, reviewed_at: '2026-06-01T10:00:00.000Z', expected_reference: null, version: 1, confirmed_at: null, created_at: '2026-06-01T10:00:00.000Z', updated_at: '2026-06-01T10:00:00.000Z', evidence: [],
+        id: 'scqcr_1',
+        show_id: 'show_1',
+        operational_date: '2026-06-01',
+        window_start: '2026-05-31T23:00:00.000Z',
+        window_end: '2026-06-01T23:00:00.000Z',
+        timezone: 'Asia/Bangkok',
+        result: 'PASS',
+        feedback: null,
+        reviewed_by: { id: 'user_1', name: 'A' },
+        reviewed_at: '2026-06-01T10:00:00.000Z',
+        expected_reference: null,
+        version: 1,
+        confirmed_at: null,
+        created_at: '2026-06-01T10:00:00.000Z',
+        updated_at: '2026-06-01T10:00:00.000Z',
+        evidence: [],
       },
     });
     const { result } = renderHook(
@@ -129,7 +164,10 @@ describe('useSceneQcReviewForm', () => {
   it('does NOT reset the draft when evidence/expected reference changes for the same Show', async () => {
     const { result, rerender } = renderHook(
       ({ detail }: { detail: SceneQcDailyItemDetail }) => useSceneQcReviewForm({
-        studioId: 'studio_abc', showId: 'show_1', operationalDate: '2026-06-01', detail,
+        studioId: 'studio_abc',
+        showId: 'show_1',
+        operationalDate: '2026-06-01',
+        detail,
       }),
       { wrapper: Wrapper, initialProps: { detail: buildDetail() } },
     );
@@ -153,7 +191,10 @@ describe('useSceneQcReviewForm', () => {
   it('resets the draft when show_id changes', async () => {
     const { result, rerender } = renderHook(
       ({ showId }: { showId: string }) => useSceneQcReviewForm({
-        studioId: 'studio_abc', showId, operationalDate: '2026-06-01', detail: buildDetail({ show: { ...buildDetail().show, id: showId } }),
+        studioId: 'studio_abc',
+        showId,
+        operationalDate: '2026-06-01',
+        detail: buildDetail({ show: { ...buildDetail().show, id: showId } }),
       }),
       { wrapper: Wrapper, initialProps: { showId: 'show_1' } },
     );
@@ -186,7 +227,11 @@ describe('useSceneQcReviewForm', () => {
     const refetchDetail = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(
       () => useSceneQcReviewForm({
-        studioId: 'studio_abc', showId: 'show_1', operationalDate: '2026-06-01', detail: buildDetail(), refetchDetail,
+        studioId: 'studio_abc',
+        showId: 'show_1',
+        operationalDate: '2026-06-01',
+        detail: buildDetail(),
+        refetchDetail,
       }),
       { wrapper: Wrapper },
     );

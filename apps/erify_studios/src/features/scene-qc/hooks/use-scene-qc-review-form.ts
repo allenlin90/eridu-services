@@ -63,9 +63,10 @@ export function useSceneQcReviewForm({
 
   const dismissConflict = useCallback(() => setConflictMessage(null), []);
 
-  const save = useCallback(async () => {
+  /** Returns `true` on a successful save, `false` on a handled conflict (never rethrown) -- lets callers chain "Save & next" only on success. */
+  const save = useCallback(async (): Promise<boolean> => {
     if (!showId || !result) {
-      return;
+      return false;
     }
     const targetShowId = showId;
     setConflictMessage(null);
@@ -84,12 +85,13 @@ export function useSceneQcReviewForm({
         // The operator switched Shows while this save was in flight -- the
         // Show-change effect already reset the draft; discard this result
         // rather than surfacing a stale success for the new selection.
-        return;
+        return false;
       }
       onSaved?.();
+      return true;
     } catch (err) {
       if (showIdRef.current !== targetShowId) {
-        return;
+        return false;
       }
       if (isConflict(err)) {
         // Preserve the typed feedback locally, refetch the current review,
@@ -98,7 +100,7 @@ export function useSceneQcReviewForm({
           getMutationErrorMessage(err, 'This review changed since you loaded it. Refresh and try again.'),
         );
         void refetchDetail?.();
-        return;
+        return false;
       }
       throw err;
     }

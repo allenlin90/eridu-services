@@ -24,15 +24,30 @@ vi.mock('../../api/get-scene-qc-item-detail', () => ({
 
 function buildItem(showId: string, overrides: Record<string, unknown> = {}) {
   return {
-    show_id: showId, show_name: showId, scheduled_start_time: '2026-06-01T10:00:00.000Z', client: null, platforms: [],
-    evidence_count: 1, has_scene_profile: false, is_blocked: false, result: null, has_feedback: false,
-    reviewed_by: null, reviewed_at: null, review_id: null, review_version: null, is_confirmed: false,
+    show_id: showId,
+    show_name: showId,
+    scheduled_start_time: '2026-06-01T10:00:00.000Z',
+    client: null,
+    platforms: [],
+    evidence_count: 1,
+    has_scene_profile: false,
+    is_blocked: false,
+    result: null,
+    has_feedback: false,
+    reviewed_by: null,
+    reviewed_at: null,
+    review_id: null,
+    review_version: null,
+    is_confirmed: false,
     ...overrides,
   };
 }
 
 const BASE_SEARCH = {
-  tab: 'daily' as const, review_state: 'all' as const, page: 1, limit: 20,
+  tab: 'daily' as const,
+  review_state: 'all' as const,
+  page: 1,
+  limit: 20,
 };
 
 describe('useSceneQcDaily', () => {

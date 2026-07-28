@@ -1,5 +1,6 @@
-import { useIsMobile } from '@eridu/ui/hooks/use-is-mobile';
 import { useCallback, useEffect, useMemo } from 'react';
+
+import { useIsMobile } from '@eridu/ui/hooks/use-is-mobile';
 
 import { useSceneQcItemDetailQuery } from '../api/get-scene-qc-item-detail';
 import type { SceneQcItemsParams } from '../api/get-scene-qc-items';
