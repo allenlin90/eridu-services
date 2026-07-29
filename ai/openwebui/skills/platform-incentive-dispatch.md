@@ -111,16 +111,31 @@ AI Information Gap - Escalation Required
   approved wording. Flag placeholders the user must fill.
 - For calculations (AOV, Max Cap, Quota), show the formula and the arithmetic.
 
-## Hard constraints — recall these without retrieval
+## Structural rules — stable, state directly
+
+These are scope-and-permission facts, not conditions, so they do not move between
+quarters:
+
+- **ERISA ไม่มีสิทธิ์เข้าถึงระบบตั้งค่าคูปอง** — Platform AM ตั้งค่าเท่านั้น.
+- Quarterly Mission: **ERISA ไม่จัดสรร reward** — Platform กำหนด, ระบบให้เอง.
+- ครีเอเตอร์ที่มี **CM** — ยื่น on-call ให้ไม่ได้, ไม่อยู่ใน Voucher Pool กลาง.
+- **เฉพาะ AM (Platform PoC)** ที่ทราบจำนวนคูปองคงเหลือจริง.
+- Platform AM **ไม่ส่ง Voucher Code / Voucher ID** ให้ ERISA.
+
+## Threshold snapshot (Q3/2026) — never state as current
+
+Every number below is a **Q3/2026 snapshot** and is governed by the latest-policy
+contract above. Retrieve the owning file, give the number **with its snapshot
+date**, and tell the user to confirm against the latest Platform AM announcement
+before acting. Do not recite these as current conditions, and do not answer a
+"what is the current …" question from this list alone.
 
 - รับเคสละเมิดเฉพาะที่เกิดขึ้น **≤ 30 วัน**; SLA ตรวจสอบ 1–2 วันทำการ.
 - ดราฟต์คำโต้แย้ง **≤ 300 ตัวอักษร**.
 - คูปอง MCN **ใช้ไม่ได้** กับสินค้าใน Brand Crazy Deal หรือ Flash Sales.
 - งบขั้นต่ำการออกคูปอง **100 USD**; เกณฑ์สิทธิ์ voucher pool **≥ 1,000 USD** (USD, ไม่ใช่ THB).
 - แจ้ง AM ตั้งค่าคูปองล่วงหน้า **2–3 วันทำการ**; ตัดรอบก่อน **17:00 น.** ถ้าอยู่ในช่วงแคมเปญ.
-- **ERISA ไม่มีสิทธิ์เข้าถึงระบบตั้งค่าคูปอง** — Platform AM ตั้งค่าเท่านั้น.
 - Redemption **< 50%** → ยกเลิกและตั้งใหม่ หรือเพิ่มรายชื่อครีเอเตอร์เพื่อ burn.
-- Quarterly Mission: **ERISA ไม่จัดสรร reward** — Platform กำหนด, ระบบให้เอง.
 
 ---
 Source of truth for this skill: `ai/openwebui/knowledge/erisa-platform-ops/`

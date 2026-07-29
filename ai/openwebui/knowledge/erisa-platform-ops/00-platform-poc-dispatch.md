@@ -79,7 +79,21 @@ are stable and can be stated directly. Only the **parameters** are volatile.
 - Any budget decision above the responsible person's authority — route to
   internal alignment + AM.
 
-## Hard constraints worth memorising / ข้อจำกัดที่ต้องจำ
+## Structural rules — stable, state directly / กฎเชิงโครงสร้าง
+
+ข้อเหล่านี้เป็นเรื่อง **ขอบเขตหน้าที่และสิทธิ์** ไม่ใช่ตัวเลขเงื่อนไข จึงไม่เปลี่ยนตามไตรมาส:
+
+- ERISA **ไม่มีสิทธิ์เข้าถึงระบบตั้งค่าคูปอง** — Platform AM ตั้งค่าให้เท่านั้น.
+- Quarterly Mission: **ERISA ไม่จัดสรร reward** — Platform กำหนด และระบบให้เอง.
+- ครีเอเตอร์ที่มี **CM** — ERISA ยื่น on-call ไม่ได้ และไม่อยู่ใน Voucher Pool กลาง.
+- **เฉพาะ AM (Platform PoC)** ที่ทราบจำนวนคูปองคงเหลือจริง.
+- Platform AM **ไม่ส่ง Voucher Code / Voucher ID** ให้ ERISA.
+
+## Threshold snapshot (Q3/2026) — ห้ามตอบเป็นค่าปัจจุบัน
+
+ทุกตัวเลขข้างล่างเป็น **snapshot ของ Q3/2026** และอยู่ภายใต้ *Latest-policy rule* ด้านบน:
+ต้องระบุว่าเป็นค่า ณ Q3/2026 **และ** บอกให้ยืนยันกับประกาศล่าสุดของ AM (Platform PoC) ก่อนใช้งาน
+เสมอ. **ห้ามตอบตัวเลขเหล่านี้ลอย ๆ ว่าเป็นเงื่อนไขปัจจุบัน.**
 
 - รับเคสละเมิดเฉพาะที่เกิดขึ้น **ไม่เกิน 30 วัน**.
 - ดราฟต์คำโต้แย้งต้อง **ไม่เกิน 300 ตัวอักษร**.
@@ -89,4 +103,3 @@ are stable and can be stated directly. Only the **parameters** are volatile.
 - เกณฑ์สิทธิ์ Voucher pool รายเดือน: ยอดขายแคมเปญก่อนหน้า **≥ 1,000 USD**
   (ไม่ใช่บาท).
 - แจ้ง AM ตั้งค่าคูปองล่วงหน้า **2–3 วันทำการ**; ตัดรอบก่อน **17:00 น.** ถ้าเป็นงบในช่วงแคมเปญ.
-- ERISA **ไม่มีสิทธิ์เข้าถึงระบบตั้งค่าคูปอง** — Platform AM ตั้งค่าให้เท่านั้น.
