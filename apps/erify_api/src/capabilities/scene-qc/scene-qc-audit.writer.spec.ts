@@ -105,4 +105,24 @@ describe('sceneQcAuditWriter', () => {
       expect(auditCreate.mock.calls[0][0].data.action).toBe(action);
     });
   });
+
+  describe('recordDailyConfirmation', () => {
+    it('writes exactly one audit.create call with the nested SceneQcAuditTarget junction pointed at sceneQcDailyConfirmation, and no reason key', async () => {
+      await writer.recordDailyConfirmation({
+        action: 'CREATE',
+        actorId: 42n,
+        sceneQcDailyConfirmationId: 11n,
+        metadata: { event: 'scene_qc_day_confirmed' },
+      });
+
+      expect(auditCreate).toHaveBeenCalledTimes(1);
+      const callArgs = auditCreate.mock.calls[0][0];
+      expect(callArgs.data.action).toBe('CREATE');
+      expect(callArgs.data.actor).toEqual({ connect: { id: 42n } });
+      expect(callArgs.data.sceneQcTargets).toEqual({
+        create: [{ sceneQcDailyConfirmation: { connect: { id: 11n } } }],
+      });
+      expect(callArgs.data).not.toHaveProperty('reason');
+    });
+  });
 });

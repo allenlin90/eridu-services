@@ -13,6 +13,8 @@ import {
 } from './schemas/scene-qc-daily.schema';
 import type { EligibleShowRow, ReviewHeadRow } from './schemas/scene-qc-review.schema';
 import { SceneProfileService } from './scene-profile.service';
+import { SceneQcConfirmationRepository } from './scene-qc-confirmation.repository';
+import { resolveSceneQcConfirmationState } from './scene-qc-confirmation-state.policy';
 import { isShowEligibleForSceneQc } from './scene-qc-eligibility-policy';
 import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
 import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
@@ -31,24 +33,31 @@ export class SceneQcQueryService {
     private readonly sceneQcRepository: SceneQcRepository,
     private readonly evidenceResolver: SceneQcEvidenceResolver,
     private readonly sceneProfileService: SceneProfileService,
+    private readonly confirmationRepository: SceneQcConfirmationRepository,
   ) {}
 
   /** Always the UNFILTERED eligible set -- never receives filter params. */
   async getDailySummary(studioUid: string, operationalDate: string): Promise<SceneQcDailySummary> {
     const window = resolveOperationalWindow(operationalDate, OPERATIONAL_TIMEZONE);
+    const operationalDateUtcMidnight = this.operationalDateToUtcMidnight(window.operationalDate);
     const shows = await this.sceneQcRepository.findEligibleShowsInWindow({
       studioUid,
       windowStart: window.windowStart,
       windowEnd: window.windowEnd,
     });
     const showIds = shows.map((show) => show.id);
-    const [reviewHeads, evidenceByShow] = await Promise.all([
+    const [reviewHeads, evidenceByShow, latestConfirmation] = await Promise.all([
       this.sceneQcRepository.findReviewHeadsForShows({
         showIds,
-        operationalDate: this.operationalDateToUtcMidnight(window.operationalDate),
+        operationalDate: operationalDateUtcMidnight,
       }),
       this.evidenceResolver.resolveForShows(showIds),
+      this.confirmationRepository.findLatestConfirmationWithScope({
+        studioUid,
+        operationalDate: operationalDateUtcMidnight,
+      }),
     ]);
+    const reviewHeadByShow = new Map<bigint, ReviewHeadRow>(reviewHeads.map((review) => [review.showId, review]));
 
     let passCount = 0;
     let minorCount = 0;
@@ -65,18 +74,37 @@ export class SceneQcQueryService {
       (show) => (evidenceByShow.get(show.id)?.length ?? 0) === 0,
     ).length;
 
-    return toSceneQcDailySummaryDto({
-      operationalDate: window.operationalDate,
-      windowStart: window.windowStart,
-      windowEnd: window.windowEnd,
-      timezone: window.timezone,
-      eligibleCount: shows.length,
-      reviewedCount: reviewHeads.length,
-      passCount,
-      minorCount,
-      failCount,
-      blockedNoEvidenceCount,
+    const current = shows.map((show) => {
+      const head = reviewHeadByShow.get(show.id);
+      return { showId: show.id, reviewId: head?.id ?? null, reviewVersion: head?.version ?? null };
     });
+    const { state, diff } = resolveSceneQcConfirmationState({
+      pinned: latestConfirmation?.items ?? null,
+      current,
+    });
+
+    return toSceneQcDailySummaryDto(
+      {
+        operationalDate: window.operationalDate,
+        windowStart: window.windowStart,
+        windowEnd: window.windowEnd,
+        timezone: window.timezone,
+        eligibleCount: shows.length,
+        reviewedCount: reviewHeads.length,
+        passCount,
+        minorCount,
+        failCount,
+        blockedNoEvidenceCount,
+      },
+      {
+        state,
+        confirmationUid: latestConfirmation?.uid ?? null,
+        revision: latestConfirmation?.revision ?? null,
+        confirmedBy: latestConfirmation?.confirmedBy ?? null,
+        confirmedAt: latestConfirmation?.confirmedAt ?? null,
+        diff,
+      },
+    );
   }
 
   /** Filters narrow visible rows only; the unfiltered summary/eligible scope is untouched. */

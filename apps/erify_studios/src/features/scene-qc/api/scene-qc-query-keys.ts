@@ -10,4 +10,11 @@ export const sceneQcKeys = {
     [...sceneQcKeys.itemsPrefix(studioId, date), filters] as const,
   itemDetail: (studioId: string, date: string, showId: string | undefined) =>
     [...sceneQcKeys.dailyPrefix(studioId), 'item', date, showId] as const,
+  recordsPrefix: (studioId: string) => [...sceneQcKeys.all, 'records', studioId] as const,
+  records: (studioId: string, filters: unknown) => [...sceneQcKeys.recordsPrefix(studioId), filters] as const,
+  recordDetail: (studioId: string, reviewId: string | undefined) =>
+    [...sceneQcKeys.recordsPrefix(studioId), 'detail', reviewId] as const,
+  reportPrefix: (studioId: string) => [...sceneQcKeys.all, 'report', studioId] as const,
+  report: (studioId: string, confirmationId: string | undefined) =>
+    [...sceneQcKeys.reportPrefix(studioId), confirmationId] as const,
 } as const;

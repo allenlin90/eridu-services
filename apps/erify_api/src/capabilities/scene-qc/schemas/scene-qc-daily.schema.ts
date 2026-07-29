@@ -2,18 +2,20 @@ import { createZodDto } from 'nestjs-zod';
 
 import type {
   SceneQcBlockedReason,
+  SceneQcConfirmationState,
   SceneQcDailyItem,
   SceneQcDailySummary,
   SceneQcExpectedReference,
   SceneQcReviewState,
 } from '@eridu/api-types/scene-qc';
 import {
-  SCENE_QC_CONFIRMATION_STATE,
   SCENE_QC_REVIEW_STATE,
   sceneQcItemDetailQuerySchema,
   sceneQcItemsQuerySchema,
   sceneQcSummaryQuerySchema,
 } from '@eridu/api-types/scene-qc';
+
+import type { ConfirmationScopeDiff } from '../scene-qc-confirmation-state.policy';
 
 import type { EligibleShowRow, ReviewHeadRow } from './scene-qc-review.schema';
 
@@ -59,13 +61,20 @@ export type SceneQcDailySummaryCounts = {
   blockedNoEvidenceCount: number;
 };
 
-/**
- * PR 3 always returns UNCONFIRMED / nulls for the confirmation fields.
- * TODO(scene-qc-confirmation): Child PR 4 populates these from
- * SceneQcDailyConfirmation. See breakdown OQ-6 -- ships in the shared schema
- * now so PR 4 is purely additive.
- */
-export function toSceneQcDailySummaryDto(counts: SceneQcDailySummaryCounts): SceneQcDailySummary {
+/** Real confirmation state for the day, resolved via `resolveSceneQcConfirmationState`. See breakdown section 1.9. */
+export type SceneQcDailySummaryConfirmationInfo = {
+  state: SceneQcConfirmationState;
+  confirmationUid: string | null;
+  revision: number | null;
+  confirmedBy: { uid: string; name: string } | null;
+  confirmedAt: Date | null;
+  diff: ConfirmationScopeDiff | null;
+};
+
+export function toSceneQcDailySummaryDto(
+  counts: SceneQcDailySummaryCounts,
+  confirmation: SceneQcDailySummaryConfirmationInfo,
+): SceneQcDailySummary {
   return {
     operational_date: counts.operationalDate,
     window_start: counts.windowStart.toISOString(),
@@ -78,11 +87,16 @@ export function toSceneQcDailySummaryDto(counts: SceneQcDailySummaryCounts): Sce
     fail_count: counts.failCount,
     blocked_no_evidence_count: counts.blockedNoEvidenceCount,
     remaining_count: counts.eligibleCount - counts.reviewedCount,
-    confirmation: SCENE_QC_CONFIRMATION_STATE.UNCONFIRMED,
-    confirmation_id: null,
-    confirmation_revision: null,
-    confirmed_by: null,
-    confirmed_at: null,
+    confirmation: confirmation.state,
+    confirmation_id: confirmation.confirmationUid,
+    confirmation_revision: confirmation.revision,
+    confirmed_by: confirmation.confirmedBy
+      ? { id: confirmation.confirmedBy.uid, name: confirmation.confirmedBy.name }
+      : null,
+    confirmed_at: confirmation.confirmedAt ? confirmation.confirmedAt.toISOString() : null,
+    confirmation_added_show_count: confirmation.diff?.addedShowCount ?? null,
+    confirmation_removed_show_count: confirmation.diff?.removedShowCount ?? null,
+    confirmation_changed_review_count: confirmation.diff?.changedReviewCount ?? null,
   };
 }
 

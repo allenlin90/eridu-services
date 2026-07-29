@@ -11,6 +11,8 @@
 
 `SceneQcRepository.findEligibleShowsInWindow` caps the eligible-Show-per-day projection at 500 rows (`MAX_ELIGIBLE_SHOWS_PER_WINDOW`, throwing a loud `422` above that), which bounds the blast radius of both issues today.
 
+**Child PR 4 addendum:** `getDailySummary` now also calls `SceneQcConfirmationRepository.findLatestConfirmationWithScope` on every current-day 5-minute poll, to resolve real `UNCONFIRMED`/`CURRENT`/`STALE` state. This is a third query per poll cycle alongside the eligible-Show read and the evidence resolver call — two additional indexed reads on a small table (`scene_qc_daily_confirmations`), not a new class of problem. Folded in here rather than opening a fourth Scene QC tech-debt entry; the same "small day sizes today, revisit if volume grows" reasoning applies.
+
 ## Why accepted (not fixed now)
 
 - Shows-per-operational-day is small in practice (tens), so the duplicate resolution and in-memory pagination are wasted work, not a correctness or scaling problem, at current volume.

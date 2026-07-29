@@ -28,4 +28,5 @@ export const UID_PREFIXES = {
   CLIENT_MECHANIC: 'cmech',
   SCENE_PROFILE: 'scprof',
   SCENE_QC_REVIEW: 'scqcr',
+  SCENE_QC_CONFIRMATION: 'scqcc',
 } as const;

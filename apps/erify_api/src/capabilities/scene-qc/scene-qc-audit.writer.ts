@@ -26,9 +26,9 @@ import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
  * is nested in the same statement, and the
  * scene_qc_audit_targets_single_target_check CHECK rejects a null target.
  *
- * PRIVATE to SceneQcModule -- never added to `exports`. Child PR 3 adds
- * recordSceneQcReviewChange, Child PR 4 recordDailyConfirmation, each with its
- * own required typed target id.
+ * PRIVATE to SceneQcModule -- never added to `exports`. Child PR 3 added
+ * recordSceneQcReviewChange, Child PR 4 adds recordDailyConfirmation, each
+ * with its own required typed target id.
  */
 @Injectable()
 export class SceneQcAuditWriter {
@@ -79,6 +79,34 @@ export class SceneQcAuditWriter {
         metadata: input.metadata as Prisma.InputJsonValue,
         sceneQcTargets: {
           create: [{ sceneQcReview: { connect: { id: input.sceneQcReviewId } } }],
+        },
+      },
+      select: { uid: true },
+    });
+  }
+
+  /**
+   * Third method, structurally identical to the two above so the widened
+   * `scene_qc_audit_targets_single_target_check` CHECK is satisfied by
+   * construction. `action` is always `'CREATE'` -- a confirmation is never
+   * updated. Metadata stays thin: business facts (show/pass/minor/fail
+   * counts) live in the normalized confirmation/item tables, never
+   * duplicated into audit metadata (plan section 5.5).
+   */
+  async recordDailyConfirmation(input: {
+    action: Extract<AuditAction, 'CREATE'>;
+    actorId: bigint;
+    sceneQcDailyConfirmationId: bigint;
+    metadata: AuditMetadata;
+  }): Promise<{ uid: string }> {
+    return this.txHost.tx.audit.create({
+      data: {
+        uid: this.uidGenerator.generateBrandedId(UID_PREFIXES.AUDIT),
+        action: input.action,
+        actor: { connect: { id: input.actorId } },
+        metadata: input.metadata as Prisma.InputJsonValue,
+        sceneQcTargets: {
+          create: [{ sceneQcDailyConfirmation: { connect: { id: input.sceneQcDailyConfirmationId } } }],
         },
       },
       select: { uid: true },

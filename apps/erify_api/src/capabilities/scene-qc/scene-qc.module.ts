@@ -2,8 +2,12 @@ import { Module } from '@nestjs/common';
 
 import { SceneProfileService } from './scene-profile.service';
 import { SceneQcAuditWriter } from './scene-qc-audit.writer';
+import { SceneQcConfirmationRepository } from './scene-qc-confirmation.repository';
+import { SceneQcConfirmationWorkflowService } from './scene-qc-confirmation-workflow.service';
 import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
 import { SceneQcQueryService } from './scene-qc-query.service';
+import { SceneQcRecordsQueryService } from './scene-qc-records.query.service';
+import { SceneQcReportService } from './scene-qc-report.service';
 import { SceneQcRepository } from './scene-qc-review.repository';
 import { SceneQcWorkflowService } from './scene-qc-review-workflow.service';
 
@@ -13,22 +17,27 @@ import { UserModule } from '@/models/user/user.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 /**
- * Scene QC capability. Owns Scene Profiles and (from Child PR 3) Daily Review
- * outcomes. Never writes Task, TaskTarget, Show, ShowStatus, or Manager
- * Review data.
+ * Scene QC capability. Owns Scene Profiles, Daily Review outcomes (Child PR
+ * 3), and Daily Confirmation / Records / Manager Report (Child PR 4). Never
+ * writes Task, TaskTarget, Show, ShowStatus, or Manager Review data.
  *
- * `SceneQcAuditWriter`, `SceneQcRepository`, and `SceneQcEvidenceResolver` are
- * private (providers only, never exported). `SceneQcRepository` writes the
- * shared `Audit` envelope plus the capability-owned `SceneQcAuditTarget`
- * junction directly through `txHost.tx.audit`, so `AuditModule` is
- * deliberately ABSENT from this module's imports. `SceneQcRepository` and
- * `SceneQcEvidenceResolver` also read `txHost.tx.show` / `txHost.tx.task`
+ * `SceneQcAuditWriter`, `SceneQcRepository`, `SceneQcConfirmationRepository`,
+ * and `SceneQcEvidenceResolver` are private (providers only, never exported).
+ * `SceneQcAuditWriter` writes the shared `Audit` envelope plus the
+ * capability-owned `SceneQcAuditTarget` junction directly through
+ * `txHost.tx.audit`, so `AuditModule` is deliberately ABSENT from this
+ * module's imports. `SceneQcRepository` and `SceneQcConfirmationRepository`
+ * also read `txHost.tx.show` / `txHost.tx.task` / `txHost.tx.platform`
  * directly as capability-local, read-only, purpose-shaped projections (OQ-9)
  * -- Scene QC never writes those tables.
  *
  * `SceneProfileService` is consumed IN-MODULE by `SceneQcWorkflowService`
  * (Client Scene Profile snapshot at review save time) in addition to being
- * exported for the Scene Profile HTTP controller.
+ * exported for the Scene Profile HTTP controller. Child PR 4 adds no new
+ * module import: `PrismaModule`, `UidGeneratorModule`, `StorageModule`, and
+ * `UserModule` already cover the confirmation workflow's needs (the
+ * confirmation-write path connects to `Studio` by `uid`, so no
+ * `StudioModule` import is needed either).
  *
  * Registered in `AppModule` transitively via `StudiosModule` importing
  * `SceneQcHttpModule`.
@@ -39,10 +48,21 @@ import { PrismaModule } from '@/prisma/prisma.module';
     SceneProfileService,
     SceneQcAuditWriter,
     SceneQcRepository,
+    SceneQcConfirmationRepository,
     SceneQcEvidenceResolver,
     SceneQcQueryService,
     SceneQcWorkflowService,
+    SceneQcConfirmationWorkflowService,
+    SceneQcRecordsQueryService,
+    SceneQcReportService,
   ],
-  exports: [SceneProfileService, SceneQcQueryService, SceneQcWorkflowService],
+  exports: [
+    SceneProfileService,
+    SceneQcQueryService,
+    SceneQcWorkflowService,
+    SceneQcConfirmationWorkflowService,
+    SceneQcRecordsQueryService,
+    SceneQcReportService,
+  ],
 })
 export class SceneQcModule {}

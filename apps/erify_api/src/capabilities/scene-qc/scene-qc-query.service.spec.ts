@@ -1,5 +1,6 @@
 import type { EligibleShowRow, ReviewHeadRow } from './schemas/scene-qc-review.schema';
 import type { SceneProfileService } from './scene-profile.service';
+import type { SceneQcConfirmationRepository } from './scene-qc-confirmation.repository';
 import type { ResolvedSceneQcEvidence, SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
 import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
 import { SceneQcQueryService } from './scene-qc-query.service';
@@ -56,6 +57,7 @@ describe('sceneQcQueryService', () => {
   let repository: jest.Mocked<Pick<SceneQcRepository, 'findEligibleShowsInWindow' | 'findShowForReview' | 'findReviewHeadsForShows' | 'findReviewByShowAndDate' | 'findClientIdsWithActiveProfile'>>;
   let evidenceResolver: jest.Mocked<Pick<SceneQcEvidenceResolver, 'resolveForShows'>>;
   let sceneProfileService: jest.Mocked<Pick<SceneProfileService, 'getActiveProfileForClient'>>;
+  let confirmationRepository: jest.Mocked<Pick<SceneQcConfirmationRepository, 'findLatestConfirmationWithScope'>>;
   let service: SceneQcQueryService;
 
   beforeEach(() => {
@@ -72,10 +74,14 @@ describe('sceneQcQueryService', () => {
     sceneProfileService = {
       getActiveProfileForClient: jest.fn().mockResolvedValue(null),
     };
+    confirmationRepository = {
+      findLatestConfirmationWithScope: jest.fn().mockResolvedValue(null),
+    };
     service = new SceneQcQueryService(
       repository as unknown as SceneQcRepository,
       evidenceResolver as unknown as SceneQcEvidenceResolver,
       sceneProfileService as unknown as SceneProfileService,
+      confirmationRepository as unknown as SceneQcConfirmationRepository,
     );
   });
 
@@ -113,7 +119,7 @@ describe('sceneQcQueryService', () => {
       expect(summary.remaining_count).toBe(1);
     });
 
-    it('always returns UNCONFIRMED / null confirmation fields (TODO(scene-qc-confirmation))', async () => {
+    it('reports UNCONFIRMED with null confirmation fields when no confirmation has ever been recorded for the day', async () => {
       const summary = await service.getDailySummary(STUDIO_UID, OPERATIONAL_DATE);
 
       expect(summary.confirmation).toBe('UNCONFIRMED');
@@ -121,6 +127,60 @@ describe('sceneQcQueryService', () => {
       expect(summary.confirmation_revision).toBeNull();
       expect(summary.confirmed_by).toBeNull();
       expect(summary.confirmed_at).toBeNull();
+      expect(summary.confirmation_added_show_count).toBeNull();
+      expect(summary.confirmation_removed_show_count).toBeNull();
+      expect(summary.confirmation_changed_review_count).toBeNull();
+    });
+
+    it('reports CURRENT with confirmation identity when the pinned scope matches the current eligible scope exactly', async () => {
+      repository.findReviewHeadsForShows.mockResolvedValue([buildReviewHead({ showId: 100n, id: 500n, version: 1 })]);
+      confirmationRepository.findLatestConfirmationWithScope.mockResolvedValue({
+        id: 1n,
+        uid: 'scqcc_a',
+        revision: 2,
+        confirmedAt: new Date('2026-06-01T12:00:00.000Z'),
+        confirmedBy: { uid: 'user_confirmer', name: 'Confirmer' },
+        items: [{ showId: 100n, reviewId: 500n, reviewVersion: 1 }],
+      });
+
+      const summary = await service.getDailySummary(STUDIO_UID, OPERATIONAL_DATE);
+
+      expect(summary.confirmation).toBe('CURRENT');
+      expect(summary.confirmation_id).toBe('scqcc_a');
+      expect(summary.confirmation_revision).toBe(2);
+      expect(summary.confirmed_by).toEqual({ id: 'user_confirmer', name: 'Confirmer' });
+      expect(summary.confirmed_at).toBe('2026-06-01T12:00:00.000Z');
+      expect(summary.confirmation_added_show_count).toBeNull();
+    });
+
+    it('reports STALE with diff counts when the eligible scope has drifted since the pinned confirmation', async () => {
+      repository.findEligibleShowsInWindow.mockResolvedValue([
+        buildShow({ id: 100n, uid: 'show_a' }),
+        buildShow({ id: 101n, uid: 'show_b' }),
+      ]);
+      repository.findReviewHeadsForShows.mockResolvedValue([
+        buildReviewHead({ showId: 100n, id: 500n, version: 1 }),
+        buildReviewHead({ showId: 101n, id: 501n, version: 1 }),
+      ]);
+      evidenceResolver.resolveForShows.mockResolvedValue(new Map([
+        [100n, [buildEvidence()]],
+        [101n, [buildEvidence()]],
+      ]));
+      confirmationRepository.findLatestConfirmationWithScope.mockResolvedValue({
+        id: 1n,
+        uid: 'scqcc_a',
+        revision: 1,
+        confirmedAt: new Date('2026-06-01T12:00:00.000Z'),
+        confirmedBy: { uid: 'user_confirmer', name: 'Confirmer' },
+        items: [{ showId: 100n, reviewId: 500n, reviewVersion: 1 }],
+      });
+
+      const summary = await service.getDailySummary(STUDIO_UID, OPERATIONAL_DATE);
+
+      expect(summary.confirmation).toBe('STALE');
+      expect(summary.confirmation_added_show_count).toBe(1);
+      expect(summary.confirmation_removed_show_count).toBe(0);
+      expect(summary.confirmation_changed_review_count).toBe(0);
     });
   });
 
