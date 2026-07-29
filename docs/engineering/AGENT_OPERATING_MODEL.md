@@ -322,13 +322,12 @@ The target operating model is reached when:
 1. Establish this operating model and update root agent instructions.
 2. Replace the current four-mode grouping with the corrected dispositions.
 3. Create the machine-readable classification registry.
-4. Extract the three pilot knowledge entries:
+4. Extract the three pilot knowledge entries together with the consumer skills or workflows that retrieve and apply them:
    - frontend technology stack;
    - architecture/design doctrine;
    - show-production lifecycle.
-5. Build or refine the reasoning and review consumers that load those sources.
-6. Extract broader pattern families and thin their implementation skills.
-7. Consolidate overlapping review and authoring skills.
-8. Re-measure catalog size, routing quality, and cross-client behavior.
+5. Extract broader pattern families and thin their implementation skills.
+6. Consolidate overlapping review and authoring skills.
+7. Re-measure catalog size, routing quality, and cross-client behavior.
 
 Do not move all pattern files first and hope routing improves later. Each extraction must land with the consumer skill or workflow that will retrieve and apply the new canonical source.

@@ -264,6 +264,7 @@ Cursor and Copilot integrations are secondary and should not block the primary s
 ```bash
 git clone <repository-url> eridu-services
 cd eridu-services
+node scripts/check-agent-tooling.mjs # dependency-free diagnosis before workspace install
 pnpm install --frozen-lockfile
 ```
 

@@ -383,19 +383,19 @@ Until that validator exists, this document is the reviewed inventory and must be
 - Keep caveman as presentation-only and explicit.
 - Add representative routing tests for each lifecycle intervention.
 
-### Wave 2 — three representative knowledge splits
+### Wave 2 — classification registry and validator
+
+- Add the external registry.
+- Validate coverage, lifecycle stage, invocation policy, destinations, links, and authority.
+- Include classification state in generated indexes without making knowledge invocable.
+
+### Wave 3 — three representative knowledge splits
 
 1. `frontend-tech-stack` → engineering-stack knowledge plus a thin or retired skill.
 2. `design-patterns` → architecture-pattern knowledge plus focused pattern-selection/review procedures.
 3. `show-production-lifecycle` → OKF domain concept plus thin change-impact and implementation routing.
 
-Verify the same representative tasks with Claude Code, Codex, and OpenCode before removing duplicated text.
-
-### Wave 3 — classification registry and validator
-
-- Add the external registry.
-- Validate coverage, lifecycle stage, invocation policy, destinations, links, and authority.
-- Include classification state in generated indexes without making knowledge invocable.
+Land each extraction with the skill or reasoning consumer that retrieves and applies the new source. Verify the same representative tasks with Claude Code, Codex, and OpenCode before removing duplicated text.
 
 ### Wave 4 — workflow and review reconciliation
 

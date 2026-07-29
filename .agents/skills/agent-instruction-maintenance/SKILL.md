@@ -73,10 +73,10 @@ For changes to the supported client model, verify Claude Code, Codex, and OpenCo
 
 When a task changes an established pattern, convention, or architectural direction — deprecating or superseding a skill, flipping a default, changing a doctrine — the change is only complete when every artifact that asserts the old pattern is reconciled in the **same PR**. This is a *ready-to-start* precondition, not a cleanup afterthought: enumerate the reconciliation set before writing the change.
 
-1. **Enumerate.** Grep the pattern name and the owning skill across the instruction surface:
+1. **Enumerate.** Search the pattern name and the owning skill across the instruction surface:
 
    ```bash
-   grep -rln "<skill-name>\|<pattern-term>" .agents .claude .cursor .opencode ai apps docs infra packages AGENTS.md README.md opencode.json
+   rg -l "<skill-name>|<pattern-term>" .agents .claude .cursor .opencode ai apps docs infra packages AGENTS.md README.md opencode.json
    ```
 
    Include vendor-specific surfaces: Claude agents and memory under `.claude/` and Cursor adapters under `.cursor/` can route work to the old pattern too.
