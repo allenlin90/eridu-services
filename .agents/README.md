@@ -4,7 +4,10 @@
 
 The current tree predates the knowledge/OKF separation and therefore contains mixed, knowledge-heavy, workflow-shaped, and presentation-oriented entries under `.agents/skills/`. Treat that as migration debt, not as a precedent for adding more skill-shaped files.
 
-See [`docs/engineering/AGENT_OPERATING_MODEL.md`](../docs/engineering/AGENT_OPERATING_MODEL.md) for the target reasoning lifecycle, mode timing, pattern-consumer model, catalog targets, and measurable exit criteria.
+See:
+
+- [`docs/engineering/AGENT_OPERATING_MODEL.md`](../docs/engineering/AGENT_OPERATING_MODEL.md) for the target reasoning lifecycle, mode timing, pattern-consumer model, catalog targets, and measurable exit criteria;
+- [`docs/engineering/AGENT_INVOCATION_COMPATIBILITY.md`](../docs/engineering/AGENT_INVOCATION_COMPATIBILITY.md) for stable workflow IDs and cross-client entrypoint requirements.
 
 ## Content Classes
 
@@ -13,6 +16,7 @@ See [`docs/engineering/AGENT_OPERATING_MODEL.md`](../docs/engineering/AGENT_OPER
 | Lifecycle/reasoning skill | Select the next task stage, resolve uncertainty, choose evidence, or route review lenses | `.agents/skills/` while cross-client invocation requires it |
 | Capability skill | Task-triggered procedure with selection logic, steps, and verification | `.agents/skills/<name>/SKILL.md` |
 | Review skill | Apply a declared risk or quality lens and produce findings | `.agents/skills/<name>/SKILL.md` |
+| Workflow bridge | Stable public invocation that forwards to one canonical workflow | `.agents/skills/<name>/SKILL.md` plus `.agents/workflows/` |
 | Workflow | Multi-step orchestration across skills or repository lifecycle stages | `.agents/workflows/` |
 | Rule | Compact constraint that should apply persistently without task-specific invocation | `.agents/rules/` |
 | Presentation mode | Explicitly requested output style that does not alter reasoning | Temporarily a manually invoked skill; dedicated registry under review |
@@ -26,17 +30,19 @@ See [`docs/engineering/AGENT_OPERATING_MODEL.md`](../docs/engineering/AGENT_OPER
 
 A new entry belongs in `.agents/skills/` only when all of these are true:
 
-1. A concrete task, reasoning gate, or review need should trigger it.
+1. A concrete task, reasoning gate, review need, or stable workflow entrypoint should trigger it.
 2. The body tells an agent what to do, not mainly what is true.
-3. It contains selection logic, an ordered procedure, or both.
+3. It contains selection logic, an ordered procedure, or a thin bridge to one canonical workflow.
 4. It defines a verifiable outcome or completion check.
-5. The procedure is reusable across more than one immediate task.
+5. The procedure or interface is reused across more than one immediate task.
 6. Stable facts, patterns, and long reference material are linked rather than duplicated.
 7. Its trigger and output are materially distinct from existing skills.
 
 Adding a `When to Use` section to a knowledge document does not make it a skill.
 
 A pattern or guide is not independently invocable merely because an agent may need it. Pattern knowledge should normally be selected and consumed by a reasoning, implementation, or review skill.
+
+A frequently used workflow bridge such as `pr-ready` may remain even when its canonical steps live under `.agents/workflows/`, because its stable name is a public interface used by Claude Code, Codex, and OpenCode.
 
 ## Routing Test
 
@@ -45,6 +51,7 @@ Before creating or expanding agent content, classify it:
 - **Which stage should the task enter next?** Lifecycle/reasoning skill.
 - **How to perform a concrete task?** Capability skill.
 - **How to inspect work through a particular risk lens?** Review skill.
+- **Which stable name should invoke a canonical workflow?** Workflow bridge.
 - **How to coordinate several procedures?** Workflow.
 - **What must always be obeyed?** Rule.
 - **What is true about the company, domain, architecture, pattern, or deployed stack?** Knowledge.
@@ -55,7 +62,8 @@ Before creating or expanding agent content, classify it:
 When a file is mixed, split by authority:
 
 ```text
-.agents/skills/<capability>/SKILL.md    thin procedure and routing
+.agents/skills/<capability>/SKILL.md    thin procedure, review, or workflow bridge
+.agents/workflows/<workflow>.md        canonical multi-step orchestration
 knowledge/<bundle>/<concept>.md        durable facts, patterns, and concepts
 .agents/skills/<capability>/references implementation detail needed only by the procedure
 docs/...                               product or engineering documentation with its own lifecycle
@@ -76,23 +84,28 @@ orient → resolve decisions → select knowledge/procedure → implement → re
 
 Presentation style must not remove uncertainty, warnings, decisions, or verification evidence.
 
-## Thin Skill Wrappers
+## Thin Skill and Workflow Bridges
 
 A skill may remain as a thin discoverable wrapper around a workflow or knowledge concept when agent clients need an invocable routing surface.
 
 A wrapper should contain only:
 
-- trigger conditions;
-- source-selection instructions;
-- the task procedure;
+- stable canonical ID and trigger conditions;
+- source-selection or target-resolution instructions;
+- the task procedure, or a pointer to one canonical workflow;
 - verification and output expectations;
-- links to canonical workflow or knowledge sources.
+- links to canonical workflow or knowledge sources;
+- client-specific explicit/implicit invocation metadata where needed.
 
-The wrapper must not duplicate the full pattern library, domain model, architecture reference, SOP, or current deployment state.
+The wrapper must not duplicate the full workflow, pattern library, domain model, architecture reference, SOP, or current deployment state.
+
+Do not rename or remove a stable workflow bridge solely to reduce the skill count. Preserve client-native entrypoints and test them before any deprecation.
 
 ## Target Catalog
 
 The first milestone is no more than 50 implicitly invocable skills. The post-consolidation target is 35 or fewer, provided each remaining trigger and output is materially distinct.
+
+Explicit-only stable workflow bridges are tracked separately from the implicit catalog target.
 
 The implicit catalog should contain:
 
@@ -114,12 +127,13 @@ When adding, removing, splitting, or reclassifying agent content:
 1. Update the canonical source and all affected links.
 2. Update [`docs/engineering/AGENT_CONTENT_REORGANIZATION.md`](../docs/engineering/AGENT_CONTENT_REORGANIZATION.md) while the migration inventory is active.
 3. Update or remove client adapters that point at the old location.
-4. Regenerate `.agents/skills/INDEX.md` with `pnpm agents:index` when a skill trigger changes.
-5. Run `pnpm agents:validate`.
-6. Run Markdown link validation for all touched trees.
-7. Record deferred moves explicitly; do not leave two files both claiming canonical authority.
-8. Verify representative routing with Claude Code, Codex, and OpenCode.
+4. Preserve stable public workflow IDs or follow the documented deprecation window.
+5. Regenerate `.agents/skills/INDEX.md` with `pnpm agents:index` when a skill trigger changes.
+6. Run `pnpm agents:validate`.
+7. Run Markdown link validation for all touched trees.
+8. Record deferred moves explicitly; do not leave two files both claiming canonical authority.
+9. Verify representative routing and explicit invocation with Claude Code, Codex, and OpenCode.
 
 ## Current Migration Rule
 
-Do not perform a broad directory move solely to make the tree look clean. Migrate one coherent cluster at a time, land the consumer skill or workflow together with extracted knowledge, preserve routing compatibility, and verify the same task with Claude Code, Codex, and OpenCode before removing an old path.
+Do not perform a broad directory move solely to make the tree look clean. Migrate one coherent cluster at a time, land the consumer skill or workflow together with extracted knowledge, preserve stable workflow entrypoints, and verify the same task with Claude Code, Codex, and OpenCode before removing an old path.
