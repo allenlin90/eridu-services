@@ -56,6 +56,7 @@ The deployed instance differs from the original runbook assumptions:
 Only the uploader script was changed; the 28 knowledge .md files are untouched.
 """
 import argparse
+import datetime
 import hashlib
 import json
 import os
@@ -168,6 +169,46 @@ def apply_and_verify_grants(api, kb_id, derived_grants):
     print(f"Access gate: applied and verified {len(want)} grant(s) (exact match).")
 
 
+def verify_manual_grants(api, kb_name):
+    """Gate the manual-exception path on the collection ALREADY being restricted.
+
+    The exception permits grants that a human maintains; it does not permit an
+    unrestricted publishing window. So this refuses to create the collection,
+    and refuses to publish into one whose grants are absent (unrestricted on
+    0.10.x) or wildcarded. It returns the kb_id so the caller never has to fall
+    back to find_or_create_kb().
+    """
+    kb = next((k for k in _as_items(api.get("list_kb"))
+               if isinstance(k, dict) and k.get("name") == kb_name), None)
+    if kb is None:
+        raise GateError(
+            f"{kb_name!r} does not exist, and the manual-grants exception may not "
+            "create it. A new collection starts with no grants, which is "
+            "unrestricted on 0.10.x. Create it and set its approved grants first, "
+            "or publish it through the derived path."
+        )
+    grants = api.get("get_kb", kb_id=kb["id"]).get("access_grants") or []
+    if not grants:
+        raise GateError(
+            f"{kb_name!r} has NO access grants -- it is unrestricted on this "
+            "deployment. Refusing to publish into it. Set its approved manual "
+            "grants, then re-run."
+        )
+    bad = [g for g in grants
+           if g.get("principal_id") in ("*", "", None)
+           or (g.get("principal_type") == "user" and g.get("principal_id") == "*")]
+    if bad:
+        raise GateError(
+            f"{kb_name!r} carries a wildcard/public grant: {bad!r}. "
+            "Refusing to publish into an effectively public collection."
+        )
+    reads = sum(1 for g in grants if g.get("permission") == "read")
+    writes = sum(1 for g in grants if g.get("permission") == "write")
+    print(f"Access gate: manual grants verified on {kb_name} -- "
+          f"{len(grants)} grant(s) ({reads} read, {writes} write), no wildcard.")
+    return kb["id"]
+
+
 def derive_access_grants(api, md_files, repo_root=REPO_ROOT):
     """Derive Open WebUI access_grants from the files' `audiences` metadata.
 
@@ -207,9 +248,11 @@ def derive_access_grants(api, md_files, repo_root=REPO_ROOT):
     wanted = set()
     seen_sensitivities = set()
     problems = []
+    seen_ids = {}
     for path in md_files:
         fm = _read_frontmatter(path)
-        for field in ("id", "audiences", "owner", "sensitivity", "status"):
+        # The canonical required set, from the schema itself -- not a subset.
+        for field in schema["requiredFields"]:
             if not fm.get(field):
                 problems.append(f"{path}: missing required '{field}'")
         seen_sensitivities.add(fm.get("sensitivity"))
@@ -217,8 +260,36 @@ def derive_access_grants(api, md_files, repo_root=REPO_ROOT):
             problems.append(f"{path}: sensitivity {fm.get('sensitivity')!r} not in {sorted(valid_sens)}")
         if fm.get("status") not in valid_status:
             problems.append(f"{path}: status {fm.get('status')!r} not in {sorted(valid_status)}")
-        if fm.get("status") in ("draft", "archived"):
-            problems.append(f"{path}: status {fm.get('status')!r} must never be synced to a live collection")
+        # Only "active" belongs in a live collection. draft was never reviewed,
+        # archived is excluded from sync, and superseded means another document
+        # replaced it -- routing it would answer from the outdated one.
+        if fm.get("status") in ("draft", "archived", "superseded"):
+            problems.append(
+                f"{path}: status {fm.get('status')!r} must never be synced to a live "
+                "collection; only 'active' may publish")
+        # Stable ids are what citations resolve to; a duplicate silently merges
+        # two documents' provenance.
+        doc_id = fm.get("id")
+        if doc_id:
+            if doc_id in seen_ids:
+                problems.append(f"{path}: duplicate id {doc_id!r} (also in {seen_ids[doc_id]})")
+            else:
+                seen_ids[doc_id] = path
+        # Review dates gate staleness; an unparseable or reversed pair means the
+        # review deadline cannot be enforced.
+        dates = {}
+        for field in ("reviewed_at", "review_by"):
+            raw = fm.get(field)
+            if not raw:
+                continue
+            try:
+                dates[field] = datetime.date.fromisoformat(str(raw).strip())
+            except ValueError:
+                problems.append(f"{path}: {field} {raw!r} is not an ISO date (YYYY-MM-DD)")
+        if len(dates) == 2 and dates["review_by"] < dates["reviewed_at"]:
+            problems.append(
+                f"{path}: review_by ({dates['review_by']}) precedes "
+                f"reviewed_at ({dates['reviewed_at']})")
         for aud in fm.get("audiences") or []:
             if aud in shorthands:
                 wanted.update(shorthands[aud])
@@ -495,15 +566,19 @@ def main():
                 f"'manual_grant_exceptions' in {AUDIENCE_MAP_PATH} with the doc that "
                 "approves it, and get that change reviewed."
             )
-        print(f"Access gate: SKIPPED for {args.kb_name} under its approved exception "
-              f"({allowed[args.kb_name]}).")
+        print(f"Access gate: derivation SKIPPED for {args.kb_name} under its approved "
+              f"exception ({allowed[args.kb_name]}).")
         print(f"  Caller reason: {args.manual_grants_exception}")
-        print("  Grants will NOT be derived. Verify them by hand immediately after this run.")
         derived_grants = None
+        # Derivation is skipped; verification is NOT. The collection must already
+        # exist and already be restricted before anything is published into it.
+        preverified_kb_id = verify_manual_grants(api, args.kb_name)
     else:
         derived_grants = derive_access_grants(api, md_files)
+        preverified_kb_id = None
 
-    kb_id = find_or_create_kb(api, args.kb_name, args.description)
+    kb_id = (preverified_kb_id if preverified_kb_id is not None
+             else find_or_create_kb(api, args.kb_name, args.description))
 
     # Lock the collection down BEFORE a single file lands in it. A newly created
     # KB has no grants, which is unrestricted on 0.10.x, so applying grants after

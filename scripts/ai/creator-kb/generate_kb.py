@@ -42,6 +42,11 @@ from openpyxl import load_workbook
 
 LINK_RE = re.compile(r"https?://\S+")
 
+# NOTE: upload_kb.py derives Open WebUI access grants from the `audiences` below
+# by default. This collection's grants are hand-maintained under a recorded
+# exception, so its uploads must pass --manual-grants-exception or the run will
+# overwrite them. See ai/openwebui/knowledge/creator-services/README.md
+# § Governance status for the exact invocation.
 GOVERNANCE = {
     "owner": "erisa-creator-services",
     # Must be a value from company-wiki/tools/wiki-schema.json's audiences
