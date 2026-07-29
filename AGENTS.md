@@ -84,6 +84,25 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Google Antigravity**: discovers `.agents/skills/` and `.agents/rules/` natively. Keep their shared content tool-neutral.
 - **OpenCode**: `opencode.json` loads this file. Skills are routed from `.agents/skills/` via `.opencode/skills` symlink.
 
+## Knowledge and OKF Contract
+
+Claude Code, Codex, and OpenCode must follow the same Open Knowledge Format behavior. Read [`docs/engineering/OKF_AGENT_CONTRACT.md`](docs/engineering/OKF_AGENT_CONTRACT.md) before changing or materially relying on an OKF bundle.
+
+Mandatory behavior:
+
+- Apply OKF only to canonical knowledge bundles, not every Markdown file or `.agents/skills/`.
+- Discover progressively from the nearest `index.md`; do not load an entire bundle by default.
+- Treat the bundle-relative path without `.md` as the portable concept ID.
+- Require a non-empty `type` for concepts, but tolerate unknown types and preserve unknown frontmatter fields.
+- Inspect `status`, `stale_after`, `sources`, `generated`, and `verified` when present; surface stale, draft, deprecated, or unverified material instead of silently treating it as current.
+- Use QMD or `rg` to select evidence, then inspect the canonical source before editing or making important claims.
+- Prefer standard Markdown links. Existing `[[wikilink]]` syntax is transitional compatibility only.
+- Treat `audiences` and `sensitivity` as policy metadata, not authorization enforcement.
+- Do not invent missing company facts, source attribution, verifier identities, or freshness claims.
+- Preserve repository extensions such as stable upload IDs, ownership, audience, and sensitivity metadata during round trips.
+
+The current Open WebUI knowledge tree under `ai/openwebui/knowledge/` is transitional. The target canonical source is `knowledge/` or a private knowledge repository; deployment adapters and published state belong under `infra/` after a dedicated migration.
+
 ## Project-Specific Guidelines
 
 ### Repository Overview
