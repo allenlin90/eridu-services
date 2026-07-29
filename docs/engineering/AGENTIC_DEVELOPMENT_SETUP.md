@@ -5,6 +5,8 @@
 > **Primary coding agents:** Claude Code, Codex, and OpenCode.
 >
 > **Secondary adapters:** Cursor and GitHub Copilot. They are supported when practical but are not required for the main workflow.
+>
+> **Canonical setup source:** This document owns installation and machine-onboarding commands. Architecture and retrieval documents should link here instead of maintaining competing installation procedures.
 
 ## Setup Goal
 
@@ -283,6 +285,7 @@ Stricter checks:
 pnpm agents:doctor --strict       # recommended retrieval and shell tools required
 pnpm agents:doctor --all-agents   # Claude, Codex, and OpenCode all required
 pnpm agents:doctor --strict --all-agents
+pnpm agents:doctor --runtime-only # skip primary-agent checks
 ```
 
 ## 6. Configure QMD
