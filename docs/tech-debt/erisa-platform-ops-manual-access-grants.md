@@ -2,7 +2,7 @@
 
 ## Affected surface
 
-- `ai/openwebui/access/audience-group-map.json` (new, unapproved)
+- `ai/openwebui/access/audience-group-map.json` (approved for ERISA only)
 - `scripts/ai/creator-kb/upload_kb.py`
 - `ai/openwebui/knowledge/erisa-platform-ops/` (collection `erisa-platform-ops-sop`)
 - `ai/architecture/llm-knowledge-base-plan.md` § Content Contract, Phase 0
@@ -21,7 +21,7 @@ ungranted collection.
 (`Erisa - Creator` read; `Admins` read + write) are byte-identical to the grants
 it previously carried by hand, so adopting derivation changed nobody's access.
 
-**Three gaps remain, all deliberate and all fail-closed.**
+**Two gaps remain, both deliberate and both fail-closed.**
 
 **1. Only ERISA is mapped.** `commerce-*`, `erify-*`, `finance-manager` and
 `hr-manager` have no entries, because no owner has decided how the tier-shaped
@@ -42,12 +42,12 @@ grants rather than widening them. The SOP does cover campaign incentive work, so
 extending to `Erisa - Campaign` is defensible — but it is a widening and has to
 be an explicit edit to the map.
 
-**3. The map contradicts `wiki-schema.json` on `Org - General`.** The schema's
-audiences note says org-general (the GM, read-only) is granted automatically on
-every collection *regardless of sensitivity*. The map deliberately does not,
-because applied literally it would give automatic read on department-confidential
-content. The two now disagree, which is a doctrine question for the plan doc —
-not something to settle by quietly editing either side.
+**Resolved, no longer a gap:** the `Org - General` automatic grant. The schema
+previously said it applied to every collection "regardless of sensitivity",
+which contradicted the sensitivity ladder in the same file. It is now scoped to
+`public`/`internal` collections, reconciled across `wiki-schema.json`, the
+company-wiki README and CHANGELOG, and `llm-knowledge-base-plan.md` in one
+change. `erisa-platform-ops-sop` is `department`, so the grant is withheld.
 
 ## Risk
 
@@ -67,9 +67,6 @@ Per gap, all trigger-gated rather than immediate:
 1. **Other pillars** — when a collection with non-ERISA audiences is first
    published. It will be refused until an owner adds the entries.
 2. **Campaign access** — when the Campaign team needs Platform PoC content.
-3. **`Org - General`** — at the next review of the Content Contract, or sooner
-   if another collection needs the automatic-grant question settled.
-
 Separately, the derivation this PR adds is what the
 `creator-services-tiktok-shop` exception gate has been waiting on; that gate can
 lift once someone confirms the mapping covers that collection's audiences too.

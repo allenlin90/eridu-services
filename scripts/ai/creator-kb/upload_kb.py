@@ -123,6 +123,45 @@ def _read_frontmatter(path):
     return fm
 
 
+def _manual_exception_allowlist(repo_root=Path(".")):
+    """Collections with a reviewed, recorded manual-grants exception."""
+    path = repo_root / AUDIENCE_MAP_PATH
+    if not path.exists():
+        return {}
+    raw = json.loads(path.read_text()).get("manual_grant_exceptions") or {}
+    # keys beginning with "$" are documentation, not collection names
+    return {k: v for k, v in raw.items() if not k.startswith("$")}
+
+
+def _grant_key(g):
+    return (g.get("principal_type"), g.get("principal_id"), g.get("permission"))
+
+
+def apply_and_verify_grants(api, kb_id, derived_grants):
+    """Apply derived grants and require the readback to match EXACTLY.
+
+    A non-empty readback is not sufficient: the server could have retained a
+    stale or public principal, dropped a grant, or applied only a subset. Any
+    of those leaves the collection more open than the derivation intended, so
+    only exact set equality is accepted.
+    """
+    api.post("kb_access", json_body={"access_grants": derived_grants}, kb_id=kb_id)
+    applied = api.get("get_kb", kb_id=kb_id).get("access_grants") or []
+    want = {_grant_key(g) for g in derived_grants}
+    got = {_grant_key(g) for g in applied}
+    if got != want:
+        missing = sorted(want - got)
+        extra = sorted(got - want)
+        raise GateError(
+            "Grant readback does not match the derived set; the collection is "
+            "NOT in the intended state.\n"
+            f"  missing: {missing or 'none'}\n"
+            f"  unexpected: {extra or 'none'}\n"
+            "Fix the grants by hand before anyone uses this collection."
+        )
+    print(f"Access gate: applied and verified {len(want)} grant(s) (exact match).")
+
+
 def derive_access_grants(api, md_files, repo_root=Path(".")):
     """Derive Open WebUI access_grants from the files' `audiences` metadata.
 
@@ -160,12 +199,14 @@ def derive_access_grants(api, md_files, repo_root=Path(".")):
 
     # 1. Validate every file's governance metadata, collecting the audience union.
     wanted = set()
+    seen_sensitivities = set()
     problems = []
     for path in md_files:
         fm = _read_frontmatter(path)
         for field in ("id", "audiences", "owner", "sensitivity", "status"):
             if not fm.get(field):
                 problems.append(f"{path}: missing required '{field}'")
+        seen_sensitivities.add(fm.get("sensitivity"))
         if fm.get("sensitivity") not in valid_sens:
             problems.append(f"{path}: sensitivity {fm.get('sensitivity')!r} not in {sorted(valid_sens)}")
         if fm.get("status") not in valid_status:
@@ -196,6 +237,17 @@ def derive_access_grants(api, md_files, repo_root=Path(".")):
     auto = amap.get("automatic") or {}
     auto_read = list(auto.get("read") or [])
     auto_write = list(auto.get("write") or [])
+
+    # Sensitivity-scoped automatic grants. wiki-schema.json grants these only to
+    # collections whose most-restrictive file sits within the listed tiers, so a
+    # department- or restricted-tier collection does not silently widen.
+    for group, tiers in (auto.get("sensitivity_scoped_read") or {}).items():
+        if seen_sensitivities <= set(tiers):
+            auto_read.append(group)
+        else:
+            blocked = sorted(seen_sensitivities - set(tiers))
+            print(f"Access gate: withholding automatic read for {group!r} -- "
+                  f"collection contains {', '.join(blocked)} content.")
     missing = sorted(n for n in want_names | set(auto_read) | set(auto_write) if n not in live)
     if missing:
         raise GateError(
@@ -426,14 +478,34 @@ def main():
     # Access gate FIRST: derive and validate before anything is published, so a
     # refusal leaves no partially-uploaded, ungranted collection behind.
     if args.manual_grants_exception:
-        print("Access gate: SKIPPED by --manual-grants-exception -- "
-              f"{args.manual_grants_exception}")
+        # A free-form reason is not authorization. The collection must appear in
+        # the reviewed allowlist in audience-group-map.json, or the gate stands.
+        allowed = _manual_exception_allowlist()
+        if args.kb_name not in allowed:
+            raise GateError(
+                f"{args.kb_name!r} has no approved manual-grants exception.\n"
+                f"Approved: {', '.join(sorted(allowed)) or '(none)'}\n"
+                "--manual-grants-exception is not a bypass: add the collection to "
+                f"'manual_grant_exceptions' in {AUDIENCE_MAP_PATH} with the doc that "
+                "approves it, and get that change reviewed."
+            )
+        print(f"Access gate: SKIPPED for {args.kb_name} under its approved exception "
+              f"({allowed[args.kb_name]}).")
+        print(f"  Caller reason: {args.manual_grants_exception}")
         print("  Grants will NOT be derived. Verify them by hand immediately after this run.")
         derived_grants = None
     else:
         derived_grants = derive_access_grants(api, md_files)
 
     kb_id = find_or_create_kb(api, args.kb_name, args.description)
+
+    # Lock the collection down BEFORE a single file lands in it. A newly created
+    # KB has no grants, which is unrestricted on 0.10.x, so applying grants after
+    # upload would leave every file readable by anyone for the length of the run
+    # -- and permanently if the process died partway.
+    if derived_grants is not None:
+        apply_and_verify_grants(api, kb_id, derived_grants)
+
     present = existing_files(api, kb_id)
     dirs = existing_dirs(api, kb_id)
     remaining = dict(present)  # names left in the KB once we've accounted for local files
@@ -505,12 +577,9 @@ def main():
     print(f"\nDone: added={ok - updated} updated={updated} skipped={skipped} "
           f"removed={removed} failed={failed}")
     if derived_grants is not None:
-        api.post("kb_access", json_body={"access_grants": derived_grants}, kb_id=kb_id)
-        applied = api.get("get_kb", kb_id=kb_id).get("access_grants") or []
-        if not applied:
-            sys.exit("FATAL: grants were applied but read back empty -- the collection "
-                     "is unrestricted. Fix manually before anyone uses it.")
-        print(f"Access gate: applied and verified {len(applied)} grant(s).")
+        # Re-verify after the writes: confirm nothing about the upload path
+        # altered the grants that were applied before publishing.
+        apply_and_verify_grants(api, kb_id, derived_grants)
 
     print("Next steps:")
     print("  1. Attach the KB to the assistant model (Workspace > Models > edit > Knowledge).")

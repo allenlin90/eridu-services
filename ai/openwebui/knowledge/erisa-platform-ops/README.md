@@ -6,12 +6,15 @@ violation resolution and incentive/voucher management.
 
 **Collection:** `erisa-platform-ops-sop` (Open WebUI).
 
-> ⚠️ **Internal staff knowledge — not creator-facing.** This collection contains
-> internal escalation thresholds, budget-allocation logic, AM messaging templates,
-> Lark working-sheet links, and worked examples with real creator handles, UIDs
-> and GMV figures. It must **not** be attached to `creator-service-assistant`
-> (the creator-facing assistant) or to any assistant whose audience includes
-> creators. Attach only to an ERISA-internal assistant.
+> ⚠️ **Internal staff knowledge — not creator-facing.** This collection carries
+> internal escalation thresholds, budget-allocation logic, AM messaging templates
+> and Platform AM coordination detail. It must **not** be attached to
+> `creator-service-assistant` (the creator-facing assistant) or to any assistant
+> whose audience includes creators. Attach only to an ERISA-internal assistant.
+>
+> The source SOP additionally illustrates its procedures with a real creator and
+> an internal sheet link. **None of that is committed here** — see *Every
+> identifier … is synthetic* below.
 
 ## Source
 
@@ -144,21 +147,17 @@ Every content file carries the Content Contract frontmatter from
 `owner: erisa-creator-services`, `sensitivity: department`, `status: active`,
 `tags`, `source_refs`, `reviewed_at`, `review_by`.
 
-**This collection has no grant-derivation and is NOT covered by an approved
-exception.** Its Open WebUI access grants are set by hand, not derived from the
-frontmatter above. The pilot-gated exception in
-`ai/architecture/llm-knowledge-base-plan.md` § Content Contract is scoped to
-`creator-services-tiktok-shop` **only**; it does not extend here, and this
-README does not extend it. Widening that exception would be a doctrine change
-and would have to go through the repository's pattern/direction reconciliation
-gate in `AGENTS.md`, not through a collection README.
+Those values are what the access gate derives grants from — this collection
+claims **no** exception to the Content Contract. `upload_kb.py` resolves
+`audiences: [erisa]` to `Erisa - Creator`, adds `Admins` read + write, and
+withholds `Org - General` because `sensitivity: department` sits outside the
+tiers that grant it. Grants are applied and verified **before** any file is
+uploaded, then re-verified after.
 
-So this is an **open governance gap**, tracked at
+What remains open is narrower than a missing gate: the map covers ERISA only,
+and maps it to `Erisa - Creator` rather than also `Erisa - Campaign`. Both are
+tracked at
 [`../../../../docs/tech-debt/erisa-platform-ops-manual-access-grants.md`](../../../../docs/tech-debt/erisa-platform-ops-manual-access-grants.md).
-The gap is not theoretical: on first deployment the collection was created
-with **no grants at all** — unrestricted on this build — and had to be
-corrected by hand afterwards. Until derivation exists, whoever deploys or
-re-uploads this collection must verify grants immediately after every run.
 
 `sensitivity: department` (Erisa pillar only) is deliberate: the content is
 operational rather than leadership-restricted, but it must not reach Commerce,

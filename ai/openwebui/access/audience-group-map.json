@@ -13,9 +13,8 @@
     "groups are function-shaped (Erisa - Creator / Erisa - Campaign). That mismatch is why this",
     "file is an explicit reviewed decision rather than something a script infers.",
     "",
-    "'audiences' maps each vocabulary group to a list of live Open WebUI group NAMES, resolved to",
-    "ids at run time against GET /api/v1/groups/ so a rename fails loudly instead of silently",
-    "granting nothing. 'automatic' grants apply to every collection; keep that list minimal."
+    "Group NAMES are resolved to ids at run time against GET /api/v1/groups/, so a rename fails",
+    "loudly instead of silently granting nothing."
   ],
 
   "status": "approved",
@@ -29,8 +28,25 @@
   },
 
   "automatic": {
+    "$comment": [
+      "Applied to every collection on top of the audience-derived grants.",
+      "'sensitivity_scoped_read' grants read only when EVERY file in the collection sits within",
+      "the listed sensitivity tiers; otherwise the grant is withheld and the run says so."
+    ],
     "read": ["Admins"],
-    "write": ["Admins"]
+    "write": ["Admins"],
+    "sensitivity_scoped_read": {
+      "Org - General": ["public", "internal"]
+    }
+  },
+
+  "manual_grant_exceptions": {
+    "$comment": [
+      "Collections allowed to publish WITHOUT derived grants, via --manual-grants-exception.",
+      "Membership here is the authorization; the caller's free-text reason is not. Adding a",
+      "collection is a reviewed change -- cite the document that approves it."
+    ],
+    "creator-services-tiktok-shop": "ai/architecture/llm-knowledge-base-plan.md § Content Contract — pilot-gated exception"
   },
 
   "$decisions": {
@@ -41,15 +57,20 @@
       "SOP does cover campaign incentive work, so widening is defensible — but it is a widening",
       "and belongs here as an explicit edit, not as an inference at run time."
     ],
-    "org-general-carved-out": [
-      "wiki-schema.json's audiences note says 'Org - General' (the GM, read-only) is granted",
-      "automatically on EVERY collection regardless of sensitivity. This file deliberately does",
-      "NOT do that.",
+    "org-general-is-sensitivity-scoped": [
+      "wiki-schema.json previously said org-general was auto-granted on every collection",
+      "'regardless of sensitivity'. That contradicted the sensitivity ladder in the same file:",
+      "'department' means 'one pillar only' and 'restricted' means 'named leadership groups",
+      "only', neither of which can include the GM. Only 'internal' is defined as reaching",
+      "org-general ('any staff member — org-general and up').",
       "",
-      "Reason: applied literally it would give automatic read on department-confidential content",
-      "such as voucher budget logic and escalation thresholds. The carve-out is recorded rather",
-      "than silent because it means this file and that schema note now disagree. Reconciling them",
-      "is a doctrine question for the plan doc, not something to settle by editing either side."
+      "The rule is now scoped to public/internal collections, and the schema, company-wiki",
+      "README, CHANGELOG and llm-knowledge-base-plan.md were all updated in the same change,",
+      "so no surface still asserts the old wording. The rule had never actually been",
+      "implemented anywhere — validate-wiki only ever expanded a document's own audiences —",
+      "so this is its first enforcement, not a narrowing of live behavior.",
+      "",
+      "Effect here: erisa-platform-ops-sop is 'department', so Org - General is withheld."
     ],
     "unmapped-by-design": [
       "commerce-member, commerce-team-lead, commerce-manager,",
