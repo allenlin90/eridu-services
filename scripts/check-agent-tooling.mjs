@@ -1,6 +1,5 @@
-import { existsSync, lstatSync, readFileSync, readlinkSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import path from 'node:path'
 import process from 'node:process'
 
 const args = new Set(process.argv.slice(2))
@@ -222,16 +221,6 @@ function readText(filePath) {
   }
 }
 
-function checkSymlink(filePath, expectedTarget) {
-  try {
-    if (!lstatSync(filePath).isSymbolicLink()) return false
-    const target = readlinkSync(filePath)
-    return path.normalize(target) === path.normalize(expectedTarget)
-  } catch {
-    return false
-  }
-}
-
 const results = tools.map(checkCommand)
 const agentResults = primaryAgents.map(checkCommand)
 
@@ -256,14 +245,7 @@ const repositoryChecks = [
   {
     name: 'Skill source',
     ok: existsSync('.agents/skills'),
-    detail: '.agents/skills exists',
-  },
-  {
-    name: 'OpenCode skills adapter',
-    ok:
-      existsSync('.opencode/skills') &&
-      (checkSymlink('.opencode/skills', '../.agents/skills') || existsSync('.opencode/skills')),
-    detail: '.opencode/skills is available while native discovery is evaluated',
+    detail: '.agents/skills exists for native/shared discovery',
   },
   {
     name: 'OKF contract',
@@ -287,9 +269,7 @@ for (const level of ['required', 'recommended', 'optional']) {
   console.log(`${level.toUpperCase()}`)
   for (const result of results.filter((item) => item.level === level)) {
     const marker = result.ok ? 'OK' : result.installed ? 'BAD' : 'MISS'
-    const detail = result.ok
-      ? result.output
-      : result.compatibilityNote || result.install
+    const detail = result.ok ? result.output : result.compatibilityNote || result.install
     console.log(`  ${marker.padEnd(4)} ${result.name.padEnd(10)} ${result.role}`)
     console.log(`       ${detail}`)
   }
@@ -335,6 +315,7 @@ if (failedRepositoryChecks.length > 0) {
 
 if (errors.length > 0) {
   for (const error of errors) console.error(`ERROR: ${error}`)
+  console.error('See docs/engineering/AGENTIC_DEVELOPMENT_SETUP.md for macOS and WSL setup.')
   process.exitCode = 1
 } else {
   console.log('Agentic development environment is ready for the selected validation level.')
