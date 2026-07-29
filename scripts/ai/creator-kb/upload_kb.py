@@ -98,6 +98,12 @@ KB_DESCRIPTION = (
 SCHEMA_PATH = Path("ai/openwebui/knowledge/company-wiki/tools/wiki-schema.json")
 AUDIENCE_MAP_PATH = Path("ai/openwebui/access/audience-group-map.json")
 
+# Resolve policy artifacts from THIS FILE's location, never the caller's cwd.
+# Reading them relative to cwd made the gate refuse with a misleading "missing
+# schema" whenever the script was run from anywhere but the repo root -- which
+# invites an operator to reach for --manual-grants-exception to get past it.
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 class GateError(SystemExit):
     """Raised before anything is published. Exit code 2 = access gate refused."""
@@ -123,7 +129,7 @@ def _read_frontmatter(path):
     return fm
 
 
-def _manual_exception_allowlist(repo_root=Path(".")):
+def _manual_exception_allowlist(repo_root=REPO_ROOT):
     """Collections with a reviewed, recorded manual-grants exception."""
     path = repo_root / AUDIENCE_MAP_PATH
     if not path.exists():
@@ -162,7 +168,7 @@ def apply_and_verify_grants(api, kb_id, derived_grants):
     print(f"Access gate: applied and verified {len(want)} grant(s) (exact match).")
 
 
-def derive_access_grants(api, md_files, repo_root=Path(".")):
+def derive_access_grants(api, md_files, repo_root=REPO_ROOT):
     """Derive Open WebUI access_grants from the files' `audiences` metadata.
 
     Fail-closed by design. `llm-knowledge-base-plan.md` says a document cannot be
@@ -172,10 +178,10 @@ def derive_access_grants(api, md_files, repo_root=Path(".")):
     schema_path = repo_root / SCHEMA_PATH
     map_path = repo_root / AUDIENCE_MAP_PATH
     if not schema_path.exists():
-        raise GateError(f"Missing {SCHEMA_PATH}; cannot validate audience metadata.")
+        raise GateError(f"Missing {schema_path}; cannot validate audience metadata.")
     if not map_path.exists():
         raise GateError(
-            f"Missing {AUDIENCE_MAP_PATH}.\n"
+            f"Missing {map_path}.\n"
             "This file is the audience -> Open WebUI group mapping the knowledge-base "
             "plan requires before anything is published. Create and get it signed off, "
             "or pass --manual-grants-exception with the documented reason."
@@ -186,9 +192,9 @@ def derive_access_grants(api, md_files, repo_root=Path(".")):
 
     if str(amap.get("status", "")).lower() != "approved":
         raise GateError(
-            f"{AUDIENCE_MAP_PATH} is not approved (status: {amap.get('status')!r}).\n"
-            "Populate 'audiences'/'automatic' from the reviewed decision and set status to "
-            "'approved'. A proposal under '$proposed' is deliberately NOT used."
+            f"{map_path} is not approved (status: {amap.get('status')!r}).\n"
+            "Populate 'audiences'/'automatic' from the reviewed decision and set "
+            "status to 'approved'."
         )
 
     valid_sens = set(schema["sensitivity"])

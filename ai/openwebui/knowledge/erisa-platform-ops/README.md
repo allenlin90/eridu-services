@@ -90,11 +90,17 @@ Never present a snapshot number as a confirmed current condition.
    python3 scripts/ai/creator-kb/upload_kb.py \
      --kb-name erisa-platform-ops-sop \
      --dir ai/openwebui/knowledge/erisa-platform-ops \
+     --full-context-file 00-platform-poc-dispatch.md \
      --description "ERISA internal Platform PoC operations SOP (Thai-primary): \
    TikTok Shop violation handling and appeals, quarterly Mission incentives, \
    monthly campaign vouchers (Payday, Double Digit), MCN voucher allocation, \
    max cap and AOV calculation, Platform AM coordination. Internal staff only."
    ```
+
+   `--description` only takes effect when the collection is first created; an
+   existing one keeps its own. `--full-context-file` only affects the closing
+   hint. Policy artifacts are resolved from the script's own location, so the
+   command works from any working directory.
 
    The script reconciles by content hash, so re-running after an edit reflects
    Git. It skips `README.md`, so this file is not uploaded.
