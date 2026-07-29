@@ -1,5 +1,7 @@
 # Local Agent Retrieval and Tooling
 
+> Installation and machine onboarding are owned by [Agentic Development Setup](./AGENTIC_DEVELOPMENT_SETUP.md). This document owns retrieval architecture, tool selection, and index lifecycle.
+
 ## Decision
 
 Engineering agents working from a local checkout use a **CLI-first retrieval model**.
@@ -154,130 +156,9 @@ QMD and Graphify overlap only partially:
 
 ## Installation
 
-Run the repository doctor first:
+Use [Agentic Development Setup](./AGENTIC_DEVELOPMENT_SETUP.md) for macOS/WSL prerequisites, primary agent installation, RTK integration, QMD setup, Graphify installation, authentication, and doctor commands.
 
-```bash
-pnpm agents:doctor
-pnpm agents:doctor --strict
-```
-
-Normal mode reports required, recommended, and optional tools. Strict mode also fails when recommended tools are absent.
-
-### RTK
-
-Verify that the installed binary is **Rust Token Killer**, not another package with the same command name:
-
-```bash
-rtk --version
-rtk gain
-```
-
-Install the binary using the official RTK distribution for the developer's operating system. Initialize only the integrations that developer uses:
-
-```bash
-rtk init -g                    # Claude Code
-rtk init -g --copilot          # GitHub Copilot
-rtk init -g --opencode         # OpenCode
-rtk init -g --codex            # Codex
-rtk init --agent antigravity   # Google Antigravity, project-scoped
-rtk init --show                # verify integration
-```
-
-Do not run every initializer blindly. Agent integrations are developer-machine configuration. Generated global hooks and plugins are not repository source.
-
-This repository already contains an Antigravity RTK rule. Re-running its project initializer must not create a competing rule. Review any initializer diff that touches repository instructions; `AGENTS.md` remains canonical.
-
-### QMD
-
-Install the Node package globally:
-
-```bash
-npm install -g @tobilu/qmd
-qmd --version
-```
-
-Create local collections once per checkout. During the transition, index the current `ai/` tree; after migration, replace it with `infra/` and `knowledge/` collections.
-
-```bash
-qmd collection add .agents --name eridu-agent-capabilities --mask "**/*.md"
-qmd collection add docs --name eridu-engineering-docs --mask "**/*.md"
-qmd collection add apps --name eridu-app-docs --mask "*/docs/**/*.md"
-qmd collection add ai --name eridu-ai-transitional --mask "**/*.md"
-
-# Target after the directory migration:
-# qmd collection add infra --name eridu-platform-infra --mask "**/*.md"
-# qmd collection add knowledge --name eridu-knowledge --mask "**/*.md"
-
-qmd update
-qmd embed
-```
-
-Example usage:
-
-```bash
-qmd search "MCP_ALLOWED_STUDIO_IDS"
-qmd query "when should a NestJS repository be introduced?"
-qmd query "how is the Open WebUI knowledge sync governed?" --intent "eridu-services repository policy"
-```
-
-Collection configuration and indexes are local user state. They are not committed to the monorepo.
-
-QMD's local MCP mode is optional:
-
-```bash
-qmd mcp
-qmd mcp --http
-```
-
-Prefer CLI calls during the pilot. Enable MCP for a client only when its structured integration is measurably better.
-
-### Graphify
-
-Install Graphify in an isolated Python tool environment:
-
-```bash
-uv tool install graphifyy
-graphify --version
-```
-
-Build a deterministic code-only graph for the first pilot:
-
-```bash
-graphify extract . --code-only
-```
-
-Or install Graphify for the developer's agent and run its `/graphify .` workflow:
-
-```bash
-graphify install
-```
-
-Query the generated graph later without reparsing the repository:
-
-```bash
-graphify query "which modules depend on the authentication boundary?"
-graphify explain "TaskOrchestrationService"
-```
-
-Do not use `graphify install --project` by default. It writes tool-specific skill and hook adapters into the repository, while this monorepo already owns canonical conventions under `.agents/` and thin vendor adapters elsewhere.
-
-`graphify-out/` is local derived state during the pilot and is ignored by Git.
-
-### OKF
-
-OKF itself requires no mandatory CLI. Start by extending the existing company-wiki validator rather than introducing another toolchain immediately.
-
-The pilot validator should check:
-
-- every concept other than `index.md` and `log.md` has parseable YAML frontmatter;
-- `type` is present and non-empty;
-- lifecycle values map to `draft`, `stable`, or `deprecated`;
-- `stale_after` dates are valid;
-- standard Markdown links resolve where required by repository policy;
-- structured `sources` entries are valid;
-- repository-specific `owner`, `audiences`, and `sensitivity` extensions remain valid.
-
-Evaluate dedicated OKF tooling only after the compatible-superset approach proves insufficient.
+This guide intentionally does not maintain a second set of installation commands.
 
 ## Agent Query Policy
 
@@ -308,23 +189,24 @@ Do not run full indexing on every Turbo build, test, or lint operation. Indexing
 Possible later automation:
 
 - a manual `knowledge:index` script that invokes installed CLIs;
-- an opt-in Git hook;
+- a post-checkout or opt-in Git hook;
 - scheduled local refresh;
 - CI-built shared artifacts after the pilot proves value.
 
+Do not add these until indexing time and retrieval quality have been measured on this repository.
+
 ## Pilot Evaluation
 
-Evaluate QMD, Graphify, and OKF concerns separately:
+Evaluate QMD and Graphify separately with real questions:
 
-| Question class | Expected mechanism |
+| Question class | Expected tool |
 | --- | --- |
 | Exact policy or environment key | `rg` or QMD lexical search |
 | Relevant skill for a task | QMD |
 | Architecture decision and rationale | QMD |
 | Caller/import/dependency path | Graphify |
 | Current show or task records | Operational MCP |
-| Open WebUI deployment configuration | QMD over current `ai/`, then target `infra/` |
-| Knowledge provenance, lifecycle, and portability | OKF metadata and validation |
+| Open WebUI deployment configuration | QMD over transitional `ai/` or target `infra/`, then source verification |
 
 Record:
 
@@ -334,7 +216,6 @@ Record:
 - index/update duration;
 - output size reaching the agent;
 - whether MCP improved the result over CLI;
-- metadata and adapter drift;
-- whether an OKF-aware consumer can traverse the bundle without Open WebUI-specific assumptions.
+- maintenance or adapter drift.
 
-Only introduce a shared knowledge service after evidence demonstrates a need beyond local CLI retrieval.
+Only introduce a shared knowledge service after this evidence demonstrates a need beyond local CLI retrieval.
