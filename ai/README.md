@@ -1,8 +1,10 @@
 # AI Workspace Control Plane
 
-This directory contains repo-owned policy and manifests for the company AI workspace around Open WebUI, LiteLLM, Better Auth, and the existing `erify_api` MCP foundation.
+> **Transitional namespace:** `ai/` currently combines Open WebUI and LiteLLM deployment material, live exports, architecture plans, and canonical knowledge sources. The target layout moves deployed third-party services under `infra/` and portable canonical knowledge under `knowledge/`. Do not add a new category here merely because it involves an LLM.
 
-Actual agent skills live in `.agents/skills/`. Files under `ai/` are policy manifests, deployment references, budget-tier policy tables, and Open WebUI export notes.
+This directory contains the current repo-owned policy and manifests for the company AI workspace around Open WebUI, LiteLLM, Better Auth, and the existing `erify_api` MCP foundation.
+
+Actual agent skills live in `.agents/skills/`. Until the migration lands, files under `ai/` remain the active paths for platform policy, deployment references, budget-tier policy tables, Open WebUI adapters, knowledge-sync sources, and live export notes.
 
 ## Deployed baseline
 
@@ -40,7 +42,9 @@ Use these actual agent skills before changing AI workspace files:
 | LiteLLM | LLM gateway, provider abstraction, virtual keys, user/customer budgets, and rate limits. |
 | `erify_api` MCP | Existing private Railway MCP service for read-only, studio-scoped operational tools. |
 | `.agents/skills/` | Canonical project skills and agent behavior. |
-| `ai/` | Workspace policy, Open WebUI manifests, and LiteLLM templates. |
+| `ai/` | Transitional location for platform material and the current Open WebUI knowledge source. |
+| `infra/` | Target owner for Open WebUI, LiteLLM, stack topology, and other deployed third-party services. |
+| `knowledge/` | Target owner for platform-neutral canonical knowledge bundles. |
 
 ## Design principles
 
@@ -54,17 +58,22 @@ Use these actual agent skills before changing AI workspace files:
 8. Start MCP tools as read-only; add write actions only after audit and approval workflows are defined.
 9. Log business-data access in the MCP service, not only in Open WebUI.
 
-## Boundary with local engineering retrieval
+## Target ownership and local retrieval
 
-`ai/` remains the owner of platform-specific Open WebUI, LiteLLM, and MCP deployment material. A local engineering agent may index and search this directory, but indexing does not reclassify the content or move its authority out of the platform tree.
+Open WebUI and LiteLLM are deployed services, even when this repository owns only their manifests, functions, policy, and reconciliation exports. Their long-term home is therefore `infra/openwebui/` and `infra/litellm/`, alongside `infra/odoo/`. A Docker Compose stack under `infra/stacks/ai-workspace/` should model the portable local topology corresponding to the Railway deployment.
+
+Company knowledge should not remain nested under an Open WebUI adapter when it is intended for multiple consumers. The target is an OKF-compatible `knowledge/` bundle or a private knowledge repository. Open WebUI sync functions, assistant adapters, access mappings, and live exports remain platform material under `infra/openwebui/`.
 
 Engineering-agent retrieval from a local checkout is CLI-first: QMD for Markdown knowledge, Graphify for code relationships, and direct source search for exact identifiers. It does not require another NestJS MCP service. A local QMD or Graphify MCP process is an optional client adapter only.
 
-Extract content from `ai/` into a platform-neutral location only when the content's authoritative audience and lifecycle become cross-client. For example, Open WebUI manifests and sync logic remain here; a future company corpus intentionally shared by Open WebUI and coding agents may move to a neutral or private knowledge repository while Open WebUI adapters remain under `ai/`.
+No paths move in this change. Active work and the deployed sync pipeline still reference `ai/openwebui/*`; the migration should be a dedicated reconciliation PR after those changes settle.
 
-See [Local Agent Retrieval and Tooling](../docs/engineering/LOCAL_AGENT_RETRIEVAL.md) for the repository-wide decision, installation matrix, and shared-service gates.
+See:
 
-## Directory map
+- [Knowledge and Platform Layout](../docs/engineering/KNOWLEDGE_AND_PLATFORM_LAYOUT.md) for the target repository structure, OKF boundary, Compose role, and migration phases.
+- [Local Agent Retrieval and Tooling](../docs/engineering/LOCAL_AGENT_RETRIEVAL.md) for local CLI installation, indexing, and shared-service gates.
+
+## Current directory map
 
 ```text
 .agents/skills/
