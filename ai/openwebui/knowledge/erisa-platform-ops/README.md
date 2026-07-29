@@ -117,8 +117,12 @@ Never present a snapshot number as a confirmed current condition.
    unmapped, a mapped group is missing on the instance, or the derivation would
    yield no grants. It then reads the grants back and fails if they are empty.
 
-   That map is currently **unapproved**, so this collection cannot be published
-   until the content owner signs off on the audience → group mapping. See
+   The map is **approved for ERISA only**: all three ERISA tiers resolve to
+   `Erisa - Creator`, plus `Admins` read + write. Every other pillar is
+   deliberately unmapped and will be refused, and `Org - General` is carved out
+   of the automatic grants that `wiki-schema.json` describes. Both decisions,
+   and the schema disagreement the carve-out creates, are recorded in the map
+   file and in
    [`../../../../docs/tech-debt/erisa-platform-ops-manual-access-grants.md`](../../../../docs/tech-debt/erisa-platform-ops-manual-access-grants.md).
 4. **Attach to an ERISA-internal assistant** in the UI (the UI sets
    `meta.knowledge[].type = "collection"`; a raw API attach that omits it makes

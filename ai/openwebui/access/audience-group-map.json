@@ -4,65 +4,63 @@
     "onto the Open WebUI groups that actually exist on the live instance.",
     "",
     "This is the artifact llm-knowledge-base-plan.md Phase 0 calls 'Define the audience and",
-    "sensitivity vocabulary and its exact Open WebUI group mapping'. Until it is populated and",
-    "signed off by the content owner, upload_kb.py REFUSES to publish any collection that would",
-    "need a mapping it does not have — the plan's rule is that a document cannot be published",
-    "when its metadata has no valid group mapping, so failing closed is the compliant behavior.",
+    "sensitivity vocabulary and its exact Open WebUI group mapping'. upload_kb.py REFUSES to",
+    "publish a collection needing a mapping this file does not carry: the plan's rule is that a",
+    "document cannot be published when its metadata has no valid group mapping, so failing closed",
+    "is the compliant behavior.",
     "",
     "The vocabulary is tier-shaped (erisa-member / erisa-team-lead / erisa-manager) while the live",
-    "groups are function-shaped (Erisa - Creator / Erisa - Campaign). That mismatch is exactly why",
-    "this file has to be an explicit, reviewed decision rather than something a script infers.",
+    "groups are function-shaped (Erisa - Creator / Erisa - Campaign). That mismatch is why this",
+    "file is an explicit reviewed decision rather than something a script infers.",
     "",
-    "'audiences' maps each vocabulary group to a list of live Open WebUI group NAMES. Names are",
-    "resolved to ids at run time against GET /api/v1/groups/, so an added or renamed group fails",
-    "loudly instead of silently granting nothing.",
-    "",
-    "'automatic' grants are applied to every collection regardless of sensitivity, per the note in",
-    "wiki-schema.json. Keep this list minimal: every entry widens access to all synced content."
+    "'audiences' maps each vocabulary group to a list of live Open WebUI group NAMES, resolved to",
+    "ids at run time against GET /api/v1/groups/ so a rename fails loudly instead of silently",
+    "granting nothing. 'automatic' grants apply to every collection; keep that list minimal."
   ],
 
-  "status": "UNAPPROVED — proposed mapping, requires content-owner sign-off before use",
+  "status": "approved",
   "owner": "erisa-creator-services",
+  "approved_scope": "ERISA only. Every other pillar is deliberately unmapped and fails closed.",
 
-  "audiences": {},
-
-  "automatic": {
-    "read": [],
-    "write": []
+  "audiences": {
+    "erisa-member": ["Erisa - Creator"],
+    "erisa-team-lead": ["Erisa - Creator"],
+    "erisa-manager": ["Erisa - Creator"]
   },
 
-  "$proposed": {
-    "$comment": [
-      "A candidate mapping for review. Move these into 'audiences'/'automatic' and set",
-      "status to 'approved' only with the content owner's explicit sign-off. Do NOT let a",
-      "script promote them.",
-      "",
-      "Open questions the owner must settle:",
-      "  1. The vocabulary has three ERISA tiers; the instance has two functional ERISA teams.",
-      "     Mapping all three tiers onto both teams means 'audiences: [erisa]' reaches Campaign",
-      "     as well as Creator. For erisa-platform-ops that is arguably correct (the SOP covers",
-      "     campaign incentive work) but it is a widening, so it needs saying out loud.",
-      "  2. wiki-schema.json says 'Org - General' (the GM, read-only) is granted automatically on",
-      "     every collection regardless of sensitivity. Applied here that would give the GM read",
-      "     on department-confidential Platform PoC content. Confirm or carve out.",
-      "  3. 'Management team' exists live but has no vocabulary entry at all."
+  "automatic": {
+    "read": ["Admins"],
+    "write": ["Admins"]
+  },
+
+  "$decisions": {
+    "erisa-tiers-to-creator-only": [
+      "All three ERISA tiers map to 'Erisa - Creator' alone, NOT to 'Erisa - Campaign'.",
+      "This reproduces the grants erisa-platform-ops-sop already had, so approving this file",
+      "changed nobody's access. Revisit if the Campaign team needs Platform PoC content: the",
+      "SOP does cover campaign incentive work, so widening is defensible — but it is a widening",
+      "and belongs here as an explicit edit, not as an inference at run time."
     ],
-    "audiences": {
-      "commerce-member": ["Commerce - Operation", "Commerce - Sales"],
-      "commerce-team-lead": ["Commerce - Operation", "Commerce - Sales"],
-      "commerce-manager": ["Commerce - Operation", "Commerce - Sales"],
-      "erify-member": ["Erify - Onset", "Erify - Offset"],
-      "erify-team-lead": ["Erify - Onset", "Erify - Offset"],
-      "erify-manager": ["Erify - Onset", "Erify - Offset"],
-      "erisa-member": ["Erisa - Creator", "Erisa - Campaign"],
-      "erisa-team-lead": ["Erisa - Creator", "Erisa - Campaign"],
-      "erisa-manager": ["Erisa - Creator", "Erisa - Campaign"],
-      "finance-manager": ["Finance - Manager"],
-      "hr-manager": ["HR - Manager"]
-    },
-    "automatic": {
-      "read": ["Admins"],
-      "write": ["Admins"]
-    }
+    "org-general-carved-out": [
+      "wiki-schema.json's audiences note says 'Org - General' (the GM, read-only) is granted",
+      "automatically on EVERY collection regardless of sensitivity. This file deliberately does",
+      "NOT do that.",
+      "",
+      "Reason: applied literally it would give automatic read on department-confidential content",
+      "such as voucher budget logic and escalation thresholds. The carve-out is recorded rather",
+      "than silent because it means this file and that schema note now disagree. Reconciling them",
+      "is a doctrine question for the plan doc, not something to settle by editing either side."
+    ],
+    "unmapped-by-design": [
+      "commerce-member, commerce-team-lead, commerce-manager,",
+      "erify-member, erify-team-lead, erify-manager,",
+      "finance-manager, hr-manager",
+      "",
+      "No owner has decided how these map onto the live functional groups",
+      "(Commerce - Operation / Commerce - Sales, Erify - Onset / Erify - Offset), and the live",
+      "'Management team' group has no vocabulary entry at all. Any collection whose audiences",
+      "touch these will be refused publication until an owner adds them here. That is the",
+      "intended behavior, not an oversight."
+    ]
   }
 }

@@ -1,4 +1,4 @@
-# Audience → Open WebUI group mapping is undefined, blocking derived access grants
+# Audience → Open WebUI group mapping is only defined for ERISA
 
 ## Affected surface
 
@@ -9,56 +9,45 @@
 
 ## Current behavior
 
-`llm-knowledge-base-plan.md` requires that collection membership and access
-grants be **derived** from validated `audiences`/`sensitivity` metadata, and that
-"a document cannot be published when its metadata has no valid collection and
-group mapping."
-
-The derivation mechanism now exists: `upload_kb.py` validates each file's
-governance metadata, refuses `draft`/`archived`, resolves `audiences` through
+Grants are now **derived**, satisfying the plan's requirement that they come from
+validated `audiences` metadata. `upload_kb.py` validates each file's governance
+metadata, refuses `draft`/`archived`, resolves `audiences` through
 `ai/openwebui/access/audience-group-map.json`, rejects wildcard grants, applies
-the result via `POST /api/v1/knowledge/{id}/access/update`, and reads the grants
-back to confirm they are non-empty. Every failure raises **before** any file is
-uploaded, so a refusal cannot leave a half-published, ungranted collection.
+the result, and reads it back to confirm it is non-empty. Every check runs
+**before** the first upload, so a refusal cannot leave a half-published,
+ungranted collection.
 
-**What is missing is the mapping itself**, and it is missing repo-wide, not just
-for this collection. Phase 0 of the plan lists "Define the audience and
-sensitivity vocabulary and its exact Open WebUI group mapping" as an open item.
-The two vocabularies do not line up:
+`erisa-platform-ops-sop` publishes cleanly under this gate. Its derived grants
+(`Erisa - Creator` read; `Admins` read + write) are byte-identical to the grants
+it previously carried by hand, so adopting derivation changed nobody's access.
 
-| Content Contract vocabulary | Live Open WebUI groups |
-| --- | --- |
-| `erisa-member`, `erisa-team-lead`, `erisa-manager` (tier-shaped) | `Erisa - Creator`, `Erisa - Campaign` (function-shaped) |
-| `commerce-member`, `commerce-team-lead`, `commerce-manager` | `Commerce - Operation`, `Commerce - Sales` |
-| `erify-member`, `erify-team-lead`, `erify-manager` | `Erify - Onset`, `Erify - Offset` |
-| — (no entry) | `Management team` |
+**Three gaps remain, all deliberate and all fail-closed.**
 
-Because no tier group exists on the instance, `audiences: [erisa]` resolves to
-nothing, and the gate correctly refuses to publish. `audience-group-map.json`
-therefore ships with `status: UNAPPROVED` and empty tables, with a candidate
-mapping parked under `$proposed` that the script deliberately ignores.
+**1. Only ERISA is mapped.** `commerce-*`, `erify-*`, `finance-manager` and
+`hr-manager` have no entries, because no owner has decided how the tier-shaped
+vocabulary lands on the function-shaped live groups:
 
-This is not a `creator-services-tiktok-shop`-style exception. That collection has
-a scoped, recorded exception; this collection has none and claims none. It simply
-cannot be published until the mapping is approved.
+| Vocabulary | Live groups | Mapped? |
+| --- | --- | --- |
+| `erisa-member`, `erisa-team-lead`, `erisa-manager` | `Erisa - Creator`, `Erisa - Campaign` | Yes — to `Erisa - Creator` only |
+| `commerce-member`, `commerce-team-lead`, `commerce-manager` | `Commerce - Operation`, `Commerce - Sales` | No |
+| `erify-member`, `erify-team-lead`, `erify-manager` | `Erify - Onset`, `Erify - Offset` | No |
+| `finance-manager`, `hr-manager` | `Finance - Manager`, `HR - Manager` | No |
+| — (no entry) | `Management team` | n/a |
 
-## Desired behavior
+Any collection whose audiences touch an unmapped group is refused publication.
 
-The content owner settles three questions and the mapping moves from `$proposed`
-into `audiences`/`automatic` with `status: approved`:
+**2. ERISA maps to Creator only, not Campaign.** This reproduces the existing
+grants rather than widening them. The SOP does cover campaign incentive work, so
+extending to `Erisa - Campaign` is defensible — but it is a widening and has to
+be an explicit edit to the map.
 
-1. **Tier → team.** Mapping all three ERISA tiers onto both ERISA teams means
-   `audiences: [erisa]` reaches Campaign as well as Creator. Defensible for this
-   SOP, which covers campaign incentive work — but it is a widening and needs to
-   be stated, not inferred.
-2. **`Org - General`.** `wiki-schema.json` says org-general (the GM, read-only)
-   is granted automatically on every collection *regardless of sensitivity*.
-   Applied literally that gives the GM read on department-confidential Platform
-   PoC content. Confirm or carve out.
-3. **`Management team`** exists live with no vocabulary entry.
-
-Then `upload_kb.py --kb-name erisa-platform-ops-sop …` publishes with derived
-grants and no manual step.
+**3. The map contradicts `wiki-schema.json` on `Org - General`.** The schema's
+audiences note says org-general (the GM, read-only) is granted automatically on
+every collection *regardless of sensitivity*. The map deliberately does not,
+because applied literally it would give automatic read on department-confidential
+content. The two now disagree, which is a doctrine question for the plan doc —
+not something to settle by quietly editing either side.
 
 ## Risk
 
@@ -73,6 +62,14 @@ than a document author intends. Sensitivity-aware narrowing is not implemented.
 
 ## Trigger to fix
 
-Immediate — this blocks publishing `erisa-platform-ops-sop` at all. Beyond that,
-the same mapping unblocks the `creator-services-tiktok-shop` exception gate,
-since derivation is exactly what that gate waits on.
+Per gap, all trigger-gated rather than immediate:
+
+1. **Other pillars** — when a collection with non-ERISA audiences is first
+   published. It will be refused until an owner adds the entries.
+2. **Campaign access** — when the Campaign team needs Platform PoC content.
+3. **`Org - General`** — at the next review of the Content Contract, or sooner
+   if another collection needs the automatic-grant question settled.
+
+Separately, the derivation this PR adds is what the
+`creator-services-tiktok-shop` exception gate has been waiting on; that gate can
+lift once someone confirms the mapping covers that collection's audiences too.

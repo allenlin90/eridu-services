@@ -310,31 +310,31 @@
     "description": "ERISA internal Platform PoC operations SOP (Thai-primary): TikTok Shop violation handling and appeals, quarterly Mission incentives, monthly campaign vouchers (Payday, Double Digit), MCN voucher allocation, max cap and AOV calculation, Platform AM coordination. Internal staff only.",
     "access_grants": [
       {
-        "id": "61977b4f-7390-4e22-aae6-dcc1976f7e50",
+        "id": "e9e6ffc5-9bdc-41a8-ab18-835a8efe3155",
         "resource_type": "knowledge",
         "resource_id": "e36ea274-4129-4779-b899-ebc78b97d549",
         "principal_type": "group",
         "principal_id": "a0c6d928-ed7a-4528-95dd-887a82a97752",
         "permission": "read",
-        "created_at": 1785207466
+        "created_at": 1785289072
       },
       {
-        "id": "f4132eb5-b12d-49ff-aa7e-ee01f46d1cc9",
+        "id": "cb40abfb-78f4-4679-9899-f333d34edddc",
         "resource_type": "knowledge",
         "resource_id": "e36ea274-4129-4779-b899-ebc78b97d549",
         "principal_type": "group",
         "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
         "permission": "read",
-        "created_at": 1785207466
+        "created_at": 1785289072
       },
       {
-        "id": "eec61e68-1e30-4e3e-a688-16d2b99b314f",
+        "id": "81597a95-02bf-41fc-a835-e1ee15587a69",
         "resource_type": "knowledge",
         "resource_id": "e36ea274-4129-4779-b899-ebc78b97d549",
         "principal_type": "group",
         "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
         "permission": "write",
-        "created_at": 1785207466
+        "created_at": 1785289072
       }
     ],
     "created_at": 1785207320,
