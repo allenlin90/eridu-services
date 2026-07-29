@@ -69,9 +69,9 @@ knowledge/<bundle>/<concept>.md        durable facts, patterns, and concepts
 docs/...                               product or engineering documentation with its own lifecycle
 ```
 
-## Reasoning Lifecycle
+## Target Reasoning Lifecycle
 
-Non-trivial tasks follow these gates:
+The proposed lifecycle for non-trivial tasks is:
 
 ```text
 orient → resolve decisions → select knowledge/procedure → implement → review → verify/bookkeep → present
@@ -83,6 +83,8 @@ orient → resolve decisions → select knowledge/procedure → implement → re
 - **Caveman/compact behavior** belongs only to presentation and requires an explicit user request.
 
 Presentation style must not remove uncertainty, warnings, decisions, or verification evidence.
+
+This lifecycle is a migration target. It becomes an active cross-client contract only after the consumer skills, adapters, and root `AGENTS.md` rules are implemented and verified together.
 
 ## Thin Skill and Workflow Bridges
 
