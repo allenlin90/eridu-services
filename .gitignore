@@ -57,6 +57,9 @@ yarn-error.log*
 # Superpowers brainstorming mockups (local-only)
 .superpowers/
 
+# Local code-graph index (derived, rebuild with Graphify)
+graphify-out/
+
 # Company wiki generated manifests (derived, regenerate via validate-wiki --write-manifest)
 ai/openwebui/knowledge/company-wiki/generated/*
 
