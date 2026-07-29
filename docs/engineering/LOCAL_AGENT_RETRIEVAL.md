@@ -8,6 +8,7 @@ Engineering agents working from a local checkout use a **CLI-first retrieval mod
 - Graphify builds and queries a structural graph of the codebase.
 - RTK compresses verbose shell output before it reaches an agent.
 - `rg`, direct file reads, and Git remain the authoritative fallback.
+- Open Knowledge Format (OKF) structures portable canonical knowledge; it is a file format, not a retrieval engine.
 
 A new NestJS knowledge MCP service is **not required** for this local workflow. MCP is an optional adapter around an existing local tool, not the default architecture and not another source of truth.
 
@@ -19,8 +20,10 @@ Git checkout                           Local derived state
 ├── .agents/skills                     └── graphify-out/graph.json
 ├── docs
 ├── apps/*/docs
-├── code
-└── ai
+├── infra                              # target platform-service material
+├── knowledge                          # target OKF bundles
+├── ai                                 # transitional current platform/knowledge tree
+└── application source
         │
         ▼
 Local agent invokes CLI
@@ -30,7 +33,9 @@ Local agent invokes CLI
 └── normal shell commands through RTK
 ```
 
-The repository owns source content. QMD and Graphify own rebuildable local indexes. RTK does not index anything; it only reduces command-output noise.
+The repository owns source content. QMD and Graphify own rebuildable local indexes. RTK does not index anything. OKF describes how canonical knowledge is packaged, not how it is searched or served.
+
+See [Knowledge and Platform Layout](./KNOWLEDGE_AND_PLATFORM_LAYOUT.md) for the target `infra/`, `knowledge/`, and `.agents/` boundaries.
 
 ## Three Retrieval Modes
 
@@ -48,31 +53,29 @@ This mode is closest to other developer CLIs such as RTK:
 
 - no long-running service is required;
 - indexes stay local to each developer;
-- every tool can be called by Claude Code, Codex, OpenCode, Copilot CLI, or another shell-capable agent;
-- the agent can inspect the original files after retrieval.
+- Claude Code, Codex, OpenCode, Copilot CLI, or another shell-capable agent can call the same tools;
+- the agent can inspect the original source after retrieval.
 
 ### 2. Local MCP adapter — optional
 
-Some clients work better with structured tools than shell output. QMD can run as a local stdio or HTTP MCP process, and Graphify can expose its graph through an MCP adapter.
-
-This remains local:
+Some clients work better with structured tools than shell output. QMD can run as a local stdio or HTTP MCP process, and Graphify may be placed behind a local MCP adapter.
 
 ```text
-agent client -> locally launched QMD/Graphify MCP -> local index -> local checkout
+agent client -> local QMD/Graphify MCP adapter -> local index -> local checkout
 ```
 
-It is not a NestJS application, shared team service, or new authoritative knowledge store. Use it only when structured tool calls materially improve the selected client.
+This is not a NestJS application, shared team service, or authoritative store. Use it only when structured calls materially improve the selected client.
 
 ### 3. Shared remote retrieval — future gate
 
-A shared retrieval service becomes justified only when at least one of these is true:
+A shared retrieval service becomes justified when at least one of these is true:
 
 - a consumer has no local repository checkout;
 - Open WebUI or a browser application must query the same index;
 - private knowledge requires centralized authentication and authorization;
 - one centrally refreshed index is preferable to per-developer indexing;
-- access needs auditing, stable source citations, or tenant boundaries;
-- local model/index loading is too expensive to repeat per client.
+- access needs auditing, stable citations, or tenant boundaries;
+- local model or index loading is too expensive to repeat per client.
 
 At that point, design a dedicated document-retrieval boundary. Do not add document tools to the existing operational `erify_api` MCP registry merely because both use MCP transport.
 
@@ -84,36 +87,62 @@ At that point, design a dedicated document-retrieval boundary. Do not add docume
 | `.agents/skills/` | Reusable procedures, scripts, functions, and implementation guides | Yes |
 | `.agents/workflows/` | Multi-step engineering workflows | Yes |
 | `.agents/rules/` | Persistent engineering constraints | Yes |
-| `docs/` | Cross-app engineering, domain, feature, and roadmap knowledge | Yes |
+| `docs/` | Cross-app engineering, domain, feature, and roadmap documentation | Yes |
 | `apps/*/docs/` | App-owned architecture and implemented behavior | Yes |
-| `ai/` | Platform-specific Open WebUI, LiteLLM, and MCP policy, manifests, adapters, and deployment references | Yes, when relevant |
+| `infra/` | Deployed third-party services, stack topology, and deployment adapters | Yes, when maintaining the stack |
+| `knowledge/` | Portable canonical knowledge bundles, preferably OKF-compatible | Yes |
+| `ai/` | Transitional current location for Open WebUI/LiteLLM material and knowledge-sync sources | Yes until migrated |
 | application source | Executable implementation and final validation evidence | Graphify and direct source tools |
 
 Indexing a path does not change its ownership.
 
-In particular, `/ai` should remain platform-specific. Engineering agents may search it because they maintain those platforms, but that does not make every `/ai` document generic engineering knowledge.
+Open WebUI manifests, functions, access mappings, and live exports should ultimately live under `infra/openwebui/`; LiteLLM material under `infra/litellm/`. Canonical knowledge intended for multiple clients should live under `knowledge/` or in a private knowledge repository. The current `ai/` tree remains active until a dedicated migration reconciles all references.
 
-Move or extract content from `/ai` only when its **authoritative audience and lifecycle** become platform-neutral. For example:
+## OKF's Role
 
-- Open WebUI model manifests stay under `ai/openwebui/`.
-- LiteLLM deployment policy stays under `ai/litellm/`.
-- A company policy used only through the current Open WebUI knowledge deployment may stay under that deployment tree.
-- A company corpus intentionally shared by Open WebUI, Claude Code, Codex, and other clients should eventually have a platform-neutral canonical location or a separate private knowledge repository. Open WebUI sync artifacts remain under `/ai`.
+OKF applies only to canonical knowledge bundles. It should not be imposed on every Markdown file in the Turborepo.
 
-This is a later content-governance decision, not a prerequisite for local engineering search.
+An OKF concept is Markdown with YAML frontmatter and a required `type`. Hierarchical `index.md` files support progressive disclosure, and optional `log.md` files record changes. Existing ownership, audience, sensitivity, and stable-ID metadata can remain as extension fields.
+
+Use OKF for:
+
+- policies and SOPs;
+- durable domain concepts;
+- cross-tool architecture concepts;
+- reviewed references;
+- generated knowledge with provenance and verification metadata.
+
+Do not use OKF as a replacement for:
+
+- `.agents/skills/`;
+- application or package layout;
+- operational databases;
+- QMD or Graphify;
+- Open WebUI collections;
+- MCP transport.
+
+The target flow is:
+
+```text
+knowledge/ OKF source
+├── QMD local indexing for coding agents
+├── Open WebUI sync into access-controlled collections
+└── future export or serving to other OKF-aware consumers
+```
 
 ## Tool Roles
 
 | Tool | Role | Status |
 | --- | --- | --- |
-| Git | Source history, review, provenance | Required |
+| Git | Source history, review, and provenance | Required |
 | Node.js and pnpm | Monorepo runtime and scripts | Required |
 | `rg` | Exact identifiers, paths, symbols, and low-latency source search | Recommended |
 | RTK | Compress verbose shell output and transparently rewrite supported commands | Recommended |
 | QMD (`@tobilu/qmd`) | BM25, vector, and reranked search over Markdown collections | Recommended pilot |
 | Graphify (`graphifyy`) | Tree-sitter code graph, relationship/path queries, architecture report | Experimental pilot |
+| OKF | Portable Markdown/frontmatter knowledge format | Format pilot; no runtime required |
 | `uv` | Isolated Graphify installation | Required only for the recommended Graphify install path |
-| `jq` | JSON inspection and support for shell integrations | Recommended |
+| `jq` | JSON inspection and shell-integration support | Recommended |
 | GitHub CLI (`gh`) | PR, issue, and Actions workflows from local agents | Optional |
 
 QMD and Graphify overlap only partially:
@@ -121,6 +150,7 @@ QMD and Graphify overlap only partially:
 - Use QMD for prose, rules, ADRs, skills, SOPs, and conceptual lookup.
 - Use Graphify for imports, calls, ownership boundaries, dependencies, and cross-file paths.
 - Use `rg` first for exact names when semantic interpretation adds no value.
+- Use OKF metadata to improve routing, provenance, lifecycle checks, and portability of canonical knowledge.
 
 ## Installation
 
@@ -131,7 +161,7 @@ pnpm agents:doctor
 pnpm agents:doctor --strict
 ```
 
-The normal mode reports required, recommended, and optional tools. Strict mode also fails when recommended tools are absent.
+Normal mode reports required, recommended, and optional tools. Strict mode also fails when recommended tools are absent.
 
 ### RTK
 
@@ -142,9 +172,7 @@ rtk --version
 rtk gain
 ```
 
-Install the binary using the official RTK distribution for the developer's operating system. Then initialize only the agent integrations that developer actually uses.
-
-Examples:
+Install the binary using the official RTK distribution for the developer's operating system. Initialize only the integrations that developer uses:
 
 ```bash
 rtk init -g                    # Claude Code
@@ -157,9 +185,7 @@ rtk init --show                # verify integration
 
 Do not run every initializer blindly. Agent integrations are developer-machine configuration. Generated global hooks and plugins are not repository source.
 
-This repository already contains the Antigravity RTK rule. Re-running the project-scoped Antigravity initializer should not create a second competing rule.
-
-For integrations that modify a repository instruction file, review the diff before committing. `AGENTS.md` remains canonical and must not be replaced by generated vendor instructions.
+This repository already contains an Antigravity RTK rule. Re-running its project initializer must not create a competing rule. Review any initializer diff that touches repository instructions; `AGENTS.md` remains canonical.
 
 ### QMD
 
@@ -170,13 +196,17 @@ npm install -g @tobilu/qmd
 qmd --version
 ```
 
-Create local collections once per checkout:
+Create local collections once per checkout. During the transition, index the current `ai/` tree; after migration, replace it with `infra/` and `knowledge/` collections.
 
 ```bash
 qmd collection add .agents --name eridu-agent-capabilities --mask "**/*.md"
 qmd collection add docs --name eridu-engineering-docs --mask "**/*.md"
 qmd collection add apps --name eridu-app-docs --mask "*/docs/**/*.md"
-qmd collection add ai --name eridu-ai-platform --mask "**/*.md"
+qmd collection add ai --name eridu-ai-transitional --mask "**/*.md"
+
+# Target after the directory migration:
+# qmd collection add infra --name eridu-platform-infra --mask "**/*.md"
+# qmd collection add knowledge --name eridu-knowledge --mask "**/*.md"
 
 qmd update
 qmd embed
@@ -190,7 +220,7 @@ qmd query "when should a NestJS repository be introduced?"
 qmd query "how is the Open WebUI knowledge sync governed?" --intent "eridu-services repository policy"
 ```
 
-Collection configuration and the index are local user state. They are not committed to the monorepo.
+Collection configuration and indexes are local user state. They are not committed to the monorepo.
 
 QMD's local MCP mode is optional:
 
@@ -199,7 +229,7 @@ qmd mcp
 qmd mcp --http
 ```
 
-Prefer CLI calls during the pilot. Enable MCP for a client only when its structured integration is measurably better than CLI invocation.
+Prefer CLI calls during the pilot. Enable MCP for a client only when its structured integration is measurably better.
 
 ### Graphify
 
@@ -210,7 +240,7 @@ uv tool install graphifyy
 graphify --version
 ```
 
-For the first pilot, build a deterministic code-only graph:
+Build a deterministic code-only graph for the first pilot:
 
 ```bash
 graphify extract . --code-only
@@ -229,9 +259,25 @@ graphify query "which modules depend on the authentication boundary?"
 graphify explain "TaskOrchestrationService"
 ```
 
-Do not use `graphify install --project` by default. It writes tool-specific skill and hook adapters into the repository, while this monorepo already owns canonical conventions under `.agents/` and thin vendor adapters elsewhere. Add project-generated Graphify adapters only through an explicit instruction-reconciliation change.
+Do not use `graphify install --project` by default. It writes tool-specific skill and hook adapters into the repository, while this monorepo already owns canonical conventions under `.agents/` and thin vendor adapters elsewhere.
 
-`graphify-out/` is treated as local derived state during the pilot and is ignored by Git. If the team later decides that a reviewed graph snapshot materially improves onboarding, introduce a deliberate artifact/versioning policy rather than committing incidental local output.
+`graphify-out/` is local derived state during the pilot and is ignored by Git.
+
+### OKF
+
+OKF itself requires no mandatory CLI. Start by extending the existing company-wiki validator rather than introducing another toolchain immediately.
+
+The pilot validator should check:
+
+- every concept other than `index.md` and `log.md` has parseable YAML frontmatter;
+- `type` is present and non-empty;
+- lifecycle values map to `draft`, `stable`, or `deprecated`;
+- `stale_after` dates are valid;
+- standard Markdown links resolve where required by repository policy;
+- structured `sources` entries are valid;
+- repository-specific `owner`, `audiences`, and `sensitivity` extensions remain valid.
+
+Evaluate dedicated OKF tooling only after the compatible-superset approach proves insufficient.
 
 ## Agent Query Policy
 
@@ -262,24 +308,23 @@ Do not run full indexing on every Turbo build, test, or lint operation. Indexing
 Possible later automation:
 
 - a manual `knowledge:index` script that invokes installed CLIs;
-- a post-checkout or opt-in Git hook;
+- an opt-in Git hook;
 - scheduled local refresh;
 - CI-built shared artifacts after the pilot proves value.
 
-Do not add these until indexing time and retrieval quality have been measured on this repository.
-
 ## Pilot Evaluation
 
-Evaluate QMD and Graphify separately with real questions:
+Evaluate QMD, Graphify, and OKF concerns separately:
 
-| Question class | Expected tool |
+| Question class | Expected mechanism |
 | --- | --- |
 | Exact policy or environment key | `rg` or QMD lexical search |
 | Relevant skill for a task | QMD |
 | Architecture decision and rationale | QMD |
 | Caller/import/dependency path | Graphify |
 | Current show or task records | Operational MCP |
-| Open WebUI deployment configuration | QMD over `/ai`, then source verification |
+| Open WebUI deployment configuration | QMD over current `ai/`, then target `infra/` |
+| Knowledge provenance, lifecycle, and portability | OKF metadata and validation |
 
 Record:
 
@@ -289,6 +334,7 @@ Record:
 - index/update duration;
 - output size reaching the agent;
 - whether MCP improved the result over CLI;
-- maintenance or adapter drift.
+- metadata and adapter drift;
+- whether an OKF-aware consumer can traverse the bundle without Open WebUI-specific assumptions.
 
-Only introduce a shared knowledge service after this evidence demonstrates a need beyond local CLI retrieval.
+Only introduce a shared knowledge service after evidence demonstrates a need beyond local CLI retrieval.
