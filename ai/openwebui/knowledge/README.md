@@ -25,6 +25,7 @@ knowledge/
 |---|---|---|
 | [`company-wiki/`](company-wiki/) | Company Wiki | Phase 1 pilot; synced via the `company_wiki_sync` Sync Pipe. |
 | [`creator-services/`](creator-services/) | `creator-services-tiktok-shop` | Erisa Creator Service Assistant knowledge (TikTok Shop Thailand, Thai-primary). Bootstrapped via [`../../../scripts/ai/creator-kb/upload_kb.py`](../../../scripts/ai/creator-kb/upload_kb.py). |
+| [`erisa-platform-ops/`](erisa-platform-ops/) | `erisa-platform-ops-sop` | **Internal ERISA staff only.** Platform PoC operations — violation resolution and incentive/voucher allocation with TikTok Shop. Hand-authored (no generator). Must not be attached to the creator-facing `creator-service-assistant`. |
 
 Knowledge collection membership and Open WebUI group grants must be derived from validated audience and sensitivity metadata. Do not mix restricted and general documents in one collection and rely on an assistant prompt to enforce confidentiality. `creator-services/` is a scoped, recorded exception to this during its pilot phase (owner `erisa-creator-services`; gate documented in `ai/architecture/llm-knowledge-base-plan.md` § Content Contract) — its grants are currently manual, not metadata-derived; this rule stays mandatory for every other collection and for `creator-services/` once that gate lifts.
 

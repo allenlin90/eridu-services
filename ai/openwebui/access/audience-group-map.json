@@ -1,0 +1,108 @@
+{
+  "$comment": [
+    "Maps the Content Contract audience vocabulary (ai/openwebui/knowledge/company-wiki/tools/wiki-schema.json)",
+    "onto the Open WebUI groups that actually exist on the live instance.",
+    "",
+    "This is the artifact llm-knowledge-base-plan.md Phase 0 calls 'Define the audience and",
+    "sensitivity vocabulary and its exact Open WebUI group mapping'. upload_kb.py REFUSES to",
+    "publish a collection needing a mapping this file does not carry: the plan's rule is that a",
+    "document cannot be published when its metadata has no valid group mapping, so failing closed",
+    "is the compliant behavior.",
+    "",
+    "The vocabulary is tier-shaped (erisa-member / erisa-team-lead / erisa-manager) while the live",
+    "groups are function-shaped (Erisa - Creator / Erisa - Campaign). That mismatch is why this",
+    "file is an explicit reviewed decision rather than something a script infers.",
+    "",
+    "Group NAMES are resolved to ids at run time against GET /api/v1/groups/, so a rename fails",
+    "loudly instead of silently granting nothing."
+  ],
+  "status": "approved",
+  "owner": "erisa-creator-services",
+  "approved_scope": "ERISA only. Every other pillar is deliberately unmapped and fails closed.",
+  "audiences": {
+    "erisa-member": [
+      "Erisa - Creator"
+    ],
+    "erisa-team-lead": [
+      "Erisa - Creator"
+    ],
+    "erisa-manager": [
+      "Erisa - Creator"
+    ]
+  },
+  "automatic": {
+    "$comment": [
+      "Applied to every collection on top of the audience-derived grants.",
+      "",
+      "'sensitivity_scoped_read' grants read only when EVERY file in the collection sits",
+      "within the listed sensitivity tiers. It is intentionally EMPTY: org-general was the",
+      "only candidate, and its automatic grant is suspended pending an ownership decision.",
+      "The mechanism is kept because it is how that decision gets implemented once made."
+    ],
+    "read": [
+      "Admins"
+    ],
+    "write": [
+      "Admins"
+    ],
+    "sensitivity_scoped_read": {}
+  },
+  "manual_grant_exceptions": {
+    "$comment": [
+      "Collections allowed to publish WITHOUT derived grants, via --manual-grants-exception.",
+      "Membership here is the authorization; the caller's free-text reason is not. Adding a",
+      "collection is a reviewed change. Each entry cites the approving policy and declares the",
+      "exact live group grants that must already exist before and after an upload."
+    ],
+    "creator-services-tiktok-shop": {
+      "policy": "ai/architecture/llm-knowledge-base-plan.md § Content Contract — pilot-gated exception",
+      "expected_group_grants": {
+        "read": [
+          "Erisa - Creator",
+          "Admins"
+        ],
+        "write": [
+          "Admins"
+        ]
+      }
+    }
+  },
+  "$decisions": {
+    "erisa-tiers-to-creator-only": [
+      "All three ERISA tiers map to 'Erisa - Creator' alone, NOT to 'Erisa - Campaign'.",
+      "This reproduces the grants erisa-platform-ops-sop already had, so approving this file",
+      "changed nobody's access. Revisit if the Campaign team needs Platform PoC content: the",
+      "SOP does cover campaign incentive work, so widening is defensible — but it is a widening",
+      "and belongs here as an explicit edit, not as an inference at run time."
+    ],
+    "unmapped-by-design": [
+      "commerce-member, commerce-team-lead, commerce-manager,",
+      "erify-member, erify-team-lead, erify-manager,",
+      "finance-manager, hr-manager",
+      "",
+      "No owner has decided how these map onto the live functional groups",
+      "(Commerce - Operation / Commerce - Sales, Erify - Onset / Erify - Offset), and the live",
+      "'Management team' group has no vocabulary entry at all. Any collection whose audiences",
+      "touch these will be refused publication until an owner adds them here. That is the",
+      "intended behavior, not an oversight."
+    ],
+    "org-general-automatic-grant-suspended": [
+      "org-general (the GM, read-only) receives NO automatic grant, on any collection.",
+      "",
+      "wiki-schema.json used to say it was auto-granted 'regardless of sensitivity'. That",
+      "contradicted the sensitivity ladder in the same file: 'department' means 'one pillar",
+      "only' and 'restricted' means 'named leadership groups only', neither of which can",
+      "include the GM. Only 'internal' is defined as reaching org-general.",
+      "",
+      "Rather than substitute a scope the owner has not chosen, the automatic grant is",
+      "withdrawn entirely and the question left open. That keeps every surface stating the",
+      "same thing -- no automatic grant -- instead of two documents implying different access.",
+      "",
+      "Nothing is lost: the rule was never implemented. validate-wiki only ever expanded a",
+      "document's own audiences, so no collection has ever received org-general this way.",
+      "",
+      "Where the GM should have access, grant it explicitly on that collection.",
+      "Tracked in docs/tech-debt/erisa-platform-ops-manual-access-grants.md."
+    ]
+  }
+}

@@ -5,6 +5,7 @@ This directory contains repo-authored adapter or import artifacts for Open WebUI
 ## Adapters in this directory
 
 - `citation-escalation-contract.md` — the citation-format and information-gap escalation behavior for any assistant with a Company Wiki knowledge collection attached. Generated from `ai/architecture/llm-knowledge-base-plan.md` § Citation And Escalation Contract — update that section first, not this file directly.
+- `platform-incentive-dispatch.md` — dispatch and answering rules for ERISA Platform PoC work (violation resolution, Quarterly Mission, Monthly Campaign, Voucher Allocation), including the latest-policy contract that keeps snapshot parameters from being stated as current fact. Its source of truth is the knowledge collection `ai/openwebui/knowledge/erisa-platform-ops/` — update that directory first, not this file directly. Internal ERISA audience only.
 
 Do not put canonical agent skills here. Actual agent skills must live in:
 

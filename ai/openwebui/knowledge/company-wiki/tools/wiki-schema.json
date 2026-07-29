@@ -1,37 +1,74 @@
 {
-  "requiredFields": ["id", "title", "audiences", "owner", "sensitivity", "status", "reviewed_at", "review_by"],
-  "optionalFields": ["tags", "source_refs"],
+  "requiredFields": [
+    "id",
+    "title",
+    "audiences",
+    "owner",
+    "sensitivity",
+    "status",
+    "reviewed_at",
+    "review_by"
+  ],
+  "optionalFields": [
+    "tags",
+    "source_refs"
+  ],
   "sensitivity": {
     "public": "Fine even outside the company. Expect this to be rare.",
-    "internal": "Any staff member — org-general and up.",
+    "internal": "Any staff member \u2014 org-general and up.",
     "department": "One pillar only (Commerce/Erify/Erisa), any tier within it.",
     "restricted": "Named leadership groups only. Widening the audience list on a restricted document requires the document owner's explicit sign-off, not just an author's edit."
   },
   "status": {
     "draft": "Not yet reviewed. Never synced to a live knowledge collection.",
     "active": "Reviewed and current.",
-    "superseded": "Replaced by another document — must set meta.replaced_by to that document's id.",
+    "superseded": "Replaced by another document \u2014 must set meta.replaced_by to that document's id.",
     "archived": "No longer relevant. Kept for provenance, excluded from sync."
   },
   "audiences": {
     "groups": [
-      "commerce-member", "commerce-team-lead", "commerce-manager",
-      "erify-member", "erify-team-lead", "erify-manager",
-      "erisa-member", "erisa-team-lead", "erisa-manager",
+      "commerce-member",
+      "commerce-team-lead",
+      "commerce-manager",
+      "erify-member",
+      "erify-team-lead",
+      "erify-manager",
+      "erisa-member",
+      "erisa-team-lead",
+      "erisa-manager",
       "finance-manager",
       "hr-manager"
     ],
     "shorthands": {
-      "commerce": ["commerce-member", "commerce-team-lead", "commerce-manager"],
-      "erify": ["erify-member", "erify-team-lead", "erify-manager"],
-      "erisa": ["erisa-member", "erisa-team-lead", "erisa-manager"],
+      "commerce": [
+        "commerce-member",
+        "commerce-team-lead",
+        "commerce-manager"
+      ],
+      "erify": [
+        "erify-member",
+        "erify-team-lead",
+        "erify-manager"
+      ],
+      "erisa": [
+        "erisa-member",
+        "erisa-team-lead",
+        "erisa-manager"
+      ],
       "company-wide": [
-        "commerce-member", "commerce-team-lead", "commerce-manager",
-        "erify-member", "erify-team-lead", "erify-manager",
-        "erisa-member", "erisa-team-lead", "erisa-manager",
-        "finance-manager", "hr-manager"
+        "commerce-member",
+        "commerce-team-lead",
+        "commerce-manager",
+        "erify-member",
+        "erify-team-lead",
+        "erify-manager",
+        "erisa-member",
+        "erisa-team-lead",
+        "erisa-manager",
+        "finance-manager",
+        "hr-manager"
       ]
     },
-    "note": "org-general (the GM, read-only) and admins (read-write) are never listed in a document's audiences — they're granted automatically at sync time on every collection, regardless of sensitivity, matching the same reasoning already applied to the eridu_mcp and Eridu CMD grant fixes."
+    "note": "admins (read-write) are never listed in a document's audiences -- they are granted automatically at sync time on every collection. org-general (the GM, read-only) is likewise never listed, but its automatic grant is currently SUSPENDED: it is not applied to any collection. The earlier rule granted it 'regardless of sensitivity', which contradicted the tiers above ('department' = one pillar only; 'restricted' = named leadership groups only), and the correct scope is an ownership decision that has not been made. Until it is, grant org-general explicitly per collection where it is wanted. Tracked in docs/tech-debt/erisa-platform-ops-manual-access-grants.md. Nothing is lost by the suspension: the automatic grant was never implemented -- tools/validate-wiki only ever expanded a document's own audiences."
   }
 }

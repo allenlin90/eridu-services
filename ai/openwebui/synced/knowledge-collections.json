@@ -188,62 +188,66 @@
     ],
     "created_at": 1784734306,
     "updated_at": 1784734306,
-    "file_count": 28,
+    "file_count": 29,
     "files": [
       {
-        "id": "e38f8016-8401-4340-b765-fd437a3b4441",
+        "id": "7b27787d-952e-4490-90e2-29d45fe58591",
         "name": "00-escalation-guide.md"
       },
       {
-        "id": "b49bcec6-490e-4ed1-8279-b2f42a22cb29",
+        "id": "0c745117-b406-410b-9210-4a6df376c203",
         "name": "01-account-shop-setup--creating-your-tiktok-shop-account.md"
       },
       {
-        "id": "8a43631e-40e9-4038-8ab2-3bbe13728ac7",
+        "id": "207e6661-9aa4-4966-8c03-0a43d79b7a5c",
         "name": "01-rs-tier.md"
       },
       {
-        "id": "dc759353-d22f-4a5f-9078-9a32ad016221",
+        "id": "737c6e4f-50eb-4398-9687-f3573cc1d900",
         "name": "02-policy.md"
       },
       {
-        "id": "4e5ca9b2-7b4a-479f-ab4f-265af5ca433d",
+        "id": "8bf3ba56-a487-4b57-887b-334e2958da69",
         "name": "02-product-management--adding-editing-products.md"
       },
       {
-        "id": "0f8b79df-b5c1-46dc-bfad-63875cf37b54",
+        "id": "a472cdea-1f38-42be-8c19-7addd3cebaf5",
         "name": "03-platform-features-updates--guide-to-creator-shopping-tools-interfac.md"
       },
       {
-        "id": "656ec396-8ae9-4e77-bb9b-df99a1d0156d",
+        "id": "ad8ccda1-5ef7-48ab-87fa-de43297f4d94",
         "name": "03-rebate-top-up-2.md"
       },
       {
-        "id": "c4887e7a-7653-4de5-9881-4eebf120252c",
+        "id": "3603bd95-d6b5-4721-94de-236c97fe7275",
         "name": "04-platform-features-updates--using-tiktok-shop-mobile-app-vs-desktop.md"
       },
       {
-        "id": "8182865a-86fe-4b1a-bde4-c195c5b740be",
+        "id": "d131202e-a039-41c0-90df-d0d56469dbfe",
         "name": "04-svls-challenge.md"
       },
       {
-        "id": "a66ad5ae-fc6b-4a81-9ea9-59b248e8e3f5",
+        "id": "1fe9ae76-eba0-421d-a27e-84700d101ae6",
         "name": "05-aca-shop-ads-commission.md"
       },
       {
-        "id": "11136506-7686-4308-9650-fb2ecdcc9932",
+        "id": "1bd65e43-45c1-4071-9df9-9ade42936529",
         "name": "05-payments-finance--understanding-fees-commissions-charges.md"
+      },
+      {
+        "id": "b8f197df-a08f-4c90-a0a7-89dcbfcf4b1d",
+        "name": "06-live-base.md"
       },
       {
         "id": "f0721082-81e7-4ca4-8d27-dcd7ae0cf069",
         "name": "06-live-base.md"
       },
       {
-        "id": "3beba4a2-57e8-4b6c-b566-e4a93f6be84e",
+        "id": "0ec79555-b4bb-45d0-a0c9-1558d19d3c75",
         "name": "06-payments-finance--setting-up-payout-information.md"
       },
       {
-        "id": "90e5a120-2e29-48e8-babc-0626f1bcbe52",
+        "id": "83739884-aa4e-4623-9d7c-cedaf6ba5ba0",
         "name": "07-payments-finance--payout-cycles-timelines.md"
       },
       {
@@ -251,47 +255,47 @@
         "name": "07-support-non-exclusive.md"
       },
       {
-        "id": "ffe7251a-e511-4f52-a3e3-962ca00953da",
+        "id": "d87de987-a4d9-4855-adf9-afd4c59477b2",
         "name": "08-payments-finance--troubleshooting-payment-issues-discrepan.md"
       },
       {
-        "id": "b4328017-0973-4986-a73c-f9a36ca63090",
+        "id": "a0e8b0f4-2730-4692-af60-15b01180af73",
         "name": "09-troubleshooting-technical-supp--common-technical-issues-quick-fixes.md"
       },
       {
-        "id": "2ff5dc8e-11de-4eea-b1cf-fcebb894fb31",
+        "id": "99173260-0071-458b-84e3-dd5d29be5c39",
         "name": "10-policies-safety-compliance--tiktok-shop---general-platform-policies.md"
       },
       {
-        "id": "5ffecbd8-6612-4275-bf3a-8e0e8361c8c7",
+        "id": "993d0480-b81a-45a5-982b-db55767f7e70",
         "name": "11-policies-safety-compliance--prohibited-restricted-products-guideline.md"
       },
       {
-        "id": "91f4c53d-5c5a-45d3-8502-823bca1d1df5",
+        "id": "2a6b6de2-ccba-4432-9106-887909fe1d14",
         "name": "12-policies-safety-compliance--how-to-appeal-violations.md"
       },
       {
-        "id": "ec9d2401-455f-452d-bdb6-1294c7cd43af",
+        "id": "6d64de9f-646c-45a8-b66f-4b2bebfe7921",
         "name": "13-policies-safety-compliance--understanding-violations-points-penaltie.md"
       },
       {
-        "id": "f1ef3206-9110-4f66-9913-8fa0c57f46d7",
+        "id": "9097e2f6-8c88-45be-95cd-b09c789055cc",
         "name": "14-official-programs-campaigns-in--understanding-programcampaign-rules-cont.md"
       },
       {
-        "id": "f08d92ab-223c-47d6-9a2b-137e9858f9ce",
+        "id": "554c70fb-2a24-4143-bd5c-ccd2175045e4",
         "name": "15-official-programs-campaigns-in--eligibility-criteria-registration-for-pr.md"
       },
       {
-        "id": "1239aa40-2826-4583-9029-33580746c381",
+        "id": "7ff832c2-5b52-46f2-8b80-046c1f551e2c",
         "name": "16-official-programs-campaigns-in--participating-in-official-tiktok-shop-ca.md"
       },
       {
-        "id": "717dad5b-c0c7-42fd-af9f-a1a53e19e041",
+        "id": "340da104-b512-4767-a750-c88729ccd593",
         "name": "17-official-programs-campaigns-in--overview-of-current-tiktok-shop-incentiv.md"
       },
       {
-        "id": "06107032-2538-4669-8116-2c671e625a16",
+        "id": "8577f876-3c87-48c5-b59c-6a1140b2497a",
         "name": "18-official-programs-campaigns-in--terms-conditions-for-specific-programsca.md"
       },
       {
@@ -301,6 +305,81 @@
       {
         "id": "a84d02d9-761f-48a6-b3db-b68a81ba0cef",
         "name": "glossary.md"
+      }
+    ]
+  },
+  {
+    "id": "e36ea274-4129-4779-b899-ebc78b97d549",
+    "name": "erisa-platform-ops-sop",
+    "description": "ERISA internal Platform PoC operations SOP (Thai-primary): TikTok Shop violation handling and appeals, quarterly Mission incentives, monthly campaign vouchers (Payday, Double Digit), MCN voucher allocation, max cap and AOV calculation, Platform AM coordination. Internal staff only.",
+    "access_grants": [
+      {
+        "id": "976eb067-f456-4567-affe-eaf6882e94b4",
+        "resource_type": "knowledge",
+        "resource_id": "e36ea274-4129-4779-b899-ebc78b97d549",
+        "principal_type": "group",
+        "principal_id": "a0c6d928-ed7a-4528-95dd-887a82a97752",
+        "permission": "read",
+        "created_at": 1785327420
+      },
+      {
+        "id": "205b6602-c368-48cf-96bd-ddd87ba8edac",
+        "resource_type": "knowledge",
+        "resource_id": "e36ea274-4129-4779-b899-ebc78b97d549",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "read",
+        "created_at": 1785327420
+      },
+      {
+        "id": "c1191e1d-b6af-48d4-aa8d-0c0fc780f8f5",
+        "resource_type": "knowledge",
+        "resource_id": "e36ea274-4129-4779-b899-ebc78b97d549",
+        "principal_type": "group",
+        "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+        "permission": "write",
+        "created_at": 1785327420
+      }
+    ],
+    "created_at": 1785207320,
+    "updated_at": 1785207320,
+    "file_count": 9,
+    "files": [
+      {
+        "id": "1440e39e-53b1-440b-b865-854aca7e868a",
+        "name": "00-platform-poc-dispatch.md"
+      },
+      {
+        "id": "28485acd-4238-431b-9a9a-a588b037503b",
+        "name": "01-channels-and-working-sheets.md"
+      },
+      {
+        "id": "1db852f9-dbcb-444b-b08d-e1812cd0398f",
+        "name": "01-quarterly-platform-incentive.md"
+      },
+      {
+        "id": "687a048e-a337-4b2d-9ca0-76060be77e75",
+        "name": "01-violation-handling-workflow.md"
+      },
+      {
+        "id": "a1038e8e-ec6b-4af5-9b86-6ae412af1c4b",
+        "name": "02-evidence-and-identifiers.md"
+      },
+      {
+        "id": "abab1565-215e-4df9-9fb3-3e9fb7f17bdd",
+        "name": "02-monthly-campaign-incentive.md"
+      },
+      {
+        "id": "557910cb-d11e-4b7f-a815-59c539073085",
+        "name": "02-platform-poc-glossary.md"
+      },
+      {
+        "id": "12c0f5f3-6a2f-45a9-aa54-247e2a5d5c1d",
+        "name": "03-voucher-allocation.md"
+      },
+      {
+        "id": "98e0ed6f-cb6b-4401-b0b8-ef47b58da455",
+        "name": "04-max-cap-and-aov.md"
       }
     ]
   },

@@ -17,15 +17,35 @@ Contract frontmatter — `id`, `audiences: [erisa]`,
 Content Contract's "grants derived from validated metadata" rule
 (`ai/architecture/llm-knowledge-base-plan.md` § Content Contract) stays
 mandatory for every other collection, and for this one once the gate below
-lifts. Until then: `generate_kb.py` does not validate this frontmatter (no
+lifts. `generate_kb.py` still does not validate this frontmatter (no
 `company-wiki/tools/validate-wiki`-equivalent exists for this collection yet),
-and `upload_kb.py` does not read it or derive Open WebUI access grants from
-it — the collection's real access grants (`ai/openwebui/synced/models.json`
-→ `creator-service-assistant` → `access_grants`) are set and maintained
-manually and are the actual source of truth for who can reach this content
-today, independent of what `audiences`/`sensitivity` say. Before changing who
-can access this collection, update the grants directly in Open WebUI (or via
-`POST /api/v1/knowledge/{id}/access/update`), not by editing frontmatter.
+and this collection's real access grants are still **maintained by hand** — they
+must match the exact approved group/permission set in
+[`../../access/audience-group-map.json`](../../access/audience-group-map.json),
+independent of what `audiences`/`sensitivity` say. Before changing who can access
+this collection, update that reviewed policy and the live grants together; do
+not edit frontmatter as a substitute.
+
+> ⚠️ **`upload_kb.py` now derives grants by default.** Running it without
+> `--manual-grants-exception` takes the derived path and would **overwrite this
+> collection's hand-maintained grants** with whatever `audiences` resolves to.
+> Always re-run it as:
+>
+> ```bash
+> python3 scripts/ai/creator-kb/upload_kb.py \
+>   --kb-name creator-services-tiktok-shop \
+>   --dir ai/openwebui/knowledge/creator-services \
+>   --full-context-file 00-escalation-guide.md \
+>   --manual-grants-exception "pilot-gated exception, llm-knowledge-base-plan.md § Content Contract"
+> ```
+>
+> The exception is allowlisted in
+> [`../../access/audience-group-map.json`](../../access/audience-group-map.json);
+> a free-form reason alone will not unlock it. It skips *derivation* only — the
+> uploader still refuses to publish unless the collection already exists and
+> its grants exactly match the reviewed group/permission set recorded in that
+> map. The same exact check runs again after upload, so the exception cannot open
+> an unrestricted or accidentally widened publishing window.
 
 - **Scope:** `creator-services-tiktok-shop` only.
 - **Owner:** `erisa-creator-services`.
@@ -93,7 +113,9 @@ python3 scripts/ai/creator-kb/generate_kb.py <new-excel>.xlsx ai/openwebui/knowl
 ```
 
 Knowledge `.md` files are **generated artifacts** — do not hand-edit content here;
-change the source Excel and regenerate, then re-run `upload_kb.py`; it reconciles
+change the source Excel and regenerate, then re-run `upload_kb.py` **with
+`--manual-grants-exception`** (see the Governance status warning above — without
+it the run rewrites this collection's hand-maintained grants). It reconciles
 changed/removed files automatically (see Sync pipeline above), no manual cleanup
 step needed.
 

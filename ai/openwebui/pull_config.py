@@ -189,7 +189,10 @@ def main():
     skills = pulled["skills"]
     for skill in skills:
         skill_id = skill.get("id")
-        if skill_id == "citation-escalation-contract":
+        # Repo-authored adapters live in ai/openwebui/skills/ and are the source
+        # of truth for their own content; re-exporting them here would create a
+        # second copy free to drift from it.
+        if skill_id in ("citation-escalation-contract", "platform-incentive-dispatch"):
             continue
         content = skill.get("content", "")
         filename = f"{skill_id}.md"
