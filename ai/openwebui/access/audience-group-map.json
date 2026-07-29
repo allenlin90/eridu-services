@@ -51,9 +51,21 @@
     "$comment": [
       "Collections allowed to publish WITHOUT derived grants, via --manual-grants-exception.",
       "Membership here is the authorization; the caller's free-text reason is not. Adding a",
-      "collection is a reviewed change -- cite the document that approves it."
+      "collection is a reviewed change. Each entry cites the approving policy and declares the",
+      "exact live group grants that must already exist before and after an upload."
     ],
-    "creator-services-tiktok-shop": "ai/architecture/llm-knowledge-base-plan.md § Content Contract — pilot-gated exception"
+    "creator-services-tiktok-shop": {
+      "policy": "ai/architecture/llm-knowledge-base-plan.md § Content Contract — pilot-gated exception",
+      "expected_group_grants": {
+        "read": [
+          "Erisa - Creator",
+          "Admins"
+        ],
+        "write": [
+          "Admins"
+        ]
+      }
+    }
   },
   "$decisions": {
     "erisa-tiers-to-creator-only": [

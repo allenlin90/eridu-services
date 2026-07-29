@@ -169,15 +169,26 @@ def apply_and_verify_grants(api, kb_id, derived_grants):
     print(f"Access gate: applied and verified {len(want)} grant(s) (exact match).")
 
 
-def verify_manual_grants(api, kb_name):
-    """Gate the manual-exception path on the collection ALREADY being restricted.
+def verify_manual_grants(api, kb_name, exception):
+    """Require the exact reviewed grant set on a manual-exception collection.
 
     The exception permits grants that a human maintains; it does not permit an
     unrestricted publishing window. So this refuses to create the collection,
-    and refuses to publish into one whose grants are absent (unrestricted on
-    0.10.x) or wildcarded. It returns the kb_id so the caller never has to fall
-    back to find_or_create_kb().
+    resolves the policy's group names to live ids, and requires exact equality
+    before publishing. It returns the kb_id so the caller never has to fall back
+    to find_or_create_kb().
     """
+    if not isinstance(exception, dict):
+        raise GateError(
+            f"{kb_name!r} has a malformed manual-grants exception. Expected an "
+            "object with 'policy' and 'expected_group_grants'.")
+    policy = exception.get("policy")
+    expected = exception.get("expected_group_grants")
+    if not policy or not isinstance(expected, dict):
+        raise GateError(
+            f"{kb_name!r} has an incomplete manual-grants exception. Both "
+            "'policy' and 'expected_group_grants' are required.")
+
     kb = next((k for k in _as_items(api.get("list_kb"))
                if isinstance(k, dict) and k.get("name") == kb_name), None)
     if kb is None:
@@ -187,25 +198,49 @@ def verify_manual_grants(api, kb_name):
             "unrestricted on 0.10.x. Create it and set its approved grants first, "
             "or publish it through the derived path."
         )
+
+    live_groups = {
+        g["name"]: g["id"]
+        for g in _as_items(api.get("list_groups"))
+        if isinstance(g, dict) and g.get("name") and g.get("id")
+    }
+    expected_keys = set()
+    expected_names = set()
+    for permission in ("read", "write"):
+        names = expected.get(permission)
+        if not isinstance(names, list) or not names:
+            raise GateError(
+                f"{kb_name!r} manual policy must declare a non-empty "
+                f"expected_group_grants.{permission} list.")
+        for name in names:
+            if not isinstance(name, str) or not name:
+                raise GateError(
+                    f"{kb_name!r} manual policy has an invalid {permission} "
+                    f"group name: {name!r}.")
+            expected_names.add(name)
+            if name not in live_groups:
+                continue
+            expected_keys.add(("group", live_groups[name], permission))
+    missing_groups = sorted(expected_names - set(live_groups))
+    if missing_groups:
+        raise GateError(
+            f"{kb_name!r} manual policy references missing live groups: "
+            f"{', '.join(missing_groups)}. Refusing to publish.")
+
     grants = api.get("get_kb", kb_id=kb["id"]).get("access_grants") or []
-    if not grants:
+    actual_keys = {_grant_key(g) for g in grants}
+    if actual_keys != expected_keys:
+        missing = sorted(expected_keys - actual_keys)
+        extra = sorted(actual_keys - expected_keys)
         raise GateError(
-            f"{kb_name!r} has NO access grants -- it is unrestricted on this "
-            "deployment. Refusing to publish into it. Set its approved manual "
-            "grants, then re-run."
+            f"{kb_name!r} grants do not match its approved manual policy "
+            f"({policy}).\n"
+            f"  missing: {missing or 'none'}\n"
+            f"  unexpected: {extra or 'none'}\n"
+            "Refusing to publish until the manual grants are corrected."
         )
-    bad = [g for g in grants
-           if g.get("principal_id") in ("*", "", None)
-           or (g.get("principal_type") == "user" and g.get("principal_id") == "*")]
-    if bad:
-        raise GateError(
-            f"{kb_name!r} carries a wildcard/public grant: {bad!r}. "
-            "Refusing to publish into an effectively public collection."
-        )
-    reads = sum(1 for g in grants if g.get("permission") == "read")
-    writes = sum(1 for g in grants if g.get("permission") == "write")
-    print(f"Access gate: manual grants verified on {kb_name} -- "
-          f"{len(grants)} grant(s) ({reads} read, {writes} write), no wildcard.")
+    print(f"Access gate: manual grants verified on {kb_name} -- exact match "
+          f"({len(expected_keys)} grant(s), policy: {policy}).")
     return kb["id"]
 
 
@@ -566,16 +601,20 @@ def main():
                 f"'manual_grant_exceptions' in {AUDIENCE_MAP_PATH} with the doc that "
                 "approves it, and get that change reviewed."
             )
+        exception = allowed[args.kb_name]
+        policy = exception.get("policy") if isinstance(exception, dict) else None
         print(f"Access gate: derivation SKIPPED for {args.kb_name} under its approved "
-              f"exception ({allowed[args.kb_name]}).")
+              f"exception ({policy or 'malformed policy entry'}).")
         print(f"  Caller reason: {args.manual_grants_exception}")
         derived_grants = None
         # Derivation is skipped; verification is NOT. The collection must already
         # exist and already be restricted before anything is published into it.
-        preverified_kb_id = verify_manual_grants(api, args.kb_name)
+        preverified_kb_id = verify_manual_grants(api, args.kb_name, exception)
+        manual_exception = exception
     else:
         derived_grants = derive_access_grants(api, md_files)
         preverified_kb_id = None
+        manual_exception = None
 
     kb_id = (preverified_kb_id if preverified_kb_id is not None
              else find_or_create_kb(api, args.kb_name, args.description))
@@ -661,6 +700,10 @@ def main():
         # Re-verify after the writes: confirm nothing about the upload path
         # altered the grants that were applied before publishing.
         apply_and_verify_grants(api, kb_id, derived_grants)
+    elif manual_exception is not None:
+        # The manual path has an exact reviewed policy too. Re-read after the
+        # writes so a server-side side effect cannot silently widen access.
+        verify_manual_grants(api, args.kb_name, manual_exception)
 
     print("Next steps:")
     print("  1. Attach the KB to the assistant model (Workspace > Models > edit > Knowledge).")
@@ -675,10 +718,6 @@ def main():
         print("     attach it as a standalone item in FULL CONTEXT mode too. See the")
         print("     collection's own README; pass --full-context-file to name it here.")
     print("  3. Keep the KB itself on Focused Retrieval (default).")
-    if derived_grants is None:
-        print("  4. Verify access grants NOW: a newly created KB has none, which is")
-        print("     unrestricted on 0.10.x. Set them via")
-        print("     POST /api/v1/knowledge/{id}/access/update with an access_grants list.")
     if failed:
         sys.exit(1)
 

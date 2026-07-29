@@ -20,10 +20,11 @@ mandatory for every other collection, and for this one once the gate below
 lifts. `generate_kb.py` still does not validate this frontmatter (no
 `company-wiki/tools/validate-wiki`-equivalent exists for this collection yet),
 and this collection's real access grants are still **maintained by hand** — they
-are the source of truth for who can reach this content, independent of what
-`audiences`/`sensitivity` say. Before changing who can access this collection,
-update the grants directly in Open WebUI (or via
-`POST /api/v1/knowledge/{id}/access/update`), not by editing frontmatter.
+must match the exact approved group/permission set in
+[`../../access/audience-group-map.json`](../../access/audience-group-map.json),
+independent of what `audiences`/`sensitivity` say. Before changing who can access
+this collection, update that reviewed policy and the live grants together; do
+not edit frontmatter as a substitute.
 
 > ⚠️ **`upload_kb.py` now derives grants by default.** Running it without
 > `--manual-grants-exception` takes the derived path and would **overwrite this
@@ -42,8 +43,9 @@ update the grants directly in Open WebUI (or via
 > [`../../access/audience-group-map.json`](../../access/audience-group-map.json);
 > a free-form reason alone will not unlock it. It skips *derivation* only — the
 > uploader still refuses to publish unless the collection already exists and
-> already carries non-empty, non-wildcard grants, so the exception cannot open an
-> unrestricted publishing window.
+> its grants exactly match the reviewed group/permission set recorded in that
+> map. The same exact check runs again after upload, so the exception cannot open
+> an unrestricted or accidentally widened publishing window.
 
 - **Scope:** `creator-services-tiktok-shop` only.
 - **Owner:** `erisa-creator-services`.

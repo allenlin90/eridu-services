@@ -18,15 +18,16 @@ are kept as official-link references (Phase 1: no TikTok Academy scraping).
 Every generated content file (not the directory READMEs) carries governance
 frontmatter (id/title/audiences/owner/sensitivity/status/source_refs/
 reviewed_at/review_by) per the Content Contract in
-ai/architecture/llm-knowledge-base-plan.md. This is metadata only, not yet
-enforced: nothing here or in upload_kb.py validates it or derives Open WebUI
-access grants from it -- the collection's real grants are set and maintained
-manually and remain the actual source of truth regardless of what this
-frontmatter says (see ai/openwebui/knowledge/creator-services/README.md
-"Governance status"). This collection maps to the plan's roadmapped
-`wiki-erisa` slot (Erisa groups / creator & affiliate workflows), reached
-early via this lighter bootstrap pipeline instead of the full company-wiki
-validator/Sync Pipe.
+ai/architecture/llm-knowledge-base-plan.md. The generator does not validate
+that metadata. upload_kb.py validates it and derives grants by default, but this
+collection uses the plan's recorded manual-grants exception, so its upload must
+pass --manual-grants-exception and must match the exact reviewed grant set in
+ai/openwebui/access/audience-group-map.json. See the creator-services README's
+"Governance status" section for the safe invocation.
+
+This collection maps to the plan's roadmapped `wiki-erisa` slot (Erisa groups /
+creator and affiliate workflows), reached early via this lighter bootstrap
+pipeline instead of the full company-wiki validator/Sync Pipe.
 
 Repo home: scripts/ai/creator-kb/generate_kb.py, with output synced to
 ai/openwebui/knowledge/creator-services/.
@@ -42,11 +43,6 @@ from openpyxl import load_workbook
 
 LINK_RE = re.compile(r"https?://\S+")
 
-# NOTE: upload_kb.py derives Open WebUI access grants from the `audiences` below
-# by default. This collection's grants are hand-maintained under a recorded
-# exception, so its uploads must pass --manual-grants-exception or the run will
-# overwrite them. See ai/openwebui/knowledge/creator-services/README.md
-# § Governance status for the exact invocation.
 GOVERNANCE = {
     "owner": "erisa-creator-services",
     # Must be a value from company-wiki/tools/wiki-schema.json's audiences

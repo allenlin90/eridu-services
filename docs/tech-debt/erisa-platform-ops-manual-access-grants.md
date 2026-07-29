@@ -11,11 +11,12 @@
 
 Grants are now **derived**, satisfying the plan's requirement that they come from
 validated `audiences` metadata. `upload_kb.py` validates each file's governance
-metadata, refuses `draft`/`archived`, resolves `audiences` through
+metadata, permits only `active` documents, resolves `audiences` through
 `ai/openwebui/access/audience-group-map.json`, rejects wildcard grants, applies
-the result, and reads it back to confirm it is non-empty. Every check runs
-**before** the first upload, so a refusal cannot leave a half-published,
-ungranted collection.
+the result, and requires exact grant-set equality before and after upload. The
+manual exception path likewise requires the collection to exist and match its
+reviewed grant set before and after upload. A refusal therefore cannot leave a
+half-published, ungranted, or accidentally widened collection.
 
 `erisa-platform-ops-sop` publishes cleanly under this gate. Its derived grants
 (`Erisa - Creator` read; `Admins` read + write) are byte-identical to the grants
