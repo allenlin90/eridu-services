@@ -296,7 +296,7 @@ The ranges are targets, not quotas. A skill remains only when its trigger and ou
 
 ### Catalog targets
 
-- reduce the implicit skill catalog from 94 entries to **no more than 50** in the first reorganization milestone;
+- reduce the current 73 implicitly invocable entries (94 total, including 21 explicit-only entries) to **no more than 50** in the first reorganization milestone;
 - target **35 or fewer** implicit entries after overlap consolidation and knowledge extraction;
 - mark manual workflows and presentation modes explicit-only;
 - keep total implicit descriptions comfortably below the Codex fallback budget;

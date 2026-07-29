@@ -76,7 +76,7 @@ When a task changes an established pattern, convention, or architectural directi
 1. **Enumerate.** Grep the pattern name and the owning skill across the instruction surface:
 
    ```bash
-   grep -rln "<skill-name>\|<pattern-term>" .agents .claude .cursor docs apps/*/docs AGENTS.md
+   grep -rln "<skill-name>\|<pattern-term>" .agents .claude .cursor .opencode ai apps docs infra packages AGENTS.md README.md opencode.json
    ```
 
    Include vendor-specific surfaces: Claude agents and memory under `.claude/` and Cursor adapters under `.cursor/` can route work to the old pattern too.

@@ -2,7 +2,7 @@
 
 > **Status:** Pilot contract. This document is expected to evolve while the repository layout and knowledge migration are evaluated.
 >
-> **Target specification:** [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
+> **Target specification:** [Open Knowledge Format v0.2, pinned at `3fcbb9f8`](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/3fcbb9f828c2f23d109c855ee403c3a4c81f3a96/okf/SPEC.md).
 
 ## Purpose
 
