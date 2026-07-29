@@ -11,6 +11,8 @@ Engineering-focused persistent references — architecture, patterns, and govern
 | [Finance Guardrails](./FINANCE_GUARDRAILS.md) | Platform rules for monetary computation, financial storage, and audit |
 | [DataTable Package Extraction](./DATA_TABLE_EXTRACTION.md) | Rationale, design decisions, and consequences of extracting DataTable |
 | [Agentic Development Setup](./AGENTIC_DEVELOPMENT_SETUP.md) | macOS/WSL setup for Claude Code, Codex, OpenCode, RTK, QMD, and optional Graphify |
+| [Target Agent Operating Model](./AGENT_OPERATING_MODEL.md) | Reasoning lifecycle, mode timing, pattern consumers, catalog targets, and measurable exit criteria |
+| [Agent Invocation Compatibility](./AGENT_INVOCATION_COMPATIBILITY.md) | Stable workflow IDs and cross-client entrypoint compatibility for Claude Code, Codex, and OpenCode |
 | [Agent Content Reorganization](./AGENT_CONTENT_REORGANIZATION.md) | Taxonomy, full 94-entry skill audit, migration waves, and bookkeeping requirements |
 | [OKF Agent Compatibility Contract](./OKF_AGENT_CONTRACT.md) | Shared read/write behavior for OKF lifecycle, provenance, extensions, and progressive disclosure |
 | [Knowledge and Platform Layout](./KNOWLEDGE_AND_PLATFORM_LAYOUT.md) | `infra/`, OKF `knowledge/`, `.agents/`, Compose topology, and migration boundaries |
