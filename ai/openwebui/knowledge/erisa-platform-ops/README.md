@@ -25,16 +25,18 @@ generated artifacts — there is no Excel source and no `generate_kb.py` step.
 Edit the Markdown directly, then re-upload. When the source `.docx` is revised,
 re-derive the affected files by hand and bump `reviewed_at`.
 
-**All worked examples in this collection are synthetic.** The source SOP
-illustrates each procedure with a real creator — handle, UID, Live Room ID,
-video and product IDs, and 30-day GMV/order figures — and the original Working
-Sheet URL. This repository is **public**, so Open WebUI access grants cannot
-protect anything committed here. Every such value has been replaced with an
-obviously-fake stand-in (`@example_creator`, IDs beginning `7000…`/`1700…`)
-chosen so the arithmetic still works: the AOV example divides to the same
-`฿206`, and the Max Cap reasoning is unchanged. When following a procedure, use
-the real values from the CRM, Partner Portal and Working Sheet — never the
-examples here. Do not re-introduce real identifiers into this directory.
+**Every identifier, figure and URL in this collection is synthetic. Nothing
+here is a real creator, order value, or internal link.**
+
+This repository is **public**, so Open WebUI access grants protect nothing
+committed to it. Handles are `@example_creator`; IDs use reserved-looking
+`7000…`/`1700…` patterns that cannot collide with real ones; the Working Sheet
+row points at the AM instead of carrying a link. Stand-ins were chosen to keep
+the arithmetic intact — the AOV example still divides to `฿206`, so the Max Cap
+reasoning is unchanged.
+
+When following a procedure, take real values from the CRM, Partner Portal and
+Working Sheet. **Never re-introduce a real identifier into this directory.**
 
 The source `.docx` is **not committed** (same platform-confidentiality rule as
 `creator-services/`: see [`../../synced/skills/creator-management.md`](../../synced/skills/creator-management.md)).
@@ -107,8 +109,17 @@ Never present a snapshot number as a confirmed current condition.
 
 2. **Verify** — `GET /api/v1/knowledge/{id}/files` → `total` should be **9**,
    names unique and 1:1 with the local `.md` files (excluding `README.md`).
-3. **Set access grants manually** to ERISA groups only
-   (`POST /api/v1/knowledge/{id}/access/update`). Do not grant company-wide.
+3. **Access grants are derived, not set by hand.** `upload_kb.py` reads each
+   file's `audiences`, maps them through
+   [`../../access/audience-group-map.json`](../../access/audience-group-map.json)
+   to live Open WebUI groups, and applies the result. It **refuses to publish**
+   — before uploading anything — when the map is unapproved, an audience is
+   unmapped, a mapped group is missing on the instance, or the derivation would
+   yield no grants. It then reads the grants back and fails if they are empty.
+
+   That map is currently **unapproved**, so this collection cannot be published
+   until the content owner signs off on the audience → group mapping. See
+   [`../../../../docs/tech-debt/erisa-platform-ops-manual-access-grants.md`](../../../../docs/tech-debt/erisa-platform-ops-manual-access-grants.md).
 4. **Attach to an ERISA-internal assistant** in the UI (the UI sets
    `meta.knowledge[].type = "collection"`; a raw API attach that omits it makes
    retrieval silently skip the collection). Attach `00-platform-poc-dispatch.md`

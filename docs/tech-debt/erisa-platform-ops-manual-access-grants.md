@@ -1,58 +1,78 @@
-# ERISA Platform Ops collection has manual, underived access grants
+# Audience → Open WebUI group mapping is undefined, blocking derived access grants
 
 ## Affected surface
 
-- `ai/openwebui/knowledge/erisa-platform-ops/` (collection `erisa-platform-ops-sop`)
+- `ai/openwebui/access/audience-group-map.json` (new, unapproved)
 - `scripts/ai/creator-kb/upload_kb.py`
-- `ai/architecture/llm-knowledge-base-plan.md` § Content Contract
+- `ai/openwebui/knowledge/erisa-platform-ops/` (collection `erisa-platform-ops-sop`)
+- `ai/architecture/llm-knowledge-base-plan.md` § Content Contract, Phase 0
 
 ## Current behavior
 
-Every file in the collection carries Content Contract frontmatter
-(`audiences: [erisa]`, `sensitivity: department`), but nothing reads it.
-`upload_kb.py` does not validate the frontmatter and does not derive Open WebUI
-`access_grants` from `audiences`. The collection's real access control is set by
-hand after upload and is the only thing protecting it.
+`llm-knowledge-base-plan.md` requires that collection membership and access
+grants be **derived** from validated `audiences`/`sensitivity` metadata, and that
+"a document cannot be published when its metadata has no valid collection and
+group mapping."
 
-This is **not** covered by an approved exception. The pilot-gated exception in
-`ai/architecture/llm-knowledge-base-plan.md` § Content Contract is scoped to
-`creator-services-tiktok-shop` only.
+The derivation mechanism now exists: `upload_kb.py` validates each file's
+governance metadata, refuses `draft`/`archived`, resolves `audiences` through
+`ai/openwebui/access/audience-group-map.json`, rejects wildcard grants, applies
+the result via `POST /api/v1/knowledge/{id}/access/update`, and reads the grants
+back to confirm they are non-empty. Every failure raises **before** any file is
+uploaded, so a refusal cannot leave a half-published, ungranted collection.
 
-The failure mode is demonstrated, not hypothetical. On first deployment
-(2026-07-28) the collection was created with **no `access_grants` at all**,
-which on Open WebUI `0.10.x` means unrestricted, and stayed that way until the
-grants were corrected by hand in a follow-up call.
+**What is missing is the mapping itself**, and it is missing repo-wide, not just
+for this collection. Phase 0 of the plan lists "Define the audience and
+sensitivity vocabulary and its exact Open WebUI group mapping" as an open item.
+The two vocabularies do not line up:
+
+| Content Contract vocabulary | Live Open WebUI groups |
+| --- | --- |
+| `erisa-member`, `erisa-team-lead`, `erisa-manager` (tier-shaped) | `Erisa - Creator`, `Erisa - Campaign` (function-shaped) |
+| `commerce-member`, `commerce-team-lead`, `commerce-manager` | `Commerce - Operation`, `Commerce - Sales` |
+| `erify-member`, `erify-team-lead`, `erify-manager` | `Erify - Onset`, `Erify - Offset` |
+| — (no entry) | `Management team` |
+
+Because no tier group exists on the instance, `audiences: [erisa]` resolves to
+nothing, and the gate correctly refuses to publish. `audience-group-map.json`
+therefore ships with `status: UNAPPROVED` and empty tables, with a candidate
+mapping parked under `$proposed` that the script deliberately ignores.
+
+This is not a `creator-services-tiktok-shop`-style exception. That collection has
+a scoped, recorded exception; this collection has none and claims none. It simply
+cannot be published until the mapping is approved.
 
 ## Desired behavior
 
-`upload_kb.py` derives `access_grants` from each file's `audiences` via the
-group mapping in `ai/openwebui/knowledge/company-wiki/tools/wiki-schema.json`,
-applies them with `POST /api/v1/knowledge/{id}/access/update`, rejects wildcard
-and public grants, and fails the run when a file's metadata has no valid group
-mapping. Alternatively the collection migrates onto
-`company-wiki/tools/validate-wiki` and the Sync Pipe.
+The content owner settles three questions and the mapping moves from `$proposed`
+into `audiences`/`automatic` with `status: approved`:
 
-Either route removes the manual step; neither should be reached by widening the
-`creator-services-tiktok-shop` exception through a collection README.
+1. **Tier → team.** Mapping all three ERISA tiers onto both ERISA teams means
+   `audiences: [erisa]` reaches Campaign as well as Creator. Defensible for this
+   SOP, which covers campaign incentive work — but it is a widening and needs to
+   be stated, not inferred.
+2. **`Org - General`.** `wiki-schema.json` says org-general (the GM, read-only)
+   is granted automatically on every collection *regardless of sensitivity*.
+   Applied literally that gives the GM read on department-confidential Platform
+   PoC content. Confirm or carve out.
+3. **`Management team`** exists live with no vocabulary entry.
+
+Then `upload_kb.py --kb-name erisa-platform-ops-sop …` publishes with derived
+grants and no manual step.
 
 ## Risk
 
-Medium. The content is `sensitivity: department` (Erisa pillar only) and
-includes voucher budget logic, escalation thresholds and Platform AM
-coordination detail. A future re-upload, a new collection created from the same
-script, or a restore that recreates the KB will again produce an unrestricted
-collection unless a human remembers to re-apply grants.
+Medium, and currently **mitigated by the gate refusing to publish**. Before the
+gate existed, the collection was created with no grants at all — unrestricted on
+Open WebUI `0.10.x` — and was corrected by hand afterwards. That class of failure
+is what the derivation prevents.
+
+The residual risk is scope creep in the mapping: because the vocabulary is
+coarser than the instance's groups, an approved mapping may grant more broadly
+than a document author intends. Sensitivity-aware narrowing is not implemented.
 
 ## Trigger to fix
 
-Any of:
-
-- a third collection is added to `upload_kb.py`'s remit (two is already enough
-  to make the manual step a pattern rather than a one-off);
-- the `creator-services-tiktok-shop` exception gate lifts, since the derivation
-  work that closes it also closes this;
-- this collection's `audiences` or `sensitivity` needs to change, since there is
-  currently no mechanism that would propagate the change to live grants.
-
-Until then: verify grants immediately after every upload run. `upload_kb.py`
-prints this as a closing step.
+Immediate — this blocks publishing `erisa-platform-ops-sop` at all. Beyond that,
+the same mapping unblocks the `creator-services-tiktok-shop` exception gate,
+since derivation is exactly what that gate waits on.

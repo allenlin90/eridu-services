@@ -59,6 +59,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -76,6 +77,8 @@ ENDPOINTS = {
     "kb_files": "/api/v1/knowledge/{kb_id}/files",
     "kb_add_file": "/api/v1/knowledge/{kb_id}/file/add",
     "dir_create": "/api/v1/knowledge/{kb_id}/dirs/create",
+    "list_groups": "/api/v1/groups/",
+    "kb_access": "/api/v1/knowledge/{kb_id}/access/update",
 }
 
 KB_DESCRIPTION = (
@@ -90,6 +93,144 @@ KB_DESCRIPTION = (
 # Pass --description when uploading a different collection with this script
 # (e.g. ai/openwebui/knowledge/erisa-platform-ops/), otherwise the new KB
 # inherits the creator-services surface above and routes badly.
+
+
+SCHEMA_PATH = Path("ai/openwebui/knowledge/company-wiki/tools/wiki-schema.json")
+AUDIENCE_MAP_PATH = Path("ai/openwebui/access/audience-group-map.json")
+
+
+class GateError(SystemExit):
+    """Raised before anything is published. Exit code 2 = access gate refused."""
+
+    def __init__(self, msg):
+        super().__init__(f"\nACCESS GATE REFUSED\n{msg}\n")
+
+
+def _read_frontmatter(path):
+    text = path.read_text(encoding="utf-8")
+    m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+    if not m:
+        raise GateError(f"{path}: no Content Contract frontmatter.")
+    fm = {}
+    for line in m.group(1).splitlines():
+        if not line or line[0].isspace() or ":" not in line:
+            continue
+        k, _, v = line.partition(":")
+        v = v.strip()
+        if v.startswith("[") and v.endswith("]"):
+            v = [x.strip().strip("'\"") for x in v[1:-1].split(",") if x.strip()]
+        fm[k.strip()] = v
+    return fm
+
+
+def derive_access_grants(api, md_files, repo_root=Path(".")):
+    """Derive Open WebUI access_grants from the files' `audiences` metadata.
+
+    Fail-closed by design. `llm-knowledge-base-plan.md` says a document cannot be
+    published when its metadata has no valid collection and group mapping, so every
+    unresolved case raises before a single file is uploaded rather than after.
+    """
+    schema_path = repo_root / SCHEMA_PATH
+    map_path = repo_root / AUDIENCE_MAP_PATH
+    if not schema_path.exists():
+        raise GateError(f"Missing {SCHEMA_PATH}; cannot validate audience metadata.")
+    if not map_path.exists():
+        raise GateError(
+            f"Missing {AUDIENCE_MAP_PATH}.\n"
+            "This file is the audience -> Open WebUI group mapping the knowledge-base "
+            "plan requires before anything is published. Create and get it signed off, "
+            "or pass --manual-grants-exception with the documented reason."
+        )
+
+    schema = json.loads(schema_path.read_text())
+    amap = json.loads(map_path.read_text())
+
+    if str(amap.get("status", "")).lower() != "approved":
+        raise GateError(
+            f"{AUDIENCE_MAP_PATH} is not approved (status: {amap.get('status')!r}).\n"
+            "Populate 'audiences'/'automatic' from the reviewed decision and set status to "
+            "'approved'. A proposal under '$proposed' is deliberately NOT used."
+        )
+
+    valid_sens = set(schema["sensitivity"])
+    valid_status = set(schema["status"])
+    groups_enum = set(schema["audiences"]["groups"])
+    shorthands = schema["audiences"]["shorthands"]
+    mapping = amap.get("audiences") or {}
+
+    # 1. Validate every file's governance metadata, collecting the audience union.
+    wanted = set()
+    problems = []
+    for path in md_files:
+        fm = _read_frontmatter(path)
+        for field in ("id", "audiences", "owner", "sensitivity", "status"):
+            if not fm.get(field):
+                problems.append(f"{path}: missing required '{field}'")
+        if fm.get("sensitivity") not in valid_sens:
+            problems.append(f"{path}: sensitivity {fm.get('sensitivity')!r} not in {sorted(valid_sens)}")
+        if fm.get("status") not in valid_status:
+            problems.append(f"{path}: status {fm.get('status')!r} not in {sorted(valid_status)}")
+        if fm.get("status") in ("draft", "archived"):
+            problems.append(f"{path}: status {fm.get('status')!r} must never be synced to a live collection")
+        for aud in fm.get("audiences") or []:
+            if aud in shorthands:
+                wanted.update(shorthands[aud])
+            elif aud in groups_enum:
+                wanted.add(aud)
+            else:
+                problems.append(f"{path}: audience {aud!r} is not in the schema vocabulary")
+    if problems:
+        raise GateError("Metadata failed validation:\n  - " + "\n  - ".join(problems))
+
+    # 2. Every audience must have an explicit live-group mapping.
+    unmapped = sorted(a for a in wanted if not mapping.get(a))
+    if unmapped:
+        raise GateError(
+            "No live-group mapping for: " + ", ".join(unmapped) + "\n"
+            f"Add them to {AUDIENCE_MAP_PATH} and get the change signed off."
+        )
+
+    # 3. Resolve group names to live ids; a rename must fail loudly, not grant nothing.
+    live = {g["name"]: g["id"] for g in _as_items(api.get("list_groups")) if isinstance(g, dict)}
+    want_names = {n for a in sorted(wanted) for n in mapping[a]}
+    auto = amap.get("automatic") or {}
+    auto_read = list(auto.get("read") or [])
+    auto_write = list(auto.get("write") or [])
+    missing = sorted(n for n in want_names | set(auto_read) | set(auto_write) if n not in live)
+    if missing:
+        raise GateError(
+            "These mapped groups do not exist on the live instance: " + ", ".join(missing) + "\n"
+            "Either the group was renamed/deleted, or the mapping is wrong. Refusing to publish."
+        )
+
+    # 4. Build grants, rejecting anything that would make the collection public.
+    grants = []
+    seen = set()
+
+    def add(name, permission):
+        gid = live[name]
+        if gid in ("*", "") or name == "*":
+            raise GateError(f"Refusing wildcard grant for {name!r}.")
+        key = (gid, permission)
+        if key not in seen:
+            seen.add(key)
+            grants.append({"principal_type": "group", "principal_id": gid, "permission": permission})
+
+    for name in sorted(want_names):
+        add(name, "read")
+    for name in auto_read:
+        add(name, "read")
+    for name in auto_write:
+        add(name, "write")
+
+    if not grants:
+        raise GateError("Derivation produced no grants; that would leave the collection unrestricted.")
+    if not any(g["permission"] == "write" for g in grants):
+        raise GateError("Derivation produced no write grant; nobody could maintain the collection.")
+
+    print(f"Access gate: derived {len(grants)} grant(s) from {len(wanted)} audience(s): "
+          + ", ".join(sorted(want_names | set(auto_read))))
+    return grants
 
 
 class Api:
@@ -240,6 +381,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--kb-name", default="creator-services-tiktok-shop")
     ap.add_argument("--dir", default=".", help="folder containing the .md files")
+    ap.add_argument("--manual-grants-exception", default=None, metavar="REASON",
+                    help="Skip access-grant derivation and leave grants to a human. "
+                         "Only for a collection with a documented, approved exception "
+                         "(today: creator-services-tiktok-shop). REASON is printed and "
+                         "should cite where the exception is recorded.")
     ap.add_argument("--full-context-file", default=None,
                     help="Filename this collection wants attached in FULL "
                          "CONTEXT mode, printed in the closing next-steps hint. "
@@ -276,6 +422,17 @@ def main():
 
     api = Api(base, token)
     full_context_file = args.full_context_file
+
+    # Access gate FIRST: derive and validate before anything is published, so a
+    # refusal leaves no partially-uploaded, ungranted collection behind.
+    if args.manual_grants_exception:
+        print("Access gate: SKIPPED by --manual-grants-exception -- "
+              f"{args.manual_grants_exception}")
+        print("  Grants will NOT be derived. Verify them by hand immediately after this run.")
+        derived_grants = None
+    else:
+        derived_grants = derive_access_grants(api, md_files)
+
     kb_id = find_or_create_kb(api, args.kb_name, args.description)
     present = existing_files(api, kb_id)
     dirs = existing_dirs(api, kb_id)
@@ -347,6 +504,14 @@ def main():
 
     print(f"\nDone: added={ok - updated} updated={updated} skipped={skipped} "
           f"removed={removed} failed={failed}")
+    if derived_grants is not None:
+        api.post("kb_access", json_body={"access_grants": derived_grants}, kb_id=kb_id)
+        applied = api.get("get_kb", kb_id=kb_id).get("access_grants") or []
+        if not applied:
+            sys.exit("FATAL: grants were applied but read back empty -- the collection "
+                     "is unrestricted. Fix manually before anyone uses it.")
+        print(f"Access gate: applied and verified {len(applied)} grant(s).")
+
     print("Next steps:")
     print("  1. Attach the KB to the assistant model (Workspace > Models > edit > Knowledge).")
     print("     Do this in the UI: it sets meta.knowledge[].type = \"collection\", which a")
@@ -360,9 +525,10 @@ def main():
         print("     attach it as a standalone item in FULL CONTEXT mode too. See the")
         print("     collection's own README; pass --full-context-file to name it here.")
     print("  3. Keep the KB itself on Focused Retrieval (default).")
-    print("  4. Verify access grants NOW: a newly created KB has none, which is")
-    print("     unrestricted on 0.10.x. Set them via")
-    print("     POST /api/v1/knowledge/{id}/access/update with an access_grants list.")
+    if derived_grants is None:
+        print("  4. Verify access grants NOW: a newly created KB has none, which is")
+        print("     unrestricted on 0.10.x. Set them via")
+        print("     POST /api/v1/knowledge/{id}/access/update with an access_grants list.")
     if failed:
         sys.exit(1)
 
