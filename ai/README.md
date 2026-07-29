@@ -54,6 +54,16 @@ Use these actual agent skills before changing AI workspace files:
 8. Start MCP tools as read-only; add write actions only after audit and approval workflows are defined.
 9. Log business-data access in the MCP service, not only in Open WebUI.
 
+## Boundary with local engineering retrieval
+
+`ai/` remains the owner of platform-specific Open WebUI, LiteLLM, and MCP deployment material. A local engineering agent may index and search this directory, but indexing does not reclassify the content or move its authority out of the platform tree.
+
+Engineering-agent retrieval from a local checkout is CLI-first: QMD for Markdown knowledge, Graphify for code relationships, and direct source search for exact identifiers. It does not require another NestJS MCP service. A local QMD or Graphify MCP process is an optional client adapter only.
+
+Extract content from `ai/` into a platform-neutral location only when the content's authoritative audience and lifecycle become cross-client. For example, Open WebUI manifests and sync logic remain here; a future company corpus intentionally shared by Open WebUI and coding agents may move to a neutral or private knowledge repository while Open WebUI adapters remain under `ai/`.
+
+See [Local Agent Retrieval and Tooling](../docs/engineering/LOCAL_AGENT_RETRIEVAL.md) for the repository-wide decision, installation matrix, and shared-service gates.
+
 ## Directory map
 
 ```text
