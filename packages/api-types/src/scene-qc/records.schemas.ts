@@ -90,6 +90,11 @@ export const sceneQcRecordAuditEntrySchema = z.object({
   at: z.iso.datetime(),
   old_result: sceneQcResultSchema.nullable(),
   new_result: sceneQcResultSchema.nullable(),
+  // Audit metadata stores only `feedback_present: boolean` (the review's
+  // feedback text itself is never persisted in audit metadata -- it's a
+  // first-class column on the review, see scene-qc-review-workflow.service.ts).
+  // So this reflects presence flipping (absent <-> present), not whether the
+  // feedback TEXT changed on a save where it was present both before and after.
   feedback_changed: z.boolean(),
 });
 

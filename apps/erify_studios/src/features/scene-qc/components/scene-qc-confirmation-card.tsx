@@ -42,6 +42,7 @@ export function SceneQcConfirmationCard({ summary, isLoading, confirmation, onOp
           <Badge variant="outline" className="border-emerald-500/50 text-emerald-700">Confirmed</Badge>
           <span className="text-xs text-muted-foreground">
             Revision
+            {' '}
             {summary.confirmation_revision}
           </span>
         </div>
@@ -107,7 +108,7 @@ export function SceneQcConfirmationCard({ summary, isLoading, confirmation, onOp
           >
             {confirmation.isPending ? 'Reconfirming…' : 'Reconfirm'}
           </Button>
-          <Button type="button" size="sm" variant="outline" disabled title="Only the current revision's report can be opened here">
+          <Button type="button" size="sm" variant="outline" disabled title="This revision's report is historical -- open it from Records instead">
             <FileText className="mr-2 h-4 w-4" />
             Open current report
           </Button>

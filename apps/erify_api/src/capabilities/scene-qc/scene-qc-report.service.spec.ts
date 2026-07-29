@@ -1,6 +1,26 @@
 import { SceneQcReportService } from './scene-qc-report.service';
 
-function buildReportRow(overrides: Partial<{ revision: number; items: unknown[] }> = {}) {
+type ReportItemFixture = {
+  showId: bigint;
+  reviewId: bigint;
+  reviewVersion: number;
+  showUid: string;
+  showName: string;
+  scheduledStartTime: Date;
+  clientUid: string;
+  clientName: string;
+  platforms: Array<{ platformUid: string; platformName: string }>;
+  review: {
+    result: string;
+    feedback: string | null;
+    reviewedBy: { uid: string; name: string };
+    reviewedAt: Date;
+    evidenceCount: number;
+    expectedSceneType: string;
+  };
+};
+
+function buildReportRow(overrides: Partial<{ revision: number; items: ReportItemFixture[] }> = {}) {
   return {
     id: 1n,
     uid: 'scqcc_a',
@@ -158,5 +178,41 @@ describe('sceneQcReportService.getReport', () => {
 
     expect(report.exceptions).toHaveLength(1);
     expect(report.exceptions[0].show_name).toBe('Show Two');
+  });
+
+  it('breaks same-scheduled-time ties by Show UID for deterministic ordering', async () => {
+    const { service, confirmationRepository } = buildHarness();
+    const sameTime = new Date('2026-08-01T07:00:00.000Z');
+    const base = buildReportRow();
+    confirmationRepository.findConfirmationForReport.mockResolvedValue(
+      buildReportRow({
+        items: [
+          { ...base.items[1], showUid: 'show_z', showName: 'Later UID', scheduledStartTime: sameTime },
+          { ...base.items[0], showUid: 'show_a', showName: 'Earlier UID', scheduledStartTime: sameTime },
+        ],
+      }),
+    );
+
+    const report = await service.getReport('std_1', 'scqcc_a');
+
+    expect(report.shows.map((show) => show.show_id)).toEqual(['show_a', 'show_z']);
+  });
+
+  it('sorts Client and platform breakdowns by name regardless of item insertion order', async () => {
+    const { service, confirmationRepository } = buildHarness();
+    const base = buildReportRow();
+    confirmationRepository.findConfirmationForReport.mockResolvedValue(
+      buildReportRow({
+        items: [
+          { ...base.items[0], showUid: 'show_z', clientUid: 'client_z', clientName: 'Zeta Client', platforms: [{ platformUid: 'plt_z', platformName: 'Zeta Platform' }] },
+          { ...base.items[1], showUid: 'show_a', clientUid: 'client_a', clientName: 'Alpha Client', platforms: [{ platformUid: 'plt_a', platformName: 'Alpha Platform' }] },
+        ],
+      }),
+    );
+
+    const report = await service.getReport('std_1', 'scqcc_a');
+
+    expect(report.client_breakdown.map((row) => row.client_name)).toEqual(['Alpha Client', 'Zeta Client']);
+    expect(report.platform_breakdown.map((row) => row.platform_name)).toEqual(['Alpha Platform', 'Zeta Platform']);
   });
 });

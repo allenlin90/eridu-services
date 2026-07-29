@@ -34,8 +34,10 @@ export function useSceneQcConfirmation({ studioId, operationalDate, summary }: U
     dayComplete,
     canConfirm,
     canReconfirm,
-    // The confirmation to open a report for -- only meaningful once a
-    // confirmation exists (CURRENT or STALE); UNCONFIRMED has none.
+    // The confirmation to open a report for -- only meaningful when
+    // CURRENT. STALE has a `confirmation_id` too, but the card never opens
+    // it from here (that revision's report is disabled on this card and
+    // only reachable from Records); UNCONFIRMED has none.
     reportConfirmationId: summary?.confirmation_id ?? null,
   };
 }

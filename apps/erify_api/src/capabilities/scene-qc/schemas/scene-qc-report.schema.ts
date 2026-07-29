@@ -82,7 +82,13 @@ export function toSceneQcReportDto(
     }
   }
 
-  const shows = [...items].sort((a, b) => a.scheduledStartTime.getTime() - b.scheduledStartTime.getTime()).map(toReportShow);
+  // Deterministic order: primary by scheduled time, secondary by Show UID so
+  // same-time ties don't depend on whatever order Postgres happened to
+  // return rows in -- two downloads of the same immutable revision must be
+  // byte-for-byte identical.
+  const shows = [...items]
+    .sort((a, b) => a.scheduledStartTime.getTime() - b.scheduledStartTime.getTime() || a.showUid.localeCompare(b.showUid))
+    .map(toReportShow);
   const exceptions = shows.filter((show) => show.result === 'MINOR' || show.result === 'FAIL');
 
   return {
@@ -106,22 +112,29 @@ export function toSceneQcReportDto(
       minor_percentage: totalShows === 0 ? 0 : round1((minorCount / totalShows) * 100),
       fail_percentage: totalShows === 0 ? 0 : round1((failCount / totalShows) * 100),
     },
-    client_breakdown: [...clientTotals.entries()].map(([clientUid, bucket]) => ({
-      client_id: clientUid,
-      client_name: bucket.name,
-      pass_count: bucket.pass,
-      minor_count: bucket.minor,
-      fail_count: bucket.fail,
-      total_count: bucket.pass + bucket.minor + bucket.fail,
-    })),
-    platform_breakdown: [...platformTotals.entries()].map(([platformUid, bucket]) => ({
-      platform_id: platformUid,
-      platform_name: bucket.name,
-      pass_count: bucket.pass,
-      minor_count: bucket.minor,
-      fail_count: bucket.fail,
-      total_count: bucket.pass + bucket.minor + bucket.fail,
-    })),
+    // Map iteration order follows first-seen item order, which isn't itself
+    // deterministic without a DB-level orderBy -- sort by name for the same
+    // byte-for-byte-reproducible reason as `shows` above.
+    client_breakdown: [...clientTotals.entries()]
+      .map(([clientUid, bucket]) => ({
+        client_id: clientUid,
+        client_name: bucket.name,
+        pass_count: bucket.pass,
+        minor_count: bucket.minor,
+        fail_count: bucket.fail,
+        total_count: bucket.pass + bucket.minor + bucket.fail,
+      }))
+      .sort((a, b) => a.client_name.localeCompare(b.client_name)),
+    platform_breakdown: [...platformTotals.entries()]
+      .map(([platformUid, bucket]) => ({
+        platform_id: platformUid,
+        platform_name: bucket.name,
+        pass_count: bucket.pass,
+        minor_count: bucket.minor,
+        fail_count: bucket.fail,
+        total_count: bucket.pass + bucket.minor + bucket.fail,
+      }))
+      .sort((a, b) => a.platform_name.localeCompare(b.platform_name)),
     shows,
     exceptions,
   };

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
 import type { SceneQcConfirmation } from '@eridu/api-types/scene-qc';
@@ -40,7 +41,12 @@ export class SceneQcConfirmationWorkflowService {
     private readonly userService: UserService,
   ) {}
 
-  @Transactional()
+  // The lock's entire purpose is to make a concurrent caller wait, and that
+  // wait is charged against this transaction's own timeout budget -- Prisma's
+  // default (5s) is too tight once a second caller is genuinely blocking on
+  // the advisory lock while the first does its full write. Same precedent as
+  // `publishing.service.ts`'s `PublishingService.publish`.
+  @Transactional<TransactionalAdapterPrisma>({ timeout: 30_000 })
   async confirmDay(
     studioUid: string,
     operationalDate: string,
