@@ -4,8 +4,8 @@ Notable schema and tooling changes to this directory. Content additions/edits ar
 
 ## 2026-07-28
 
-- `org-general`'s automatic grant is now **sensitivity-scoped**. The 2026-07-13 entry below records it as applying "regardless of sensitivity", which contradicted the sensitivity ladder in the same schema: `department` is defined as "one pillar only" and `restricted` as "named leadership groups only", neither of which can include the GM. `org-general` is now auto-granted only on collections whose content is entirely `public` or `internal`; Admins are unchanged and still granted everywhere.
-- The rule had never been implemented — `tools/validate-wiki`'s `expandAudiences` only ever expanded a document's own `audiences`. It is now enforced, for the first time, by `scripts/ai/creator-kb/upload_kb.py` via the `automatic`/`sensitivity_scoped_read` block in `ai/openwebui/access/audience-group-map.json`.
+- `org-general`'s automatic grant is **suspended**: it is applied to no collection. The 2026-07-13 entry below records it as applying "regardless of sensitivity", which contradicted the sensitivity ladder in the same schema — `department` is defined as "one pillar only" and `restricted` as "named leadership groups only", neither of which can include the GM. Rather than pick a replacement scope, the automatic grant is withdrawn until an owner decides. Grant `org-general` explicitly per collection meanwhile. Admins are unchanged and still granted everywhere.
+- Nothing is lost by the suspension: the rule had never been implemented. `tools/validate-wiki`'s `expandAudiences` only ever expanded a document's own `audiences`, and no sync path ever added `org-general`.
 
 ## 2026-07-13
 

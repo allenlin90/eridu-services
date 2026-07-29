@@ -16,30 +16,37 @@
     "Group NAMES are resolved to ids at run time against GET /api/v1/groups/, so a rename fails",
     "loudly instead of silently granting nothing."
   ],
-
   "status": "approved",
   "owner": "erisa-creator-services",
   "approved_scope": "ERISA only. Every other pillar is deliberately unmapped and fails closed.",
-
   "audiences": {
-    "erisa-member": ["Erisa - Creator"],
-    "erisa-team-lead": ["Erisa - Creator"],
-    "erisa-manager": ["Erisa - Creator"]
+    "erisa-member": [
+      "Erisa - Creator"
+    ],
+    "erisa-team-lead": [
+      "Erisa - Creator"
+    ],
+    "erisa-manager": [
+      "Erisa - Creator"
+    ]
   },
-
   "automatic": {
     "$comment": [
       "Applied to every collection on top of the audience-derived grants.",
-      "'sensitivity_scoped_read' grants read only when EVERY file in the collection sits within",
-      "the listed sensitivity tiers; otherwise the grant is withheld and the run says so."
+      "",
+      "'sensitivity_scoped_read' grants read only when EVERY file in the collection sits",
+      "within the listed sensitivity tiers. It is intentionally EMPTY: org-general was the",
+      "only candidate, and its automatic grant is suspended pending an ownership decision.",
+      "The mechanism is kept because it is how that decision gets implemented once made."
     ],
-    "read": ["Admins"],
-    "write": ["Admins"],
-    "sensitivity_scoped_read": {
-      "Org - General": ["public", "internal"]
-    }
+    "read": [
+      "Admins"
+    ],
+    "write": [
+      "Admins"
+    ],
+    "sensitivity_scoped_read": {}
   },
-
   "manual_grant_exceptions": {
     "$comment": [
       "Collections allowed to publish WITHOUT derived grants, via --manual-grants-exception.",
@@ -48,7 +55,6 @@
     ],
     "creator-services-tiktok-shop": "ai/architecture/llm-knowledge-base-plan.md § Content Contract — pilot-gated exception"
   },
-
   "$decisions": {
     "erisa-tiers-to-creator-only": [
       "All three ERISA tiers map to 'Erisa - Creator' alone, NOT to 'Erisa - Campaign'.",
@@ -56,21 +62,6 @@
       "changed nobody's access. Revisit if the Campaign team needs Platform PoC content: the",
       "SOP does cover campaign incentive work, so widening is defensible — but it is a widening",
       "and belongs here as an explicit edit, not as an inference at run time."
-    ],
-    "org-general-is-sensitivity-scoped": [
-      "wiki-schema.json previously said org-general was auto-granted on every collection",
-      "'regardless of sensitivity'. That contradicted the sensitivity ladder in the same file:",
-      "'department' means 'one pillar only' and 'restricted' means 'named leadership groups",
-      "only', neither of which can include the GM. Only 'internal' is defined as reaching",
-      "org-general ('any staff member — org-general and up').",
-      "",
-      "The rule is now scoped to public/internal collections, and the schema, company-wiki",
-      "README, CHANGELOG and llm-knowledge-base-plan.md were all updated in the same change,",
-      "so no surface still asserts the old wording. The rule had never actually been",
-      "implemented anywhere — validate-wiki only ever expanded a document's own audiences —",
-      "so this is its first enforcement, not a narrowing of live behavior.",
-      "",
-      "Effect here: erisa-platform-ops-sop is 'department', so Org - General is withheld."
     ],
     "unmapped-by-design": [
       "commerce-member, commerce-team-lead, commerce-manager,",
@@ -82,6 +73,24 @@
       "'Management team' group has no vocabulary entry at all. Any collection whose audiences",
       "touch these will be refused publication until an owner adds them here. That is the",
       "intended behavior, not an oversight."
+    ],
+    "org-general-automatic-grant-suspended": [
+      "org-general (the GM, read-only) receives NO automatic grant, on any collection.",
+      "",
+      "wiki-schema.json used to say it was auto-granted 'regardless of sensitivity'. That",
+      "contradicted the sensitivity ladder in the same file: 'department' means 'one pillar",
+      "only' and 'restricted' means 'named leadership groups only', neither of which can",
+      "include the GM. Only 'internal' is defined as reaching org-general.",
+      "",
+      "Rather than substitute a scope the owner has not chosen, the automatic grant is",
+      "withdrawn entirely and the question left open. That keeps every surface stating the",
+      "same thing -- no automatic grant -- instead of two documents implying different access.",
+      "",
+      "Nothing is lost: the rule was never implemented. validate-wiki only ever expanded a",
+      "document's own audiences, so no collection has ever received org-general this way.",
+      "",
+      "Where the GM should have access, grant it explicitly on that collection.",
+      "Tracked in docs/tech-debt/erisa-platform-ops-manual-access-grants.md."
     ]
   }
 }

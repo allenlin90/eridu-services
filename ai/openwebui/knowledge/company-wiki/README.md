@@ -40,7 +40,7 @@ source_refs: [ticket-0000]
 
 Required fields, allowed `sensitivity`/`status` values, and the audience vocabulary (real Open WebUI group tags plus pillar/company-wide shorthands) are defined in [`tools/wiki-schema.json`](tools/wiki-schema.json) — treat it as the single source of truth over any description here.
 
-`org-general` (GM, read-only) and Admins (read-write) are never listed in a document's `audiences`; they are granted automatically at sync time. Admins are granted on every collection. `org-general` is granted only on collections whose content is entirely `public` or `internal` — not on `department` or `restricted` ones, whose own definitions ("one pillar only", "named leadership groups only") exclude it.
+`org-general` (GM, read-only) and Admins (read-write) are never listed in a document's `audiences`. Admins are granted automatically on every collection. **`org-general`'s automatic grant is suspended** — it is applied to no collection, because its correct scope is an open ownership decision. Grant it explicitly per collection where it is wanted.
 
 ## Validation
 

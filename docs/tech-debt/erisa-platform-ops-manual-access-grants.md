@@ -21,7 +21,7 @@ ungranted collection.
 (`Erisa - Creator` read; `Admins` read + write) are byte-identical to the grants
 it previously carried by hand, so adopting derivation changed nobody's access.
 
-**Two gaps remain, both deliberate and both fail-closed.**
+**Three gaps remain. All are deliberate; the first two fail closed.**
 
 **1. Only ERISA is mapped.** `commerce-*`, `erify-*`, `finance-manager` and
 `hr-manager` have no entries, because no owner has decided how the tier-shaped
@@ -42,12 +42,21 @@ grants rather than widening them. The SOP does cover campaign incentive work, so
 extending to `Erisa - Campaign` is defensible — but it is a widening and has to
 be an explicit edit to the map.
 
-**Resolved, no longer a gap:** the `Org - General` automatic grant. The schema
-previously said it applied to every collection "regardless of sensitivity",
-which contradicted the sensitivity ladder in the same file. It is now scoped to
-`public`/`internal` collections, reconciled across `wiki-schema.json`, the
-company-wiki README and CHANGELOG, and `llm-knowledge-base-plan.md` in one
-change. `erisa-platform-ops-sop` is `department`, so the grant is withheld.
+**3. `org-general`'s automatic grant is suspended, not decided.** The schema
+used to say it applied to every collection "regardless of sensitivity", which
+contradicted the sensitivity ladder in the same file — `department` means "one
+pillar only", `restricted` means "named leadership groups only", and only
+`internal` is defined as reaching org-general.
+
+Rather than substitute a scope nobody had chosen, the automatic grant was
+withdrawn entirely and the question left open. Every surface now says the same
+thing (no automatic grant), so there is no longer a contradiction — but there is
+also no policy. The GM currently receives access only where granted explicitly
+on a collection.
+
+Nothing was lost in the withdrawal: the rule had never been implemented.
+`validate-wiki`'s `expandAudiences` only ever expanded a document's own
+`audiences`, so no collection had ever received `org-general` this way.
 
 ## Risk
 
@@ -67,6 +76,13 @@ Per gap, all trigger-gated rather than immediate:
 1. **Other pillars** — when a collection with non-ERISA audiences is first
    published. It will be refused until an owner adds the entries.
 2. **Campaign access** — when the Campaign team needs Platform PoC content.
+3. **`org-general`'s scope** — when the GM actually needs a collection they
+   cannot currently reach, or at the next Content Contract review. Options are
+   automatic on `public`/`internal` only, automatic everywhere with the
+   sensitivity tiers reworded to acknowledge a standing GM exception, or
+   permanently explicit-per-collection (the current de-facto state). The
+   `sensitivity_scoped_read` mechanism in `audience-group-map.json` is retained
+   and empty, ready to carry whichever scope is chosen.
 Separately, the derivation this PR adds is what the
 `creator-services-tiktok-shop` exception gate has been waiting on; that gate can
 lift once someone confirms the mapping covers that collection's audiences too.

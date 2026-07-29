@@ -69,6 +69,6 @@
         "hr-manager"
       ]
     },
-    "note": "org-general (the GM, read-only) and admins (read-write) are never listed in a document's audiences -- they are granted automatically at sync time. Admins are granted on every collection. org-general is granted only where the sensitivity ladder above already places it: collections whose content is entirely public or internal ('internal' is defined as 'any staff member -- org-general and up'). It is NOT granted on department or restricted collections, because that would contradict those tiers' own definitions ('one pillar only' and 'named leadership groups only'). Enforced by the automatic/sensitivity_scoped_read block in ai/openwebui/access/audience-group-map.json."
+    "note": "admins (read-write) are never listed in a document's audiences -- they are granted automatically at sync time on every collection. org-general (the GM, read-only) is likewise never listed, but its automatic grant is currently SUSPENDED: it is not applied to any collection. The earlier rule granted it 'regardless of sensitivity', which contradicted the tiers above ('department' = one pillar only; 'restricted' = named leadership groups only), and the correct scope is an ownership decision that has not been made. Until it is, grant org-general explicitly per collection where it is wanted. Tracked in docs/tech-debt/erisa-platform-ops-manual-access-grants.md. Nothing is lost by the suspension: the automatic grant was never implemented -- tools/validate-wiki only ever expanded a document's own audiences."
   }
 }

@@ -149,10 +149,10 @@ Every content file carries the Content Contract frontmatter from
 
 Those values are what the access gate derives grants from — this collection
 claims **no** exception to the Content Contract. `upload_kb.py` resolves
-`audiences: [erisa]` to `Erisa - Creator`, adds `Admins` read + write, and
-withholds `Org - General` because `sensitivity: department` sits outside the
-tiers that grant it. Grants are applied and verified **before** any file is
-uploaded, then re-verified after.
+`audiences: [erisa]` to `Erisa - Creator` and adds `Admins` read + write. No
+other group is granted: `Org - General`'s automatic grant is suspended across
+every collection pending an ownership decision. Grants are applied and verified
+**before** any file is uploaded, then re-verified after.
 
 What remains open is narrower than a missing gate: the map covers ERISA only,
 and maps it to `Erisa - Creator` rather than also `Erisa - Campaign`. Both are
