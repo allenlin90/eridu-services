@@ -10,7 +10,8 @@ Engineering-focused persistent references — architecture, patterns, and govern
 | [DB Migration Policy](./DB_MIGRATION_POLICY.md) | Migration governance, framework-first rule, branch-local scoping |
 | [Finance Guardrails](./FINANCE_GUARDRAILS.md) | Platform rules for monetary computation, financial storage, and audit |
 | [DataTable Package Extraction](./DATA_TABLE_EXTRACTION.md) | Rationale, design decisions, and consequences of extracting DataTable |
-| [Local Agent Retrieval and Tooling](./LOCAL_AGENT_RETRIEVAL.md) | CLI-first QMD, Graphify, and RTK roles; optional local MCP and shared-service gates |
+| [Knowledge and Platform Layout](./KNOWLEDGE_AND_PLATFORM_LAYOUT.md) | `infra/`, OKF `knowledge/`, `.agents/`, Compose topology, and migration boundaries |
+| [Local Agent Retrieval and Tooling](./LOCAL_AGENT_RETRIEVAL.md) | CLI-first QMD, Graphify, RTK, and OKF roles; optional local MCP and shared-service gates |
 
 ## Usage
 
