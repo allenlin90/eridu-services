@@ -34,9 +34,12 @@ The canonical ID is more stable than any client's invocation sigil.
 | Claude Code | `/pr-ready` or natural-language selection of the `pr-ready` skill | Preserve the slash-visible skill ID and bridge behavior |
 | Codex | `$pr-ready` in current skill metadata; team-used aliases such as `#pr-ready` must be tested explicitly | Preserve `.agents/skills/pr-ready` and `agents/openai.yaml`; do not assume an undocumented alias is portable |
 | OpenCode | `/pr-ready` when exposed in the slash catalog, or native on-demand skill loading | Preserve the exact path-derived skill ID and avoid duplicate higher-precedence definitions |
+| Google Antigravity | Native shared skill and rule discovery | Portable shared content remains supported, but Antigravity is outside this migration's primary compatibility test matrix |
 | Cursor / Copilot | Secondary adapter or natural-language invocation | Preserve only after the primary three clients pass compatibility tests |
 
 The repository should document the invocation forms actually verified against supported client versions. Do not infer that the same punctuation has identical behavior across clients.
+
+The required compatibility matrix for this migration is Claude Code, Codex, and OpenCode. Adding Antigravity, Cursor, or Copilot to a release gate requires an explicit scope change and corresponding adapter tests.
 
 ## Bridge Pattern
 
