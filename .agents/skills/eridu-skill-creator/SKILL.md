@@ -143,5 +143,6 @@ Use `references/` for implementation detail needed only after the skill is selec
 - Codex discovers `.agents/skills/` natively.
 - Claude Code loads the root contract through `.claude/CLAUDE.md` and reads canonical skills from `.agents/skills/`.
 - OpenCode loads `AGENTS.md` through `opencode.json` and routes skills through `.opencode/skills`.
+- Google Antigravity continues to discover `.agents/skills/` and `.agents/rules/` natively, but is outside the primary Claude Code, Codex, and OpenCode compatibility matrix for this migration.
 - If the skill governs documentation placement or roadmap ownership, align it with [monorepo-doc-layering](../monorepo-doc-layering/SKILL.md).
 - Prefer repo-local examples over invented examples when refining an existing skill.
