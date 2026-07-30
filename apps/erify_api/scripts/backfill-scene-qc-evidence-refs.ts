@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
@@ -14,6 +15,7 @@ import {
 
 import { SCENE_QC_EVIDENCE_BINDINGS, type SceneQcEvidenceBinding } from './scene-qc-evidence-binding-map';
 
+import { envSchema } from '@/config/env.schema';
 import { TaskTemplateModule } from '@/models/task-template/task-template.module';
 import { TaskTemplateService } from '@/models/task-template/task-template.service';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -52,9 +54,9 @@ import { PrismaService } from '@/prisma/prisma.service';
  *   --apply            Executes both passes for real.
  *
  * Usage:
- *   pnpm --filter erify_api exec tsx scripts/backfill-scene-qc-evidence-refs.ts --report
- *   pnpm --filter erify_api exec tsx scripts/backfill-scene-qc-evidence-refs.ts
- *   pnpm --filter erify_api exec tsx scripts/backfill-scene-qc-evidence-refs.ts --apply
+ *   pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/backfill-scene-qc-evidence-refs.ts --report
+ *   pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/backfill-scene-qc-evidence-refs.ts
+ *   pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/backfill-scene-qc-evidence-refs.ts --apply
  *
  * Dry-run by default. Refuses a non-localhost DATABASE_URL unless ALLOW_PROD=1
  * is set (matches the local-only-by-default convention used elsewhere in this
@@ -354,6 +356,26 @@ export function hasUnresolvedOrFailedBindings(result: BackfillResult): boolean {
 
 @Module({
   imports: [
+    // PrismaService injects ConfigService; without a real ConfigModule.forRoot()
+    // registration somewhere in the tree, Nest has no provider for it and the
+    // injector passes `undefined`, crashing PrismaService's constructor.
+    // Mirrors the real AppModule's setup (src/app.module.ts) exactly, including
+    // the env schema validation, so a missing/invalid DATABASE_URL fails loudly
+    // here the same way it would in the real app.
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate: (config: Record<string, unknown>) => {
+        const result = envSchema.safeParse(config);
+        if (!result.success) {
+          const errorMessage = result.error.issues
+            .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+            .join('\n');
+          throw new Error(`Invalid environment variables:\n${errorMessage}`);
+        }
+        return result.data;
+      },
+    }),
     PrismaModule,
     TaskTemplateModule,
     // TaskTemplateRepository injects TransactionHost<TransactionalAdapterPrisma>
@@ -379,7 +401,12 @@ async function main() {
   const report = process.argv.includes('--report');
   const apply = process.argv.includes('--apply');
 
-  const app = await NestFactory.createApplicationContext(BackfillModule, { logger: false });
+  // `logger: false` would silence a bootstrap failure entirely: with Nest's
+  // default `abortOnError: true`, a DI/provider error calls `process.exit(1)`
+  // directly rather than rejecting this promise, so a silenced logger means
+  // the operator sees nothing but a bare non-zero exit code. Keep error/warn
+  // visible so a bootstrap failure is diagnosable.
+  const app = await NestFactory.createApplicationContext(BackfillModule, { logger: ['error', 'warn'] });
   try {
     const prisma = app.get(PrismaService);
 

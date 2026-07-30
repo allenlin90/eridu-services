@@ -220,12 +220,12 @@ Populating those arrays requires a human to read real production Task Template d
 
 ### 3.2 The three commands, in order
 
-There is no `package.json` script for either file; both are invoked via `tsx`. `--since` is required by the verifier and has no default.
+There is no `package.json` script for either file; both are invoked via `ts-node -r tsconfig-paths/register`, this repo's established convention for standalone NestJS-context scripts (see the other `manual:*`/backfill scripts in `package.json` and `scripts/`). **Both scripts originally shipped documenting `tsx` instead, which does not work**: `tsx` is esbuild-based and does not emit TypeScript's `emitDecoratorMetadata` output, so NestJS's implicit constructor-type DI silently receives `undefined` for every injected parameter. Both scripts also shipped without a `ConfigModule.forRoot()` registration in their bootstrap module, which independently crashes `PrismaService`'s constructor. Both bugs are fixed as part of this PR — see [`erify-api-scripts-missing-config-module.md`](../../../../docs/tech-debt/erify-api-scripts-missing-config-module.md) for the full root-cause writeup and two other scripts that likely share the `ConfigModule` gap. `--since` is required by the verifier and has no default.
 
 **Step 1 — Candidate report (read-only, run first, against a database with representative templates).**
 
 ```bash
-pnpm --filter erify_api exec tsx scripts/backfill-scene-qc-evidence-refs.ts --report
+pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/backfill-scene-qc-evidence-refs.ts --report
 ```
 
 Prints every non-deleted template's `file` fields that have a strictly image-only `validation.accept` rule and no `evidence_purpose` yet, with `templateUid`, resolved content `fieldKey`, snapshot-time `label`, and live task count. Then prints the current (empty) map's dry-run plan. **This is the input an operator reviews.** Its output is transcribed into `scene-qc-evidence-binding-map.ts` with a required `note` per binding and a required `reason` per intentional exclusion, and that file edit is committed on this PR's branch.
@@ -236,9 +236,9 @@ Guard: `ensureLocalDatabase` throws unless `DATABASE_URL` is localhost **or** `A
 
 ```bash
 # dry run — no flags
-pnpm --filter erify_api exec tsx scripts/backfill-scene-qc-evidence-refs.ts
+pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/backfill-scene-qc-evidence-refs.ts
 # real
-ALLOW_PROD=1 pnpm --filter erify_api exec tsx scripts/backfill-scene-qc-evidence-refs.ts --apply
+ALLOW_PROD=1 pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/backfill-scene-qc-evidence-refs.ts --apply
 ```
 
 Two passes per mapped template: (1) a durability pass that writes `evidence_purpose: 'scene_qc'` into `currentSchema` through the real `TaskTemplateService.updateTemplateWithSnapshot` path — bumping template `version` and creating a new snapshot, so a later builder edit's delete-then-recreate sync cannot silently erase the binding; (2) a historical pass that `createMany({ skipDuplicates: true })`s ref rows for every *other* snapshot referenced by a live Task, never rewriting snapshot JSON.
@@ -250,7 +250,7 @@ Pass contract: exit code `0`. `main()` sets `exitCode = 1` via `hasUnresolvedOrF
 **Step 3 — Verification gate (read-only, CI-shaped).**
 
 ```bash
-ALLOW_PROD=1 pnpm --filter erify_api exec tsx scripts/verify-scene-qc-evidence-bindings.ts --since YYYY-MM-DD
+ALLOW_PROD=1 pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/verify-scene-qc-evidence-bindings.ts --since YYYY-MM-DD
 # machine-readable
 … --since YYYY-MM-DD --json
 ```

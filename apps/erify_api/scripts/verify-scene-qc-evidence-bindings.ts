@@ -1,11 +1,13 @@
 import 'dotenv/config';
 
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 
 import { SCENE_QC_INTENTIONALLY_UNBOUND } from './scene-qc-evidence-binding-map';
 
 import { isSceneQcEligibleShowStatus } from '@/capabilities/scene-qc/scene-qc-eligibility-policy';
+import { envSchema } from '@/config/env.schema';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -25,8 +27,8 @@ import { PrismaService } from '@/prisma/prisma.service';
  * target environment before cutover (rollout step 3).
  *
  * Usage:
- *   pnpm --filter erify_api exec tsx scripts/verify-scene-qc-evidence-bindings.ts --since 2026-07-01
- *   pnpm --filter erify_api exec tsx scripts/verify-scene-qc-evidence-bindings.ts --since 2026-07-01 --json
+ *   pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/verify-scene-qc-evidence-bindings.ts --since 2026-07-01
+ *   pnpm --filter erify_api exec ts-node -r tsconfig-paths/register scripts/verify-scene-qc-evidence-bindings.ts --since 2026-07-01 --json
  */
 
 type InScopeSnapshotRow = {
@@ -125,7 +127,30 @@ export async function runVerify(params: {
   };
 }
 
-@Module({ imports: [PrismaModule] })
+@Module({
+  imports: [
+    // PrismaService injects ConfigService; without a real ConfigModule.forRoot()
+    // registration somewhere in the tree, Nest has no provider for it and the
+    // injector passes `undefined`, crashing PrismaService's constructor.
+    // Mirrors the real AppModule's setup (src/app.module.ts) exactly, including
+    // the env schema validation.
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate: (config: Record<string, unknown>) => {
+        const result = envSchema.safeParse(config);
+        if (!result.success) {
+          const errorMessage = result.error.issues
+            .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+            .join('\n');
+          throw new Error(`Invalid environment variables:\n${errorMessage}`);
+        }
+        return result.data;
+      },
+    }),
+    PrismaModule,
+  ],
+})
 class VerifyModule {}
 
 async function main() {
@@ -142,7 +167,9 @@ async function main() {
   }
   const asJson = process.argv.includes('--json');
 
-  const app = await NestFactory.createApplicationContext(VerifyModule, { logger: false });
+  // See the identical comment in backfill-scene-qc-evidence-refs.ts: a silenced
+  // logger hides a bootstrap failure behind a bare non-zero exit code.
+  const app = await NestFactory.createApplicationContext(VerifyModule, { logger: ['error', 'warn'] });
   try {
     const prisma = app.get(PrismaService);
     const result = await runVerify({ prisma, since });
