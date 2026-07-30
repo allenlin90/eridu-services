@@ -37,7 +37,8 @@
 | 3.12  | Task Report Builder    | `/studios/$studioId/task-reports/builder` | Admin/Manager/ModerationManager | ✅ |
 | 3.13  | Task Report Results    | `/studios/$studioId/task-reports/results` | Admin/Manager/ModerationManager | ✅ |
 | 3.14  | Show Run Review        | `/studios/$studioId/show-run-review`      | Admin/Manager | Planned |
-| 3.15  | Scene Review           | `/studios/$studioId/scene-review`         | Admin/Manager/Designer | ✅ |
+| 3.15  | Scene QC               | `/studios/$studioId/scene-review`         | Admin/Manager/Designer | ✅ |
+| 3.16  | Scene Profiles         | `/studios/$studioId/scene-review/profiles` | Admin/Manager/Designer | ✅ |
 
 ---
 
@@ -88,8 +89,8 @@ Show Run Review → choose operational day range → review submitted show recor
 
 The default operational day is 06:00-05:59 local time. Task Review applies that window to `show_start_from` / `show_start_to` and silently refetches every 5 minutes for the current operational day; historical ranges use the table refresh action.
 
-### 10.1 Scene Review (Admin/Manager/Designer)
-Scene Review → choose a show operational-day range → inspect submitted screenshot evidence in either Analysis or advisory QC Inbox mode. Client uses the shared asynchronous combobox; Platform is a secondary filter. Desktop pairs a compact queue with a persistent large viewer, while mobile opens a full-height evidence drawer. Layout QC, collapsed show context, and available performance metrics are read-only. See [Scene Review](./SCENE_REVIEW.md).
+### 10.1 Scene QC (Admin/Manager/Designer)
+Scene QC → pick an operational day → review each eligible Show's explicit image evidence against the Client's Scene Profile reference → record `PASS`, `MINOR`, or `FAIL` with feedback required for Minor and Fail → confirm the completed day → open the manager report or download its CSV. A Records tab queries confirmed history by date range, Client, platform, and result. Client uses the shared asynchronous combobox; platform and result are secondary filters. Desktop pairs the Show queue with a side-by-side evidence/reference workspace; mobile uses a Live/Expected drawer with the result form immediately below. Scene QC persists only its own outcomes and confirmations — it never changes Task, Manager Review, or Show state. See [Scene QC](./SCENE_QC.md).
 
 ### 11. Bulk Submitted-Task Approval (Admin/Manager)
 Task Review → select one or more eligible `REVIEW` rows → click `Approve Selected` → triggers API bulk approve request. Selection eligibility is intentionally narrower than the issue badges: hard blockers include non-`REVIEW` state and missing assignee, while binding drift, zero-fact, and no-binding extraction warnings remain advisory because single approval follows the same backend transition and extraction path.
@@ -104,9 +105,9 @@ Task Review → select one or more eligible `REVIEW` rows → click `Approve Sel
 ## Navigation & Studio Context
 
 - **Studio Switcher**: `TeamSwitcher` from `@eridu/ui` — maps `studio_memberships` from `/me/profile`
-- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Task Setup, Task Review, Scene Review, Show Run Review, and Task Reports; Studio Settings contains Task Templates.
+- **Sidebar Nav**: My Workspace contains personal tasks; Operations contains Task Setup, Task Review, Scene QC, Show Run Review, and Task Reports; Studio Settings contains Task Templates.
 - **Active Studio**: persisted in `localStorage`, auto-initializes, invalidates queries on switch
-- **Role-Based Access**: admin/manager task operators see Task Review and Scene Review; Designer sees only the read-only Scene Review entry; other task executors see only their separately authorized workspace/report entries.
+- **Role-Based Access**: admin/manager task operators see Task Review and Scene QC; Designer sees only the Scene QC entry, which writes scene outcomes but no task or show state; other task executors see only their separately authorized workspace/report entries.
 
 ---
 

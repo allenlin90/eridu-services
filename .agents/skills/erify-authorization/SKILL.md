@@ -33,7 +33,7 @@ Current authorization implementation patterns for erify_api.
 | `ADMIN` | Full access + membership management | ✅ |
 | `MANAGER` | Full access (no membership management) | ❌ |
 | `TALENT_MANAGER` | Creator mapping, catalog, roster, availability | ❌ |
-| `DESIGNER` | Dashboard, own tasks, own shifts, read-only Scene Review evidence | ❌ |
+| `DESIGNER` | Dashboard, own tasks, own shifts, full Scene QC (review, confirm, Scene Profile) — no Task Review or task mutation | ❌ |
 | `MODERATION_MANAGER` | Dashboard, own tasks, own shifts | ❌ |
 | `MEMBER` | Dashboard, own tasks, own shifts | ❌ |
 | `ACCOUNT_MANAGER` | Client mechanic catalog (write, client-linked only); read-only on task templates, shows, creator mapping with money redacted | ❌ (only `ADMIN` can grant it) |
@@ -54,7 +54,7 @@ Current authorization implementation patterns for erify_api.
 @StudioProtected([STUDIO_ROLE.ADMIN])                        // Admin-only
 ```
 
-Keep review purposes separately guarded. Task Review list/detail/statistics and every task mutation remain `ADMIN`/`MANAGER` only. The dedicated Scene Review list/detail endpoints are read-only and admit `DESIGNER`, `ADMIN`, and `MANAGER`. Frontend route access and sidebar visibility must use `STUDIO_ROUTE_ACCESS.reviewQueue` for Task Review and `STUDIO_ROUTE_ACCESS.sceneReview` for Scene Review.
+Keep review purposes separately guarded. Task Review list/detail/statistics and every task mutation remain `ADMIN`/`MANAGER` only. Every Scene QC endpoint — daily summary/items/detail, review create/update, daily confirmation, records, manager report, and Scene Profile `GET`/`PUT`/`DELETE` — admits exactly `DESIGNER`, `ADMIN`, and `MANAGER`, with no method-level narrowing. Designating a Task Template image field as Scene QC evidence is deliberately **not** on that list: it rides the existing Task Template write permissions (`[ADMIN, MANAGER]`), so Scene QC access never widens template administration. Frontend route access and sidebar visibility must use `STUDIO_ROUTE_ACCESS.reviewQueue` for Task Review and `STUDIO_ROUTE_ACCESS.sceneReview` for Scene QC.
 
 > `getAllAndOverride` means method-level `@StudioProtected` always wins over class-level.
 

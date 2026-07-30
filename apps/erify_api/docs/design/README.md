@@ -11,7 +11,6 @@ Active design documents for planned and in-progress features. Once a feature shi
 5. [Data Warehouse (Datastream + BigQuery)](./DATA_WAREHOUSE_DESIGN.md) — Phase 5 candidate
 6. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — Deferred Phase 5 (revisit for Client Portal)
 7. [Show-Level Issue Ownership](./SHOW_ISSUE_OWNERSHIP_DESIGN.md) — Phase 5 item 9 design locked for implementation
-8. [Scene QC Implementation Plan](./SCENE_QC_IMPLEMENTATION_PLAN.md) — Cross-app replacement plan for the PR #319 Scene Review workspace
 
 ## Note
 

@@ -235,7 +235,7 @@ A `file` field can be marked `evidence_purpose: 'scene_qc'` to explicitly design
 - **Requires a strictly image-only `validation.accept` rule.** `image/*,.pdf` is rejected — the resolver would otherwise have to silently drop a non-image upload at review time, exactly the "arbitrary field became evidence" failure the explicit binding removes. See `isImageOnlyAcceptRule()` in `template-definition.schema.ts`.
 - **`TaskTemplateSceneQcEvidenceRef`** is a denormalized projection (`template_id` / `snapshot_id` ↔ `field_key` + snapshot-time `label`), written by `TaskTemplateRepository.syncSceneQcEvidenceRefsForTemplate` on every snapshot-creating template save — mirrors `syncMechanicRefsForTemplate`, but `snapshotId` is REQUIRED (no `currentSchema`-only draft row set), since the resolver only ever joins through a Task's pinned snapshot.
 - **Governed by existing Task Template permissions.** Designating a field as evidence does not introduce a new authorization boundary; it rides `StudioTaskTemplateController`'s existing write-route roles.
-- See [`apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md`](../../apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md) section 5.2 for the full Scene QC evidence-binding design.
+- See [Scene QC](./scene-qc.md) for the full Scene QC evidence-binding design and [`apps/erify_api/docs/SCENE_QC.md`](../../apps/erify_api/docs/SCENE_QC.md) for the evidence-resolution contract.
 
 ## Downstream Consumers
 
@@ -299,7 +299,7 @@ Feature-specific artifact list:
 | Shared schema skill          | [.agents/skills/shared-api-types/SKILL.md](../../.agents/skills/shared-api-types/SKILL.md)                                                           | `template-definition.schema.ts` or task-management exports change             |
 | Shared schema source         | [packages/api-types/src/task-management/template-definition.schema.ts](../../packages/api-types/src/task-management/template-definition.schema.ts) | Field item shape, validation, or schema engine envelope changes               |
 | Seed                         | [apps/erify_api/prisma/seed.ts](../../apps/erify_api/prisma/seed.ts)                                                                               | New canonical patterns; deprecation of old patterns (e.g., `_l2` workarounds) |
-| Scene QC design reference    | [apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md](../../apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md)                     | `evidence_purpose` binding rules, evidence resolver scope change              |
+| Scene QC evidence binding    | [docs/features/scene-qc.md](./scene-qc.md)                                                                                                          | `evidence_purpose` binding rules, evidence resolver scope change              |
 | Upload presign skill         | [.agents/skills/file-upload-presign/SKILL.md](../../.agents/skills/file-upload-presign/SKILL.md)                                                    | Scene Profile / Scene Reference upload consumer changes                       |
 
 **Definition of done for refactor/redesign PRs in this area**: every artifact above either has its update committed in the same PR, or has an explicit "no change needed" line in the PR description. Reviewers should treat a missing update as a blocking finding.

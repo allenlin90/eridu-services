@@ -60,7 +60,7 @@ Unlike `system_fact_key`/`shared_field_key`, `mechanic_ref` is **not** v2-exclus
 - Per-loop `(mechanic_id, group)` uniqueness is enforced at the same validation layer, not as a DB constraint — `TaskTemplateMechanicRef` is a denormalized, write-on-save link table (S2) for coverage queries, not the source of truth (that's the JSON `mechanic_ref` inside `currentSchema.items[]`).
 - The repository syncs `TaskTemplateMechanicRef` with a transactional delete-then-recreate per `(templateId, snapshotId)` on every create/update — see `TaskTemplateRepository.syncMechanicRefsForTemplate`.
 
-### 9. Explicit Evidence Designation (`evidence_purpose`) — Scene QC (Child PR 2)
+### 9. Explicit Evidence Designation (`evidence_purpose`) — Scene QC
 
 Like `mechanic_ref`, `evidence_purpose` lives on `FieldItemBaseSchema` (not v2-only): evidence designation is schema-version-agnostic, and the cutover backfill must bind pre-existing v1 snapshots too. It marks a `file` field's uploads as explicit Scene QC evidence (`EVIDENCE_PURPOSE.SCENE_QC = 'scene_qc'`), so the evidence resolver (Child PR 3) never falls back to a filename heuristic or a recursive content scan.
 

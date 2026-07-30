@@ -11,7 +11,7 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
 | Operator (Host/Producer) | All | Executes check-lists, fills out forms, auto-saves input, and submits tasks. |
 | Studio Manager | `MANAGER` | Reviews submissions, bulk-approves tasks, reviews compiled daily facts, and exports filtered operational rows. |
 | Studio Admin | `ADMIN` | Same as Manager, plus template creation and task configuration. |
-| Scene Designer | `DESIGNER` | Reviews submitted screenshots and layout QC evidence without approving or modifying tasks. |
+| Scene Designer | `DESIGNER` | Reviews each show's scene setup, records a persisted Pass/Minor/Fail outcome, and confirms the operational day — without approving or modifying tasks. |
 
 ---
 
@@ -24,7 +24,7 @@ End-to-end workflow for how a studio manages operator task execution, manager bu
        ↓
 3. Operator fills out JsonForm checklists, auto-saves, and SUBMITS for review
        ↓
-4. Designer optionally inspects screenshot evidence in Scene Review (/scene-review)
+4. Designer/Manager reviews each show's scene setup and records an outcome in Scene QC (/scene-review), then confirms the day
        ↓
 5. Manager triages Task Review queues (/task-review), checking boxes on ready items
        ↓
@@ -53,12 +53,13 @@ When shows are scheduled, tasks are instantiated from these templates:
 3. When the checklist is complete, the operator taps **`Submit for Review`**, transitioning the task status `→ REVIEW`.
 * **Runbook**: [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](../../apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)
 
-### 3. Scene Review (`/scene-review`)
-Scene Designers can inspect submitted screenshots for the show's operational day (06:00–05:59 local window) without entering the task approval workflow:
-* **Screenshot-first QC**: A compact queue opens a large responsive viewer with phone-friendly navigation, an optional safe-area/host-focus/product-zone overlay, and collapsed show/performance context.
-* **Read-only boundary**: Scene Review cannot select tasks, edit due dates, approve, reject, block, close, or bulk-approve tasks. QC Inbox is advisory and does not gate a task transition.
-* **Independent analysis**: Analysis mode also supports closer inspection outside manager triage while keeping the screenshot primary and performance metrics secondary.
-* **Filters**: Show date is primary. Client uses the shared asynchronous combobox, and Platform remains secondary.
+### 3. Scene QC (`/scene-review`)
+`DESIGNER`, `MANAGER`, and `ADMIN` review each eligible Show's scene setup for one operational day (local 06:00–05:59, **resolved server-side** from a date-only `operational_date` — the browser timezone never defines the durable scope):
+* **Evidence is explicit**: only Task Template image fields designated `evidence_purpose: 'scene_qc'` feed the review. A Show with no such evidence is blocked and cannot receive an outcome.
+* **Persisted outcome**: `PASS`, `MINOR`, or `FAIL`, with feedback required for Minor and Fail, compared against a snapshot of the Client's Scene Profile reference taken at save time.
+* **Daily confirmation**: once every eligible Show has an outcome, an authorized operator confirms the day. Confirmation is append-only; a later scope change marks the day stale and requires a new revision. A confirmed day unlocks the manager report (in-app + CSV).
+* **Boundary**: Scene QC writes only its own reviews, confirmations, and Scene Profiles. It performs no task selection, due-date edit, approval, rejection, block, close, or bulk approval, and changes no Task, Manager Review, or Show lifecycle state. Designating a template field as evidence uses existing Task Template permissions, not Scene QC access.
+* **Filters**: operational date is primary. Client uses the shared asynchronous combobox; platform and review state are secondary.
 
 ### 4. Pre-Confirmation Task Review (`/task-review`)
 Studio managers review submitted operator task checklists before confirming operational facts:
@@ -154,3 +155,4 @@ sequenceDiagram
 | [TASK_MANAGEMENT_SUMMARY (BE)](../../apps/erify_api/docs/TASK_MANAGEMENT_SUMMARY.md) | Technical reference of task endpoints and schemas |
 | [TASK_MANAGEMENT_SUMMARY (FE)](../../apps/erify_studios/docs/TASK_MANAGEMENT_SUMMARY.md) | Technical reference of review controllers, tabs, and query pools |
 | [table-view-pattern skill](../../.agents/skills/table-view-pattern/SKILL.md) | Mandates for tabular pagination, URL state, and selection checks |
+| [Scene QC](../features/scene-qc.md) | Persisted Show-level scene review, confirmation, records, and manager report |
