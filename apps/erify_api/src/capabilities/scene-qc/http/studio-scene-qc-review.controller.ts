@@ -3,9 +3,12 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
+import { sceneQcReviewAmendmentSchema } from '@eridu/api-types/scene-qc';
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
+import { SceneQcAmendmentService } from '../scene-qc-amendment.service';
 import { SceneQcWorkflowService } from '../scene-qc-review-workflow.service';
+import { CreateSceneQcReviewAmendmentDto } from '../schemas/scene-qc-amendment.schema';
 import { CreateSceneQcReviewDto, sceneQcReviewDto, UpdateSceneQcReviewDto } from '../schemas/scene-qc-review.schema';
 
 import type { AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
@@ -24,7 +27,10 @@ import { BaseStudioController } from '@/studios/base-studio.controller';
 @StudioProtected([STUDIO_ROLE.DESIGNER, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ADMIN])
 @Controller('studios/:studioId/scene-qc-reviews')
 export class StudioSceneQcReviewController extends BaseStudioController {
-  constructor(private readonly sceneQcWorkflowService: SceneQcWorkflowService) {
+  constructor(
+    private readonly sceneQcWorkflowService: SceneQcWorkflowService,
+    private readonly amendmentService: SceneQcAmendmentService,
+  ) {
     super();
   }
 
@@ -55,5 +61,17 @@ export class StudioSceneQcReviewController extends BaseStudioController {
       actorExtId: user.ext_id,
       studioUid: studioId,
     });
+  }
+
+  @ApiOperation({ summary: 'Append an immutable comment or correction to a confirmed Scene QC review' })
+  @Post(':reviewId/amendments')
+  @ZodResponse(sceneQcReviewAmendmentSchema, HttpStatus.CREATED)
+  async appendAmendment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('reviewId', new UidValidationPipe(UID_PREFIXES.SCENE_QC_REVIEW, 'Scene QC review')) reviewId: string,
+    @Body() body: CreateSceneQcReviewAmendmentDto,
+  ) {
+    return this.amendmentService.append(studioId, reviewId, body, user.ext_id);
   }
 }

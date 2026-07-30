@@ -15,6 +15,9 @@ vi.mock('../../api/save-scene-qc-review', () => ({
   useCreateSceneQcReview: () => ({ mutateAsync: mockCreateMutateAsync, isPending: false }),
   useUpdateSceneQcReview: () => ({ mutateAsync: mockUpdateMutateAsync, isPending: false }),
 }));
+vi.mock('../../api/get-scene-qc-taxonomy', () => ({
+  useSceneQcTaxonomyQuery: () => ({ data: undefined, isLoading: false }),
+}));
 
 function createAxios409(message = 'This review changed since you loaded it.') {
   return new AxiosError('Conflict', '409', undefined, undefined, {
@@ -75,7 +78,7 @@ describe('useSceneQcReviewForm', () => {
     expect(result.current.canSave).toBe(false);
   });
 
-  it('requires feedback for MINOR/FAIL but not PASS', () => {
+  it('requires structured findings for MINOR/FAIL but not PASS', () => {
     const { result } = renderHook(
       () => useSceneQcReviewForm({ studioId: 'studio_abc', showId: 'show_1', operationalDate: '2026-06-01', detail: buildDetail() }),
       { wrapper: Wrapper },
@@ -86,11 +89,11 @@ describe('useSceneQcReviewForm', () => {
 
     act(() => result.current.setResult('FAIL'));
     expect(result.current.canSave).toBe(false);
-    expect(result.current.feedbackMissing).toBe(true);
+    expect(result.current.findingsMissing).toBe(true);
 
-    act(() => result.current.setFeedback('blank image'));
+    act(() => result.current.setFindings([{ element_id: 'scqce_1', defect_id: 'scqcd_1' }]));
     expect(result.current.canSave).toBe(true);
-    expect(result.current.feedbackMissing).toBe(false);
+    expect(result.current.findingsMissing).toBe(false);
   });
 
   it('creates a review via the create mutation when no review exists yet', async () => {
@@ -117,6 +120,7 @@ describe('useSceneQcReviewForm', () => {
       operational_date: '2026-06-01',
       result: 'PASS',
       feedback: null,
+      findings: [],
     });
     expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
     expect(onSaved).toHaveBeenCalledTimes(1);
@@ -134,6 +138,7 @@ describe('useSceneQcReviewForm', () => {
         timezone: 'Asia/Bangkok',
         result: 'PASS',
         feedback: null,
+        findings: [],
         reviewed_by: { id: 'user_1', name: 'A' },
         reviewed_at: '2026-06-01T10:00:00.000Z',
         expected_reference: null,
@@ -153,12 +158,18 @@ describe('useSceneQcReviewForm', () => {
     await waitFor(() => expect(result.current.result).toBe('PASS'));
 
     act(() => result.current.setResult('MINOR'));
+    act(() => result.current.setFindings([{ element_id: 'scqce_1', defect_id: 'scqcd_1' }]));
     act(() => result.current.setFeedback('watermark visible'));
     await act(async () => {
       await result.current.save();
     });
 
-    expect(mockUpdateMutateAsync).toHaveBeenCalledWith({ result: 'MINOR', feedback: 'watermark visible', version: 1 });
+    expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+      result: 'MINOR',
+      feedback: 'watermark visible',
+      findings: [{ element_id: 'scqce_1', defect_id: 'scqcd_1' }],
+      version: 1,
+    });
   });
 
   it('does NOT reset the draft when evidence/expected reference changes for the same Show', async () => {

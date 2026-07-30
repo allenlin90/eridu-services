@@ -8,6 +8,7 @@ import type { SceneQcRecordsQueryDto } from './schemas/scene-qc-records.schema';
 import { toSceneQcRecordDetailDto, toSceneQcRecordDto } from './schemas/scene-qc-records.schema';
 import { SceneQcConfirmationRepository } from './scene-qc-confirmation.repository';
 import { resolveSceneQcRevisionStatus } from './scene-qc-confirmation-state.policy';
+import { SceneQcRecordsQuery } from './scene-qc-records.query';
 import { SceneQcRepository } from './scene-qc-review.repository';
 
 import { HttpError } from '@/lib/errors/http-error.util';
@@ -20,6 +21,7 @@ import { HttpError } from '@/lib/errors/http-error.util';
 export class SceneQcRecordsQueryService {
   constructor(
     private readonly sceneQcRepository: SceneQcRepository,
+    private readonly recordsQuery: SceneQcRecordsQuery,
     private readonly confirmationRepository: SceneQcConfirmationRepository,
   ) {}
 
@@ -41,8 +43,8 @@ export class SceneQcRecordsQueryService {
     };
 
     const [rows, total] = await Promise.all([
-      this.sceneQcRepository.findReviewRecords({ ...filters, skip, take: query.limit }),
-      this.sceneQcRepository.countReviewRecords(filters),
+      this.recordsQuery.findReviewRecords({ ...filters, skip, take: query.limit }),
+      this.recordsQuery.countReviewRecords(filters),
     ]);
 
     const refs = await this.confirmationRepository.findConfirmationRefsForReviews(rows.map((row) => row.id));
@@ -55,8 +57,9 @@ export class SceneQcRecordsQueryService {
       throw HttpError.notFound('Scene QC review');
     }
 
-    const [auditHistory, refs] = await Promise.all([
+    const [auditHistory, amendments, refs] = await Promise.all([
       this.sceneQcRepository.findReviewAuditHistory(record.id),
+      this.sceneQcRepository.findReviewAmendments(record.id),
       this.confirmationRepository.findConfirmationRefsForReviews([record.id]),
     ]);
     const ref = refs.get(record.id);
@@ -75,6 +78,7 @@ export class SceneQcRecordsQueryService {
       review: record,
       confirmation,
       auditHistory,
+      amendments,
     });
   }
 

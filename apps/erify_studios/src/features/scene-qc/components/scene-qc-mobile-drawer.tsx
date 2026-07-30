@@ -22,6 +22,7 @@ import { SceneQcResultForm } from './scene-qc-result-form';
 type SceneQcReviewFormController = ReturnType<typeof useSceneQcReviewForm>;
 
 type SceneQcMobileDrawerProps = {
+  studioId: string;
   open: boolean;
   detail: SceneQcDailyItemDetail | undefined;
   isLoading: boolean;
@@ -32,6 +33,7 @@ type SceneQcMobileDrawerProps = {
 };
 
 type SceneQcMobileReviewContentProps = {
+  studioId: string;
   detail: SceneQcDailyItemDetail;
   form: SceneQcReviewFormController;
   onSave: () => void;
@@ -44,7 +46,7 @@ type SceneQcMobileReviewContentProps = {
  * needing a `useEffect`, while the outer `SceneQcMobileDrawer` shell (and
  * its open/close animation) stays stable.
  */
-function SceneQcMobileReviewContent({ detail, form, onSave }: SceneQcMobileReviewContentProps) {
+function SceneQcMobileReviewContent({ studioId, detail, form, onSave }: SceneQcMobileReviewContentProps) {
   const [side, setSide] = useState<'live' | 'expected'>('live');
   const [evidenceIndex, setEvidenceIndex] = useState(0);
 
@@ -100,12 +102,16 @@ function SceneQcMobileReviewContent({ detail, form, onSave }: SceneQcMobileRevie
             : (
                 <div className="sticky bottom-0 -mx-3 mt-auto border-t bg-background p-3">
                   <SceneQcResultForm
+                    studioId={studioId}
                     result={form.result}
                     onResultChange={form.setResult}
                     feedback={form.feedback}
                     onFeedbackChange={form.setFeedback}
-                    feedbackRequired={form.feedbackRequired}
-                    feedbackMissing={form.feedbackMissing}
+                    findings={form.findings}
+                    onFindingsChange={form.setFindings}
+                    findingsMissing={form.findingsMissing}
+                    taxonomy={form.taxonomy}
+                    sceneType={form.sceneType}
                     canSave={form.canSave}
                     isSaving={form.isSaving}
                     onSave={onSave}
@@ -122,7 +128,7 @@ function SceneQcMobileReviewContent({ detail, form, onSave }: SceneQcMobileRevie
  * -> image + selector -> result controls -> inline feedback -> sticky Save &
  * next. No compressed two-column view, no swipe gestures.
  */
-export function SceneQcMobileDrawer({ open, detail, isLoading, isError, form, onSave, onOpenChange }: SceneQcMobileDrawerProps) {
+export function SceneQcMobileDrawer({ studioId, open, detail, isLoading, isError, form, onSave, onOpenChange }: SceneQcMobileDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="flex h-[100dvh] max-h-[100dvh] flex-col">
@@ -143,7 +149,7 @@ export function SceneQcMobileDrawer({ open, detail, isLoading, isError, form, on
               ? <div className="p-6 text-center text-sm text-destructive">Unable to load this Show's Scene QC context.</div>
               : !detail
                   ? <div className="p-6 text-center text-sm text-muted-foreground">Select a Show to begin review.</div>
-                  : <SceneQcMobileReviewContent key={detail.show.id} detail={detail} form={form} onSave={onSave} />}
+                  : <SceneQcMobileReviewContent key={detail.show.id} studioId={studioId} detail={detail} form={form} onSave={onSave} />}
         </div>
       </DrawerContent>
     </Drawer>

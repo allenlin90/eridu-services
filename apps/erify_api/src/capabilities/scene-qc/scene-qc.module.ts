@@ -1,15 +1,20 @@
 import { Module } from '@nestjs/common';
 
 import { SceneProfileService } from './scene-profile.service';
+import { SceneQcAmendmentService } from './scene-qc-amendment.service';
 import { SceneQcAuditWriter } from './scene-qc-audit.writer';
 import { SceneQcConfirmationRepository } from './scene-qc-confirmation.repository';
 import { SceneQcConfirmationWorkflowService } from './scene-qc-confirmation-workflow.service';
 import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
+import { SceneQcPeriodReportQuery } from './scene-qc-period-report.query';
+import { SceneQcPeriodReportService } from './scene-qc-period-report.service';
 import { SceneQcQueryService } from './scene-qc-query.service';
+import { SceneQcRecordsQuery } from './scene-qc-records.query';
 import { SceneQcRecordsQueryService } from './scene-qc-records.query.service';
 import { SceneQcReportService } from './scene-qc-report.service';
 import { SceneQcRepository } from './scene-qc-review.repository';
 import { SceneQcWorkflowService } from './scene-qc-review-workflow.service';
+import { SceneQcTaxonomyService } from './scene-qc-taxonomy.service';
 
 import { StorageModule } from '@/lib/storage/storage.module';
 import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
@@ -46,23 +51,31 @@ import { PrismaModule } from '@/prisma/prisma.module';
   imports: [PrismaModule, UidGeneratorModule, StorageModule, UserModule],
   providers: [
     SceneProfileService,
+    SceneQcAmendmentService,
     SceneQcAuditWriter,
     SceneQcRepository,
     SceneQcConfirmationRepository,
     SceneQcEvidenceResolver,
+    SceneQcPeriodReportQuery,
+    SceneQcPeriodReportService,
     SceneQcQueryService,
     SceneQcWorkflowService,
     SceneQcConfirmationWorkflowService,
     SceneQcRecordsQueryService,
+    SceneQcRecordsQuery,
     SceneQcReportService,
+    SceneQcTaxonomyService,
   ],
   exports: [
     SceneProfileService,
+    SceneQcAmendmentService,
     SceneQcQueryService,
     SceneQcWorkflowService,
     SceneQcConfirmationWorkflowService,
+    SceneQcPeriodReportService,
     SceneQcRecordsQueryService,
     SceneQcReportService,
+    SceneQcTaxonomyService,
   ],
 })
 export class SceneQcModule {}

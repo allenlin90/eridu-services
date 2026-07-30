@@ -22,8 +22,13 @@ function makeForm() {
     setResult: vi.fn(),
     feedback: '',
     setFeedback: vi.fn(),
-    feedbackRequired: false,
-    feedbackMissing: false,
+    findings: [],
+    setFindings: vi.fn(),
+    findingsRequired: false,
+    findingsMissing: false,
+    taxonomy: undefined,
+    taxonomyIsLoading: false,
+    sceneType: null,
     dirty: false,
     isSaving: false,
     conflictMessage: null,
@@ -38,6 +43,7 @@ describe('sceneQcReviewPanel', () => {
   it('renders the blocked panel and no result form when blocked_reason is NO_EVIDENCE', () => {
     render(
       <SceneQcReviewPanel
+        studioId="std_test"
         detail={makeDetail({ can_review: false, blocked_reason: 'NO_EVIDENCE' })}
         isLoading={false}
         isError={false}
@@ -51,6 +57,7 @@ describe('sceneQcReviewPanel', () => {
   it('renders an immutable message and no result form when blocked_reason is CONFIRMED', () => {
     render(
       <SceneQcReviewPanel
+        studioId="std_test"
         detail={makeDetail({ can_review: false, blocked_reason: 'CONFIRMED' })}
         isLoading={false}
         isError={false}
@@ -65,6 +72,7 @@ describe('sceneQcReviewPanel', () => {
   it('renders an explicit not-eligible message and no result form when blocked_reason is NOT_ELIGIBLE', () => {
     render(
       <SceneQcReviewPanel
+        studioId="std_test"
         detail={makeDetail({ can_review: false, blocked_reason: 'NOT_ELIGIBLE' })}
         isLoading={false}
         isError={false}
@@ -79,6 +87,7 @@ describe('sceneQcReviewPanel', () => {
   it('renders the result form when the Show is reviewable', () => {
     render(
       <SceneQcReviewPanel
+        studioId="std_test"
         detail={makeDetail()}
         isLoading={false}
         isError={false}

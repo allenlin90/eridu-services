@@ -3,11 +3,16 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import type { Prisma } from '@prisma/client';
 
-import type { ReviewAuditEntry, ReviewRecordRow } from './schemas/scene-qc-records.schema';
+import type {
+  CreateAmendmentPersistenceInput,
+  SceneQcAmendmentRecord,
+} from './schemas/scene-qc-amendment.schema';
+import type { ReviewAuditEntry } from './schemas/scene-qc-records.schema';
 import type {
   CreateReviewPersistenceInput,
   EligibleShowRow,
   PinnedEvidenceInput,
+  PinnedFindingInput,
   ReviewHeadRow,
   ReviewMutablePersistenceFields,
   SceneQcReviewRecord,
@@ -19,6 +24,18 @@ import { HttpError } from '@/lib/errors/http-error.util';
 
 /** Loud, not silent: OQ-11 caps the eligible-Show-per-operational-day projection. */
 const MAX_ELIGIBLE_SHOWS_PER_WINDOW = 500;
+
+const AMENDMENT_INCLUDE = {
+  createdBy: { select: { uid: true, name: true } },
+  findings: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      element: { select: { uid: true } },
+      defect: { select: { uid: true } },
+      relatedElement: { select: { uid: true } },
+    },
+  },
+} as const satisfies Prisma.SceneQcReviewAmendmentInclude;
 
 const ELIGIBLE_SHOW_SELECT = {
   id: true,
@@ -224,101 +241,6 @@ export class SceneQcRepository {
     });
   }
 
-  // --- Records reads (Child PR 4) -----------------------------------------
-
-  private buildRecordsWhere(input: {
-    studioUid: string;
-    operationalDateFrom: Date;
-    operationalDateTo: Date;
-    clientUid?: string;
-    platformUid?: string;
-    result?: Prisma.SceneQcReviewWhereInput['result'];
-  }): Prisma.SceneQcReviewWhereInput {
-    return {
-      operationalDate: { gte: input.operationalDateFrom, lte: input.operationalDateTo },
-      show: {
-        deletedAt: null,
-        studio: { uid: input.studioUid },
-        // Records is review-anchored, not confirmation-anchored: it does NOT
-        // apply the eligibility deny-list (a review pinned to a Show later
-        // cancelled is still a historical record). Client/platform filters
-        // match the Show's LIVE relations -- see breakdown section 1.7.
-        ...(input.clientUid ? { client: { uid: input.clientUid } } : {}),
-        ...(input.platformUid
-          ? { showPlatforms: { some: { deletedAt: null, platform: { uid: input.platformUid } } } }
-          : {}),
-      },
-      ...(input.result ? { result: input.result } : {}),
-    };
-  }
-
-  /** SQL-level `skip`/`take` -- all Records filters are SQL-expressible, unlike listDailyItems' evidence-dependent filter (OQ-28). */
-  async findReviewRecords(input: {
-    studioUid: string;
-    operationalDateFrom: Date;
-    operationalDateTo: Date;
-    clientUid?: string;
-    platformUid?: string;
-    result?: Prisma.SceneQcReviewWhereInput['result'];
-    skip: number;
-    take: number;
-  }): Promise<ReviewRecordRow[]> {
-    const reviews = await this.txHost.tx.sceneQcReview.findMany({
-      where: this.buildRecordsWhere(input),
-      select: {
-        id: true,
-        uid: true,
-        operationalDate: true,
-        result: true,
-        feedback: true,
-        version: true,
-        reviewedBy: { select: { uid: true, name: true } },
-        reviewedAt: true,
-        show: {
-          select: {
-            uid: true,
-            name: true,
-            startTime: true,
-            client: { select: { uid: true, name: true } },
-            showPlatforms: { where: { deletedAt: null }, select: { platform: { select: { uid: true, name: true } } } },
-          },
-        },
-        _count: { select: { evidence: true } },
-      },
-      orderBy: [{ operationalDate: 'desc' }, { reviewedAt: 'desc' }],
-      skip: input.skip,
-      take: input.take,
-    });
-
-    return reviews.map((review) => ({
-      id: review.id,
-      uid: review.uid,
-      operationalDate: review.operationalDate,
-      showUid: review.show.uid,
-      showName: review.show.name,
-      scheduledStartTime: review.show.startTime,
-      client: review.show.client,
-      platforms: review.show.showPlatforms.map((entry) => entry.platform),
-      result: review.result,
-      feedback: review.feedback,
-      reviewedBy: review.reviewedBy,
-      reviewedAt: review.reviewedAt,
-      version: review.version,
-      evidenceCount: review._count.evidence,
-    }));
-  }
-
-  async countReviewRecords(input: {
-    studioUid: string;
-    operationalDateFrom: Date;
-    operationalDateTo: Date;
-    clientUid?: string;
-    platformUid?: string;
-    result?: Prisma.SceneQcReviewWhereInput['result'];
-  }): Promise<number> {
-    return this.txHost.tx.sceneQcReview.count({ where: this.buildRecordsWhere(input) });
-  }
-
   async findReviewRecordDetail(input: {
     studioUid: string;
     reviewUid: string;
@@ -328,6 +250,14 @@ export class SceneQcRepository {
       include: { ...sceneQcReviewDefaultInclude, show: { select: ELIGIBLE_SHOW_SELECT } },
     });
     return review ? { ...review, show: toEligibleShowRow(review.show) } : null;
+  }
+
+  async findReviewAmendments(reviewId: bigint): Promise<SceneQcAmendmentRecord[]> {
+    return this.txHost.tx.sceneQcReviewAmendment.findMany({
+      where: { reviewId },
+      include: AMENDMENT_INCLUDE,
+      orderBy: { revision: 'asc' },
+    });
   }
 
   /**
@@ -397,6 +327,7 @@ export class SceneQcRepository {
         expectedFileUrl: input.expectedFileUrl,
         expectedSceneType: input.expectedSceneType,
         evidence: { create: input.evidence.map(toEvidenceCreateInput) },
+        findings: { create: input.findings.map(toFindingCreateInput) },
       },
       include: sceneQcReviewDefaultInclude,
     });
@@ -414,6 +345,7 @@ export class SceneQcRepository {
     expectedVersion: number;
     data: ReviewMutablePersistenceFields;
     evidence: PinnedEvidenceInput[];
+    findings: PinnedFindingInput[];
   }): Promise<SceneQcReviewRecord | null> {
     const { count } = await this.txHost.tx.sceneQcReview.updateMany({
       where: { id: input.reviewId, version: input.expectedVersion, confirmedAt: null },
@@ -438,10 +370,45 @@ export class SceneQcRepository {
         data: input.evidence.map((evidence) => ({ reviewId: input.reviewId, ...toEvidenceCreateInput(evidence) })),
       });
     }
+    await this.txHost.tx.sceneQcReviewFinding.deleteMany({ where: { reviewId: input.reviewId } });
+    if (input.findings.length > 0) {
+      await this.txHost.tx.sceneQcReviewFinding.createMany({
+        data: input.findings.map((finding) => ({ reviewId: input.reviewId, ...toFindingCreateInput(finding) })),
+      });
+    }
 
     return this.txHost.tx.sceneQcReview.findUniqueOrThrow({
       where: { id: input.reviewId },
       include: sceneQcReviewDefaultInclude,
+    });
+  }
+
+  /**
+   * Serializes revision allocation per review. The caller owns the ambient
+   * transaction, so the advisory lock, max-revision read, amendment, findings,
+   * and audit envelope commit atomically.
+   */
+  async appendReviewAmendment(
+    input: CreateAmendmentPersistenceInput,
+  ): Promise<SceneQcAmendmentRecord> {
+    const lockKey = `scene-qc-amendment:${input.reviewId.toString()}`;
+    await this.txHost.tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
+
+    const latest = await this.txHost.tx.sceneQcReviewAmendment.aggregate({
+      where: { reviewId: input.reviewId },
+      _max: { revision: true },
+    });
+    return this.txHost.tx.sceneQcReviewAmendment.create({
+      data: {
+        uid: input.uid,
+        reviewId: input.reviewId,
+        revision: (latest._max.revision ?? 0) + 1,
+        result: input.result,
+        note: input.note,
+        createdById: input.createdById,
+        findings: { create: input.findings.map(toFindingCreateInput) },
+      },
+      include: AMENDMENT_INCLUDE,
     });
   }
 }
@@ -463,5 +430,20 @@ function toEvidenceCreateInput(evidence: PinnedEvidenceInput) {
     sourceLabel: evidence.sourceLabel,
     objectKey: evidence.objectKey,
     fileUrl: evidence.fileUrl,
+  };
+}
+
+function toFindingCreateInput(finding: PinnedFindingInput) {
+  return {
+    sortOrder: finding.sortOrder,
+    elementId: finding.elementId,
+    elementKey: finding.elementKey,
+    elementLabel: finding.elementLabel,
+    defectId: finding.defectId,
+    defectKey: finding.defectKey,
+    defectLabel: finding.defectLabel,
+    relatedElementId: finding.relatedElementId,
+    relatedElementKey: finding.relatedElementKey,
+    relatedElementLabel: finding.relatedElementLabel,
   };
 }

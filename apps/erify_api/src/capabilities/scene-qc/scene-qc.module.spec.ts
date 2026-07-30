@@ -5,21 +5,26 @@ import { MODULE_METADATA } from '@nestjs/common/constants';
 
 import { StudioSceneProfileController } from './http/studio-scene-profile.controller';
 import { StudioSceneQcConfirmationController } from './http/studio-scene-qc-confirmation.controller';
+import { StudioSceneQcPeriodReportController } from './http/studio-scene-qc-period-report.controller';
 import { StudioSceneQcQueryController } from './http/studio-scene-qc-query.controller';
 import { StudioSceneQcRecordsController } from './http/studio-scene-qc-records.controller';
 import { StudioSceneQcReviewController } from './http/studio-scene-qc-review.controller';
+import { StudioSceneQcTaxonomyController } from './http/studio-scene-qc-taxonomy.controller';
 import { SceneProfileService } from './scene-profile.service';
 import { SceneQcModule } from './scene-qc.module';
+import { SceneQcAmendmentService } from './scene-qc-amendment.service';
 import { SceneQcAuditWriter } from './scene-qc-audit.writer';
 import { SceneQcConfirmationRepository } from './scene-qc-confirmation.repository';
 import { SceneQcConfirmationWorkflowService } from './scene-qc-confirmation-workflow.service';
 import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
 import { SceneQcHttpModule } from './scene-qc-http.module';
+import { SceneQcPeriodReportService } from './scene-qc-period-report.service';
 import { SceneQcQueryService } from './scene-qc-query.service';
 import { SceneQcRecordsQueryService } from './scene-qc-records.query.service';
 import { SceneQcReportService } from './scene-qc-report.service';
 import { SceneQcRepository } from './scene-qc-review.repository';
 import { SceneQcWorkflowService } from './scene-qc-review-workflow.service';
+import { SceneQcTaxonomyService } from './scene-qc-taxonomy.service';
 
 import { StorageModule } from '@/lib/storage/storage.module';
 import { UidGeneratorModule } from '@/lib/uid/uid-generator.module';
@@ -37,11 +42,14 @@ describe('sceneQcModule', () => {
 
     expect(exports).toEqual([
       SceneProfileService,
+      SceneQcAmendmentService,
       SceneQcQueryService,
       SceneQcWorkflowService,
       SceneQcConfirmationWorkflowService,
+      SceneQcPeriodReportService,
       SceneQcRecordsQueryService,
       SceneQcReportService,
+      SceneQcTaxonomyService,
     ]);
   });
 
@@ -108,7 +116,9 @@ describe('sceneQcHttpModule', () => {
       StudioSceneQcQueryController,
       StudioSceneQcReviewController,
       StudioSceneQcConfirmationController,
+      StudioSceneQcPeriodReportController,
       StudioSceneQcRecordsController,
+      StudioSceneQcTaxonomyController,
     ]);
   });
 

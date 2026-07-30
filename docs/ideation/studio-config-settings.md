@@ -87,22 +87,20 @@ This document unifies three previously scattered ideation tracks:
 
 ### 9. Scene QC Taxonomy Governance
 
-Scene QC Stage 1 records Pass, Minor, or Fail with required Designer feedback for Minor and Fail. It also pins `GRAPHIC_BG` or `REAL_BACKDROP` on each Scene Profile revision. Structured element/defect findings and user-managed taxonomy are deferred.
+Scene QC now ships one organization-wide element/defect catalog. Built-in options follow the source functional specification; Designer, Manager, and Admin may add shared custom options and retire custom options from future use. Findings snapshot their keys and labels, and confirmed-review comments/corrections are append-only. The note is optional because structured findings carry the required Minor/Fail classification.
 
-The eventual configuration must support:
+This is deliberately **not** a Studio setting today:
 
-- a shared system catalog of stable QC element and defect codes;
-- optional studio-scoped additions or applicability overrides;
-- explicit governance for which roles can create, update, or retire entries;
-- retirement rather than deletion so historical findings remain readable;
-- stable labels or label snapshots for confirmed historical records; and
-- centralized counting and labeling behavior for reports.
+- there is one Studio;
+- QC standards and learned issue vocabulary should normally be shared within the organization; and
+- adding Studio ownership before a real divergence exists would complicate management and reporting without solving a current problem.
 
-The scope decision remains open between fully shared, fully studio-scoped, and hybrid shared-plus-studio taxonomy. The hybrid shape is the leading option because it preserves cross-studio reporting consistency while allowing local scene vocabulary.
+Keep two future controls in this settings track so they are not lost when the Studio Settings surface is designed:
 
-The functional specification's two-axis element/defect vocabulary and optional related element are the seed candidate. Promote this configuration slice when Scene QC Stage 3 begins and its shared-versus-studio governance is agreed; free text is operational context, not a replacement taxonomy-discovery mechanism.
+1. **Taxonomy scope:** introduce Studio-specific overrides only after a second Studio exists and a concrete option is proven not to be shareable. Preserve the organization catalog as the default.
+2. **Designer management policy:** add an explicit Scene QC setting that allows or excludes the `DESIGNER` role from managing issue options. `MANAGER` and `ADMIN` always retain management access. The default should preserve current behavior (Designer allowed) because Designer owns the QC process today.
 
-When promoted, structured findings remain children of the existing Show review (never a replacement for it), and free-text feedback stays required for Minor and Fail unless product evidence supports relaxing it. `GRAPHIC_BG` / `REAL_BACKDROP` is already recorded on each Scene Profile, so adding structured findings needs no profile-history migration.
+These controls must ship with their settings UI and authorization enforcement in the same change. Do not add hidden configuration, per-Studio taxonomy columns, or a general Studio Settings page solely for the current single-Studio workflow.
 
 ---
 

@@ -7,6 +7,7 @@ import { resolveSceneQcResultChip } from '../lib/scene-qc-result-chip';
 
 import { SceneQcExpectedReferencePanel } from './scene-qc-expected-reference-panel';
 import { SceneQcImageFrame } from './scene-qc-image-frame';
+import { SceneQcRecordHistory } from './scene-qc-record-history';
 
 const REPORT_STATUS_CHIP: Record<'CURRENT' | 'STALE' | 'SUPERSEDED', { label: string; className: string }> = {
   CURRENT: { label: 'Current', className: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
@@ -15,6 +16,7 @@ const REPORT_STATUS_CHIP: Record<'CURRENT' | 'STALE' | 'SUPERSEDED', { label: st
 };
 
 type SceneQcRecordDetailContentProps = {
+  studioId: string;
   detail: SceneQcRecordDetail | undefined;
   isLoading: boolean;
   isError: boolean;
@@ -22,7 +24,7 @@ type SceneQcRecordDetailContentProps = {
 };
 
 /** Shared detail body used by both the desktop Sheet and mobile Drawer (§7.5). */
-export function SceneQcRecordDetailContent({ detail, isLoading, isError, onOpenReport }: SceneQcRecordDetailContentProps) {
+export function SceneQcRecordDetailContent({ studioId, detail, isLoading, isError, onOpenReport }: SceneQcRecordDetailContentProps) {
   if (isLoading) {
     return (
       <div className="space-y-3 p-4">
@@ -38,7 +40,7 @@ export function SceneQcRecordDetailContent({ detail, isLoading, isError, onOpenR
     return <div className="p-6 text-center text-sm text-muted-foreground">Select a record to view its details.</div>;
   }
 
-  const resultChip = resolveSceneQcResultChip(detail.review.result);
+  const resultChip = resolveSceneQcResultChip(detail.effective_result);
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -46,6 +48,15 @@ export function SceneQcRecordDetailContent({ detail, isLoading, isError, onOpenR
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold">{detail.show.name}</h3>
           <Badge variant="outline" className={resultChip.className}>{resultChip.label}</Badge>
+          {detail.effective_result !== detail.review.result
+            ? (
+                <span className="text-xs text-muted-foreground">
+                  Originally
+                  {' '}
+                  {detail.review.result}
+                </span>
+              )
+            : null}
         </div>
         <p className="text-xs text-muted-foreground">
           {new Date(detail.show.scheduled_start_time).toLocaleString()}
@@ -74,8 +85,26 @@ export function SceneQcRecordDetailContent({ detail, isLoading, isError, onOpenR
       {detail.review.feedback
         ? (
             <div className="rounded-md border p-3 text-sm">
-              <p className="text-xs font-medium text-muted-foreground">Feedback</p>
+              <p className="text-xs font-medium text-muted-foreground">Optional note</p>
               <p>{detail.review.feedback}</p>
+            </div>
+          )
+        : null}
+
+      {detail.effective_findings.length > 0
+        ? (
+            <div className="rounded-md border p-3 text-sm">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Effective issues</p>
+              <ul className="space-y-1">
+                {detail.effective_findings.map((finding) => (
+                  <li key={`${finding.element_key}:${finding.defect_key}:${finding.related_element_key ?? ''}`}>
+                    {finding.element_label}
+                    {' · '}
+                    {finding.defect_label}
+                    {finding.related_element_label ? ` · ${finding.related_element_label}` : ''}
+                  </li>
+                ))}
+              </ul>
             </div>
           )
         : null}
@@ -111,27 +140,7 @@ export function SceneQcRecordDetailContent({ detail, isLoading, isError, onOpenR
           : <p className="mt-1 text-xs text-muted-foreground">Not yet confirmed</p>}
       </div>
 
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Audit history</p>
-        {detail.audit_history.length === 0
-          ? <p className="text-xs text-muted-foreground">No changes recorded.</p>
-          : (
-              <ul className="space-y-1.5 text-xs">
-                {detail.audit_history.map((entry) => (
-                  <li key={entry.id} className="flex items-center justify-between gap-2 border-b pb-1.5 last:border-b-0">
-                    <span>
-                      {entry.actor?.name ?? 'System'}
-                      {' '}
-                      {entry.action === 'CREATE' ? 'created' : 'updated'}
-                      {' '}
-                      {entry.new_result ? `→ ${entry.new_result}` : ''}
-                    </span>
-                    <span className="text-muted-foreground">{new Date(entry.at).toLocaleString()}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-      </div>
+      <SceneQcRecordHistory studioId={studioId} detail={detail} />
     </div>
   );
 }

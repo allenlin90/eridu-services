@@ -11,6 +11,8 @@ function buildRow(overrides: Partial<{ id: bigint; uid: string; operationalDate:
     client: { uid: 'client_a', name: 'Client A' },
     platforms: [{ uid: 'plt_1', name: 'TikTok' }],
     result: 'PASS' as const,
+    effectiveResult: 'PASS' as const,
+    amendmentCount: 0,
     feedback: null,
     reviewedBy: { uid: 'user_a', name: 'Reviewer' },
     reviewedAt: new Date('2026-08-01T07:30:00.000Z'),
@@ -25,7 +27,8 @@ describe('sceneQcRecordsQueryService.listRecords', () => {
     const countReviewRecords = jest.fn().mockResolvedValue(1);
     const findReviewRecordDetail = jest.fn();
     const findReviewAuditHistory = jest.fn().mockResolvedValue([]);
-    const sceneQcRepository = { findReviewRecords, countReviewRecords, findReviewRecordDetail, findReviewAuditHistory };
+    const sceneQcRepository = { findReviewRecordDetail, findReviewAuditHistory };
+    const recordsQuery = { findReviewRecords, countReviewRecords };
 
     const findConfirmationRefsForReviews = jest.fn().mockResolvedValue(new Map());
     const findConfirmationScopeById = jest.fn();
@@ -38,7 +41,11 @@ describe('sceneQcRecordsQueryService.listRecords', () => {
       findReviewHeadsForShows,
     };
 
-    const service = new SceneQcRecordsQueryService(sceneQcRepository as never, confirmationRepository as never);
+    const service = new SceneQcRecordsQueryService(
+      sceneQcRepository as never,
+      recordsQuery as never,
+      confirmationRepository as never,
+    );
     return { service, sceneQcRepository, confirmationRepository, findReviewRecords, countReviewRecords };
   }
 
@@ -131,6 +138,7 @@ describe('sceneQcRecordsQueryService.getRecordDetail', () => {
       createdAt: new Date('2026-08-01T07:30:00.000Z'),
       updatedAt: new Date('2026-08-01T07:30:00.000Z'),
       evidence: [],
+      findings: [],
     };
 
     const findReviewRecordDetail = jest.fn().mockResolvedValue(reviewRecord);
@@ -148,6 +156,7 @@ describe('sceneQcRecordsQueryService.getRecordDetail', () => {
     const sceneQcRepository = {
       findReviewRecordDetail,
       findReviewAuditHistory,
+      findReviewAmendments: jest.fn().mockResolvedValue([]),
       findEligibleShowsInWindow: jest.fn().mockResolvedValue([]),
       findReviewHeadsForShows: jest.fn().mockResolvedValue([]),
     };
@@ -158,7 +167,11 @@ describe('sceneQcRecordsQueryService.getRecordDetail', () => {
       findConfirmationScopeById: jest.fn(),
     };
 
-    const service = new SceneQcRecordsQueryService(sceneQcRepository as never, confirmationRepository as never);
+    const service = new SceneQcRecordsQueryService(
+      sceneQcRepository as never,
+      {} as never,
+      confirmationRepository as never,
+    );
     return { service, sceneQcRepository, confirmationRepository, findReviewAuditHistory };
   }
 

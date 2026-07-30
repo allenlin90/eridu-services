@@ -31,6 +31,9 @@ model User {
   publishRuns                  PublishRun[]               @relation("PublishRunTrigger")
   sceneQcReviews               SceneQcReview[]
   sceneQcDailyConfirmations    SceneQcDailyConfirmation[]
+  sceneQcTaxonomyElements      SceneQcTaxonomyElement[]   @relation("SceneQcTaxonomyElementCreatedBy")
+  sceneQcTaxonomyDefects       SceneQcTaxonomyDefect[]    @relation("SceneQcTaxonomyDefectCreatedBy")
+  sceneQcReviewAmendments      SceneQcReviewAmendment[]   @relation("SceneQcReviewAmendmentCreatedBy")
   createdAt                    DateTime                   @default(now()) @map("created_at")
   updatedAt                    DateTime                   @updatedAt @map("updated_at")
   deletedAt                    DateTime?                  @map("deleted_at")
@@ -1083,6 +1086,8 @@ model SceneQcReview {
   createdAt                     DateTime                       @default(now()) @map("created_at")
   updatedAt                     DateTime                       @updatedAt @map("updated_at")
   evidence                      SceneQcReviewEvidence[]
+  findings                      SceneQcReviewFinding[]
+  amendments                    SceneQcReviewAmendment[]
   auditTargets                  SceneQcAuditTarget[]
   sceneQcDailyConfirmationItems SceneQcDailyConfirmationItem[]
 
@@ -1122,6 +1127,127 @@ model SceneQcReviewEvidence {
   @@index([reviewId])
   @@index([sourceTaskId])
   @@map("scene_qc_review_evidence")
+}
+
+// Organization-wide Scene QC vocabulary. System rows are the protected
+// specification defaults; user-created rows are shared across the organization
+// until multi-studio evidence justifies scoped overrides.
+model SceneQcTaxonomyElement {
+  id                       BigInt                          @id @default(autoincrement())
+  uid                      String                          @unique
+  key                      String                          @unique
+  label                    String
+  appliesToGraphicBg       Boolean                         @default(true) @map("applies_to_graphic_bg")
+  appliesToRealBackdrop    Boolean                         @default(true) @map("applies_to_real_backdrop")
+  isSystem                 Boolean                         @default(false) @map("is_system")
+  createdById              BigInt?                         @map("created_by_id")
+  createdBy                User?                           @relation("SceneQcTaxonomyElementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  retiredAt                DateTime?                       @map("retired_at")
+  createdAt                DateTime                        @default(now()) @map("created_at")
+  defects                  SceneQcTaxonomyDefect[]
+  reviewFindings           SceneQcReviewFinding[]          @relation("SceneQcReviewFindingElement")
+  relatedReviewFindings    SceneQcReviewFinding[]          @relation("SceneQcReviewFindingRelatedElement")
+  amendmentFindings        SceneQcReviewAmendmentFinding[] @relation("SceneQcReviewAmendmentFindingElement")
+  relatedAmendmentFindings SceneQcReviewAmendmentFinding[] @relation("SceneQcReviewAmendmentFindingRelatedElement")
+
+  @@index([retiredAt])
+  @@map("scene_qc_taxonomy_elements")
+}
+
+model SceneQcTaxonomyDefect {
+  id                BigInt                          @id @default(autoincrement())
+  uid               String                          @unique
+  elementId         BigInt                          @map("element_id")
+  element           SceneQcTaxonomyElement          @relation(fields: [elementId], references: [id], onDelete: Restrict)
+  key               String
+  label             String
+  isSystem          Boolean                         @default(false) @map("is_system")
+  createdById       BigInt?                         @map("created_by_id")
+  createdBy         User?                           @relation("SceneQcTaxonomyDefectCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  retiredAt         DateTime?                       @map("retired_at")
+  createdAt         DateTime                        @default(now()) @map("created_at")
+  reviewFindings    SceneQcReviewFinding[]
+  amendmentFindings SceneQcReviewAmendmentFinding[]
+
+  @@unique([elementId, key])
+  @@index([elementId, retiredAt])
+  @@index([retiredAt])
+  @@map("scene_qc_taxonomy_defects")
+}
+
+// A draft review's normalized structured findings. Labels and keys are
+// snapshotted so retiring catalog entries never changes historical wording.
+model SceneQcReviewFinding {
+  id                  BigInt                  @id @default(autoincrement())
+  reviewId            BigInt                  @map("review_id")
+  review              SceneQcReview           @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  sortOrder           Int                     @map("sort_order")
+  elementId           BigInt                  @map("element_id")
+  element             SceneQcTaxonomyElement  @relation("SceneQcReviewFindingElement", fields: [elementId], references: [id], onDelete: Restrict)
+  elementKey          String                  @map("element_key")
+  elementLabel        String                  @map("element_label")
+  defectId            BigInt                  @map("defect_id")
+  defect              SceneQcTaxonomyDefect   @relation(fields: [defectId], references: [id], onDelete: Restrict)
+  defectKey           String                  @map("defect_key")
+  defectLabel         String                  @map("defect_label")
+  relatedElementId    BigInt?                 @map("related_element_id")
+  relatedElement      SceneQcTaxonomyElement? @relation("SceneQcReviewFindingRelatedElement", fields: [relatedElementId], references: [id], onDelete: Restrict)
+  relatedElementKey   String?                 @map("related_element_key")
+  relatedElementLabel String?                 @map("related_element_label")
+  createdAt           DateTime                @default(now()) @map("created_at")
+
+  @@unique([reviewId, sortOrder])
+  @@index([reviewId])
+  @@index([elementId])
+  @@index([defectId])
+  @@map("scene_qc_review_findings")
+}
+
+// Append-only correction or comment attached to a confirmed review. A null
+// result is a comment-only amendment; a non-null result replaces the effective
+// result for records and period analytics without mutating the original review.
+model SceneQcReviewAmendment {
+  id          BigInt                          @id @default(autoincrement())
+  uid         String                          @unique
+  reviewId    BigInt                          @map("review_id")
+  review      SceneQcReview                   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  revision    Int
+  result      SceneQcResult?
+  note        String
+  createdById BigInt                          @map("created_by_id")
+  createdBy   User                            @relation("SceneQcReviewAmendmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime                        @default(now()) @map("created_at")
+  findings    SceneQcReviewAmendmentFinding[]
+
+  @@unique([reviewId, revision])
+  @@index([reviewId, createdAt])
+  @@map("scene_qc_review_amendments")
+}
+
+model SceneQcReviewAmendmentFinding {
+  id                  BigInt                  @id @default(autoincrement())
+  amendmentId         BigInt                  @map("amendment_id")
+  amendment           SceneQcReviewAmendment  @relation(fields: [amendmentId], references: [id], onDelete: Cascade)
+  sortOrder           Int                     @map("sort_order")
+  elementId           BigInt                  @map("element_id")
+  element             SceneQcTaxonomyElement  @relation("SceneQcReviewAmendmentFindingElement", fields: [elementId], references: [id], onDelete: Restrict)
+  elementKey          String                  @map("element_key")
+  elementLabel        String                  @map("element_label")
+  defectId            BigInt                  @map("defect_id")
+  defect              SceneQcTaxonomyDefect   @relation(fields: [defectId], references: [id], onDelete: Restrict)
+  defectKey           String                  @map("defect_key")
+  defectLabel         String                  @map("defect_label")
+  relatedElementId    BigInt?                 @map("related_element_id")
+  relatedElement      SceneQcTaxonomyElement? @relation("SceneQcReviewAmendmentFindingRelatedElement", fields: [relatedElementId], references: [id], onDelete: Restrict)
+  relatedElementKey   String?                 @map("related_element_key")
+  relatedElementLabel String?                 @map("related_element_label")
+  createdAt           DateTime                @default(now()) @map("created_at")
+
+  @@unique([amendmentId, sortOrder])
+  @@index([amendmentId])
+  @@index([elementId])
+  @@index([defectId])
+  @@map("scene_qc_review_amendment_findings")
 }
 
 // Capability-owned audit-target junction. Scene QC's target growth stays off the

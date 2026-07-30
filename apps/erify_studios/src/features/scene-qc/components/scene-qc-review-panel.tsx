@@ -10,6 +10,7 @@ import { SceneQcResultForm } from './scene-qc-result-form';
 type SceneQcReviewFormController = ReturnType<typeof useSceneQcReviewForm>;
 
 type SceneQcReviewPanelProps = {
+  studioId: string;
   detail: SceneQcDailyItemDetail | undefined;
   isLoading: boolean;
   isError: boolean;
@@ -18,7 +19,7 @@ type SceneQcReviewPanelProps = {
 };
 
 /** §7.2 (5 right): orchestrates the comparison, inline form, and blocked panel for the selected Show. */
-export function SceneQcReviewPanel({ detail, isLoading, isError, form, onSave }: SceneQcReviewPanelProps) {
+export function SceneQcReviewPanel({ studioId, detail, isLoading, isError, form, onSave }: SceneQcReviewPanelProps) {
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
@@ -93,12 +94,16 @@ export function SceneQcReviewPanel({ detail, isLoading, isError, form, onSave }:
               )
             : (
                 <SceneQcResultForm
+                  studioId={studioId}
                   result={form.result}
                   onResultChange={form.setResult}
                   feedback={form.feedback}
                   onFeedbackChange={form.setFeedback}
-                  feedbackRequired={form.feedbackRequired}
-                  feedbackMissing={form.feedbackMissing}
+                  findings={form.findings}
+                  onFindingsChange={form.setFindings}
+                  findingsMissing={form.findingsMissing}
+                  taxonomy={form.taxonomy}
+                  sceneType={form.sceneType}
                   canSave={form.canSave}
                   isSaving={form.isSaving}
                   onSave={onSave}

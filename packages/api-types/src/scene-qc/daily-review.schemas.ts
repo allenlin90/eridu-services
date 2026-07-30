@@ -4,6 +4,7 @@ import { UID_PREFIXES } from '../constants.js';
 import { createPaginatedResponseSchema, paginationBaseSchema } from '../pagination/schemas.js';
 
 import { sceneTypeSchema } from './schemas.js';
+import { sceneQcFindingInputSchema, sceneQcFindingSchema } from './taxonomy.schemas.js';
 
 /**
  * Scene QC Daily Review contracts. See "Routes" in
@@ -169,6 +170,7 @@ export const sceneQcReviewSchema = sceneQcOperationalWindowSchema.extend({
   show_id: z.string().startsWith(UID_PREFIXES.SHOW),
   result: sceneQcResultSchema,
   feedback: z.string().nullable(),
+  findings: z.array(sceneQcFindingSchema),
   reviewed_by: sceneQcUserRefSchema,
   reviewed_at: z.iso.datetime(),
   expected_reference: sceneQcExpectedReferenceSchema.nullable(),
@@ -213,17 +215,23 @@ export const sceneQcDailyItemDetailSchema = z.object({
 // Command schemas
 // ============================================================================
 
-function sceneQcFeedbackRule(
-  data: { result: SceneQcResult; feedback?: string | null },
+function sceneQcFindingRule(
+  data: { result: SceneQcResult; findings: unknown[] },
   ctx: z.RefinementCtx,
 ) {
-  const needsFeedback = data.result === SCENE_QC_RESULT.MINOR || data.result === SCENE_QC_RESULT.FAIL;
-  const provided = (data.feedback ?? '').trim().length > 0;
-  if (needsFeedback && !provided) {
+  const needsFindings = data.result === SCENE_QC_RESULT.MINOR || data.result === SCENE_QC_RESULT.FAIL;
+  if (needsFindings && data.findings.length === 0) {
     ctx.addIssue({
       code: 'custom',
-      path: ['feedback'],
-      message: 'feedback is required for Minor and Fail results',
+      path: ['findings'],
+      message: 'at least one structured issue is required for Minor and Fail results',
+    });
+  }
+  if (data.result === SCENE_QC_RESULT.PASS && data.findings.length > 0) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['findings'],
+      message: 'Pass results cannot contain structured issues',
     });
   }
 }
@@ -233,13 +241,15 @@ export const createSceneQcReviewInputSchema = z.object({
   operational_date: operationalDateSchema,
   result: sceneQcResultSchema,
   feedback: z.string().trim().max(2000).nullish(),
-}).superRefine(sceneQcFeedbackRule);
+  findings: z.array(sceneQcFindingInputSchema).max(50).default([]),
+}).superRefine(sceneQcFindingRule);
 
 export const updateSceneQcReviewInputSchema = z.object({
   result: sceneQcResultSchema,
   feedback: z.string().trim().max(2000).nullish(),
+  findings: z.array(sceneQcFindingInputSchema).max(50).default([]),
   version: z.number().int().positive(),
-}).superRefine(sceneQcFeedbackRule);
+}).superRefine(sceneQcFindingRule);
 
 export type SceneQcSummaryQuery = z.infer<typeof sceneQcSummaryQuerySchema>;
 export type SceneQcItemsQuery = z.infer<typeof sceneQcItemsQuerySchema>;
@@ -251,5 +261,5 @@ export type SceneQcEvidence = z.infer<typeof sceneQcEvidenceSchema>;
 export type SceneQcExpectedReference = z.infer<typeof sceneQcExpectedReferenceSchema>;
 export type SceneQcReview = z.infer<typeof sceneQcReviewSchema>;
 export type SceneQcDailyItemDetail = z.infer<typeof sceneQcDailyItemDetailSchema>;
-export type CreateSceneQcReviewInput = z.infer<typeof createSceneQcReviewInputSchema>;
-export type UpdateSceneQcReviewInput = z.infer<typeof updateSceneQcReviewInputSchema>;
+export type CreateSceneQcReviewInput = z.input<typeof createSceneQcReviewInputSchema>;
+export type UpdateSceneQcReviewInput = z.input<typeof updateSceneQcReviewInputSchema>;

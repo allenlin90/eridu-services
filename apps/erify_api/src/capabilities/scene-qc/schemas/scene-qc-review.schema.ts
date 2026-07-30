@@ -8,6 +8,7 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { UID_PREFIXES } from '@eridu/api-types/constants';
+import type { SceneQcFindingInput } from '@eridu/api-types/scene-qc';
 import {
   createSceneQcReviewInputSchema,
   sceneQcResultSchema,
@@ -29,6 +30,14 @@ export const sceneQcReviewDefaultInclude = {
   show: { select: { uid: true } },
   reviewedBy: { select: { uid: true, name: true } },
   evidence: { orderBy: { sortOrder: 'asc' } },
+  findings: {
+    orderBy: { sortOrder: 'asc' },
+    include: {
+      element: { select: { uid: true } },
+      defect: { select: { uid: true } },
+      relatedElement: { select: { uid: true } },
+    },
+  },
 } as const satisfies Prisma.SceneQcReviewInclude;
 
 // Internal entity shape (DB row + include -> DTO transform input).
@@ -60,6 +69,17 @@ export const sceneQcReviewEntitySchema = z.object({
     objectKey: z.string().nullable(),
     fileUrl: z.string(),
   })),
+  findings: z.array(z.object({
+    element: z.object({ uid: z.string() }),
+    elementKey: z.string(),
+    elementLabel: z.string(),
+    defect: z.object({ uid: z.string() }),
+    defectKey: z.string(),
+    defectLabel: z.string(),
+    relatedElement: z.object({ uid: z.string() }).nullable(),
+    relatedElementKey: z.string().nullable(),
+    relatedElementLabel: z.string().nullable(),
+  })),
 });
 
 export const sceneQcReviewDto = sceneQcReviewEntitySchema
@@ -75,6 +95,17 @@ export const sceneQcReviewDto = sceneQcReviewEntitySchema
     timezone: obj.timezone,
     result: obj.result,
     feedback: obj.feedback,
+    findings: obj.findings.map((finding) => ({
+      element_id: finding.element.uid,
+      element_key: finding.elementKey,
+      element_label: finding.elementLabel,
+      defect_id: finding.defect.uid,
+      defect_key: finding.defectKey,
+      defect_label: finding.defectLabel,
+      related_element_id: finding.relatedElement?.uid ?? null,
+      related_element_key: finding.relatedElementKey,
+      related_element_label: finding.relatedElementLabel,
+    })),
     reviewed_by: { id: obj.reviewedBy.uid, name: obj.reviewedBy.name },
     reviewed_at: obj.reviewedAt.toISOString(),
     expected_reference: obj.expectedFileUrl
@@ -111,12 +142,14 @@ export const createSceneQcReviewSchema = createSceneQcReviewInputSchema.transfor
   operationalDate: data.operational_date,
   result: data.result,
   feedback: data.feedback ?? null,
+  findings: data.findings,
 }));
 export class CreateSceneQcReviewDto extends createZodDto(createSceneQcReviewSchema) {}
 
 export const updateSceneQcReviewSchema = updateSceneQcReviewInputSchema.transform((data) => ({
   result: data.result,
   feedback: data.feedback ?? null,
+  findings: data.findings,
   version: data.version,
 }));
 export class UpdateSceneQcReviewDto extends createZodDto(updateSceneQcReviewSchema) {}
@@ -129,11 +162,13 @@ export type CreateSceneQcReviewPayload = {
   operationalDate: string;
   result: PrismaSceneQcResult;
   feedback: string | null;
+  findings?: SceneQcFindingInput[];
 };
 
 export type UpdateSceneQcReviewPayload = {
   result: PrismaSceneQcResult;
   feedback: string | null;
+  findings?: SceneQcFindingInput[];
   version: number;
 };
 
@@ -155,6 +190,19 @@ export type PinnedEvidenceInput = {
   fileUrl: string;
 };
 
+export type PinnedFindingInput = {
+  sortOrder: number;
+  elementId: bigint;
+  elementKey: string;
+  elementLabel: string;
+  defectId: bigint;
+  defectKey: string;
+  defectLabel: string;
+  relatedElementId: bigint | null;
+  relatedElementKey: string | null;
+  relatedElementLabel: string | null;
+};
+
 /** The fields the §8.2 review save transaction can mutate on the head row. */
 export type ReviewMutablePersistenceFields = {
   result: PrismaSceneQcResult;
@@ -173,6 +221,7 @@ export type CreateReviewPersistenceInput = ReviewMutablePersistenceFields & {
   windowEnd: Date;
   timezone: string;
   evidence: PinnedEvidenceInput[];
+  findings: PinnedFindingInput[];
 };
 
 /**

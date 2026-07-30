@@ -11,8 +11,10 @@ import { SCENE_QC_REVIEW_STATE } from '@eridu/api-types/scene-qc';
 
 import { SceneProfileService } from '@/capabilities/scene-qc/scene-profile.service';
 import { SceneQcModule } from '@/capabilities/scene-qc/scene-qc.module';
+import { SceneQcAmendmentService } from '@/capabilities/scene-qc/scene-qc-amendment.service';
 import { SceneQcConfirmationWorkflowService } from '@/capabilities/scene-qc/scene-qc-confirmation-workflow.service';
 import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from '@/capabilities/scene-qc/scene-qc-operational-window.util';
+import { SceneQcPeriodReportService } from '@/capabilities/scene-qc/scene-qc-period-report.service';
 import { SceneQcQueryService } from '@/capabilities/scene-qc/scene-qc-query.service';
 import { SceneQcRecordsQueryService } from '@/capabilities/scene-qc/scene-qc-records.query.service';
 import { SceneQcReportService } from '@/capabilities/scene-qc/scene-qc-report.service';
@@ -113,11 +115,13 @@ describe('real database Scene QC whole-capability journey', () => {
   let prisma: PrismaService;
   let taskTemplateService: TaskTemplateService;
   let sceneProfileService: SceneProfileService;
+  let amendmentService: SceneQcAmendmentService;
   let reviewWorkflow: SceneQcWorkflowService;
   let confirmationWorkflow: SceneQcConfirmationWorkflowService;
   let sceneQcQueryService: SceneQcQueryService;
   let recordsQueryService: SceneQcRecordsQueryService;
   let reportService: SceneQcReportService;
+  let periodReportService: SceneQcPeriodReportService;
 
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({
@@ -145,11 +149,13 @@ describe('real database Scene QC whole-capability journey', () => {
     prisma = moduleRef.get(PrismaService);
     taskTemplateService = moduleRef.get(TaskTemplateService);
     sceneProfileService = moduleRef.get(SceneProfileService);
+    amendmentService = moduleRef.get(SceneQcAmendmentService);
     reviewWorkflow = moduleRef.get(SceneQcWorkflowService);
     confirmationWorkflow = moduleRef.get(SceneQcConfirmationWorkflowService);
     sceneQcQueryService = moduleRef.get(SceneQcQueryService);
     recordsQueryService = moduleRef.get(SceneQcRecordsQueryService);
     reportService = moduleRef.get(SceneQcReportService);
+    periodReportService = moduleRef.get(SceneQcPeriodReportService);
   });
 
   afterEach(async () => {
@@ -333,7 +339,16 @@ describe('real database Scene QC whole-capability journey', () => {
     );
     const reviewA = await reviewWorkflow.createReview(
       studio.uid,
-      { showId: showA.uid, operationalDate: OPERATIONAL_DATE, result: 'MINOR', feedback: 'Backdrop is slightly misaligned.' },
+      {
+        showId: showA.uid,
+        operationalDate: OPERATIONAL_DATE,
+        result: 'MINOR',
+        feedback: 'Backdrop is slightly misaligned.',
+        findings: [{
+          element_id: 'scqce_system_bg',
+          defect_id: 'scqcd_system_bg_misaligned',
+        }],
+      },
       context,
     );
     expect(reviewA.evidence).toHaveLength(2);
@@ -381,7 +396,33 @@ describe('real database Scene QC whole-capability journey', () => {
     expect(report.exceptions[0].result).toBe('MINOR');
     expect(report.exceptions[0].feedback).toBe('Backdrop is slightly misaligned.');
 
-    // --- Step 8: Records for the date range ---
+    // --- Step 8: append a correction. The confirmed daily report remains an
+    // immutable snapshot, while Records and period analytics use the latest
+    // result-bearing amendment. ---
+    const amendment = await amendmentService.append(
+      studio.uid,
+      reviewA.uid,
+      {
+        note: 'Blur is more severe than first assessed.',
+        result: 'FAIL',
+        findings: [{
+          element_id: 'scqce_system_tech',
+          defect_id: 'scqcd_system_tech_blurry',
+        }],
+      },
+      user.extId!,
+    );
+    expect(amendment.revision).toBe(1);
+    expect(amendment.result).toBe('FAIL');
+    await expect(prisma.sceneQcReview.findUniqueOrThrow({
+      where: { uid: reviewA.uid },
+      select: { result: true },
+    })).resolves.toEqual({ result: 'MINOR' });
+    await expect(reportService.getReport(studio.uid, confirmed.id)).resolves.toMatchObject({
+      scope: { minor_count: 1, fail_count: 0 },
+    });
+
+    // --- Step 9: Records for the date range use the effective correction. ---
     const { items: records } = await recordsQueryService.listRecords(studio.uid, {
       dateFrom: OPERATIONAL_DATE,
       dateTo: OPERATIONAL_DATE,
@@ -395,8 +436,39 @@ describe('real database Scene QC whole-capability journey', () => {
     const recordB = records.find((item) => item.review_id === reviewB.uid);
     expect(recordA?.confirmation_status).toBe('CONFIRMED');
     expect(recordA?.confirmation_revision).toBe(1);
+    expect(recordA?.original_result).toBe('MINOR');
+    expect(recordA?.result).toBe('FAIL');
+    expect(recordA?.amendment_count).toBe(1);
     expect(recordB?.confirmation_status).toBe('CONFIRMED');
     expect(recordB?.confirmation_revision).toBe(1);
+
+    const detailA = await recordsQueryService.getRecordDetail(studio.uid, reviewA.uid);
+    expect(detailA.review.result).toBe('MINOR');
+    expect(detailA.effective_result).toBe('FAIL');
+    expect(detailA.amendments).toHaveLength(1);
+    expect(detailA.effective_findings[0]).toMatchObject({
+      element_key: 'tech',
+      defect_key: 'blurry',
+    });
+
+    // --- Step 10: centralized period analytics apply the correction once. ---
+    const periodReport = await periodReportService.getReport(
+      studio.uid,
+      OPERATIONAL_DATE,
+      OPERATIONAL_DATE,
+    );
+    expect(periodReport.summary).toMatchObject({
+      total_count: 2,
+      pass_count: 1,
+      minor_count: 0,
+      fail_count: 1,
+      pass_percentage: 50,
+    });
+    expect(periodReport.issue_breakdown).toEqual([expect.objectContaining({
+      element_key: 'tech',
+      defect_key: 'blurry',
+      count: 1,
+    })]);
 
     const audits = await prisma.sceneQcAuditTarget.findMany({
       where: {

@@ -14,6 +14,7 @@ import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
 import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
 import { SceneQcRepository } from './scene-qc-review.repository';
 import { SceneQcWorkflowService } from './scene-qc-review-workflow.service';
+import { SceneQcTaxonomyService } from './scene-qc-taxonomy.service';
 
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
@@ -74,6 +75,7 @@ function buildReviewRecord(overrides: Partial<SceneQcReviewRecord> = {}): SceneQ
     createdAt: new Date('2026-06-01T10:00:00.000Z'),
     updatedAt: new Date('2026-06-01T10:00:00.000Z'),
     evidence: [],
+    findings: [],
     ...overrides,
   };
 }
@@ -98,6 +100,7 @@ describe('sceneQcWorkflowService', () => {
   let repository: jest.Mocked<Pick<SceneQcRepository, 'findShowForReview' | 'createReviewWithEvidence' | 'findReviewForUpdate' | 'replaceReviewWithEvidence'>>;
   let evidenceResolver: jest.Mocked<Pick<SceneQcEvidenceResolver, 'resolveForShows'>>;
   let sceneProfileService: jest.Mocked<Pick<SceneProfileService, 'getActiveProfileForClient'>>;
+  let taxonomyService: jest.Mocked<Pick<SceneQcTaxonomyService, 'resolveFindings'>>;
   let auditWriter: jest.Mocked<Pick<SceneQcAuditWriter, 'recordSceneQcReviewChange'>>;
   let uidGenerator: jest.Mocked<Pick<UidGeneratorService, 'generateBrandedId'>>;
   let userService: jest.Mocked<Pick<UserService, 'getUserByExtId'>>;
@@ -116,6 +119,9 @@ describe('sceneQcWorkflowService', () => {
     };
     sceneProfileService = {
       getActiveProfileForClient: jest.fn().mockResolvedValue(null),
+    };
+    taxonomyService = {
+      resolveFindings: jest.fn().mockImplementation(async (findings) => findings as never),
     };
     auditWriter = {
       recordSceneQcReviewChange: jest.fn().mockResolvedValue({ uid: 'aud_test1' }),
@@ -143,6 +149,7 @@ describe('sceneQcWorkflowService', () => {
         { provide: SceneQcRepository, useValue: repository },
         { provide: SceneQcEvidenceResolver, useValue: evidenceResolver },
         { provide: SceneProfileService, useValue: sceneProfileService },
+        { provide: SceneQcTaxonomyService, useValue: taxonomyService },
         { provide: SceneQcAuditWriter, useValue: auditWriter },
         { provide: UidGeneratorService, useValue: uidGenerator },
         { provide: UserService, useValue: userService },
@@ -156,10 +163,10 @@ describe('sceneQcWorkflowService', () => {
   });
 
   it('never injects a Task, Show, or ShowStatus write collaborator -- only Scene QC-owned dependencies', () => {
-    // Structural proof: exactly the six Scene QC-owned collaborators, in this
+    // Structural proof: exactly the seven Scene QC-owned collaborators, in this
     // order, reach the constructor. There is no way for a Task/Show/ShowStatus
     // write-capable service to be injected here.
-    expect(SceneQcWorkflowService.length).toBe(6);
+    expect(SceneQcWorkflowService.length).toBe(7);
   });
 
   describe('createReview', () => {
@@ -203,10 +210,10 @@ describe('sceneQcWorkflowService', () => {
       expect(repository.createReviewWithEvidence).not.toHaveBeenCalled();
     });
 
-    it('rejects MINOR/FAIL with empty feedback before any persistence call', async () => {
+    it('rejects MINOR/FAIL without a structured issue before any persistence call', async () => {
       await expect(
         service.createReview(STUDIO_UID, { ...PAYLOAD, result: 'FAIL', feedback: '  ' }, CONTEXT),
-      ).rejects.toThrow(/feedback is required/);
+      ).rejects.toThrow(/structured issue is required/);
       expect(repository.createReviewWithEvidence).not.toHaveBeenCalled();
     });
 
@@ -252,7 +259,16 @@ describe('sceneQcWorkflowService', () => {
   });
 
   describe('updateReview', () => {
-    const PAYLOAD = { result: 'MINOR' as const, feedback: 'watermark visible', version: 1 };
+    const PAYLOAD = {
+      result: 'MINOR' as const,
+      feedback: 'watermark visible',
+      findings: [{
+        element_id: 'scqce_element1',
+        defect_id: 'scqcd_defect1',
+        related_element_id: null,
+      }],
+      version: 1,
+    };
 
     beforeEach(() => {
       repository.findReviewForUpdate.mockResolvedValue(buildReviewRecord());

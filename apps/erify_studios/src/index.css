@@ -1,3 +1,35 @@
 @import 'tailwindcss';
 @source "./**/*.{ts,tsx}";
 @import '@eridu/ui/styles/globals.css';
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .scene-qc-print-report,
+  .scene-qc-print-report *,
+  .scene-qc-print-report-header,
+  .scene-qc-print-report-header * {
+    visibility: visible;
+  }
+
+  .scene-qc-print-report-header {
+    display: block !important;
+    position: relative;
+  }
+
+  .scene-qc-print-report {
+    position: relative;
+    break-inside: avoid;
+  }
+
+  .scene-qc-print-hide {
+    display: none !important;
+  }
+}

@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
+import { SceneQcAmendmentService } from '../scene-qc-amendment.service';
 import { SceneQcWorkflowService } from '../scene-qc-review-workflow.service';
 
 import { StudioSceneQcReviewController } from './studio-scene-qc-review.controller';
@@ -12,6 +13,7 @@ import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 describe('studioSceneQcReviewController', () => {
   let controller: StudioSceneQcReviewController;
   let workflowService: jest.Mocked<SceneQcWorkflowService>;
+  let amendmentService: jest.Mocked<SceneQcAmendmentService>;
 
   const studioId = 'std_1';
   const user = { ext_id: 'ext_actor_1', id: 'ext_actor_1' } as any;
@@ -27,11 +29,18 @@ describe('studioSceneQcReviewController', () => {
             updateReview: jest.fn(),
           },
         },
+        {
+          provide: SceneQcAmendmentService,
+          useValue: {
+            append: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get(StudioSceneQcReviewController);
     workflowService = module.get(SceneQcWorkflowService);
+    amendmentService = module.get(SceneQcAmendmentService);
   });
 
   it('grants access to DESIGNER, MANAGER, and ADMIN only', () => {
@@ -39,12 +48,28 @@ describe('studioSceneQcReviewController', () => {
     expect(roles).toEqual([STUDIO_ROLE.DESIGNER, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ADMIN]);
   });
 
-  it('exposes exactly POST/PATCH at studios/:studioId/scene-qc-reviews', () => {
+  it('exposes draft create/update and append-only amendments at studios/:studioId/scene-qc-reviews', () => {
     const path = Reflect.getMetadata('path', StudioSceneQcReviewController);
     expect(path).toBe('studios/:studioId/scene-qc-reviews');
-    for (const method of ['create', 'update'] as const) {
+    for (const method of ['create', 'update', 'appendAmendment'] as const) {
       expect(typeof controller[method]).toBe('function');
     }
+  });
+
+  it('delegates append-only comments and corrections with the actor ext_id', async () => {
+    const body = { note: 'Confirmed after review', result: null, findings: [] } as any;
+    const amendment = { id: 'scqca_1', revision: 1 } as any;
+    amendmentService.append.mockResolvedValue(amendment);
+
+    const result = await controller.appendAmendment(user, studioId, 'scqcr_1', body);
+
+    expect(amendmentService.append).toHaveBeenCalledWith(
+      studioId,
+      'scqcr_1',
+      body,
+      user.ext_id,
+    );
+    expect(result).toBe(amendment);
   });
 
   describe('create', () => {

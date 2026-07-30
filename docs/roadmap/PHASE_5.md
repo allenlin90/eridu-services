@@ -334,19 +334,20 @@ The delivered boundary is:
 
 **Source**: [Scene Quality Control](../features/scene-qc.md)
 
-Replaces item 22's read-only Scene Review workspace with a persisted, Show-level Scene QC capability. Designer, Manager, and Admin record `PASS`/`MINOR`/`FAIL` with required feedback for Minor/Fail against a resolved Client-owned Scene Profile, track daily review completion for one operational day, confirm or reconfirm the day, and inspect filtered historical Records and a confirmed manager report (in-app and CSV). Scene QC stays advisory: it never changes Task, Task Review, Manager Review, or Show lifecycle state.
+Replaces item 22's read-only Scene Review workspace with a persisted, Show-level Scene QC capability. Designer, Manager, and Admin record `PASS`/`MINOR`/`FAIL`; Minor/Fail require structured element/defect findings while the note remains optional. The same roles manage one organization-wide taxonomy, track and confirm the daily scope, append corrections/comments without rewriting confirmed records, and inspect Records, daily manager reports, and confirmed-history period analytics. Scene QC stays advisory: it never changes Task, Task Review, Manager Review, or Show lifecycle state.
 
 Delivered via [integration PR delivery](../../.agents/workflows/integration-pr-delivery.md): one integration branch, four reviewable child PRs, and one atomic main PR to `master` that also removes the PR #319 heuristic implementation.
 
-1. **Child PR 1 — Contracts and Persistence Foundation**: `@eridu/api-types/scene-qc`, a shared `SCENE_QC_OPERATIONAL_TIMEZONE` constant, Prisma models and migration, private repositories.
+1. **Child PR 1 — Contracts and Persistence Foundation**: `@eridu/api-types/scene-qc`, a shared `SCENE_QC_OPERATIONAL_TIMEZONE` constant, Prisma models, private repositories.
 2. **Child PR 2 — Profiles and Explicit Evidence Feeder**: Client-owned Scene Profile API, Task Template `evidence_purpose` binding, snapshot evidence-ref backfill.
 3. **Child PR 3 — Daily Review Journey**: summary/items/context queries, review create/update, Daily Review UI (desktop side-by-side, mobile Live/Expected toggle).
 4. **Child PR 4 — Confirmation, Records, and Manager Report**: append-only confirmation/staleness, Records query/table/detail, in-app + CSV manager report.
 5. **Main Integration PR**: atomic cutover, removes the old Scene Review Task-anchored implementation, doc/skill reconciliation.
+6. **Integration refinement**: one consolidated undeployed migration, specification taxonomy and self-service management, append-only review amendments, period reporting, print/PDF behavior, and responsive master-detail UX reconciliation.
 
-Structured taxonomy findings, cross-day trend analytics, heatmaps, and PDF export are deferred to Stage 2/3; Stage 1 ships free-text Minor/Fail feedback.
+Richer chart exploration (heatmaps, scatter plots, expanded-chart modals, and generated narrative conclusions) remains a possible reporting enhancement; the required confirmed-history trend, Client, result, issue, and print/PDF workflow ships with the integration.
 
-**Status**: ✅ Done — delivered by #346, #347, #348, #350, and the #343 integration merge.
+**Status**: Ready to merge in PR #343 — child PRs #346, #347, #348, and #350 feed the completed integration.
 
 **Acceptance record**: see the acceptance record in [Scene Quality Control](../features/scene-qc.md).
 

@@ -446,7 +446,7 @@ describe('real database Scene QC review persistence safety', () => {
         workflow.updateReview(
           studio.uid,
           created.uid,
-          { result: 'MINOR', feedback: 'stale attempt', version: created.version + 1 },
+          { result: 'PASS', feedback: 'stale attempt', version: created.version + 1 },
           { actorExtId: user.extId, studioUid: studio.uid },
         ),
       ).rejects.toMatchObject({ status: 409 });

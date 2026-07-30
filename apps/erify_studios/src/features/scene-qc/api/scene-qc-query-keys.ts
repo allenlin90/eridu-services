@@ -10,6 +10,7 @@ export const sceneQcKeys = {
     [...sceneQcKeys.itemsPrefix(studioId, date), filters] as const,
   itemDetail: (studioId: string, date: string, showId: string | undefined) =>
     [...sceneQcKeys.dailyPrefix(studioId), 'item', date, showId] as const,
+  taxonomy: (studioId: string) => [...sceneQcKeys.all, 'taxonomy', studioId] as const,
   recordsPrefix: (studioId: string) => [...sceneQcKeys.all, 'records', studioId] as const,
   records: (studioId: string, filters: unknown) => [...sceneQcKeys.recordsPrefix(studioId), filters] as const,
   recordDetail: (studioId: string, reviewId: string | undefined) =>
@@ -17,4 +18,6 @@ export const sceneQcKeys = {
   reportPrefix: (studioId: string) => [...sceneQcKeys.all, 'report', studioId] as const,
   report: (studioId: string, confirmationId: string | undefined) =>
     [...sceneQcKeys.reportPrefix(studioId), confirmationId] as const,
+  periodReport: (studioId: string, dateFrom: string, dateTo: string) =>
+    [...sceneQcKeys.reportPrefix(studioId), 'period', dateFrom, dateTo] as const,
 } as const;

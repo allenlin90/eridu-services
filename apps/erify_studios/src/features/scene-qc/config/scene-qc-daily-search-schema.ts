@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const sceneQcDailySearchSchema = z.object({
-  tab: z.enum(['daily', 'records']).catch('daily'),
+  tab: z.enum(['daily', 'records', 'reports']).catch('daily'),
   // `undefined` means "current operational day" -- the hook resolves it via
   // getCurrentOperationalDate() and writes it into the URL on first
   // navigation so back/forward is stable (breakdown section 3.2).

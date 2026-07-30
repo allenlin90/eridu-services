@@ -1,7 +1,8 @@
-import { DataTable, DataTablePagination } from '@eridu/ui';
+import { Badge, DataTable, DataTablePagination, Skeleton } from '@eridu/ui';
 
 import type { SceneQcSearch } from '../config/scene-qc-search-schema';
 import { useSceneQcRecords } from '../hooks/use-scene-qc-records';
+import { resolveSceneQcResultChip } from '../lib/scene-qc-result-chip';
 
 import { SceneQcRecordDetailSheet } from './scene-qc-record-detail-sheet';
 import { sceneQcRecordsColumns } from './scene-qc-records-columns';
@@ -46,15 +47,63 @@ export function SceneQcRecordsView({ studioId, search, onSearchChange, onOpenRep
         onResultChange={(value) => controller.changeScope({ result: value })}
       />
 
-      <DataTable
-        data={data}
-        columns={sceneQcRecordsColumns}
-        isLoading={recordsQuery.isLoading}
-        isFetching={recordsQuery.isFetching}
-        manualPagination
-        emptyMessage="No Scene QC records for this range."
-        onRowClick={(row) => controller.selectRecord(row.review_id)}
-      />
+      <div className="space-y-2 md:hidden">
+        {recordsQuery.isLoading
+          ? ['record-loading-1', 'record-loading-2', 'record-loading-3'].map((key) => (
+              <Skeleton key={key} className="h-28 w-full" />
+            ))
+          : data.length === 0
+            ? (
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  No Scene QC records for this range.
+                </div>
+              )
+            : data.map((record) => {
+                const resultChip = resolveSceneQcResultChip(record.result);
+                return (
+                  <button
+                    key={record.review_id}
+                    type="button"
+                    className="w-full space-y-2 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => controller.selectRecord(record.review_id)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{record.show_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {record.operational_date}
+                          {' · '}
+                          {new Date(record.scheduled_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className={resultChip.className}>{resultChip.label}</Badge>
+                    </div>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {record.client?.name ?? 'No client'}
+                      {' · '}
+                      {record.platforms.map((platform) => platform.name).join(', ') || 'No platform'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {record.confirmation_status === 'CONFIRMED' ? 'Confirmed' : record.confirmation_status === 'SUPERSEDED' ? 'Superseded' : 'Unconfirmed'}
+                      {' · '}
+                      {record.reviewed_by.name}
+                    </p>
+                  </button>
+                );
+              })}
+      </div>
+
+      <div className="hidden md:block">
+        <DataTable
+          data={data}
+          columns={sceneQcRecordsColumns}
+          isLoading={recordsQuery.isLoading}
+          isFetching={recordsQuery.isFetching}
+          manualPagination
+          emptyMessage="No Scene QC records for this range."
+          onRowClick={(row) => controller.selectRecord(row.review_id)}
+        />
+      </div>
 
       {meta
         ? (
@@ -71,6 +120,7 @@ export function SceneQcRecordsView({ studioId, search, onSearchChange, onOpenRep
         : null}
 
       <SceneQcRecordDetailSheet
+        studioId={studioId}
         open={Boolean(controller.selectedRecordId)}
         detail={detailQuery.data}
         isLoading={detailQuery.isLoading}

@@ -18,8 +18,9 @@ import { SceneQcAuditWriter } from './scene-qc-audit.writer';
 import { isShowEligibleForSceneQc } from './scene-qc-eligibility-policy';
 import { SceneQcEvidenceResolver } from './scene-qc-evidence.resolver';
 import { OPERATIONAL_TIMEZONE, resolveOperationalWindow } from './scene-qc-operational-window.util';
-import { isReviewEditable, normalizeFeedback, validateResultFeedback } from './scene-qc-result.policy';
+import { isReviewEditable, normalizeFeedback, validateResultFindings } from './scene-qc-result.policy';
 import { SceneQcRepository } from './scene-qc-review.repository';
+import { SceneQcTaxonomyService } from './scene-qc-taxonomy.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
@@ -51,6 +52,7 @@ export class SceneQcWorkflowService {
     private readonly sceneQcRepository: SceneQcRepository,
     private readonly evidenceResolver: SceneQcEvidenceResolver,
     private readonly sceneProfileService: SceneProfileService,
+    private readonly taxonomyService: SceneQcTaxonomyService,
     private readonly auditWriter: SceneQcAuditWriter,
     private readonly uidGenerator: UidGeneratorService,
     private readonly userService: UserService,
@@ -77,7 +79,11 @@ export class SceneQcWorkflowService {
 
     const pins = await this.resolvePinnedEvidence(show.id);
     const expected = await this.resolveExpectedSnapshot(show);
-    this.assertResultFeedback(payload.result, payload.feedback);
+    const findings = await this.taxonomyService.resolveFindings(
+      payload.findings ?? [],
+      expected.expectedSceneType,
+    );
+    this.assertResultFindings(payload.result, findings.length);
 
     const now = new Date();
     let created: SceneQcReviewRecord;
@@ -90,11 +96,12 @@ export class SceneQcWorkflowService {
         windowEnd: window.windowEnd,
         timezone: window.timezone,
         result: payload.result,
-        feedback: normalizeFeedback(payload.result, payload.feedback),
+        feedback: normalizeFeedback(payload.feedback),
         reviewedById: actor.id,
         reviewedAt: now,
         ...expected,
         evidence: pins,
+        findings,
       });
     } catch (error) {
       if (this.isReviewUniqueConstraintError(error)) {
@@ -157,19 +164,24 @@ export class SceneQcWorkflowService {
 
     const pins = await this.resolvePinnedEvidence(show.id);
     const expected = await this.resolveExpectedSnapshot(show);
-    this.assertResultFeedback(payload.result, payload.feedback);
+    const findings = await this.taxonomyService.resolveFindings(
+      payload.findings ?? [],
+      expected.expectedSceneType,
+    );
+    this.assertResultFindings(payload.result, findings.length);
 
     const updated = await this.sceneQcRepository.replaceReviewWithEvidence({
       reviewId: existing.id,
       expectedVersion: payload.version,
       data: {
         result: payload.result,
-        feedback: normalizeFeedback(payload.result, payload.feedback),
+        feedback: normalizeFeedback(payload.feedback),
         reviewedById: actor.id,
         reviewedAt: new Date(),
         ...expected,
       },
       evidence: pins,
+      findings,
     });
 
     if (!updated) {
@@ -214,9 +226,13 @@ export class SceneQcWorkflowService {
     }
   }
 
-  private assertResultFeedback(result: CreateSceneQcReviewPayload['result'], feedback: string | null): void {
-    if (!validateResultFeedback(result, feedback)) {
-      throw HttpError.badRequest('feedback is required for Minor and Fail results');
+  private assertResultFindings(result: CreateSceneQcReviewPayload['result'], findingCount: number): void {
+    if (!validateResultFindings(result, findingCount)) {
+      throw HttpError.badRequest(
+        result === 'PASS'
+          ? 'Pass results cannot contain structured issues'
+          : 'At least one structured issue is required for Minor and Fail results',
+      );
     }
   }
 

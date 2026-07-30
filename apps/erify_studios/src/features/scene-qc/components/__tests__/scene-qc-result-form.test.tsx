@@ -4,42 +4,49 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SceneQcResultForm } from '../scene-qc-result-form';
 
+const SHARED_PROPS = {
+  studioId: 'std_test',
+  findings: [],
+  onFindingsChange: vi.fn(),
+  findingsMissing: false,
+  taxonomy: undefined,
+  sceneType: 'GRAPHIC_BG' as const,
+};
+
 describe('sceneQcResultForm', () => {
-  it('has no feedback textarea for PASS (not yet selected)', () => {
+  it('always offers an optional note', () => {
     render(
       <SceneQcResultForm
+        {...SHARED_PROPS}
         result={null}
         onResultChange={vi.fn()}
         feedback=""
         onFeedbackChange={vi.fn()}
-        feedbackRequired={false}
-        feedbackMissing={false}
         canSave={false}
         isSaving={false}
         onSave={vi.fn()}
         onSelectUnusableImage={vi.fn()}
       />,
     );
-    expect(screen.queryByLabelText('Feedback')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Optional note')).toBeInTheDocument();
   });
 
-  it('shows the required feedback textarea and a validation message when Minor is selected with no feedback', () => {
+  it('shows structured issue validation when Minor is selected without findings', () => {
     render(
       <SceneQcResultForm
+        {...SHARED_PROPS}
         result="MINOR"
         onResultChange={vi.fn()}
         feedback=""
         onFeedbackChange={vi.fn()}
-        feedbackRequired
-        feedbackMissing
+        findingsMissing
         canSave={false}
         isSaving={false}
         onSave={vi.fn()}
         onSelectUnusableImage={vi.fn()}
       />,
     );
-    expect(screen.getByLabelText('Feedback')).toBeInTheDocument();
-    expect(screen.getByText(/Feedback is required for Minor and Fail results/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add at least one issue for Minor and Fail/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Save & next/i })).toBeDisabled();
   });
 
@@ -48,12 +55,11 @@ describe('sceneQcResultForm', () => {
     const onResultChange = vi.fn();
     render(
       <SceneQcResultForm
+        {...SHARED_PROPS}
         result={null}
         onResultChange={onResultChange}
         feedback=""
         onFeedbackChange={vi.fn()}
-        feedbackRequired={false}
-        feedbackMissing={false}
         canSave={false}
         isSaving={false}
         onSave={vi.fn()}
@@ -71,12 +77,11 @@ describe('sceneQcResultForm', () => {
     const onSave = vi.fn();
     render(
       <SceneQcResultForm
+        {...SHARED_PROPS}
         result={null}
         onResultChange={vi.fn()}
         feedback=""
         onFeedbackChange={vi.fn()}
-        feedbackRequired={false}
-        feedbackMissing={false}
         canSave={false}
         isSaving={false}
         onSave={onSave}
@@ -94,12 +99,11 @@ describe('sceneQcResultForm', () => {
     const onSave = vi.fn();
     render(
       <SceneQcResultForm
+        {...SHARED_PROPS}
         result="PASS"
         onResultChange={vi.fn()}
         feedback=""
         onFeedbackChange={vi.fn()}
-        feedbackRequired={false}
-        feedbackMissing={false}
         canSave
         isSaving={false}
         onSave={onSave}
@@ -116,12 +120,11 @@ describe('sceneQcResultForm', () => {
   it('disables Save & next and shows a pending label while saving', () => {
     render(
       <SceneQcResultForm
+        {...SHARED_PROPS}
         result="PASS"
         onResultChange={vi.fn()}
         feedback=""
         onFeedbackChange={vi.fn()}
-        feedbackRequired={false}
-        feedbackMissing={false}
         canSave
         isSaving
         onSave={vi.fn()}

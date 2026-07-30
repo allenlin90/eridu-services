@@ -7,13 +7,13 @@
 
 ## Purpose
 
-Scene QC is a capability-owned, Show-anchored persisted quality-review workflow: a Client Scene Profile (expected-scene reference), Show-level review outcomes, append-only daily confirmations, records, and a manager report. It replaced the read-only, Task-anchored Scene Review implementation from PR #319, which persisted no QC outcome.
+Scene QC is a capability-owned, Show-anchored persisted quality-review workflow: a Client Scene Profile (expected-scene reference), Show-level review outcomes with structured findings, organization-wide taxonomy management, append-only daily confirmations and review amendments, Records, daily manager reports, and confirmed-history period analytics.
 
 Scene QC never writes `Task`, `TaskTarget`, `Show`, `ShowStatus`, or Manager Review data. Designating a Task Template image field as Scene QC evidence rides existing Task Template write permissions (`[ADMIN, MANAGER]`) — Scene QC access never widens template administration.
 
 ## Routes
 
-All 12 endpoints admit exactly `DESIGNER`, `MANAGER`, `ADMIN` via `@StudioProtected`, with no method-level override (asserted by `scene-qc-authorization.spec.ts`). List reads return the shared paginated envelope (`items` + `total`); studio-scoped path params use `UidValidationPipe`.
+All endpoints admit exactly `DESIGNER`, `MANAGER`, `ADMIN` via `@StudioProtected`, with no method-level override (asserted by `scene-qc-authorization.spec.ts`). List reads return the shared paginated envelope (`items` + `total`); studio-scoped path params use `UidValidationPipe`. Taxonomy rows are organization-wide even though the route carries `:studioId`: that parameter provides the existing Studio membership authorization boundary, not data ownership.
 
 ```text
 GET    /studios/:studioId/scene-profiles/:clientId
@@ -26,6 +26,13 @@ GET    /studios/:studioId/scene-qc/items/:showId
 
 POST   /studios/:studioId/scene-qc-reviews
 PATCH  /studios/:studioId/scene-qc-reviews/:reviewId
+POST   /studios/:studioId/scene-qc-reviews/:reviewId/amendments
+
+GET    /studios/:studioId/scene-qc-taxonomy
+POST   /studios/:studioId/scene-qc-taxonomy/elements
+POST   /studios/:studioId/scene-qc-taxonomy/defects
+DELETE /studios/:studioId/scene-qc-taxonomy/elements/:elementId
+DELETE /studios/:studioId/scene-qc-taxonomy/defects/:defectId
 
 POST   /studios/:studioId/scene-qc-confirmations
 GET    /studios/:studioId/scene-qc-confirmations/:confirmationId/report
@@ -33,30 +40,30 @@ GET    /studios/:studioId/scene-qc-confirmations/:confirmationId/report.csv
 
 GET    /studios/:studioId/scene-qc-records
 GET    /studios/:studioId/scene-qc-records/:reviewId
+
+GET    /studios/:studioId/scene-qc-reports/period
 ```
 
 `PUT` on Scene Profile creates or replaces the Client's single profile in one version-checked call — there is no separate create/update distinction. Every daily query, review command, and confirmation request sends a date-only `operational_date`; the server resolves the exact local `06:00`–`05:59` window from `SCENE_QC_OPERATIONAL_TIMEZONE` and returns `window_start` / `window_end` / `timezone` as provenance. Clients never submit bounds or timezone.
 
 ## Persisted Model
 
-Five tables, all under `apps/erify_api/prisma/schema.prisma`:
+The capability-owned tables are defined under `apps/erify_api/prisma/schema.prisma`:
 
 | Table | Key invariant |
 | --- | --- |
 | `SceneProfile` | At most one non-deleted row per Client, enforced by the partial unique index `scene_profiles_active_client_key` (`CREATE UNIQUE INDEX ... ON scene_profiles (client_id) WHERE deleted_at IS NULL`) — invisible to Prisma, so `migrate dev` will try to drop it; confirm its presence directly in any target environment. |
 | `TaskTemplateSceneQcEvidenceRef` | Denormalizes `evidence_purpose: 'scene_qc'` per immutable Task Template snapshot (`(snapshotId, fieldKey)` unique). Written by the real Task Template save/publish path, never by a heuristic. |
-| `SceneQcReview` + `SceneQcReviewEvidence` | One review head per `(showId, operationalDate)` (unique index) — a review from a prior operational date is never effective after the Show crosses the day boundary. `expectedObjectKey` / `expectedFileUrl` / `expectedSceneType` are a **snapshot-not-reference** of the Client's Scene Profile at save time: a later profile replacement never rewrites a review's expected-image context. |
+| `SceneQcReview` + `SceneQcReviewEvidence` + `SceneQcReviewFinding` | One review head per `(showId, operationalDate)`. Evidence and structured finding labels are pinned snapshots; a later Task, Scene Profile, or taxonomy change never rewrites the recorded decision context. |
+| `SceneQcTaxonomyElement` + `SceneQcTaxonomyDefect` | Organization-wide built-in and custom vocabulary. Built-ins are protected; retiring a custom option removes it from future selection without affecting finding snapshots. |
+| `SceneQcReviewAmendment` + `SceneQcReviewAmendmentFinding` | Append-only comments and corrections for confirmed reviews. Revision allocation is serialized by a review-scoped advisory lock. A null result is comment-only; the latest result-bearing row is the effective result for Records and period analytics. |
 | `SceneQcDailyConfirmation` + `SceneQcDailyConfirmationItem(Platform)` | Append-only: one revision number per `(studioId, operationalDate, revision)`. The confirm command takes `pg_advisory_xact_lock(hashtextextended('scene-qc-confirmation:{studioId}:{operationalDate}', 0))`, reads the max revision, and appends the next one — it never rewrites a prior revision's rows. |
 | `SceneQcAuditTarget` | Capability-owned typed-FK side table on the standard `Audit` envelope (`sceneProfileId` / `sceneQcReviewId` / `sceneQcDailyConfirmationId`, `CHECK (num_nonnulls(...) = 1)`), so Scene QC's own audit-target growth never lands on the shared `audit_targets` table. |
 
-Five migrations landed incrementally, one per child PR, and are all checked in — this capability generates no migration of its own:
+All undeployed Scene QC schema work is consolidated into one official Prisma migration. Its custom SQL preserves the active-profile partial unique index, the audit single-target check, and seeds the specification's built-in taxonomy:
 
 ```text
-20260726235634_scene_qc_foundation
-20260727050141_task_template_scene_qc_evidence_binding
-20260727152709_scene_qc_audit_target_audit_id_index
-20260727164956_scene_qc_review
-20260728012640_scene_qc_daily_confirmation
+20260730162002_scene_qc_review_workflow
 ```
 
 ## Evidence Resolution
@@ -73,9 +80,37 @@ It never falls back to recursive URL discovery, filename matching, or provisiona
 
 ## Transaction Semantics
 
-- **Review save** (`SceneQcWorkflowService.createReview` / `updateReview`, `@Transactional()`): resolves and authorizes the Show, resolves and pins the operational window, resolves evidence (rejecting if none), resolves and snapshots the Client's current Scene Profile if any, validates the result/feedback contract, replaces the draft's pinned evidence set, writes Audit — all in one transaction. After `confirmedAt` is set, the update command rejects further edits.
+- **Review save** (`SceneQcWorkflowService.createReview` / `updateReview`, `@Transactional()`): resolves and authorizes the Show, pins the operational window/evidence/Scene Profile, validates taxonomy selections, requires findings for Minor/Fail, writes the draft plus snapshots and Audit in one transaction. The note is optional. After `confirmedAt` is set, normal updates reject.
 - **Confirmation** (`SceneQcConfirmationWorkflowService.confirmDay`, `@Transactional()`): acquires the advisory lock, recomputes the eligible Show set with no UI filters, resolves one effective review per Show, rejects incomplete/blocked scope, appends confirmation + item rows, snapshots confirmation-time Show/Client/platform report dimensions, marks newly included reviews confirmed, writes Audit.
+- **Amendment** (`SceneQcAmendmentService.append`, `@Transactional()`): authorizes the confirmed review, validates an optional corrected result and findings, acquires `pg_advisory_xact_lock(hashtextextended('scene-qc-amendment:{reviewId}', 0))`, allocates the next revision, appends the amendment/findings, and writes Audit. It never updates the original review.
+- **Period report** (`SceneQcPeriodReportQuery`): starts from the latest immutable confirmation revision per operational day, applies the latest result-bearing amendment, and returns centralized trend, Client, and issue aggregates. Report consumers never count raw finding shapes independently.
 - Confirmation state is a pure comparison of the latest confirmation's pinned scope against the current eligible set: `UNCONFIRMED` (none exists), `CURRENT` (scopes match), `STALE` (a Show was added, reactivated, moved in/out of the day, or terminally cancelled since the pinned revision).
+
+## Write and Read Sequence
+
+```mermaid
+sequenceDiagram
+  participant UI as "erify_studios"
+  participant HTTP as "Scene QC controllers"
+  participant UseCase as "Capability services"
+  participant Store as "Private persistence/query providers"
+  participant DB as "PostgreSQL"
+
+  UI->>HTTP: Save review with findings
+  HTTP->>UseCase: create/update command
+  UseCase->>Store: Pin evidence and taxonomy labels
+  Store->>DB: Review + evidence + findings + audit (transaction)
+  UI->>HTTP: Confirm complete day
+  HTTP->>UseCase: confirm command
+  UseCase->>DB: Append confirmation revision
+  UI->>HTTP: Append comment or correction
+  HTTP->>UseCase: amendment command
+  UseCase->>DB: Append amendment revision (original unchanged)
+  UI->>HTTP: Query Records / period report
+  HTTP->>UseCase: read model
+  UseCase->>Store: Latest confirmed scope + latest correction
+  Store-->>UI: Immutable history + effective result
+```
 
 ## Cutover Scripts
 

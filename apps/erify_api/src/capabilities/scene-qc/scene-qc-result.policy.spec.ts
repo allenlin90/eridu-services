@@ -1,60 +1,31 @@
 import {
-  isFeedbackRequired,
   isReviewEditable,
   normalizeFeedback,
-  validateResultFeedback,
+  validateResultFindings,
 } from './scene-qc-result.policy';
 
 describe('scene-qc result policy', () => {
-  describe('isFeedbackRequired', () => {
-    it('is false for PASS', () => {
-      expect(isFeedbackRequired('PASS')).toBe(false);
+  describe('validateResultFindings', () => {
+    it('accepts PASS only without findings', () => {
+      expect(validateResultFindings('PASS', 0)).toBe(true);
+      expect(validateResultFindings('PASS', 1)).toBe(false);
     });
 
-    it('is true for MINOR and FAIL', () => {
-      expect(isFeedbackRequired('MINOR')).toBe(true);
-      expect(isFeedbackRequired('FAIL')).toBe(true);
-    });
-  });
-
-  describe('validateResultFeedback', () => {
-    it('accepts PASS with empty, whitespace-only, null, or undefined feedback', () => {
-      expect(validateResultFeedback('PASS', '')).toBe(true);
-      expect(validateResultFeedback('PASS', '   ')).toBe(true);
-      expect(validateResultFeedback('PASS', null)).toBe(true);
-      expect(validateResultFeedback('PASS', undefined)).toBe(true);
-    });
-
-    it('accepts PASS with non-empty feedback too', () => {
-      expect(validateResultFeedback('PASS', 'looks fine')).toBe(true);
-    });
-
-    it.each(['MINOR', 'FAIL'] as const)('rejects %s with empty, whitespace-only, null, or undefined feedback', (result) => {
-      expect(validateResultFeedback(result, '')).toBe(false);
-      expect(validateResultFeedback(result, '   ')).toBe(false);
-      expect(validateResultFeedback(result, null)).toBe(false);
-      expect(validateResultFeedback(result, undefined)).toBe(false);
-    });
-
-    it.each(['MINOR', 'FAIL'] as const)('accepts %s with non-empty feedback', (result) => {
-      expect(validateResultFeedback(result, 'watermark visible')).toBe(true);
+    it.each(['MINOR', 'FAIL'] as const)('requires findings for %s', (result) => {
+      expect(validateResultFindings(result, 0)).toBe(false);
+      expect(validateResultFindings(result, 1)).toBe(true);
     });
   });
 
   describe('normalizeFeedback', () => {
-    it('normalizes PASS feedback to null even when text was provided', () => {
-      expect(normalizeFeedback('PASS', 'looks good')).toBeNull();
-      expect(normalizeFeedback('PASS', null)).toBeNull();
-      expect(normalizeFeedback('PASS', undefined)).toBeNull();
+    it('preserves and trims an optional note for any result', () => {
+      expect(normalizeFeedback('  looks good  ')).toBe('looks good');
+      expect(normalizeFeedback(null)).toBeNull();
+      expect(normalizeFeedback(undefined)).toBeNull();
     });
 
-    it('trims MINOR/FAIL feedback', () => {
-      expect(normalizeFeedback('MINOR', '  watermark visible  ')).toBe('watermark visible');
-      expect(normalizeFeedback('FAIL', '  blank image  ')).toBe('blank image');
-    });
-
-    it('normalizes whitespace-only MINOR/FAIL feedback to null', () => {
-      expect(normalizeFeedback('MINOR', '   ')).toBeNull();
+    it('normalizes a whitespace-only note to null', () => {
+      expect(normalizeFeedback('   ')).toBeNull();
     });
   });
 

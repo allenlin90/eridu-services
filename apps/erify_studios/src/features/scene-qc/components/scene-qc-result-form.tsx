@@ -1,5 +1,15 @@
-import type { SceneQcResult } from '@eridu/api-types/scene-qc';
+import { useState } from 'react';
+
+import type {
+  SceneQcFindingInput,
+  SceneQcResult,
+  SceneQcTaxonomy,
+  SceneType,
+} from '@eridu/api-types/scene-qc';
 import { Button, Textarea } from '@eridu/ui';
+
+import { SceneQcIssuePicker } from './scene-qc-issue-picker';
+import { SceneQcTaxonomyDialog } from './scene-qc-taxonomy-dialog';
 
 const RESULT_OPTIONS: Array<{ value: SceneQcResult; label: string }> = [
   { value: 'PASS', label: 'Pass' },
@@ -8,12 +18,16 @@ const RESULT_OPTIONS: Array<{ value: SceneQcResult; label: string }> = [
 ];
 
 type SceneQcResultFormProps = {
+  studioId: string;
   result: SceneQcResult | null;
   onResultChange: (result: SceneQcResult) => void;
   feedback: string;
   onFeedbackChange: (feedback: string) => void;
-  feedbackRequired: boolean;
-  feedbackMissing: boolean;
+  findings: SceneQcFindingInput[];
+  onFindingsChange: (findings: SceneQcFindingInput[]) => void;
+  findingsMissing: boolean;
+  taxonomy: SceneQcTaxonomy | undefined;
+  sceneType: SceneType | null;
   canSave: boolean;
   isSaving: boolean;
   onSave: () => void;
@@ -22,17 +36,23 @@ type SceneQcResultFormProps = {
 
 /** §7.2 (7-8): Pass/Minor/Fail, inline required feedback, unusable-image shortcut, Save & next. */
 export function SceneQcResultForm({
+  studioId,
   result,
   onResultChange,
   feedback,
   onFeedbackChange,
-  feedbackRequired,
-  feedbackMissing,
+  findings,
+  onFindingsChange,
+  findingsMissing,
+  taxonomy,
+  sceneType,
   canSave,
   isSaving,
   onSave,
   onSelectUnusableImage,
 }: SceneQcResultFormProps) {
+  const [taxonomyOpen, setTaxonomyOpen] = useState(false);
+  const needsFindings = result === 'MINOR' || result === 'FAIL';
   return (
     <div className="space-y-3 border-t pt-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -55,28 +75,45 @@ export function SceneQcResultForm({
         </Button>
       </div>
 
-      {feedbackRequired
+      {needsFindings
         ? (
-            <div className="space-y-1">
-              <Textarea
-                value={feedback}
-                onChange={(event) => onFeedbackChange(event.target.value)}
-                placeholder="Describe the issue"
-                aria-invalid={feedbackMissing}
-                aria-label="Feedback"
-              />
-              {feedbackMissing
-                ? <p className="text-xs text-destructive">Feedback is required for Minor and Fail results.</p>
-                : null}
-            </div>
+            <SceneQcIssuePicker
+              taxonomy={taxonomy}
+              sceneType={sceneType}
+              findings={findings}
+              onChange={onFindingsChange}
+              onManage={() => setTaxonomyOpen(true)}
+              missing={findingsMissing}
+            />
           )
         : null}
+
+      <div className="space-y-1">
+        <Textarea
+          value={feedback}
+          onChange={(event) => onFeedbackChange(event.target.value)}
+          placeholder="Optional note"
+          aria-label="Optional note"
+        />
+        <p className="text-xs text-muted-foreground">Add context only when it helps; issue classification is structured above.</p>
+      </div>
 
       <div className="flex justify-end">
         <Button type="button" onClick={onSave} disabled={!canSave || isSaving}>
           {isSaving ? 'Saving...' : 'Save & next'}
         </Button>
       </div>
+
+      {taxonomyOpen
+        ? (
+            <SceneQcTaxonomyDialog
+              studioId={studioId}
+              taxonomy={taxonomy}
+              open
+              onOpenChange={setTaxonomyOpen}
+            />
+          )
+        : null}
     </div>
   );
 }

@@ -14,6 +14,8 @@ import type {
 } from '@eridu/api-types/scene-qc';
 import { SCENE_QC_RECORD_CONFIRMATION_STATUS, sceneQcRecordsQuerySchema } from '@eridu/api-types/scene-qc';
 
+import type { SceneQcAmendmentRecord } from './scene-qc-amendment.schema';
+import { toSceneQcAmendmentDto } from './scene-qc-amendment.schema';
 import type { ConfirmationRef } from './scene-qc-confirmation.schema';
 import type { SceneQcReviewRecord } from './scene-qc-review.schema';
 
@@ -46,6 +48,8 @@ export type ReviewRecordRow = {
   client: { uid: string; name: string } | null;
   platforms: Array<{ uid: string; name: string }>;
   result: PrismaSceneQcResult;
+  effectiveResult: PrismaSceneQcResult;
+  amendmentCount: number;
   feedback: string | null;
   reviewedBy: { uid: string; name: string };
   reviewedAt: Date;
@@ -82,7 +86,9 @@ export function toSceneQcRecordDto(row: ReviewRecordRow, confirmationRef: Confir
     scheduled_start_time: row.scheduledStartTime.toISOString(),
     client: row.client ? { id: row.client.uid, name: row.client.name } : null,
     platforms: row.platforms.map((platform) => ({ id: platform.uid, name: platform.name })),
-    result: row.result,
+    result: row.effectiveResult,
+    original_result: row.result,
+    amendment_count: row.amendmentCount,
     has_feedback: Boolean(row.feedback && row.feedback.trim().length > 0),
     reviewed_by: { id: row.reviewedBy.uid, name: row.reviewedBy.name },
     reviewed_at: row.reviewedAt.toISOString(),
@@ -122,7 +128,10 @@ export function toSceneQcRecordDetailDto(input: {
     confirmedAt: Date;
   } | null;
   auditHistory: ReviewAuditEntry[];
+  amendments: SceneQcAmendmentRecord[];
 }): SceneQcRecordDetail {
+  const latestCorrection = [...input.amendments].reverse().find((amendment) => amendment.result !== null);
+  const effectiveFindings = latestCorrection?.findings ?? input.review.findings;
   return {
     show: {
       id: input.show.uid,
@@ -140,6 +149,17 @@ export function toSceneQcRecordDetailDto(input: {
       timezone: input.review.timezone,
       result: input.review.result,
       feedback: input.review.feedback,
+      findings: input.review.findings.map((finding) => ({
+        element_id: finding.element.uid,
+        element_key: finding.elementKey,
+        element_label: finding.elementLabel,
+        defect_id: finding.defect.uid,
+        defect_key: finding.defectKey,
+        defect_label: finding.defectLabel,
+        related_element_id: finding.relatedElement?.uid ?? null,
+        related_element_key: finding.relatedElementKey,
+        related_element_label: finding.relatedElementLabel,
+      })),
       reviewed_by: { id: input.review.reviewedBy.uid, name: input.review.reviewedBy.name },
       reviewed_at: input.review.reviewedAt.toISOString(),
       expected_reference: input.review.expectedFileUrl
@@ -163,6 +183,19 @@ export function toSceneQcRecordDetailDto(input: {
         file_url: item.fileUrl,
       })),
     },
+    effective_result: latestCorrection?.result ?? input.review.result,
+    effective_findings: effectiveFindings.map((finding) => ({
+      element_id: finding.element.uid,
+      element_key: finding.elementKey,
+      element_label: finding.elementLabel,
+      defect_id: finding.defect.uid,
+      defect_key: finding.defectKey,
+      defect_label: finding.defectLabel,
+      related_element_id: finding.relatedElement?.uid ?? null,
+      related_element_key: finding.relatedElementKey,
+      related_element_label: finding.relatedElementLabel,
+    })),
+    amendments: input.amendments.map(toSceneQcAmendmentDto),
     confirmation: input.confirmation
       ? {
           id: input.confirmation.ref.confirmationUid,

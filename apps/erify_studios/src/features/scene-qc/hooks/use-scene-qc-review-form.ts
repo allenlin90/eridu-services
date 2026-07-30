@@ -1,8 +1,13 @@
 import axios from 'axios';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { SceneQcDailyItemDetail, SceneQcResult } from '@eridu/api-types/scene-qc';
+import type {
+  SceneQcDailyItemDetail,
+  SceneQcFindingInput,
+  SceneQcResult,
+} from '@eridu/api-types/scene-qc';
 
+import { useSceneQcTaxonomyQuery } from '../api/get-scene-qc-taxonomy';
 import { useCreateSceneQcReview, useUpdateSceneQcReview } from '../api/save-scene-qc-review';
 
 import { getMutationErrorMessage } from '@/features/studio-shows/lib/get-mutation-error-message';
@@ -39,9 +44,11 @@ export function useSceneQcReviewForm({
   const review = detail?.review ?? null;
   const createMutation = useCreateSceneQcReview(studioId);
   const updateMutation = useUpdateSceneQcReview(studioId, review?.id);
+  const taxonomyQuery = useSceneQcTaxonomyQuery(studioId);
 
   const [result, setResult] = useState<SceneQcResult | null>(null);
   const [feedback, setFeedback] = useState('');
+  const [findings, setFindings] = useState<SceneQcFindingInput[]>([]);
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
 
   const showIdRef = useRef(showId);
@@ -55,6 +62,11 @@ export function useSceneQcReviewForm({
     initializedForShowRef.current = showId;
     setResult(review?.result ?? null);
     setFeedback(review?.feedback ?? '');
+    setFindings((review?.findings ?? []).map((finding) => ({
+      element_id: finding.element_id,
+      defect_id: finding.defect_id,
+      related_element_id: finding.related_element_id,
+    })));
     setConflictMessage(null);
     // Intentionally NOT depending on review.result/feedback beyond this
     // Show-change reset -- a later re-resolution of evidence/expected
@@ -63,6 +75,12 @@ export function useSceneQcReviewForm({
   }, [showId]);
 
   const dismissConflict = useCallback(() => setConflictMessage(null), []);
+  const changeResult = useCallback((next: SceneQcResult) => {
+    setResult(next);
+    if (next === 'PASS') {
+      setFindings([]);
+    }
+  }, []);
 
   /** Returns `true` on a successful save, `false` on a handled conflict (never rethrown) -- lets callers chain "Save & next" only on success. */
   const save = useCallback(async (): Promise<boolean> => {
@@ -73,13 +91,19 @@ export function useSceneQcReviewForm({
     setConflictMessage(null);
     try {
       if (review) {
-        await updateMutation.mutateAsync({ result, feedback: feedback.trim() || null, version: review.version });
+        await updateMutation.mutateAsync({
+          result,
+          feedback: feedback.trim() || null,
+          findings,
+          version: review.version,
+        });
       } else {
         await createMutation.mutateAsync({
           show_id: showId,
           operational_date: operationalDate,
           result,
           feedback: feedback.trim() || null,
+          findings,
         });
       }
       if (showIdRef.current !== targetShowId) {
@@ -105,30 +129,42 @@ export function useSceneQcReviewForm({
       }
       throw err;
     }
-  }, [showId, result, feedback, review, updateMutation, createMutation, operationalDate, onSaved, refetchDetail]);
+  }, [showId, result, feedback, findings, review, updateMutation, createMutation, operationalDate, onSaved, refetchDetail]);
 
   /** "Image blank or not viewable": selects Fail and focuses feedback. Never auto-saves (§7.2/§12.3). */
   const selectUnusableImage = useCallback(() => {
     setResult('FAIL');
   }, []);
 
-  const feedbackRequired = result === 'MINOR' || result === 'FAIL';
-  const feedbackMissing = feedbackRequired && feedback.trim().length === 0;
-  const dirty = result !== (review?.result ?? null) || feedback !== (review?.feedback ?? '');
+  const findingsRequired = result === 'MINOR' || result === 'FAIL';
+  const findingsMissing = findingsRequired && findings.length === 0;
+  const originalFindings = (review?.findings ?? []).map((finding) => ({
+    element_id: finding.element_id,
+    defect_id: finding.defect_id,
+    related_element_id: finding.related_element_id,
+  }));
+  const dirty = result !== (review?.result ?? null)
+    || feedback !== (review?.feedback ?? '')
+    || JSON.stringify(findings) !== JSON.stringify(originalFindings);
 
   return {
     result,
-    setResult,
+    setResult: changeResult,
     feedback,
     setFeedback,
-    feedbackRequired,
-    feedbackMissing,
+    findings,
+    setFindings,
+    findingsRequired,
+    findingsMissing,
+    taxonomy: taxonomyQuery.data,
+    taxonomyIsLoading: taxonomyQuery.isLoading,
+    sceneType: detail?.scene_profile?.scene_type ?? null,
     dirty,
     isSaving: createMutation.isPending || updateMutation.isPending,
     conflictMessage,
     dismissConflict,
     save,
     selectUnusableImage,
-    canSave: result !== null && !feedbackMissing,
+    canSave: result !== null && !findingsMissing && (result !== 'PASS' || findings.length === 0),
   };
 }

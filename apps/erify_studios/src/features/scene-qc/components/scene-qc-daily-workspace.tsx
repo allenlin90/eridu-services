@@ -118,6 +118,7 @@ export function SceneQcDailyWorkspace({ studioId, search, onSearchChange, onOpen
 
                 <Card className="hidden min-w-0 overflow-y-auto lg:block lg:h-[calc(100dvh-20rem)]">
                   <SceneQcReviewPanel
+                    studioId={studioId}
                     detail={detailQuery.data}
                     isLoading={detailQuery.isLoading}
                     isError={detailQuery.isError}
@@ -130,6 +131,7 @@ export function SceneQcDailyWorkspace({ studioId, search, onSearchChange, onOpen
               {controller.isMobile
                 ? (
                     <SceneQcMobileDrawer
+                      studioId={studioId}
                       open={Boolean(controller.selectedShowId)}
                       detail={detailQuery.data}
                       isLoading={detailQuery.isLoading}

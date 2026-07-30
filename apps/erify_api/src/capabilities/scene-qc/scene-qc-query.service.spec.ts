@@ -336,6 +336,7 @@ describe('sceneQcQueryService', () => {
         createdAt: new Date('2026-06-01T10:00:00.000Z'),
         updatedAt: new Date('2026-06-01T10:00:00.000Z'),
         evidence: [],
+        findings: [],
       });
 
       const detail = await service.getDailyItemDetail(STUDIO_UID, 'show_abc', OPERATIONAL_DATE);

@@ -60,7 +60,7 @@ describe('sceneQcRecordsView', () => {
   it('renders a filtered/empty state when there are no records for the range', () => {
     render(<SceneQcRecordsView studioId="studio_abc" search={BASE_SEARCH} onSearchChange={vi.fn()} onOpenReport={vi.fn()} />);
 
-    expect(screen.getByText(/No Scene QC records for this range/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/No Scene QC records for this range/i)).toHaveLength(2);
   });
 
   it('renders loading state via the table', () => {
@@ -121,6 +121,6 @@ describe('sceneQcRecordsView', () => {
     });
 
     render(<SceneQcRecordsView studioId="studio_abc" search={BASE_SEARCH} onSearchChange={vi.fn()} onOpenReport={vi.fn()} />);
-    expect(screen.getByText('Show One')).toBeInTheDocument();
+    expect(screen.getAllByText('Show One')).toHaveLength(2);
   });
 });

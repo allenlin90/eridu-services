@@ -16,6 +16,7 @@ import { useIsMobile } from '@eridu/ui/hooks/use-is-mobile';
 import { SceneQcRecordDetailContent } from './scene-qc-record-detail-content';
 
 type SceneQcRecordDetailSheetProps = {
+  studioId: string;
   open: boolean;
   detail: SceneQcRecordDetail | undefined;
   isLoading: boolean;
@@ -25,7 +26,7 @@ type SceneQcRecordDetailSheetProps = {
 };
 
 /** Desktop `Sheet` / mobile `Drawer`, switched by `useIsMobile()` (§7.5). */
-export function SceneQcRecordDetailSheet({ open, detail, isLoading, isError, onOpenChange, onOpenReport }: SceneQcRecordDetailSheetProps) {
+export function SceneQcRecordDetailSheet({ studioId, open, detail, isLoading, isError, onOpenChange, onOpenReport }: SceneQcRecordDetailSheetProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
@@ -37,7 +38,7 @@ export function SceneQcRecordDetailSheet({ open, detail, isLoading, isError, onO
             <DrawerDescription className="sr-only">Read-only Scene QC record detail.</DrawerDescription>
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-            <SceneQcRecordDetailContent detail={detail} isLoading={isLoading} isError={isError} onOpenReport={onOpenReport} />
+            <SceneQcRecordDetailContent studioId={studioId} detail={detail} isLoading={isLoading} isError={isError} onOpenReport={onOpenReport} />
           </div>
         </DrawerContent>
       </Drawer>
@@ -51,7 +52,7 @@ export function SceneQcRecordDetailSheet({ open, detail, isLoading, isError, onO
           <SheetTitle>{detail?.show.name ?? 'Scene QC Record'}</SheetTitle>
           <SheetDescription className="sr-only">Read-only Scene QC record detail.</SheetDescription>
         </SheetHeader>
-        <SceneQcRecordDetailContent detail={detail} isLoading={isLoading} isError={isError} onOpenReport={onOpenReport} />
+        <SceneQcRecordDetailContent studioId={studioId} detail={detail} isLoading={isLoading} isError={isError} onOpenReport={onOpenReport} />
       </SheetContent>
     </Sheet>
   );

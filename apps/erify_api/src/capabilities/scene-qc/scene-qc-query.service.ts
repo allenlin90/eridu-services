@@ -208,6 +208,17 @@ export class SceneQcQueryService {
             timezone: review.timezone,
             result: review.result,
             feedback: review.feedback,
+            findings: review.findings.map((finding) => ({
+              element_id: finding.element.uid,
+              element_key: finding.elementKey,
+              element_label: finding.elementLabel,
+              defect_id: finding.defect.uid,
+              defect_key: finding.defectKey,
+              defect_label: finding.defectLabel,
+              related_element_id: finding.relatedElement?.uid ?? null,
+              related_element_key: finding.relatedElementKey,
+              related_element_label: finding.relatedElementLabel,
+            })),
             reviewed_by: { id: review.reviewedBy.uid, name: review.reviewedBy.name },
             reviewed_at: review.reviewedAt.toISOString(),
             expected_reference: review.expectedFileUrl

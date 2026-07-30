@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { UID_PREFIXES } from '../constants.js';
 import { createPaginatedResponseSchema, paginationBaseSchema } from '../pagination/schemas.js';
 
+import { sceneQcReviewAmendmentSchema } from './amendment.schemas.js';
 import {
   operationalDateSchema,
   sceneQcClientRefSchema,
@@ -12,6 +13,7 @@ import {
   sceneQcUserRefSchema,
 } from './daily-review.schemas.js';
 import { sceneQcReportStatusSchema } from './report.schemas.js';
+import { sceneQcFindingSchema } from './taxonomy.schemas.js';
 
 /**
  * Scene QC Records contracts. See "Routes" in apps/erify_api/docs/SCENE_QC.md.
@@ -69,6 +71,8 @@ export const sceneQcRecordSchema = z.object({
   client: sceneQcClientRefSchema.nullable(),
   platforms: z.array(sceneQcPlatformRefSchema),
   result: sceneQcResultSchema,
+  original_result: sceneQcResultSchema,
+  amendment_count: z.number().int().min(0),
   has_feedback: z.boolean(),
   reviewed_by: sceneQcUserRefSchema,
   reviewed_at: z.iso.datetime(),
@@ -108,6 +112,9 @@ const sceneQcRecordShowSchema = z.object({
 export const sceneQcRecordDetailSchema = z.object({
   show: sceneQcRecordShowSchema,
   review: sceneQcReviewSchema,
+  effective_result: sceneQcResultSchema,
+  effective_findings: z.array(sceneQcFindingSchema),
+  amendments: z.array(sceneQcReviewAmendmentSchema),
   confirmation: z.object({
     id: z.string().startsWith(UID_PREFIXES.SCENE_QC_CONFIRMATION),
     revision: z.number().int().positive(),
