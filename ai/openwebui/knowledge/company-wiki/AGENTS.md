@@ -2,6 +2,15 @@
 
 Scope: `ai/openwebui/knowledge/company-wiki/`.
 
+## Compatibility profile
+
+This directory remains under the legacy company-wiki schema. It is not a strict OKF v0.2 bundle until the schema, validator, content, maintainer guidance, and Open WebUI publication mapping migrate together.
+
+- Do not require `type` on current content.
+- Do not add `okf_version`, `type`, `sources`, `generated`, `verified`, or `stale_after` piecemeal.
+- Use [`docs/engineering/OKF_AGENT_CONTRACT.md`](../../../../docs/engineering/OKF_AGENT_CONTRACT.md) only for legacy read interpretation and migration planning.
+- Treat this directory's `README.md`, `tools/wiki-schema.json`, and `tools/validate-wiki` as the active writer contract.
+
 ## Before editing
 
 - Read `README.md` in this directory and [`wiki-knowledge-maintainer`](../../../../.agents/skills/wiki-knowledge-maintainer/SKILL.md) — that skill is canonical for content maintenance workflow; this file only covers directory-local mechanics.

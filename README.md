@@ -44,9 +44,22 @@ graph TB
     style External fill:#f3e5f5,stroke:#9C27B0
 ```
 
+## Developer Setup
+
+- macOS and WSL onboarding for Claude Code, Codex, OpenCode, RTK, QMD, and optional Graphify: [`docs/engineering/AGENTIC_DEVELOPMENT_SETUP.md`](docs/engineering/AGENTIC_DEVELOPMENT_SETUP.md)
+- Canonical shared coding-agent instructions: [`AGENTS.md`](AGENTS.md)
+- Verify a configured machine with:
+
+```bash
+pnpm agents:doctor
+```
+
 ## Documentation
 
-- AI workspace control-plane scaffold: [`ai/README.md`](ai/README.md)
+- Platform, knowledge, and agent directory boundaries: [`docs/engineering/KNOWLEDGE_AND_PLATFORM_LAYOUT.md`](docs/engineering/KNOWLEDGE_AND_PLATFORM_LAYOUT.md)
+- OKF behavior required across Claude Code, Codex, and OpenCode: [`docs/engineering/OKF_AGENT_CONTRACT.md`](docs/engineering/OKF_AGENT_CONTRACT.md)
+- Transitional AI workspace control-plane scaffold: [`ai/README.md`](ai/README.md)
+- Infrastructure and third-party service ownership: [`infra/README.md`](infra/README.md)
 - Monorepo roadmap and product references: [`docs/README.md`](docs/README.md)
 - App-specific implementation docs:
   - [`apps/erify_api/docs/README.md`](apps/erify_api/docs/README.md)
@@ -106,11 +119,13 @@ If any of these checks fail, the commit will be blocked.
 The commit-msg hook validates commit messages using [`commitlint`](https://commitlint.js.org/) with the [Conventional Commits](https://www.conventionalcommits.org/) format.
 
 Commit messages must follow the format:
+
 ```
 <type>(<scope>): <subject>
 ```
 
 Examples:
+
 - `feat: add new authentication endpoint`
 - `fix(api): resolve schedule validation bug`
 - `chore: update dependencies`

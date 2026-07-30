@@ -4,6 +4,20 @@ Git-authored, reviewed company knowledge that syncs into Open WebUI knowledge co
 
 This is the Phase 1 content contract: schema, validator, and directory layout. No reviewed content has been migrated yet — see `content/README.md` for status.
 
+## Compatibility status
+
+This directory uses the **legacy company-wiki schema**. It is not yet an Open Knowledge Format (OKF) v0.2 bundle.
+
+Until the reviewed atomic migration lands:
+
+- `tools/wiki-schema.json` and `tools/validate-wiki` remain authoritative;
+- documents are not required to contain `type`;
+- the current `id`, `audiences`, `owner`, `sensitivity`, `status`, `reviewed_at`, `review_by`, and `source_refs` fields remain valid;
+- agents must not add OKF v0.2 fields piecemeal merely to make individual documents appear conformant;
+- agents may interpret legacy lifecycle fields through [`docs/engineering/OKF_AGENT_CONTRACT.md`](../../../../docs/engineering/OKF_AGENT_CONTRACT.md), but must preserve the original fields when editing.
+
+Migration to strict OKF v0.2 must update the bundle root, schema, validator, all content, maintainer guidance, and Open WebUI publication mapping together.
+
 ## Layout
 
 ```text
@@ -55,6 +69,7 @@ It does not do semantic maintenance (contradiction detection, staleness judgment
 
 ## Related
 
+- [`docs/engineering/OKF_AGENT_CONTRACT.md`](../../../../docs/engineering/OKF_AGENT_CONTRACT.md) — strict v0.2 and legacy compatibility profiles.
 - [`ai/architecture/llm-knowledge-base-plan.md`](../../../architecture/llm-knowledge-base-plan.md) — overall migration plan this directory implements Phase 1 of.
 - [`ai/openwebui/knowledge/README.md`](../README.md) — parent directory conventions.
 - [`wiki-knowledge-maintainer`](../../../../.agents/skills/wiki-knowledge-maintainer/SKILL.md) — content maintenance workflow once documents exist.

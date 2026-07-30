@@ -9,14 +9,35 @@ Maintain the company wiki as a small, trustworthy compiled knowledge surface ove
 
 This is a repository-maintenance skill. Do not attach it to employee-facing Open WebUI assistants. Their prompts should contain only answering, citation, escalation, and role-specific behavior.
 
+## Compatibility Profiles
+
+Before editing, identify the active knowledge profile.
+
+### Legacy company wiki
+
+`ai/openwebui/knowledge/company-wiki/content/` remains governed by its local README, AGENTS, `tools/wiki-schema.json`, and `tools/validate-wiki`.
+
+- Missing `type` is valid.
+- Preserve `id`, `audiences`, `owner`, `sensitivity`, legacy `status`, `reviewed_at`, `review_by`, and `source_refs`.
+- Do not add OKF v0.2 fields piecemeal.
+- Use the legacy mapping in `docs/engineering/OKF_AGENT_CONTRACT.md` for interpretation only.
+- Run the legacy validator after every content change.
+
+### Strict OKF v0.2 bundle
+
+A repository-produced strict bundle must have a bundle-root `index.md` declaring `okf_version: "0.2"`. Follow `docs/engineering/OKF_AGENT_CONTRACT.md` for `type`, lifecycle, provenance, trust, progressive disclosure, and extension preservation.
+
+The legacy company wiki changes profile only through an atomic migration of its bundle root, schema, validator, content, maintainer guidance, and Open WebUI publication mapping.
+
 ## Sources To Read
 
 Before changing the wiki, read:
 
 - `ai/architecture/llm-knowledge-base-plan.md`
 - `ai/openwebui/knowledge/README.md`
+- `docs/engineering/OKF_AGENT_CONTRACT.md`
 - the target wiki's `README.md` and `AGENTS.md`, when present
-- the affected content files and their declared `source_refs`
+- the affected content files and their declared source references
 
 Use [doc-hygiene](../doc-hygiene/SKILL.md) when rewriting maintained pages. Use [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) when collection boundaries, Open WebUI grants, sync behavior, or runtime retrieval changes.
 
@@ -24,7 +45,7 @@ Use [doc-hygiene](../doc-hygiene/SKILL.md) when rewriting maintained pages. Use 
 
 Use deterministic validation for facts a script can prove:
 
-- required frontmatter and allowed values;
+- required frontmatter and allowed values for the active profile;
 - stable and unique document IDs;
 - valid links and source references;
 - duplicate titles or aliases;
@@ -48,14 +69,15 @@ Never use model confidence as evidence that a company fact is correct.
 
 Run this workflow whenever reviewed content is added, replaced, or materially changed:
 
-1. Validate the changed files and their source references.
-2. Search titles, aliases, tags, links, and key claims for overlap with existing pages.
-3. Prefer updating an existing canonical page when the new information changes an existing concept, policy, entity, or procedure.
-4. Create a new page only when it represents a separately linkable concept, entity, policy, or procedure.
-5. Identify statements that are ambiguous, unsupported, conflicting, or scoped to an unclear audience.
-6. Update affected summaries, cross-links, section catalogs, and generated routing metadata.
-7. Record unresolved semantic issues for the document owner; do not guess or silently choose between conflicting sources.
-8. Run the focused retrieval evaluation for the affected domain before publishing.
+1. Identify the active compatibility profile and validator.
+2. Validate the changed files and their source references.
+3. Search titles, aliases, tags, links, and key claims for overlap with existing pages.
+4. Prefer updating an existing canonical page when the new information changes an existing concept, policy, entity, or procedure.
+5. Create a new page only when it represents a separately linkable concept, entity, policy, or procedure.
+6. Identify statements that are ambiguous, unsupported, conflicting, or scoped to an unclear audience.
+7. Update affected summaries, cross-links, section catalogs, and generated routing metadata.
+8. Record unresolved semantic issues for the document owner; do not guess or silently choose between conflicting sources.
+9. Run the focused retrieval evaluation for the affected domain before publishing.
 
 ## Routine Health Check
 
@@ -63,27 +85,28 @@ Run a scheduled lint pass weekly for active pilot content and at least monthly a
 
 Check:
 
-1. **Schema integrity**: missing, invalid, or inconsistent metadata.
-2. **Review status**: approaching or exceeded `review_by` dates and missing owners.
+1. **Schema integrity**: missing, invalid, or inconsistent metadata under the active profile.
+2. **Review status**: approaching or exceeded legacy `review_by` or OKF `stale_after` dates and missing owners.
 3. **Contradictions**: pages or claims that disagree without an explicit scope or effective-date explanation.
 4. **Clarity**: undefined acronyms, vague actors, missing prerequisites, unclear deadlines, and instructions without a success condition.
 5. **Coverage**: frequently referenced concepts, teams, tools, or procedures without a canonical page.
 6. **Graph health**: broken links, orphan pages, weakly connected clusters, and missing related-page links.
 7. **Duplication**: near-identical pages, repeated policy text, and summaries that have become alternate sources of truth.
 8. **Routing drift**: catalogs that are too large, descriptions that no longer identify the right documents, or domain boundaries that cause broad retrieval.
-9. **Lifecycle hygiene**: drafts published as active, superseded pages still routed, and obsolete content without redirects or replacement IDs.
+9. **Lifecycle hygiene**: drafts published as active, superseded or deprecated pages still routed, and obsolete content without redirects or replacement IDs.
 10. **Retrieval quality**: evaluation questions retrieving too many documents, missing the canonical document, or crossing audience boundaries.
 
 Produce a concise maintenance report grouped into automatic repairs, proposed editorial changes, owner decisions, access risks, and routing changes. Do not create permanent audit narration inside maintained pages.
 
 ## Deadline Policy
 
-- `review_by` is a required owner commitment for time-sensitive documents, not a freshness decoration.
-- Never advance `reviewed_at` or `review_by` without actual owner review.
+- Legacy `review_by` is a required owner commitment for time-sensitive documents, not a freshness decoration.
+- OKF `stale_after` is a consumer freshness signal; follow the bundle's maintenance policy for owner review requirements.
+- Never advance `reviewed_at`, `review_by`, `generated`, or `verified` without the real event represented by the field.
 - Flag documents before expiry so owners have time to act.
 - An overdue general document remains visible with a review warning unless local policy says otherwise.
 - An overdue legal, HR, finance, safety, credential, or approval-limit document must escalate and should be excluded from confident procedural answers until reviewed.
-- Never delete expired content automatically. Mark it for review, supersession, or archival with a replacement link.
+- Never delete expired content automatically. Mark it for review, supersession, deprecation, or archival with a replacement link.
 
 ## Routing And Abstraction
 
@@ -108,7 +131,7 @@ At moderate scale, use deterministic title, alias, tag, and full-text search ove
 
 ## Safe Edit Rules
 
-The maintainer may directly repair unambiguous metadata, links, routing summaries, and generated artifacts.
+The maintainer may directly repair unambiguous metadata, links, routing summaries, and generated artifacts that are valid under the active profile.
 
 Require owner review before:
 
@@ -116,18 +139,20 @@ Require owner review before:
 - resolving contradictory sources;
 - changing sensitivity or audience classification;
 - merging pages when information could be lost;
-- archiving a still-referenced page;
+- archiving or deprecating a still-referenced page;
 - changing an Open WebUI collection or group grant.
 
-Preserve immutable source material. The compiled wiki may be revised, split, merged, or superseded, but every factual claim must remain traceable to a reviewed source reference.
+Preserve immutable source material. The compiled wiki may be revised, split, merged, superseded, or deprecated, but every factual claim must remain traceable to a reviewed source reference.
 
 ## Completion Checklist
 
-- [ ] Deterministic validation passes.
+- [ ] Active compatibility profile identified.
+- [ ] Deterministic validation for that profile passes.
 - [ ] New content updates existing concepts instead of creating avoidable duplicates.
 - [ ] Ambiguous and conflicting statements have an owner decision or explicit escalation.
 - [ ] Review deadlines and sensitive expired content are handled.
 - [ ] Root and domain routing surfaces remain compact.
 - [ ] Cross-links, summaries, and manifests reflect the change.
 - [ ] Access classification is unchanged or separately approved.
+- [ ] No piecemeal legacy-to-OKF conversion was introduced.
 - [ ] Affected retrieval and citation evaluations pass.
