@@ -5,13 +5,24 @@ metadata:
   type: project
 ---
 
+## Program closed (2026-07-30)
+
+The program merged: main integration PR #343 landed the atomic cutover, and
+the implementation plan plus both child-PR breakdown docs this file cites
+were retired per `knowledge-sync.md` §2 (design docs are deleted once
+promoted). Canonical references are now `docs/features/scene-qc.md`,
+`apps/erify_api/docs/SCENE_QC.md`, and `apps/erify_studios/docs/SCENE_QC.md`.
+This file's recurring-review-finding content below stays useful for future
+Scene QC PRs; the four inline references to the retired design docs are
+retargeted to the canonical docs rather than removed.
+
 ## Program structure
 
 Scene QC replaces the PR #319 Task-anchored Scene Review with a persisted,
 Show-level capability. Delivered via `.agents/workflows/integration-pr-delivery.md`:
 one integration branch `feat/scene-qc-integration`, four child PRs targeting it,
-one atomic main PR to `master`. Plan: `apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md`.
-PRD: `docs/prd/scene-qc.md`. When reviewing any child PR, diff against
+one atomic main PR to `master`. Canonical doc: `apps/erify_api/docs/SCENE_QC.md`.
+Product doc: `docs/features/scene-qc.md`. When reviewing any child PR, diff against
 `origin/feat/scene-qc-integration`, not `origin/master` — "should target master"
 is not a valid finding for these branches.
 
@@ -57,10 +68,10 @@ plan were rewritten accordingly:
   Scene Profile GET/PUT/DELETE routes now live there alongside the evidence
   feeder, since the persistence-only Child PR 1 ships no controllers.
 
-PR #345 predates this rewrite and will be superseded or substantially reworked.
-Do not apply the "Verified-correct patterns" below as if the old model still
-exists — cross-check the current `apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md`
-§5 for the authoritative persisted-model shape before reviewing.
+PR #345 predates this rewrite and was superseded by the rescoped design. Do not
+apply the "Verified-correct patterns" below as if the old model still exists —
+cross-check `apps/erify_api/docs/SCENE_QC.md` ("Persisted Model") for the
+authoritative persisted-model shape before reviewing.
 
 ## Verified-correct patterns that remain valid after the rescope
 
@@ -196,7 +207,7 @@ findOne/findByUid-equivalent lookup.
 ## PR #348 — Child PR 3 (Daily Review Journey), reviewed 2026-07-28
 
 Diffed against `feat/scene-qc-integration` (merge-base `6a2ec632`), not
-`master`. Implementation matches SCENE_QC_CHILD_PR_3_BREAKDOWN.md almost
+`master`. Implementation matches the (now-retired) Child PR 3 breakdown almost
 exactly — schema, migration (including the documented spurious DROP INDEX
 strip and the CHECK-widen custom SQL), repository, evidence resolver
 (bulk, deterministic sortOrder `(taskUid, fieldKey)`, dedup by fileUrl),
@@ -204,9 +215,9 @@ workflow service (§8.2 chain, order of operations, 409-vs-403 re-read on
 update conflict), query service (unfiltered summary vs filtered items,
 in-memory blocked-state filtering per OQ-11, 500-cap loud failure),
 controllers, module wiring, audit writer, `StorageService.deriveObjectKeyFromPublicUrl`,
-route swap (OQ-8, no temp route), and the `SCENE_QC_IMPLEMENTATION_PLAN.md`
-OQ-2 re-sign-claim correction were all verified line-by-line against the
-breakdown's decisions table (§6.0) and found correct. All gates independently
+route swap (OQ-8, no temp route), and the OQ-2 re-sign-claim correction were
+all verified line-by-line against the breakdown's decisions table (§6.0) and
+found correct. All gates independently
 re-run and green: api-types lint/typecheck/build (no test script — pre-existing,
 not this PR's gap); erify_api lint/typecheck/build, test (185 suites/1880
 tests); erify_studios lint/typecheck/build, test (217 files/1039 tests);
