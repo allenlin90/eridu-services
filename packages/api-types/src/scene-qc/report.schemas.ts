@@ -12,8 +12,8 @@ import {
 import { sceneTypeSchema } from './schemas.js';
 
 /**
- * Scene QC Manager Report contracts — Child PR 4. See
- * `apps/erify_api/docs/design/SCENE_QC_CHILD_PR_4_BREAKDOWN.md` section 2.4.
+ * Scene QC Manager Report contracts. See "Routes" and "Persisted Model" in
+ * apps/erify_api/docs/SCENE_QC.md.
  *
  * The daily summary state (`SCENE_QC_CONFIRMATION_STATE`, a property of the
  * DAY) and the report status below (a property of a REVISION) are

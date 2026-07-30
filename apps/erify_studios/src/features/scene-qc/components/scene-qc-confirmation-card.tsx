@@ -19,9 +19,9 @@ function formatDateTime(value: string): string {
 }
 
 /**
- * §7.3 rows 6-8: the four confirmation states, pure function of the summary
- * response. All four states carry text labels in addition to colour (§7.8).
- * See SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 3.3.
+ * The four confirmation states, pure function of the summary response. All
+ * four states carry text labels in addition to colour. See "Confirmation
+ * states" in apps/erify_studios/docs/SCENE_QC.md.
  */
 export function SceneQcConfirmationCard({ summary, isLoading, confirmation, onOpenReport }: SceneQcConfirmationCardProps) {
   if (isLoading || !summary) {

@@ -109,7 +109,7 @@ export type AppendConfirmationItemInput = {
 export type AppendConfirmationInput = {
   // Resolved via `connect: { uid }` inside the repository -- SceneQcModule
   // does not import StudioModule, so the workflow never resolves Studio's
-  // bigint id itself (see SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.3).
+  // bigint id itself.
   studioUid: string;
   operationalDate: Date;
   windowStart: Date;

@@ -14,10 +14,9 @@ import {
 import { sceneQcReportStatusSchema } from './report.schemas.js';
 
 /**
- * Scene QC Records contracts — Child PR 4. See
- * `apps/erify_api/docs/design/SCENE_QC_CHILD_PR_4_BREAKDOWN.md` section 2.3.
+ * Scene QC Records contracts. See "Routes" in apps/erify_api/docs/SCENE_QC.md.
  * `sceneQcReportStatusSchema` is defined in `report.schemas.ts` and imported
- * here (not duplicated) to avoid a cycle -- see OQ-34/§2.4.
+ * here (not duplicated) to avoid a cycle.
  */
 
 export const SCENE_QC_RECORD_CONFIRMATION_STATUS = {

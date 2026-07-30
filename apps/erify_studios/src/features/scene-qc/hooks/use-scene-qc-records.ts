@@ -19,7 +19,7 @@ type UseSceneQcRecordsParams = {
 /**
  * View-model for the Records tab: resolves the effective date range, builds
  * list params, runs the list + detail queries, and owns selection/paging.
- * See SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 3.5.
+ * See "Records and manager report" in apps/erify_studios/docs/SCENE_QC.md.
  */
 export function useSceneQcRecords({ studioId, search, onSearchChange }: UseSceneQcRecordsParams) {
   const isMobile = useIsMobile();

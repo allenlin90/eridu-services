@@ -51,7 +51,7 @@ function toEligibleShowRow(show: RawEligibleShow): EligibleShowRow {
 /**
  * Every Scene QC read projection and multi-row write for review outcomes.
  * All access through `txHost.tx`. PRIVATE to SceneQcModule -- providers only,
- * never `exports`. See SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 1.6.
+ * never `exports`.
  *
  * `findEligibleShowsInWindow` and `findShowForReview` read
  * `txHost.tx.show` directly -- a deliberate, capability-local, read-only,

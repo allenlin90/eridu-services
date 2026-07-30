@@ -5,7 +5,7 @@ import { sceneQcDailySearchSchema } from './scene-qc-daily-search-schema';
 /**
  * Records-tab-exclusive search fields, composed onto the shared daily schema
  * so the whole `/scene-review/` route owns one search contract. See
- * SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 3.1.
+ * "Tabs and URL state" in apps/erify_studios/docs/SCENE_QC.md.
  */
 export const sceneQcRecordsSearchFields = {
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().catch(undefined),

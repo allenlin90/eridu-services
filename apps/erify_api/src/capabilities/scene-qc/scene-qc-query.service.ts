@@ -23,9 +23,9 @@ import { SceneQcRepository } from './scene-qc-review.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 
 /**
- * The three GET read models (§8.1 → code). Enforces studio scope, bounded
- * pagination, lean projections. EXPORTED (capability API). See
- * SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 1.5/1.8.
+ * The three GET read models. Enforces studio scope, bounded pagination, lean
+ * projections. EXPORTED (capability API). See "Routes" in
+ * apps/erify_api/docs/SCENE_QC.md.
  */
 @Injectable()
 export class SceneQcQueryService {

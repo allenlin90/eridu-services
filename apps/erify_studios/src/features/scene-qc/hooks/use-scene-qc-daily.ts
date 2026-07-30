@@ -18,7 +18,8 @@ type UseSceneQcDailyParams = {
 /**
  * View-model for the Daily Review workspace: resolves the effective
  * operational date, builds list params, runs the three queries, and owns
- * navigation/selection. See SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 3.3.
+ * navigation/selection. See "Daily Review" in
+ * apps/erify_studios/docs/SCENE_QC.md.
  */
 export function useSceneQcDaily({ studioId, search, onSearchChange }: UseSceneQcDailyParams) {
   const isMobile = useIsMobile();

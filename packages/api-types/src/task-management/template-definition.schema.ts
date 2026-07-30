@@ -172,7 +172,8 @@ export const MechanicRefSchema = z.object({
  * resolver reads ONLY fields carrying `scene_qc` — never a filename heuristic or
  * a recursive URL scan. Lives on FieldItemBaseSchema (not v2-only) because the
  * cutover backfill must bind pre-existing v1 snapshots too.
- * See apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md section 5.2.
+ * See docs/features/scene-qc.md and apps/erify_api/docs/SCENE_QC.md
+ * ("Evidence Resolution").
  */
 export const EVIDENCE_PURPOSE = { SCENE_QC: 'scene_qc' } as const;
 export type EvidencePurpose = (typeof EVIDENCE_PURPOSE)[keyof typeof EVIDENCE_PURPOSE];

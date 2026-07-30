@@ -17,8 +17,8 @@ import { BaseStudioController } from '@/studios/base-studio.controller';
 
 /**
  * Scene QC Records: the paginated confirmed/unconfirmed review history list
- * and its detail. Same role set as the rest of the capability. See
- * SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.4.
+ * and its detail. Same role set as the rest of the capability. See "Routes"
+ * in apps/erify_api/docs/SCENE_QC.md.
  */
 @ApiTags('Studio Scene QC Records')
 @StudioProtected([STUDIO_ROLE.DESIGNER, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ADMIN])

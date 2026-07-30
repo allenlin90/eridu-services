@@ -5,9 +5,10 @@ import { SCENE_QC_OPERATIONAL_DAY_START_HOUR, SCENE_QC_OPERATIONAL_TIMEZONE } fr
  * `@/lib/operational-day-range` (which reads the *browser's* local calendar
  * via `date.getFullYear()` etc.) -- Scene QC's date selection must use the
  * server-authoritative operational-timezone constant regardless of the
- * viewer's browser timezone (SCENE_QC_IMPLEMENTATION_PLAN.md section 12.3,
- * breakdown OQ-10). Do not extend `operational-day-range.ts`: other surfaces
- * depend on its current browser-local semantics.
+ * viewer's browser timezone. See "Operational day" in
+ * apps/erify_studios/docs/SCENE_QC.md. Do not extend
+ * `operational-day-range.ts`: other surfaces depend on its current
+ * browser-local semantics.
  */
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

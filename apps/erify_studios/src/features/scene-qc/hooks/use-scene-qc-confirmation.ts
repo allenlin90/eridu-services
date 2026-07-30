@@ -13,8 +13,8 @@ type UseSceneQcConfirmationParams = {
 /**
  * Owns the confirm/reconfirm mutation, its pending/error state, whether the
  * day is confirmable, and the "open current report" target. Keeps
- * `scene-qc-daily-workspace.tsx` from growing. See
- * SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 3.5/§7.3.
+ * `scene-qc-daily-workspace.tsx` from growing. See "Confirmation states" in
+ * apps/erify_studios/docs/SCENE_QC.md.
  */
 export function useSceneQcConfirmation({ studioId, operationalDate, summary }: UseSceneQcConfirmationParams) {
   const mutation = useConfirmSceneQcDay(studioId);

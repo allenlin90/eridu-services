@@ -5,8 +5,8 @@ import { UID_PREFIXES } from '../constants.js';
 import { operationalDateSchema, sceneQcOperationalWindowSchema, sceneQcUserRefSchema } from './daily-review.schemas.js';
 
 /**
- * Scene QC Daily Confirmation contracts — Child PR 4. See
- * `apps/erify_api/docs/design/SCENE_QC_CHILD_PR_4_BREAKDOWN.md` section 2.2.
+ * Scene QC Daily Confirmation contracts. See "Persisted Model" in
+ * apps/erify_api/docs/SCENE_QC.md.
  */
 
 export const createSceneQcConfirmationInputSchema = z.object({

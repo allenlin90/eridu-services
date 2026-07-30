@@ -23,9 +23,10 @@ type UseSceneQcReviewFormParams = {
 /**
  * Local draft form state for the inline Pass/Minor/Fail result form. Resets
  * on `show_id` change only -- never on evidence/expected-reference
- * re-resolution (§12.3). Uses the "latest ref" guard already established in
+ * re-resolution. Uses the "latest ref" guard already established in
  * `use-scene-profile-editor.ts` so a slow in-flight save cannot clobber a
- * newer Show selection. See SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 3.3.
+ * newer Show selection. See "Daily Review" in
+ * apps/erify_studios/docs/SCENE_QC.md.
  */
 export function useSceneQcReviewForm({
   studioId,

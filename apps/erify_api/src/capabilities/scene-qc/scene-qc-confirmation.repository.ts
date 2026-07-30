@@ -47,8 +47,8 @@ const CONFIRMATION_REPORT_INCLUDE = {
  * Advisory lock acquisition, confirmation reads, the append-only
  * confirmation+item+platform write, the bulk `confirmedAt` stamp, and the
  * report's item<->review join. All through `txHost.tx`. PRIVATE to
- * SceneQcModule -- providers only, never `exports`. See
- * SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.6.1/1.7.
+ * SceneQcModule -- providers only, never `exports`. See "Transaction
+ * Semantics" in apps/erify_api/docs/SCENE_QC.md.
  */
 @Injectable()
 export class SceneQcConfirmationRepository {

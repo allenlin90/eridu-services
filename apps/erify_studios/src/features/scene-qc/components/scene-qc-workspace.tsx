@@ -16,7 +16,8 @@ type SceneQcWorkspaceProps = {
 /**
  * Tab shell: composition only, well under 200 LOC. Owns the Manager Report
  * sheet's open state since both the Daily confirmation card and Records rows
- * can open a report. See SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 3.2.
+ * can open a report. See "Records and manager report" in
+ * apps/erify_studios/docs/SCENE_QC.md.
  */
 export function SceneQcWorkspace({ studioId, search, onSearchChange }: SceneQcWorkspaceProps) {
   const [reportConfirmationId, setReportConfirmationId] = useState<string | null>(null);

@@ -37,12 +37,13 @@ type ExpectedSnapshot = {
 
 /**
  * `createReview` / `updateReview` -- the `@Transactional()` command owning
- * the §8.2 review save transaction end to end. The transaction boundary is
+ * the review save transaction end to end. The transaction boundary is
  * this workflow method (skill §3 -- transaction ownership at the application
  * workflow). Never writes Task, TaskTarget, Show, ShowStatus, or Manager
  * Review data -- the constructor injects only Scene QC's own collaborators.
  *
- * EXPORTED (capability API). See SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 1.9.
+ * EXPORTED (capability API). See "Transaction Semantics" in
+ * apps/erify_api/docs/SCENE_QC.md.
  */
 @Injectable()
 export class SceneQcWorkflowService {

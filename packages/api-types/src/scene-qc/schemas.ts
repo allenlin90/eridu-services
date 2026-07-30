@@ -5,8 +5,8 @@ import { FILE_UPLOAD_USE_CASE, getUploadMaxFileSizeBytes } from '../uploads/sche
 
 /**
  * A Client's declared physical scene setup for its Scene Profile reference
- * image. Required on every Scene Profile — see
- * `apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md` section 5.1.
+ * image. Required on every Scene Profile — see "Persisted Model" in
+ * apps/erify_api/docs/SCENE_QC.md.
  */
 export const SCENE_TYPE = {
   GRAPHIC_BG: 'GRAPHIC_BG',

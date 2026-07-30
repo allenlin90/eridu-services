@@ -6,10 +6,10 @@ import { createPaginatedResponseSchema, paginationBaseSchema } from '../paginati
 import { sceneTypeSchema } from './schemas.js';
 
 /**
- * Scene QC Daily Review contracts — Child PR 3. See
- * `apps/erify_api/docs/design/SCENE_QC_CHILD_PR_3_BREAKDOWN.md` section 2.
- * Kept in a separate module from `schemas.ts` (Scene Profile) so neither file
- * grows oversized; Child PR 4 adds `records.schemas.ts` alongside this one.
+ * Scene QC Daily Review contracts. See "Routes" in
+ * apps/erify_api/docs/SCENE_QC.md. Kept in a separate module from
+ * `schemas.ts` (Scene Profile) so neither file grows oversized;
+ * `records.schemas.ts` sits alongside this one for the same reason.
  */
 
 // ============================================================================

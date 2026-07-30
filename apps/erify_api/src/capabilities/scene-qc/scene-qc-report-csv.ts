@@ -4,10 +4,8 @@ import { SCENE_QC_REPORT_CSV_COLUMNS } from '@eridu/api-types/scene-qc';
 /**
  * Mirrors `apps/erify_studios/src/lib/csv.ts` exactly: UTF-8 BOM, every cell
  * double-quoted with `"` doubled, and the CSV-injection prefix guard. This is
- * `erify_api`'s first non-JSON response -- see
- * SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.8. Columns are the exact
- * ordered §6.3 list from the single shared `SCENE_QC_REPORT_CSV_COLUMNS`
- * constant.
+ * `erify_api`'s first non-JSON response. Columns are the exact ordered list
+ * from the single shared `SCENE_QC_REPORT_CSV_COLUMNS` constant.
  */
 
 const UTF8_BOM = '﻿';

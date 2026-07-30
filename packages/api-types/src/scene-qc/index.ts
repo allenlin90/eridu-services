@@ -1,7 +1,7 @@
 /**
  * Scene QC schemas and types — Stage 1 Scene Profile contracts (a Client's
  * single mutable expected-scene reference image and scene type). See
- * `apps/erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md`.
+ * docs/features/scene-qc.md and apps/erify_api/docs/SCENE_QC.md.
  */
 
 export * from './confirmation.schemas.js';

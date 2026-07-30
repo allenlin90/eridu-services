@@ -3,9 +3,9 @@ import type { SceneQcReport, SceneQcReportShow, SceneQcReportStatus } from '@eri
 import type { ConfirmationReportRow } from './scene-qc-confirmation.schema';
 
 /**
- * Report read-model -> DTO mapper (§6.3 -> code). Reads ONLY the confirmation
- * item snapshot columns -- never a live Show/Client/Platform relation (plan
- * section 5.4). See SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 2.4.
+ * Report read-model -> DTO mapper. Reads ONLY the confirmation item snapshot
+ * columns -- never a live Show/Client/Platform relation. See "Persisted
+ * Model" in apps/erify_api/docs/SCENE_QC.md.
  */
 
 function round1(value: number): number {

@@ -23,10 +23,10 @@ import { UserService } from '@/models/user/user.service';
 type ResultCounts = { pass: number; minor: number; fail: number };
 
 /**
- * `confirmDay` -- the §8.3 confirmation transaction owning the advisory-locked,
+ * `confirmDay` -- the confirmation transaction owning the advisory-locked,
  * cross-row, append-only revision append end to end. The transaction boundary
- * is this workflow method (capability skill section 3). See
- * SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.6.
+ * is this workflow method (capability skill section 3). See "Transaction
+ * Semantics" in apps/erify_api/docs/SCENE_QC.md.
  *
  * EXPORTED (capability API).
  */

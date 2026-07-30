@@ -21,9 +21,9 @@ import { StudioService } from '@/models/studio/studio.service';
 import { BaseStudioController } from '@/studios/base-studio.controller';
 
 /**
- * The §8.3 confirmation command plus the report JSON/CSV reads. Same role set
- * as the rest of the capability. See SCENE_QC_CHILD_PR_4_BREAKDOWN.md
- * section 1.4/1.8.
+ * The confirmation command plus the report JSON/CSV reads. Same role set
+ * as the rest of the capability. See "Routes" in
+ * apps/erify_api/docs/SCENE_QC.md.
  */
 @ApiTags('Studio Scene QC Confirmations')
 @StudioProtected([STUDIO_ROLE.DESIGNER, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ADMIN])

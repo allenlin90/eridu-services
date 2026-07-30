@@ -12,10 +12,10 @@ import { SceneQcRepository } from './scene-qc-review.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 
 /**
- * The §6.3 report read model + status resolution. Hosts the
+ * The report read model + status resolution. Hosts the
  * `TODO(scene-qc-reporting)` marker for the report-status-recomputes-
- * eligible-set tech debt (OQ-42). EXPORTED (capability API). See
- * SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.3/1.9.
+ * eligible-set tech debt. EXPORTED (capability API). See "Routes" and
+ * "Transaction Semantics" in apps/erify_api/docs/SCENE_QC.md.
  */
 @Injectable()
 export class SceneQcReportService {

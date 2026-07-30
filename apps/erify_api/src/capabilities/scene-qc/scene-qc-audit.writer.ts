@@ -17,8 +17,9 @@ import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
  * exhaustive switch over AuditTargetType routing exclusively into the shared
  * `audit_targets` table. Reaching Scene QC through it would require widening
  * that shared enum AND adding a scene_profile_id FK to `audit_targets` --
- * explicitly rejected by SCENE_QC_IMPLEMENTATION_PLAN.md section 5.5
- * ("widening audit_targets is not the fallback").
+ * explicitly rejected: Scene QC's own target growth must never land on the
+ * shared table regardless of how many typed FKs it eventually needs. See
+ * "Persisted Model" in apps/erify_api/docs/SCENE_QC.md.
  *
  * This writer never calls AuditService, so the shared "Audit requires at least
  * one target" guard is untouched for every other capability. Its own no-orphan

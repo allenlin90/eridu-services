@@ -2,14 +2,14 @@ import type { SceneQcConfirmationState, SceneQcReportStatus } from '@eridu/api-t
 import { SCENE_QC_CONFIRMATION_STATE, SCENE_QC_REPORT_STATUS } from '@eridu/api-types/scene-qc';
 
 /**
- * Pure decision function for the §5.4 three-way daily confirmation state.
- * No Nest provider, no I/O -- the correctness core of the whole PR, proven
- * before anything (the confirmation workflow, the summary read model) depends
- * on it. See SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.10.
+ * Pure decision function for the three-way daily confirmation state. No Nest
+ * provider, no I/O -- the correctness core of the whole capability, proven
+ * before anything (the confirmation workflow, the summary read model)
+ * depends on it.
  *
  * `CURRENT` requires both an equal `showId` set AND a matching
  * `(reviewId, reviewVersion)` per Show. Comparing `reviewVersion` is only
- * sound because confirmation does NOT bump `SceneQcReview.version` (OQ-22) --
+ * sound because confirmation does NOT bump `SceneQcReview.version` --
  * the two decisions are coupled and must be changed together if either is
  * revisited.
  */

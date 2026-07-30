@@ -16,9 +16,9 @@ import { StudioService } from '@/models/studio/studio.service';
 import { BaseStudioController } from '@/studios/base-studio.controller';
 
 /**
- * Scene QC review create/update commands -- the §8.2 review save transaction.
- * Same role set as the query controller and Scene Profile. See
- * SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 1.5/1.9.
+ * Scene QC review create/update commands -- the review save transaction.
+ * Same role set as the query controller and Scene Profile. See "Routes" in
+ * apps/erify_api/docs/SCENE_QC.md.
  */
 @ApiTags('Studio Scene QC Reviews')
 @StudioProtected([STUDIO_ROLE.DESIGNER, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ADMIN])

@@ -29,7 +29,7 @@ import { BaseStudioController } from '@/studios/base-studio.controller';
  * identical Scene QC permissions. Shows carry `studioId` directly, so scoping
  * is a `show: { studio: { uid: studioId } }` predicate inside the repository
  * -- no Client/Studio linkage probe needed here (contrast the Scene Profile
- * controller). See SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 1.5.
+ * controller). See "Routes" in apps/erify_api/docs/SCENE_QC.md.
  */
 @ApiTags('Studio Scene QC')
 @StudioProtected([STUDIO_ROLE.DESIGNER, STUDIO_ROLE.MANAGER, STUDIO_ROLE.ADMIN])

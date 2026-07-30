@@ -13,8 +13,8 @@ import { SceneQcRepository } from './scene-qc-review.repository';
 import { HttpError } from '@/lib/errors/http-error.util';
 
 /**
- * Records list + detail read models (§6.3 -> §7.5). EXPORTED (capability API).
- * See SCENE_QC_CHILD_PR_4_BREAKDOWN.md section 1.3/1.7.
+ * Records list + detail read models. EXPORTED (capability API). See
+ * "Routes" in apps/erify_api/docs/SCENE_QC.md.
  */
 @Injectable()
 export class SceneQcRecordsQueryService {
