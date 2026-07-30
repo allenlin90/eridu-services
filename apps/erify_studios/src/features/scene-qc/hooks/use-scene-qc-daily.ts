@@ -51,8 +51,7 @@ export function useSceneQcDaily({ studioId, search, onSearchChange }: UseSceneQc
   const detailQuery = useSceneQcItemDetailQuery(studioId, effectiveDate, search.show_id);
 
   // Desktop auto-selects the first queue row when show_id is absent; mobile
-  // starts with the list and requires an explicit tap (mirrors the shipped
-  // use-scene-review-page.ts guard).
+  // starts with the list and requires an explicit tap.
   useEffect(() => {
     if (!isMobile && !search.show_id && itemsQuery.data?.data[0]) {
       onSearchChange({ show_id: itemsQuery.data.data[0].show_id });
