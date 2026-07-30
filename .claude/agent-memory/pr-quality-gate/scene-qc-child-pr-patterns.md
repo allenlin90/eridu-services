@@ -280,3 +280,95 @@ does not distinguish enum re-exports (plain string-literal unions, no ORM
 query DSL) from the `Prisma.*Input`/`Prisma.*WhereInput` shapes the rule is
 actually guarding against. Flag as a 💡 suggestion only if asked to be
 stricter than existing precedent.
+
+## PR #343 — Main Integration PR, READY, merged (reviewed 2026-07-30)
+
+The atomic cutover to `master`. Correctly scope this kind of review to
+`git diff <last-child-PR-merge-sha>..HEAD` (here `3211b73f..HEAD`, the "Child
+PR 4" merge commit), not `master...HEAD` — the latter is the full ~21.7k-line
+program diff including all four already-reviewed child PRs. The integration-
+only diff was 99 files / +1189/-5231. All of the following independently
+re-verified and green: `@eridu/api-types` lint/typecheck/build (no test
+script, pre-existing); `erify_api` lint/typecheck/build, test (190 suites/1947
+tests); `erify_studios` lint/typecheck/build, test (223 files/1075 tests, 1
+pre-existing skip); `architecture:signals` matched the PR's own predicted
+first-negative-delta exactly (typescript_files 597→590, production_services
+75→74, controllers 59→58, specs 187→184, `exported_repositories` unchanged at
+5, 0 module cycles); `agents:validate`; `lint:markdown`; `sherif`; and the
+guarded real-DB integration gate (10 suites, 1 pre-existing skip, 53 passed
+including the new whole-capability `scene-qc-journey.integration-spec.ts` and
+the extended `app-runtime.integration-spec.ts` route-table-absence assertion).
+Three dangling-reference greps (retired docs, `SceneReview`/`scene-review.`
+identifiers, old heuristic identifiers `findFallbackEvidence`/
+`METRIC_MATCHERS`/`IMAGE_EXTENSION_PATTERN`) came back clean — the one
+`METRIC_MATCHERS`/`IMAGE_EXTENSION_PATTERN` hit is a same-named-but-unrelated
+pre-existing utility in `features/tasks/lib/task-qc-evidence.ts` (PR #319,
+Task Review's own evidence heuristics, untouched by this PR) — a false
+positive, not a residual.
+
+Deletion of the PR #319 Scene Review implementation was clean: `TaskRepository`
+lost exactly `findSceneReviewCandidates`/`findSceneReviewCandidate` (both had
+`// Engineering decision:` tags), `task-relation-query.ts` lost only
+`sceneReviewCandidateInclude` while `showHydrationTargetSelect` (shared by both
+surviving includes) was correctly kept, `TaskQcEvidenceViewer` in
+`features/tasks/` is untouched and still wired into `task-qc-review-sheet.tsx`.
+The `/studios/:studioId/scene-review` route, nav label, and
+`STUDIO_ROUTE_ACCESS.sceneReview` key were retained by design (now serving
+Scene QC under the old URL/nav slug) — component/i18n identifiers there
+(`SceneReviewLayout`, `scene_review_access_title`) still literally say "scene
+review," which is an intentional, disclosed naming carryover, not a defect.
+
+New tests are all genuinely strong, not tautological:
+`scene-qc-authorization.spec.ts` table-drives all 5 controllers, asserts the
+exact role array via `Reflect.getMetadata`, asserts no method-level override,
+and asserts an exclusion list (`MODERATION_MANAGER`/`TALENT_MANAGER`/`MEMBER`/
+`ACCOUNT_MANAGER`) is absent. `app-runtime.integration-spec.ts`'s addition
+enumerates the actual booted Express route table (skips the Nest catch-all)
+and asserts the deleted `/scene-review` and `/scene-review/:taskId` routes are
+genuinely gone, with an `arrayContaining` sanity check proving the enumeration
+itself would have caught something. `scene-qc-journey.integration-spec.ts`
+is the first spec to compose all four child capabilities in one flow (profile
+save → real `TaskTemplateService.updateTemplateWithSnapshot` evidence binding
+→ two reviews → confirmation → report/CSV/Records) with concrete value
+assertions at every step (evidence counts, MINOR/PASS results, confirmation
+revision, report scope totals, CSV row count, records confirmation status).
+
+The two script fixes (`backfill-scene-qc-evidence-refs.ts`,
+`verify-scene-qc-evidence-bindings.ts`) add a `ConfigModule.forRoot({
+isGlobal: true, cache: true, validate: ... })` block that textually mirrors
+`AppModule`'s (`apps/erify_api/src/app.module.ts`) — confirmed by direct
+diff — and correct their own header-comment invocation from `tsx` to
+`ts-node -r tsconfig-paths/register` (correct: `tsx`'s esbuild transform drops
+`emitDecoratorMetadata`, so Nest's implicit constructor DI silently receives
+`undefined`). Also switched `logger: false` → `logger: ['error', 'warn']` so a
+DI bootstrap failure is diagnosable instead of a silent `process.exit(1)`. A
+new tech-debt doc (`docs/tech-debt/erify-api-scripts-missing-config-module.md`)
+honestly discloses two *other*, unrelated pre-existing scripts
+(`consolidate-duplicate-mechanics.ts`, `backfill-product-promotion-mechanics.ts`)
+sharing the same bootstrap gap, explicitly not fixed here as out of scope —
+good hygiene, not scope creep.
+
+`scene-qc-evidence-binding-map.ts`'s single bound field
+(`fld_cmkmx9knubz`/"On air_check") and 11 intentionally-unbound entries each
+carry an individually-verified reason; the fieldKeys use the v2 `field.id`
+content-key convention, consistent with the shared `getFieldContentKey`
+helper (`@eridu/api-types/task-management`, also used by
+`TaskTemplateRepository` and the backfill script itself) that the binding map
+is designed to match.
+
+Doc reconciliation spot-checked and accurate: both skill files
+(`erify-authorization`, `operations-review-surface`) correctly narrow the
+former absolute "every review surface is read-only" rule to a bounded
+carve-out scoped to Scene QC's own normalized tables;
+`docs/features/rbac-roles.md`'s role matrix row
+(`❌/✅/❌/✅/❌/✅` for MEMBER/DESIGNER/MODERATION_MANAGER/MANAGER/
+TALENT_MANAGER/ADMIN) matches the shipped `[DESIGNER, MANAGER, ADMIN]`
+`@StudioProtected` set exactly. `docs/roadmap/PHASE_5.md` item 22 (the PR #319
+historical record) was left untouched except for one added "Superseded by
+item 23" forward-link paragraph, confirmed by diff. The two comments required
+to be inlined rather than retargeted (`scene-qc-evidence.resolver.ts`'s OQ-1
+exclude-non-derivable-object-key rule, `scene-qc-confirmation-state.policy.ts`'s
+OQ-22/23 version-not-bumped coupling) both read as fully self-contained
+explanations now, no reference to a deleted doc needed.
+
+No blocking or warning findings. Verdict: READY, merged.

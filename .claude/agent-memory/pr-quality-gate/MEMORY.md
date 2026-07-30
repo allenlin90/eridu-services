@@ -8,7 +8,7 @@
 - `moderation-workflow-patterns.md` — Moderation loop, idb-keyval draft persistence
 - `studio-member-roster-patterns.md` — Studio member roster CRUD (PR #28), isSelf logic, version descope, filterFn dead code
 - `studio-creator-roster-patterns.md` — Creator roster CRUD (PR #30), duplicate validation, updateWithVersionCheck 3-query pattern
-- `scene-qc-child-pr-patterns.md` — Scene QC program (PR #343 umbrella); Child PR 1 was rescoped 2026-07-27 (no Material/Assignment tables, no repository, no Studio.timezone column) — read the scope-correction note before reviewing
+- `scene-qc-child-pr-patterns.md` — Scene QC program (PR #343 umbrella, CLOSED/merged 2026-07-30, READY); Child PR 1 was rescoped 2026-07-27 (no Material/Assignment tables, no repository, no Studio.timezone column) — read the scope-correction note before reviewing anything pre-rescope
 - `backend-verified-conventions.md` — Cross-cutting erify_api conventions confirmed across many reviews: Prisma leakage, CLS/txHost, version field, repo-method necessity judgment calls
 - `task-template-script-exceptions.md` — Internal operator/script services' accepted Prisma-in-service exception; templateKind JSONB filter
 
@@ -19,3 +19,4 @@
 - `@StudioParam()` does not exist in this codebase — all studio controllers use `@Param('studioId', new UidValidationPipe(...))`. Stop citing it as a real decorator.
 - Repository method necessity is a judgment call, not mechanical: single-caller shallow finders without an `// Engineering decision:` tag are usually WARNING not BLOCKING when they're the model's canonical findOne-equivalent.
 - Always independently verify a PR's self-reported test/gate results — re-run commands yourself rather than trusting checkboxes (see `scene-qc-child-pr-patterns.md` and `backend-verified-conventions.md` for a concrete example where a PR's own gate-applicability claim was wrong).
+- Reviewing an integration-branch main PR (`.agents/workflows/integration-pr-delivery.md`): diff against the last child-PR merge commit, not `master...HEAD` — the latter re-includes every already-reviewed child PR's full diff. `git log --oneline master..HEAD` to find that commit.
