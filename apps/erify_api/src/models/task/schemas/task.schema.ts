@@ -19,9 +19,6 @@ import {
   listStudioShowsQuerySchema,
   reassignTaskRequestSchema,
   reassignTaskShowRequestSchema,
-  sceneReviewDetailSchema,
-  sceneReviewListItemSchema,
-  sceneReviewQuerySchema,
   showWithTaskSummaryDto,
   studioShowLookupsDto,
   taskActionRequestSchema,
@@ -46,9 +43,6 @@ export {
   listStudioShowsQuerySchema,
   reassignTaskRequestSchema,
   reassignTaskShowRequestSchema,
-  sceneReviewDetailSchema,
-  sceneReviewListItemSchema,
-  sceneReviewQuerySchema,
   showWithTaskSummaryDto,
   studioShowLookupsDto,
   taskActionRequestSchema,
@@ -68,7 +62,6 @@ export class ReassignTaskDto extends createZodDto(reassignTaskRequestSchema) {}
 export class ReassignTaskShowDto extends createZodDto(reassignTaskShowRequestSchema) {}
 export class ListStudioShowsQueryDto extends createZodDto(listStudioShowsQuerySchema) {}
 export class ListMyTasksQueryDto extends createZodDto(listMyTasksQuerySchema) {}
-export class SceneReviewQueryDto extends createZodDto(sceneReviewQuerySchema) {}
 export class BulkDeleteTasksDto extends createZodDto(bulkDeleteTasksRequestSchema) {}
 export class BulkDeleteTasksResponseDto extends createZodDto(bulkDeleteTasksResponseSchema) {}
 export class BulkApproveTasksDto extends createZodDto(bulkApproveTasksRequestSchema) {}

@@ -30,8 +30,8 @@ function isSafeRemoteUrl(value: string): boolean {
  * task.content[fieldKey]. The join to explicit refs is the ONLY binding
  * source -- the snapshot JSON schema is never re-parsed for discovery, and
  * there is no recursive URL search, filename matching, or metric-label
- * matching (the old `models/task/scene-review.mapper.ts` heuristics the main
- * integration PR deletes). See SCENE_QC_CHILD_PR_3_BREAKDOWN.md section 1.7.
+ * matching -- rather than the filename/recursive-URL heuristics the retired
+ * PR #319 Scene Review mapper used.
  *
  * PRIVATE to SceneQcModule.
  */
