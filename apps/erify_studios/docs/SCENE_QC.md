@@ -50,7 +50,7 @@ See [Feature: Scene Quality Control](../../../docs/features/scene-qc.md) for pro
 ## Operational day
 
 - The durable operational-day window is resolved **server-side** from a date-only `operational_date`, using the shared `SCENE_QC_OPERATIONAL_TIMEZONE` constant — never from client-submitted bounds.
-- The browser clock supplies only the first-load default date (`getCurrentOperationalDate()` in `features/scene-qc/lib/scene-qc-operational-date.ts`), which is deliberately separate from the browser-local `lib/operational-day-range.ts` used by read-only review surfaces. This first-load-default gap (a viewer's clock/timezone briefly affecting only which date opens on first load, never the durable server scope) is [accepted tech debt](../../../docs/tech-debt/scene-qc-default-operational-date-browser-clock.md).
+- The browser clock supplies only the first-load default date (`getCurrentOperationalDate()` in `features/scene-qc/lib/scene-qc-operational-date.ts`, which correctly converts via `Intl.DateTimeFormat` on the shared `SCENE_QC_OPERATIONAL_TIMEZONE` constant — a device set to a different timezone still resolves the right calendar date). It is deliberately separate from the browser-local `lib/operational-day-range.ts` used by read-only review surfaces. The residual risk (a skewed system clock briefly picking the wrong default day on first load, never the durable server scope) is [accepted tech debt](../../../docs/tech-debt/scene-qc-default-operational-date-browser-clock.md).
 
 ## Canonical implementation
 

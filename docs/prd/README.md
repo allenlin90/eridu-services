@@ -50,10 +50,4 @@ Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) uses workstream briefs for addit
 
 Deferred Phase 4 and Phase 6 candidate work is tracked in the [ideation register](../ideation/README.md) until it is committed to an active phase.
 
-## Active Requirements Pending Roadmap Assignment
-
-| PRD | Workstream | Status |
-| --- | --- | --- |
-| [Scene Quality Control](./scene-qc.md) | Replace read-only Scene Review with persisted Show-level daily QC, reusable expected-scene materials, confirmation, records, and reports | Product requirements accepted; implementation plan ready; roadmap assignment pending |
-
 Sidebar redesign is tracked in app-local design doc: [SIDEBAR_REDESIGN.md](../../apps/erify_studios/docs/design/SIDEBAR_REDESIGN.md) (Wave 1, incremental rollout).

@@ -102,6 +102,8 @@ The scope decision remains open between fully shared, fully studio-scoped, and h
 
 The functional specification's two-axis element/defect vocabulary and optional related element are the seed candidate. Promote this configuration slice when Scene QC Stage 3 begins and its shared-versus-studio governance is agreed; free text is operational context, not a replacement taxonomy-discovery mechanism.
 
+When promoted, structured findings remain children of the existing Show review (never a replacement for it), and free-text feedback stays required for Minor and Fail unless product evidence supports relaxing it. `GRAPHIC_BG` / `REAL_BACKDROP` is already recorded on each Scene Profile, so adding structured findings needs no profile-history migration.
+
 ---
 
 ## Proposed Unified Solution: Typed Operational Identity and Studio Settings
