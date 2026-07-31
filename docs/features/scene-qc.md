@@ -23,6 +23,7 @@ Designer, Manager, and Admin share identical Scene QC permissions. Daily confirm
 ## Product Rules
 
 - One QC result belongs to one Show, even when several Tasks or images supply evidence. A Show review can contain multiple evidence assets but never produces competing effective results for the same operational-day scope.
+- Task Template authors explicitly choose the image field Scene QC consumes. The Builder keeps the cross-workflow consequence visible, and the enabled field is highlighted. Saving the template creates snapshot-level evidence bindings; submitting a Task only stores the screenshot and does not create or approve a Scene QC record.
 - Allowed outcomes are `PASS`, `MINOR`, and `FAIL`. `MINOR` and `FAIL` require at least one structured element/defect finding. The note is optional for every outcome. A blank, corrupted, or non-viewable image can be recorded as `FAIL` with a structured finding and optional context.
 - The issue vocabulary is organization-wide. Built-in options reproduce the source specification's scene-type-gated element/defect catalog; custom options created by Designer, Manager, or Admin are immediately shared with every Scene QC reviewer.
 - Removing a custom option retires it from future selection. Review and amendment findings snapshot keys and labels, so past records remain readable.
@@ -117,6 +118,7 @@ sequenceDiagram
 - [x] Designer, Manager, and Admin can create and edit Scene QC outcomes and confirm a completed day; Moderation Manager cannot access Scene QC.
 - [x] Designer, Manager, and Admin can manage the Stage 1 Client-owned Scene Profile (single reference image and scene type).
 - [x] Existing Task Template permissions, rather than Scene QC role access alone, control who can designate a Task image field as Scene QC evidence.
+- [x] The Task Template Builder persistently explains and highlights when an image field feeds the separate Scene QC workflow.
 - [x] Scene QC activity by a Manager does not enter or mutate the separate Manager Review flow.
 - [x] The default queue covers exactly one operational day; Shows come from existing persisted schedule data, with no CSV upload.
 - [x] One Show appears once in the review queue and can expose multiple eligible evidence assets.

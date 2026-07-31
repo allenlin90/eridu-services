@@ -10,6 +10,16 @@ describe('sceneQcEvidenceToggle', () => {
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox).not.toBeChecked();
     expect(checkbox).toBeEnabled();
+    expect(screen.getByText(/Enable only for the screenshot that Scene QC reviewers should inspect/i)).toBeInTheDocument();
+    expect(screen.queryByText('Shared with Scene QC')).not.toBeInTheDocument();
+  });
+
+  it('highlights the cross-workflow consequence when enabled', () => {
+    render(<SceneQcEvidenceToggle id="t1" checked onChange={vi.fn()} />);
+
+    expect(screen.getByText('Shared with Scene QC')).toBeInTheDocument();
+    expect(screen.getByText(/Uploads to this field also appear in the separate Scene Review workspace/i)).toBeInTheDocument();
+    expect(screen.getByText(/Manager Review approval is not required/i)).toBeInTheDocument();
   });
 
   it('calls onChange(true) when toggled on', () => {

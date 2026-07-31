@@ -78,6 +78,8 @@ All undeployed Scene QC schema work is consolidated into one official Prisma mig
 
 It never falls back to recursive URL discovery, filename matching, or provisional content-label metric matching — the heuristics the retired PR #319 Scene Review mapper used. There is no permanent heuristic compatibility path.
 
+Evidence-reference rows are template-snapshot metadata, not submission records. A snapshot-creating Task Template save projects fields marked `evidence_purpose: 'scene_qc'`; Task submission only stores the screenshot URL in `task.content`. The one-time cutover backfill supplies reviewed bindings for historical immutable snapshots and marks the current template so future snapshot saves maintain the projection automatically.
+
 ## Transaction Semantics
 
 - **Review save** (`SceneQcWorkflowService.createReview` / `updateReview`, `@Transactional()`): resolves and authorizes the Show, pins the operational window/evidence/Scene Profile, validates taxonomy selections, requires findings for Minor/Fail, writes the draft plus snapshots and Audit in one transaction. The note is optional. After `confirmedAt` is set, normal updates reject.

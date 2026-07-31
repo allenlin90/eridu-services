@@ -20,6 +20,7 @@ See [Feature: Scene Quality Control](../../../docs/features/scene-qc.md) for pro
 ## Daily Review
 
 - The workspace uses one responsive master-detail flow: queue/progress on the left and a large Live/Expected comparison plus structured result form on the right. Mobile opens the selected Show in a full-height drawer. There are no swipe gestures or duplicated Overview/Review modes.
+- Evidence originates from an image-only Task Template field explicitly marked **Use as Scene QC evidence**. The Builder keeps a persistent explanation beside the control, highlights the enabled state, and shows a `Scene QC` badge on the field card. Task submission stores the screenshot normally; it does not create the snapshot binding or wait for Manager Review approval.
 - A Show with no designated evidence is blocked and shows the no-evidence panel; it cannot receive an outcome.
 - A missing Client Scene Profile shows a warning panel but does not block review.
 - A blank, corrupted, or non-viewable image has an unusable-image Fail shortcut.

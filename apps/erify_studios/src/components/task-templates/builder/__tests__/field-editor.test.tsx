@@ -154,6 +154,7 @@ describe('fieldEditor', () => {
       const checkbox = screen.getByRole('checkbox', { name: /Use as Scene QC evidence/ });
       expect(checkbox).not.toBeChecked();
       expect(checkbox).toBeEnabled();
+      expect(screen.getByText(/Enable only for the screenshot that Scene QC reviewers should inspect/i)).toBeInTheDocument();
     });
 
     it('renders checked when the field already carries evidence_purpose: scene_qc', () => {
@@ -164,6 +165,8 @@ describe('fieldEditor', () => {
         />,
       );
       expect(screen.getByRole('checkbox', { name: /Use as Scene QC evidence/ })).toBeChecked();
+      expect(screen.getByText('Shared with Scene QC')).toBeInTheDocument();
+      expect(screen.getByText(/Manager Review approval is not required/i)).toBeInTheDocument();
     });
 
     it('disables the toggle for a mechanic field, with the mechanic-specific reason', () => {
