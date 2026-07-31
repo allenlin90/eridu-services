@@ -86,30 +86,49 @@ It never falls back to recursive URL discovery, filename matching, or provisiona
 - **Period report** (`SceneQcPeriodReportQuery`): starts from the latest immutable confirmation revision per operational day, applies the latest result-bearing amendment, and returns centralized trend, Client, and issue aggregates. Report consumers never count raw finding shapes independently.
 - Confirmation state is a pure comparison of the latest confirmation's pinned scope against the current eligible set: `UNCONFIRMED` (none exists), `CURRENT` (scopes match), `STALE` (a Show was added, reactivated, moved in/out of the day, or terminally cancelled since the pinned revision).
 
-## Write and Read Sequence
+## Actor and Write Sequence
+
+Task submission is upstream of both review workflows. Once a configured Task evidence field contains a valid screenshot, Manager Review and Scene QC can proceed independently. Manager Review approval does not gate Scene QC, and Scene QC never mutates Task or Manager Review state.
 
 ```mermaid
 sequenceDiagram
-  participant UI as "erify_studios"
-  participant HTTP as "Scene QC controllers"
-  participant UseCase as "Capability services"
-  participant Store as "Private persistence/query providers"
+  actor Member as "Task assignee / member"
+  actor Manager as "Manager reviewer"
+  actor QC as "Scene QC reviewer (Designer / Manager / Admin)"
+  participant UI as "Erify Studios"
+  participant API as "Erify API"
   participant DB as "PostgreSQL"
 
-  UI->>HTTP: Save review with findings
-  HTTP->>UseCase: create/update command
-  UseCase->>Store: Pin evidence and taxonomy labels
-  Store->>DB: Review + evidence + findings + audit (transaction)
-  UI->>HTTP: Confirm complete day
-  HTTP->>UseCase: confirm command
-  UseCase->>DB: Append confirmation revision
-  UI->>HTTP: Append comment or correction
-  HTTP->>UseCase: amendment command
-  UseCase->>DB: Append amendment revision (original unchanged)
-  UI->>HTTP: Query Records / period report
-  HTTP->>UseCase: read model
-  UseCase->>Store: Latest confirmed scope + latest correction
-  Store-->>UI: Immutable history + effective result
+  Member->>UI: Upload and submit screenshot
+  UI->>API: Save screenshot in configured Task evidence field
+  API->>DB: Persist Task content
+  par Separate Manager Review workflow
+    Manager->>UI: Review Task submission
+    UI->>API: Approve or reject Task
+    API->>DB: Update Manager Review state
+  and Independent Scene QC workflow
+    QC->>UI: Open Show in Scene QC
+    UI->>API: Load screenshot and Client Scene Profile
+    API-->>UI: Return live evidence and expected reference
+    QC->>UI: Record Pass, Minor, or Fail
+    UI->>API: Save Scene QC result
+    API->>DB: Save review and evidence/findings snapshots
+  end
+  QC->>UI: Confirm completed operational day
+  UI->>API: Confirm day
+  API->>DB: Append immutable confirmation revision
+  alt Later context only
+    QC->>UI: Add comment
+    UI->>API: Append comment
+    API->>DB: Append amendment (original unchanged)
+  else Result was wrong
+    QC->>UI: Add corrected result, findings, and reason
+    UI->>API: Append correction
+    API->>DB: Append result-bearing amendment
+  end
+  QC->>UI: Open Records or period Reports
+  UI->>API: Read confirmed scope + latest correction
+  API-->>UI: Original history and effective analytics
 ```
 
 ## Cutover Scripts

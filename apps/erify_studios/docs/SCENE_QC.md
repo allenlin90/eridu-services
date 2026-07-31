@@ -28,6 +28,51 @@ See [Feature: Scene Quality Control](../../../docs/features/scene-qc.md) for pro
 - Saving advances to the next unreviewed Show ("Save & next").
 - An optimistic-conflict (409) response surfaces inline rather than silently overwriting; the draft form resets only on `show_id` change, never on evidence/expected-reference re-resolution, using the same "latest ref" guard pattern as `use-scene-profile-editor.ts` so a slow in-flight save cannot clobber a newer Show selection.
 
+## Actor Workflow
+
+Task submission is upstream of both review workflows. Once a configured Task evidence field contains a valid screenshot, Manager Review and Scene QC can proceed independently. Manager Review approval does not gate Scene QC, and Scene QC never mutates Task or Manager Review state.
+
+```mermaid
+sequenceDiagram
+  actor Member as "Task assignee / member"
+  actor Manager as "Manager reviewer"
+  actor QC as "Scene QC reviewer (Designer / Manager / Admin)"
+  participant UI as "Erify Studios"
+  participant API as "Erify API"
+  participant DB as "PostgreSQL"
+
+  Member->>UI: Upload and submit screenshot
+  UI->>API: Save screenshot in configured Task evidence field
+  API->>DB: Persist Task content
+  par Separate Manager Review workflow
+    Manager->>UI: Review Task submission
+    UI->>API: Approve or reject Task
+    API->>DB: Update Manager Review state
+  and Independent Scene QC workflow
+    QC->>UI: Open Show in Scene QC
+    UI->>API: Load screenshot and Client Scene Profile
+    API-->>UI: Return live evidence and expected reference
+    QC->>UI: Record Pass, Minor, or Fail
+    UI->>API: Save Scene QC result
+    API->>DB: Save review and evidence/findings snapshots
+  end
+  QC->>UI: Confirm completed operational day
+  UI->>API: Confirm day
+  API->>DB: Append immutable confirmation revision
+  alt Later context only
+    QC->>UI: Add comment
+    UI->>API: Append comment
+    API->>DB: Append amendment (original unchanged)
+  else Result was wrong
+    QC->>UI: Add corrected result, findings, and reason
+    UI->>API: Append correction
+    API->>DB: Append result-bearing amendment
+  end
+  QC->>UI: Open Records or period Reports
+  UI->>API: Read confirmed scope + latest correction
+  API-->>UI: Original history and effective analytics
+```
+
 ## Confirmation states
 
 `SceneQcConfirmationCard` renders four states, driven purely by the daily summary response:

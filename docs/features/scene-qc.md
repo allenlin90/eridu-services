@@ -63,27 +63,45 @@ Locked for Stage 1 (the accepted implementation plan's decision table, lifted he
 
 ## Review and History Sequence
 
+Task submission is upstream of both review workflows. Once a configured Task evidence field contains a valid screenshot, Manager Review and Scene QC can proceed independently. Manager Review approval does not gate Scene QC, and Scene QC never mutates Task or Manager Review state.
+
 ```mermaid
 sequenceDiagram
-  actor Reviewer as "Designer / Manager / Admin"
-  participant UI as "Scene QC workspace"
-  participant API as "Scene QC capability"
+  actor Member as "Task assignee / member"
+  actor Manager as "Manager reviewer"
+  actor QC as "Scene QC reviewer (Designer / Manager / Admin)"
+  participant UI as "Erify Studios"
+  participant API as "Erify API"
   participant DB as "PostgreSQL"
 
-  Reviewer->>UI: Select Show and compare live vs benchmark
-  UI->>API: Save Pass, or Minor/Fail with structured findings
-  API->>DB: Save draft review + evidence/findings snapshots
-  Reviewer->>UI: Confirm completed operational day
+  Member->>UI: Upload and submit screenshot
+  UI->>API: Save screenshot in configured Task evidence field
+  API->>DB: Persist Task content
+  par Separate Manager Review workflow
+    Manager->>UI: Review Task submission
+    UI->>API: Approve or reject Task
+    API->>DB: Update Manager Review state
+  and Independent Scene QC workflow
+    QC->>UI: Open Show in Scene QC
+    UI->>API: Load screenshot and Client Scene Profile
+    API-->>UI: Return live evidence and expected reference
+    QC->>UI: Record Pass, Minor, or Fail
+    UI->>API: Save Scene QC result
+    API->>DB: Save review and evidence/findings snapshots
+  end
+  QC->>UI: Confirm completed operational day
   UI->>API: Confirm day
   API->>DB: Append immutable confirmation revision
   alt Later context only
-    Reviewer->>API: Append comment
+    QC->>UI: Add comment
+    UI->>API: Append comment
     API->>DB: Append amendment (original unchanged)
   else Result was wrong
-    Reviewer->>API: Append corrected result + findings + reason
+    QC->>UI: Add corrected result, findings, and reason
+    UI->>API: Append correction
     API->>DB: Append result-bearing amendment
   end
-  Reviewer->>UI: Open Records or period Reports
+  QC->>UI: Open Records or period Reports
   UI->>API: Read confirmed scope + latest correction
   API-->>UI: Original history and effective analytics
 ```
