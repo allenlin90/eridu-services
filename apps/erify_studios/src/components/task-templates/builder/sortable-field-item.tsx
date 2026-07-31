@@ -18,7 +18,7 @@ import {
 import { FieldEditor } from './field-editor';
 import { buildMechanicUpgradePatch } from './mechanic-reference.utils';
 import type { FieldItem } from './schema';
-import { isMechanicField, isSharedField } from './schema';
+import { EVIDENCE_PURPOSE, isMechanicField, isSharedField } from './schema';
 
 import type { ClientMechanic } from '@/features/client-mechanics/api/get-client-mechanics';
 
@@ -102,6 +102,11 @@ export const SortableFieldItem = memo(({ index, item, onUpdate, onRemove, errors
                   {isMechanicField(item) && (
                     <Badge variant="default" className="text-[10px] h-5 px-1.5 bg-blue-600 hover:bg-blue-700 text-white border-none">
                       Mechanic
+                    </Badge>
+                  )}
+                  {item.evidence_purpose === EVIDENCE_PURPOSE.SCENE_QC && (
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-violet-50 border-violet-300 text-violet-800">
+                      Scene QC
                     </Badge>
                   )}
                   {isRetired && (

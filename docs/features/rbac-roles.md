@@ -23,7 +23,7 @@ Studio membership had three roles (`admin`, `manager`, `member`) with no functio
 | Dashboard                    | ✅      | ✅        | ✅                  | ✅       | ✅              | ✅     |
 | My Tasks                     | ✅      | ✅        | ✅                  | ✅       | ✅              | ✅     |
 | My Shifts                    | ✅      | ✅        | ✅                  | ✅       | ✅              | ✅     |
-| Scene Review (read-only)     | ❌      | ✅        | ❌                  | ✅       | ❌              | ✅     |
+| Scene QC (review + confirm)  | ❌      | ✅        | ❌                  | ✅       | ❌              | ✅     |
 | Task Review                  | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
 | Tasks (assignment/ops)       | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
 | Shifts (management)          | ❌      | ❌        | ❌                  | ✅       | ❌              | ✅     |
@@ -38,7 +38,7 @@ Studio membership had three roles (`admin`, `manager`, `member`) with no functio
 
 - `MANAGER` has the same access as `ADMIN` except for studio membership management.
 - `TALENT_MANAGER` scope is creator operations only — catalog, roster, availability, show assignment/removal.
-- `DESIGNER` otherwise retains member-level access, with one narrow exception: the dedicated read-only Scene Review workspace. `MODERATION_MANAGER` retains member-level task execution plus its separately gated reporting access.
+- `DESIGNER` otherwise retains member-level access, with one narrow exception: the dedicated Scene QC workspace, where it has the same permissions as MANAGER and ADMIN (review, daily confirmation, Client Scene Profiles). Scene QC persists only its own outcomes; DESIGNER still gains no Task Review or task-mutation access. `MODERATION_MANAGER` retains member-level task execution plus its separately gated reporting access.
 - Roles live on `StudioMembership.role`; all enforcement uses `@StudioProtected([...roles])` guards — no separate permission table.
 
 ## Acceptance Record
@@ -47,4 +47,4 @@ Studio membership had three roles (`admin`, `manager`, `member`) with no functio
 - [x] `@StudioProtected([STUDIO_ROLE.TALENT_MANAGER])` restricts creator endpoints correctly
 - [x] `MANAGER` can access all studio features except membership management
 - [x] Roles assignable via admin API
-- [x] `DESIGNER` can inspect Scene Review evidence without receiving Task Review or task mutation access
+- [x] `DESIGNER` can record and confirm Scene QC outcomes without receiving Task Review or task mutation access

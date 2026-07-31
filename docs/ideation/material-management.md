@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [docs/domain/BUSINESS.md](../../docs/domain/BUSINESS.md), [Scene Quality Control](../prd/scene-qc.md)
+> **Related**: [docs/domain/BUSINESS.md](../../docs/domain/BUSINESS.md), [Scene Quality Control](../features/scene-qc.md)
 
 ## What
 
@@ -41,3 +41,23 @@ Promote to a PRD when **any** of these are true:
 - Material-ticket integration (attachments on ad-hoc tasks).
 - Show-material linking and dedicated material UI.
 - Scene QC reference materials remain capability-local until one of the promotion gates above requires a shared Material domain.
+
+## Scene QC PRD Stage 2 — Forwarded Scope
+
+[Scene Quality Control](../features/scene-qc.md) Stage 1 shipped a single mutable Client-owned Scene Profile with no revision history or composition. The PRD's Stage 2 ("Governance and Advanced Profile Operations") is forwarded here rather than dropped, since its profile/material scope belongs with this ideation topic:
+
+- Reusable, versioned Scene Materials distinct from a Client's single Stage 1 reference, ordered multi-reference composition, and per-Studio/per-platform applicability.
+- Per-Show or per-platform Scene Profile overrides beyond the Stage 1 Client-wide default.
+- Record detail with a revision timeline.
+
+### Confirmed-Result Amendment Workflow (Stage 2)
+
+A separate but co-scheduled Stage 2 item — not a Material Management concern itself, forwarded here only because it shares Stage 2 sequencing with the profile/material work above:
+
+- Confirmed Scene QC results can be amended through an explicit command.
+- An amendment requires a reason and preserves the original result.
+- Amendments increment the effective revision and remain visible in record detail.
+- Manager reports identify amended data and use the latest effective confirmed revision.
+- No Scene QC history is publicly deletable.
+
+Promote either forwarded item to its own PRD/design doc under the same decision-gate discipline as the rest of this document, rather than reusing Stage 1's now-closed [docs/features/scene-qc.md](../features/scene-qc.md).

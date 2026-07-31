@@ -1,11 +1,22 @@
+import { HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { ConfigService } from '@nestjs/config';
 
 import { StorageService } from './storage.service';
 
+const mockS3Send = jest.fn();
+
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn(),
 }));
+
+jest.mock('@aws-sdk/client-s3', () => {
+  const actual = jest.requireActual('@aws-sdk/client-s3');
+  return {
+    ...actual,
+    S3Client: jest.fn().mockImplementation(() => ({ send: mockS3Send })),
+  };
+});
 
 describe('storageService', () => {
   let service: StorageService;
@@ -25,6 +36,7 @@ describe('storageService', () => {
     };
 
     service = new StorageService(configMock as unknown as ConfigService);
+    mockS3Send.mockReset();
   });
 
   it('should generate object key with use case and actor id', () => {
@@ -70,5 +82,93 @@ describe('storageService', () => {
     );
 
     jest.useRealTimers();
+  });
+
+  describe('sanitizeActorIdForObjectKey', () => {
+    it('applies the exact same sanitization generateObjectKey embeds for the actor-id segment', () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-03-03T10:00:00.000Z'));
+
+      const key = service.generateObjectKey('scene_reference', '../weird actor!!', 'x.png');
+      const embeddedActorSegment = key.split('/')[1];
+
+      expect(service.sanitizeActorIdForObjectKey('../weird actor!!')).toBe(embeddedActorSegment);
+
+      jest.useRealTimers();
+    });
+
+    it('leaves a clean actor id unchanged', () => {
+      expect(service.sanitizeActorIdForObjectKey('ext_abc123')).toBe('ext_abc123');
+    });
+  });
+
+  describe('headObject', () => {
+    it('returns the real, R2-observed content type and length for an existing object', async () => {
+      mockS3Send.mockResolvedValue({ ContentType: 'image/png', ContentLength: 12345 });
+
+      const result = await service.headObject('scene_reference/ext_abc/2026-01-01/x.png');
+
+      expect(result).toEqual({ contentType: 'image/png', contentLength: 12345 });
+      expect(mockS3Send).toHaveBeenCalledWith(expect.any(HeadObjectCommand));
+    });
+
+    it('returns null when the object does not exist (SDK NotFound error name)', async () => {
+      const notFound = Object.assign(new Error('not found'), { name: 'NotFound' });
+      mockS3Send.mockRejectedValue(notFound);
+
+      await expect(
+        service.headObject('scene_reference/ext_abc/2026-01-01/missing.png'),
+      ).resolves.toBeNull();
+    });
+
+    it('returns null when the error carries a 404 metadata status code', async () => {
+      const notFound = Object.assign(new Error('not found'), { $metadata: { httpStatusCode: 404 } });
+      mockS3Send.mockRejectedValue(notFound);
+
+      await expect(
+        service.headObject('scene_reference/ext_abc/2026-01-01/missing.png'),
+      ).resolves.toBeNull();
+    });
+
+    it('rethrows a non-404 error rather than treating it as a missing object', async () => {
+      const serverError = Object.assign(new Error('boom'), { $metadata: { httpStatusCode: 500 } });
+      mockS3Send.mockRejectedValue(serverError);
+
+      await expect(
+        service.headObject('scene_reference/ext_abc/2026-01-01/x.png'),
+      ).rejects.toThrow('boom');
+    });
+  });
+
+  describe('deriveObjectKeyFromPublicUrl', () => {
+    it('round-trips a key resolvePublicFileUrl produced, including percent-encoded segments', () => {
+      const objectKey = 'scene_reference/ext_abc/2026-01-01/my file (final)!.png';
+      const fileUrl = service.resolvePublicFileUrl(objectKey);
+
+      expect(service.deriveObjectKeyFromPublicUrl(fileUrl)).toBe(objectKey);
+    });
+
+    it('round-trips a plain, unencoded key', () => {
+      const objectKey = 'scene_reference/ext_abc/2026-01-01/plain.png';
+      const fileUrl = service.resolvePublicFileUrl(objectKey);
+
+      expect(service.deriveObjectKeyFromPublicUrl(fileUrl)).toBe(objectKey);
+    });
+
+    it('returns null for a URL whose base does not match the configured public base', () => {
+      expect(
+        service.deriveObjectKeyFromPublicUrl('https://legacy-cdn.example.net/some/key.png'),
+      ).toBeNull();
+    });
+
+    it('returns null for a URL that only matches the base with no key remainder', () => {
+      expect(service.deriveObjectKeyFromPublicUrl('https://cdn.example.com/')).toBeNull();
+      expect(service.deriveObjectKeyFromPublicUrl('https://cdn.example.com')).toBeNull();
+    });
+
+    it('returns null rather than throwing for malformed percent-encoding', () => {
+      expect(
+        service.deriveObjectKeyFromPublicUrl('https://cdn.example.com/bad%segment'),
+      ).toBeNull();
+    });
   });
 });

@@ -73,33 +73,6 @@ const showHydrationTargetSelect = {
   },
 } as const;
 
-export const sceneReviewCandidateInclude = {
-  snapshot: {
-    select: {
-      schema: true,
-    },
-  },
-  targets: {
-    where: { targetType: 'SHOW', deletedAt: null },
-    include: {
-      show: {
-        select: {
-          uid: true,
-          name: true,
-          startTime: true,
-          client: {
-            select: {
-              uid: true,
-              name: true,
-            },
-          },
-          ...showHydrationTargetSelect,
-        },
-      },
-    },
-  },
-} satisfies Prisma.TaskInclude;
-
 export const taskSnapshotTargetInclude = {
   template: {
     select: {

@@ -26,4 +26,10 @@ export const UID_PREFIXES = {
   STUDIO_SHIFT_BLOCK: 'ssb',
   AUDIT: 'aud',
   CLIENT_MECHANIC: 'cmech',
+  SCENE_PROFILE: 'scprof',
+  SCENE_QC_REVIEW: 'scqcr',
+  SCENE_QC_CONFIRMATION: 'scqcc',
+  SCENE_QC_TAXONOMY_ELEMENT: 'scqce',
+  SCENE_QC_TAXONOMY_DEFECT: 'scqcd',
+  SCENE_QC_AMENDMENT: 'scqca',
 } as const;

@@ -61,7 +61,7 @@ This document unifies three previously scattered ideation tracks:
     1.  **Latent correctness bug:** performance/costs bucket shows at 06:00 local (UTC+7 in practice) while shift-alignment buckets at 06:00 UTC — a 7-hour disagreement on which operational day a show belongs to. Today this is masked because all studios are in `Asia/Bangkok`; it diverges the moment a studio is in any other zone, and is already incorrect for any non-browser caller (scheduled exports, server jobs).
     2.  **Client-clock dependence:** all three approaches ultimately tie a **studio-intrinsic** window to whoever is *viewing* it (the browser's clock). The operational day is a property of the studio's physical location, not the viewer's device — so a traveling manager, a cross-border VA, or any headless caller produces wrong windows. PR #205's explicit-instant contract is the cleanest of the three (no server-side tz math, no offset derivation) and is a good reference shape for the eventual server-authoritative util, but it is still viewer-clock-driven.
 *   **Concrete instance — task report metrics (PR #205, June 2026):** midnight shows starting before 06:00 were displayed on the performance dashboard but excluded from task reports, because the report builder clamped to `00:00–23:59` calendar days instead of the `06:00→05:59` operational window. PR #205 fixed this by having the FE send the operational-day window as explicit ISO instants and deleting the BE's server-local `new Date(\`${dateStr}T00:00:00\`)` string-munging entirely. This removed the worst (server-host-locale) variant, but the window is still resolved from the viewer's browser clock — the studio-timezone-as-config target below is what makes it authoritative.
-*   **Target:** required `Studio.timezone` and `Studio.operationalDayStartHour` columns consumed by **one** shared BE timezone-boundary utility (proper IANA conversion, not naive `setHours`), retiring `deriveClientOffsetMs`, `ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC`, and the client-supplied `window_start`/`window_end` contract in favor of server-authoritative resolution. Scene QC promotes `Studio.timezone` first because a signed daily confirmation requires stable shared scope; the start hour remains the shared constant `06:00` until the broader configuration is promoted.
+*   **Target:** required `Studio.timezone` and `Studio.operationalDayStartHour` columns consumed by **one** shared BE timezone-boundary utility (proper IANA conversion, not naive `setHours`), retiring `deriveClientOffsetMs`, `ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC`, and the client-supplied `window_start`/`window_end` contract in favor of server-authoritative resolution. Scene QC's daily confirmation needs the same stable shared scope today, but ships against a hardcoded shared operational-timezone constant (`Asia/Bangkok`) rather than promoting this column early — its IANA/DST-aware window-resolution utility already takes a timezone string as a parameter, so swapping the constant for this column later is additive, not a rewrite. The start hour remains the shared constant `06:00` until the broader configuration is promoted.
 
 ### 7. Mechanic Requirement Enforcement (Future)
 
@@ -87,20 +87,20 @@ This document unifies three previously scattered ideation tracks:
 
 ### 9. Scene QC Taxonomy Governance
 
-Scene QC Stage 1 records Pass, Minor, or Fail with required Designer feedback for Minor and Fail. It also pins `GRAPHIC_BG` or `REAL_BACKDROP` on each Scene Profile revision. Structured element/defect findings and user-managed taxonomy are deferred.
+Scene QC now ships one organization-wide element/defect catalog. Built-in options follow the source functional specification; Designer, Manager, and Admin may add shared custom options and retire custom options from future use. Findings snapshot their keys and labels, and confirmed-review comments/corrections are append-only. The note is optional because structured findings carry the required Minor/Fail classification.
 
-The eventual configuration must support:
+This is deliberately **not** a Studio setting today:
 
-- a shared system catalog of stable QC element and defect codes;
-- optional studio-scoped additions or applicability overrides;
-- explicit governance for which roles can create, update, or retire entries;
-- retirement rather than deletion so historical findings remain readable;
-- stable labels or label snapshots for confirmed historical records; and
-- centralized counting and labeling behavior for reports.
+- there is one Studio;
+- QC standards and learned issue vocabulary should normally be shared within the organization; and
+- adding Studio ownership before a real divergence exists would complicate management and reporting without solving a current problem.
 
-The scope decision remains open between fully shared, fully studio-scoped, and hybrid shared-plus-studio taxonomy. The hybrid shape is the leading option because it preserves cross-studio reporting consistency while allowing local scene vocabulary.
+Keep two future controls in this settings track so they are not lost when the Studio Settings surface is designed:
 
-The functional specification's two-axis element/defect vocabulary and optional related element are the seed candidate. Promote this configuration slice when Scene QC Stage 3 begins and its shared-versus-studio governance is agreed; free text is operational context, not a replacement taxonomy-discovery mechanism.
+1. **Taxonomy scope:** introduce Studio-specific overrides only after a second Studio exists and a concrete option is proven not to be shareable. Preserve the organization catalog as the default.
+2. **Designer management policy:** add an explicit Scene QC setting that allows or excludes the `DESIGNER` role from managing issue options. `MANAGER` and `ADMIN` always retain management access. The default should preserve current behavior (Designer allowed) because Designer owns the QC process today.
+
+These controls must ship with their settings UI and authorization enforcement in the same change. Do not add hidden configuration, per-Studio taxonomy columns, or a general Studio Settings page solely for the current single-Studio workflow.
 
 ---
 
@@ -231,7 +231,7 @@ const hasModerationTask = tasks.some(task => {
 
 This consolidated topic should be promoted to a PRD and scheduled for execution when:
 1.  **High-severity False Positives:** The false alarms on the task readiness panel (e.g. missing moderation for `"Moderator Workflow"` tasks) cause significant user confusion.
-2.  **Multi-Region Onboarding:** A new studio is onboarded that does not use English text in templates (making `/moderation/i` useless) or requires a different operational day start hour. The Scene QC implementation plan already owns the prerequisite to add an explicit canonical timezone for every Studio.
+2.  **Multi-Region Onboarding:** A new studio is onboarded that does not use English text in templates (making `/moderation/i` useless), requires a different operational day start hour, or needs a timezone other than Scene QC's current hardcoded `Asia/Bangkok` constant. Scene QC's window-resolution utility is already IANA/DST-aware and timezone-parameterized, so this promotion is limited to adding the column, backfilling it, and passing its value in — not building new timezone-conversion logic.
 3.  **Studio Settings Dashboard Epic:** The product roadmap schedules a general **Studio Settings and Preferences UI** phase.
 4.  **Operational-day drift becomes user-visible:** surfaces disagree on the same window (e.g. PR #205's report-vs-dashboard mismatch), or the performance-vs-shift-alignment boundary disagreement (gap §6) produces a wrong-day bucket in production. Each interim per-surface patch raises the cost of *not* unifying on a studio timezone.
 5.  **Mechanic enforcement requested (§7):** product defines a concrete standard for "which mechanics a show requires" (even for one client/show-standard), or repeated account-manager sign-off requests for the same client signal the manual conversation should become configuration.

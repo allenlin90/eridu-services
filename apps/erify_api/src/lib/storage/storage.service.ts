@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -58,7 +58,7 @@ export class StorageService {
       uploadMethod: 'PUT',
       uploadHeaders: { contentType: input.contentType },
       objectKey: input.objectKey,
-      fileUrl: this.buildPublicFileUrl(input.objectKey),
+      fileUrl: this.resolvePublicFileUrl(input.objectKey),
       expiresInSeconds,
     };
   }
@@ -70,6 +70,57 @@ export class StorageService {
     const safeActorId = this.sanitizePathComponent(actorId);
     const safeName = this.sanitizeFileName(fileName);
     return `${safeUseCase}/${safeActorId}/${date}/${randomPart}-${safeName}`;
+  }
+
+  /**
+   * The exact transform `generateObjectKey` applies to an actor id before
+   * embedding it as a key path segment. Exposed so a write path that needs to
+   * verify a client-supplied object key was actually issued for the current
+   * actor can compute the expected segment without duplicating (and risking
+   * drift from) the sanitization rule.
+   */
+  sanitizeActorIdForObjectKey(actorId: string): string {
+    return this.sanitizePathComponent(actorId);
+  }
+
+  /**
+   * Confirms an object was actually uploaded and returns its real,
+   * R2-observed content type and size. Returns `null` when the object does
+   * not exist (an unusable or forged key). A write path that accepts a
+   * client-supplied object key must call this and persist the returned
+   * values -- never the client's claimed `mime_type`/`file_size` -- so a
+   * caller cannot register a nonexistent object or misdeclare what it is.
+   */
+  async headObject(objectKey: string): Promise<{ contentType: string; contentLength: number } | null> {
+    const endpoint = this.getRequiredConfig('R2_ENDPOINT');
+    const bucket = this.getRequiredConfig('R2_BUCKET_NAME');
+    const parsedEndpoint = this.parseAndValidateR2Endpoint(endpoint);
+
+    try {
+      const result = await this.getS3Client(parsedEndpoint.origin).send(
+        new HeadObjectCommand({ Bucket: bucket, Key: objectKey }),
+      );
+      return {
+        contentType: result.ContentType ?? '',
+        contentLength: result.ContentLength ?? 0,
+      };
+    } catch (error) {
+      if (this.isNotFoundError(error)) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  private isNotFoundError(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+    const name = 'name' in error ? (error as { name?: unknown }).name : undefined;
+    const statusCode = '$metadata' in error
+      ? (error as { $metadata?: { httpStatusCode?: unknown } }).$metadata?.httpStatusCode
+      : undefined;
+    return name === 'NotFound' || statusCode === 404;
   }
 
   private getRequiredConfig(key: keyof Env): string {
@@ -95,7 +146,12 @@ export class StorageService {
     return parsed;
   }
 
-  private buildPublicFileUrl(objectKey: string): string {
+  /**
+   * The single canonical browser URL for an object key. Public so write paths
+   * that accept a client-supplied `file_url` can verify it against the key
+   * instead of trusting it (Scene Profile save).
+   */
+  resolvePublicFileUrl(objectKey: string): string {
     const publicBaseUrl = this.configService.get('R2_PUBLIC_BASE_URL', { infer: true });
     if (!publicBaseUrl || typeof publicBaseUrl !== 'string') {
       throw HttpError.internalServerError(
@@ -103,6 +159,42 @@ export class StorageService {
       );
     }
     return `${this.trimEndSlashes(publicBaseUrl)}/${this.encodeObjectKey(objectKey)}`;
+  }
+
+  /**
+   * Best-effort inverse of {@link resolvePublicFileUrl}: strips the
+   * configured public base and decodes each path segment back to an object
+   * key. Returns `null` (never throws) when `fileUrl` does not sit under
+   * `R2_PUBLIC_BASE_URL` -- an env change, a legacy asset, or an
+   * externally-pasted URL. Callers must treat `null` as "provenance
+   * unavailable", not as a validation failure; `fileUrl` remains the durable
+   * render source regardless. See Scene QC Child PR 3 breakdown OQ-1.
+   */
+  deriveObjectKeyFromPublicUrl(fileUrl: string): string | null {
+    const publicBaseUrl = this.configService.get('R2_PUBLIC_BASE_URL', { infer: true });
+    if (!publicBaseUrl || typeof publicBaseUrl !== 'string') {
+      return null;
+    }
+
+    const normalizedBase = `${this.trimEndSlashes(publicBaseUrl)}/`;
+    if (!fileUrl.startsWith(normalizedBase)) {
+      return null;
+    }
+
+    const encodedKey = fileUrl.slice(normalizedBase.length);
+    if (!encodedKey) {
+      return null;
+    }
+
+    try {
+      return encodedKey
+        .split('/')
+        .map((segment) => decodeURIComponent(segment))
+        .join('/');
+    } catch {
+      // Malformed percent-encoding (e.g. a bare `%`) -- not a derivable key.
+      return null;
+    }
   }
 
   private sanitizeFileName(fileName: string): string {

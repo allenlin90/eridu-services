@@ -34,6 +34,7 @@
 | [Task-Input Fact Binding](./TASK_INPUT_FACT_BINDING.md)                                              | ✅ Phase 4    | Fact-key template bindings, target hydration, priority-gated extraction pipeline and auditing |
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                                                | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries                              |
 | [MCP Server](./MCP_SERVER.md)                                                                        | ✅ Foundation | Private in-cluster MCP entrypoint with narrow read-only show/task lookup tools                       |
+| [Scene QC](./SCENE_QC.md)                                                                             | ✅ Phase 5    | Persisted Show-level scene review, daily confirmation, records, and manager report                   |
 | [Studios Internal Read Traffic Hardening](../../erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md) | ✅ Ops        | Internal-read burst handling, query cancellation, and readBurst throttle coverage                    |
 | [DB Migration Policy](../../../docs/engineering/DB_MIGRATION_POLICY.md)                              | ✅ Ops        | Canonical migration governance, tool-first generation, and branch-local scoping rule                 |
 

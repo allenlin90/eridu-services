@@ -18,6 +18,10 @@ function createPrismaServiceMock() {
       deleteMany: jest.fn(),
       createMany: jest.fn(),
     },
+    taskTemplateSceneQcEvidenceRef: {
+      deleteMany: jest.fn(),
+      createMany: jest.fn(),
+    },
     clientMechanic: {
       findMany: jest.fn(),
     },
@@ -444,6 +448,126 @@ describe('taskTemplateRepository', () => {
       await expect(
         repository.update({ uid: 'ttpl_1' }, { currentSchema: templateData.currentSchema } as any),
       ).rejects.toThrow('Cannot link mechanic refs: template has no client binding');
+    });
+  });
+
+  describe('scene QC evidence ref syncing', () => {
+    function buildTemplate(items: unknown[], snapshotItems: unknown[] = items) {
+      return {
+        id: BigInt(1),
+        uid: 'ttpl_1',
+        name: 'Template 1',
+        clientId: BigInt(5),
+        currentSchema: { items },
+        snapshots: [
+          { id: BigInt(10), version: 1, schema: { items: snapshotItems } },
+        ],
+      };
+    }
+
+    it('writes one ref row per field marked evidence_purpose: scene_qc, keyed by the v1 field key', async () => {
+      const items = [
+        { id: 'fld_1', key: 'scene_photo', type: 'file', label: 'Scene photo', evidence_purpose: 'scene_qc', validation: { accept: 'image/*' } },
+        { id: 'fld_2', key: 'notes', type: 'text', label: 'Notes' },
+      ];
+      const templateData = buildTemplate(items);
+      prisma.taskTemplate.create.mockResolvedValue(templateData);
+
+      await repository.create(templateData as any);
+
+      expect(prisma.taskTemplateSceneQcEvidenceRef.deleteMany).toHaveBeenCalledWith({
+        where: { templateId: BigInt(1), snapshotId: BigInt(10) },
+      });
+      expect(prisma.taskTemplateSceneQcEvidenceRef.createMany).toHaveBeenCalledWith({
+        data: [{ templateId: BigInt(1), snapshotId: BigInt(10), fieldKey: 'scene_photo', label: 'Scene photo' }],
+        skipDuplicates: true,
+      });
+    });
+
+    it('resolves the v2 field key as item.id, not item.key', async () => {
+      const items = [
+        {
+          id: 'fld_abcdefghij',
+          key: 'scene_photo',
+          type: 'file',
+          label: 'Scene photo',
+          evidence_purpose: 'scene_qc',
+          validation: { accept: 'image/*' },
+        },
+      ];
+      const templateData = {
+        id: BigInt(1),
+        uid: 'ttpl_1',
+        name: 'Template 1',
+        clientId: BigInt(5),
+        currentSchema: {
+          schema_version: 2,
+          schema_engine: 'task_template_v2',
+          items,
+        },
+        snapshots: [
+          {
+            id: BigInt(10),
+            version: 1,
+            schema: { schema_version: 2, schema_engine: 'task_template_v2', items },
+          },
+        ],
+      };
+      prisma.taskTemplate.create.mockResolvedValue(templateData);
+
+      await repository.create(templateData as any);
+
+      expect(prisma.taskTemplateSceneQcEvidenceRef.createMany).toHaveBeenCalledWith({
+        data: [{ templateId: BigInt(1), snapshotId: BigInt(10), fieldKey: 'fld_abcdefghij', label: 'Scene photo' }],
+        skipDuplicates: true,
+      });
+    });
+
+    it('writes no rows and skips createMany entirely when no field carries evidence_purpose', async () => {
+      const items = [
+        { id: 'fld_1', key: 'notes', type: 'text', label: 'Notes' },
+      ];
+      const templateData = buildTemplate(items);
+      prisma.taskTemplate.create.mockResolvedValue(templateData);
+
+      await repository.create(templateData as any);
+
+      expect(prisma.taskTemplateSceneQcEvidenceRef.deleteMany).toHaveBeenCalledWith({
+        where: { templateId: BigInt(1), snapshotId: BigInt(10) },
+      });
+      expect(prisma.taskTemplateSceneQcEvidenceRef.createMany).not.toHaveBeenCalled();
+    });
+
+    it('scopes the delete-before-create to exactly this (templateId, snapshotId) pair, never touching other snapshots', async () => {
+      const items = [
+        { id: 'fld_1', key: 'scene_photo', type: 'file', label: 'Scene photo', evidence_purpose: 'scene_qc', validation: { accept: 'image/*' } },
+      ];
+      const templateData = buildTemplate(items);
+      prisma.taskTemplate.create.mockResolvedValue(templateData);
+
+      await repository.create(templateData as any);
+
+      const deleteCalls = prisma.taskTemplateSceneQcEvidenceRef.deleteMany.mock.calls;
+      expect(deleteCalls).toHaveLength(1);
+      expect(deleteCalls[0][0]).toEqual({ where: { templateId: BigInt(1), snapshotId: BigInt(10) } });
+    });
+
+    it('takes the snapshot-time label, not any later live-template label', async () => {
+      const snapshotItems = [
+        { id: 'fld_1', key: 'scene_photo', type: 'file', label: 'Old label at snapshot time', evidence_purpose: 'scene_qc', validation: { accept: 'image/*' } },
+      ];
+      const currentItems = [
+        { id: 'fld_1', key: 'scene_photo', type: 'file', label: 'New live label', evidence_purpose: 'scene_qc', validation: { accept: 'image/*' } },
+      ];
+      const templateData = buildTemplate(currentItems, snapshotItems);
+      prisma.taskTemplate.create.mockResolvedValue(templateData);
+
+      await repository.create(templateData as any);
+
+      expect(prisma.taskTemplateSceneQcEvidenceRef.createMany).toHaveBeenCalledWith({
+        data: [{ templateId: BigInt(1), snapshotId: BigInt(10), fieldKey: 'scene_photo', label: 'Old label at snapshot time' }],
+        skipDuplicates: true,
+      });
     });
   });
 });

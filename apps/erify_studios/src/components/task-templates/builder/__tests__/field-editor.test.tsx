@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { FieldEditor } from '../field-editor';
 import type { FieldItem } from '../schema';
+import { isImageOnlyAcceptRule } from '../schema';
 
 // happy-dom does not implement the pointer-capture / scroll APIs that Radix
 // Select relies on to open its listbox. Polyfill them locally so the
@@ -134,6 +135,126 @@ describe('fieldEditor', () => {
 
     expect(onUpdate).toHaveBeenCalledWith({
       validation: { require_reason: 'always' },
+    });
+  });
+
+  describe('scene QC evidence toggle', () => {
+    it('does not render the evidence toggle for a non-file field', () => {
+      render(<FieldEditor item={makeItem({ type: 'text' })} onUpdate={vi.fn()} />);
+      expect(screen.queryByText('Use as Scene QC evidence')).not.toBeInTheDocument();
+    });
+
+    it('renders the evidence toggle, unchecked, for a file field with an image-only accept rule', () => {
+      render(
+        <FieldEditor
+          item={makeItem({ type: 'file', validation: { accept: 'image/*' } })}
+          onUpdate={vi.fn()}
+        />,
+      );
+      const checkbox = screen.getByRole('checkbox', { name: /Use as Scene QC evidence/ });
+      expect(checkbox).not.toBeChecked();
+      expect(checkbox).toBeEnabled();
+      expect(screen.getByText(/Enable only for the screenshot that Scene QC reviewers should inspect/i)).toBeInTheDocument();
+    });
+
+    it('renders checked when the field already carries evidence_purpose: scene_qc', () => {
+      render(
+        <FieldEditor
+          item={makeItem({ type: 'file', evidence_purpose: 'scene_qc', validation: { accept: 'image/*' } })}
+          onUpdate={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('checkbox', { name: /Use as Scene QC evidence/ })).toBeChecked();
+      expect(screen.getByText('Shared with Scene QC')).toBeInTheDocument();
+      expect(screen.getByText(/Manager Review approval is not required/i)).toBeInTheDocument();
+    });
+
+    it('disables the toggle for a mechanic field, with the mechanic-specific reason', () => {
+      render(
+        <FieldEditor
+          item={makeItem({
+            type: 'file',
+            validation: { accept: 'image/*' },
+            mechanic_ref: { client_id: 'client_1', mechanic_id: 'cmech_1', content_revision: 1 },
+          })}
+          onUpdate={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('checkbox', { name: /Use as Scene QC evidence/ })).toBeDisabled();
+      expect(screen.getByText('Mechanic fields cannot be Scene QC evidence.')).toBeInTheDocument();
+    });
+
+    it('disables the toggle when the accept rule is not image-only, with the accept-specific reason', () => {
+      render(
+        <FieldEditor
+          item={makeItem({ type: 'file', validation: { accept: 'image/*,.pdf' } })}
+          onUpdate={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('checkbox', { name: /Use as Scene QC evidence/ })).toBeDisabled();
+      expect(screen.getByText('Select image-only file types below to allow Scene QC evidence.')).toBeInTheDocument();
+    });
+
+    it('turns evidence_purpose on when the toggle is clicked', async () => {
+      const user = userEvent.setup();
+      const onUpdate = vi.fn();
+      render(
+        <FieldEditor
+          item={makeItem({ type: 'file', validation: { accept: 'image/*' } })}
+          onUpdate={onUpdate}
+        />,
+      );
+
+      await user.click(screen.getByRole('checkbox', { name: /Use as Scene QC evidence/ }));
+
+      expect(onUpdate).toHaveBeenCalledWith({ evidence_purpose: 'scene_qc' });
+    });
+
+    it('clears evidence_purpose when the field type changes away from file', async () => {
+      const user = userEvent.setup();
+      const onUpdate = vi.fn();
+      render(
+        <FieldEditor
+          item={makeItem({ type: 'file', evidence_purpose: 'scene_qc', validation: { accept: 'image/*' } })}
+          onUpdate={onUpdate}
+        />,
+      );
+
+      await user.click(screen.getByRole('combobox', { name: 'Type' }));
+      await user.click(await screen.findByRole('option', { name: 'Text' }));
+
+      expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'text',
+        evidence_purpose: undefined,
+      }));
+    });
+
+    it('clears evidence_purpose when the accept rule stops being image-only', async () => {
+      const user = userEvent.setup();
+      const onUpdate = vi.fn();
+      render(
+        <FieldEditor
+          item={makeItem({ type: 'file', evidence_purpose: 'scene_qc', validation: { accept: 'image/*' } })}
+          onUpdate={onUpdate}
+        />,
+      );
+
+      const acceptGroup = screen.getByText('Allowed File Types').closest('div') as HTMLElement;
+      await user.click(within(acceptGroup).getByRole('combobox'));
+      // Deselecting the only selected option ("Image") empties `accept`,
+      // which is no longer an image-only rule.
+      await user.click(await screen.findByRole('option', { name: 'Image' }));
+
+      expect(onUpdate).toHaveBeenCalledWith({
+        validation: { accept: undefined },
+        evidence_purpose: undefined,
+      });
+    });
+
+    it('the client-side image-only-accept check agrees with the shared schema rule', () => {
+      expect(isImageOnlyAcceptRule('image/*')).toBe(true);
+      expect(isImageOnlyAcceptRule('image/*,.pdf')).toBe(false);
+      expect(isImageOnlyAcceptRule(undefined)).toBe(false);
     });
   });
 });

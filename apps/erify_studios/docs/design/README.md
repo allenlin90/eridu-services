@@ -9,7 +9,6 @@ Design/proposal/in-progress documents for `erify_studios`.
 3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
 4. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — ⏸️ Deferred Phase 5 reference (revisit for Client Portal)
 5. [Show-Level Issue Ownership](../../../erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md) — 📐 Cross-app Phase 5 item 8 design locked for implementation
-6. [Scene QC Implementation Plan](../../../erify_api/docs/design/SCENE_QC_IMPLEMENTATION_PLAN.md) — 📐 Cross-app replacement plan for the PR #319 Scene Review workspace
 
 ## Note
 

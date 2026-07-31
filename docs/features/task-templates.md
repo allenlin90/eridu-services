@@ -143,6 +143,7 @@ The v2 schema decouples editor handle, content storage key, and canonical report
 | `id`               | —                   | stable `fld_...` field identity       | frozen               | **v2 storage key**       | unused                                    |
 | `shared_field_key` | —                   | link to Layer 0                       | frozen               | —                        | v2 shared descriptor base                 |
 | `system_fact_key`  | —                   | closed operational fact binding       | frozen on authored fields; per-target hydrated keys live in `task.content` and are recomputed at render and submission time until the task is `COMPLETED`/`CLOSED` | drives target-scoped hydration in PR 12 | read by PR 12 extractors; task reports project platform-performance bindings from the extracted `ShowPlatform` columns (not content) |
+| `evidence_purpose` | —                   | marks an image field for a named downstream workflow | frozen; snapshot save projects a lookup row | the upload remains normal `task.content` at the engine-routed field key | unused by Task Reports; Scene QC resolves the marked screenshot independently |
 | `standard`         | —                   | legacy v1 canonical flag              | frozen               | —                        | v1 shared descriptor branch               |
 | `group`            | —                   | binds field to a loop id              | frozen               | —                        | v2 shared/template-local loop descriptor segment |
 | `type`             | locked at creation  | must match Layer 0 if shared          | frozen               | drives content validator | drives column type                        |
@@ -164,6 +165,7 @@ The template schema isn't only a storage contract — it also drives what the us
 | `group` + `metadata.loops[]`   | Loop card grouping; loop reorder by position; loop name/duration edit  | Loop tabs + Previous/Next nav; live-loop indicator from `show.start_time`  | All loops visible at once (no tab filtering) |
 | `shared_field_key` (canonical link) | Shared-field picker; locks shared key/type once linked                  | No direct UX effect beyond engine-routed storage                           | No direct UX effect                          |
 | `system_fact_key`              | Searchable "Auto-fill record field" picker (with info-icon tooltip); selecting a binding sets the compatible field type from `@eridu/api-types/task-management`; each fact key can appear once per template | At render time, the operator task form expands the bound field into one input per assigned `ShowCreator` / `ShowPlatform` (PR 12.0.4); keys without an active target are marked `binding_stale` and rendered read-only | PR 12.0.5+ extractors read the hydrated keys and write to indexed columns |
+| `evidence_purpose`             | Persistent Scene QC guidance on eligible image fields; enabled state is highlighted and remains visible as a field-card badge | The operator uses the normal file-upload control; submission stores only the screenshot URL and creates no Scene QC reference row | Task Review is unchanged; the separate Scene QC workspace resolves the marked field without waiting for Manager Review approval |
 | `standard`                     | Legacy v1 canonical link only                                          | Legacy v1 snapshots remain readable                                        | Legacy v1 snapshots remain readable          |
 | `id`                           | dnd-kit drag handle stability and v2 content key                       | React-hook-form field name; IndexedDB draft key component                  | Same as execution                            |
 | `task_type` (envelope-level)   | Mode selector affecting which template-type-specific rules apply       | Determines submission-window enforcement (SETUP before show, ACTIVE after) | Visible as a chip                            |
@@ -218,6 +220,28 @@ A **mechanic** is a client-owned reusable moderation instruction (`ClientMechani
 - **`TaskTemplateMechanicRef`** is a denormalized link table (`template_id` / `snapshot_id` ↔ `mechanic_id` + `group`), written on template save. Coverage resolvers (PR 20.6/20.7) query this table directly — never a JSONB scan of `currentSchema`.
 - **Matrix view forces Cards on mobile.** The Loop × Mechanic matrix is a wide grid; small viewports render Cards only.
 
+## Explicit Evidence Designation (`evidence_purpose`)
+
+A `file` field can be marked `evidence_purpose: 'scene_qc'` to explicitly designate its uploads as Scene QC evidence — the Scene QC evidence resolver (Child PR 3) reads ONLY fields carrying this marker, never a filename heuristic or a recursive URL scan of `task.content`.
+
+```jsonc
+// FieldItemBase.evidence_purpose (present on both v1 and v2 field items)
+{
+  "type": "file",
+  "validation": { "accept": "image/*" },
+  "evidence_purpose": "scene_qc"
+}
+```
+
+- **Lives on `FieldItemBaseSchema`, not v2-only.** Evidence designation is schema-version-agnostic, and the cutover backfill must bind existing v1 snapshots too — unlike `mechanic_ref`'s eventual v2-first direction, this one field-attribute intentionally applies to both engines.
+- **Requires a strictly image-only `validation.accept` rule.** `image/*,.pdf` is rejected — the resolver would otherwise have to silently drop a non-image upload at review time, exactly the "arbitrary field became evidence" failure the explicit binding removes. See `isImageOnlyAcceptRule()` in `template-definition.schema.ts`.
+- **The Builder presents a cross-workflow contract, not a hidden technical flag.** Eligible image fields show persistent guidance explaining that uploads also appear in the separate Scene Review workspace, that Manager Review approval is not required, and that ordinary Task submission behavior is unchanged. The enabled state is highlighted in the editor and remains visible as a `Scene QC` field-card badge.
+- **Task submission never creates evidence-reference rows.** A snapshot-creating Task Template save projects the marked field into `TaskTemplateSceneQcEvidenceRef`; a later Task upload only stores the image URL under the snapshot-defined content key. This keeps authoring intent separate from submitted data.
+- **`TaskTemplateSceneQcEvidenceRef`** is a denormalized projection (`template_id` / `snapshot_id` ↔ `field_key` + snapshot-time `label`), written by `TaskTemplateRepository.syncSceneQcEvidenceRefsForTemplate` on every snapshot-creating template save — mirrors `syncMechanicRefsForTemplate`, but `snapshotId` is REQUIRED (no `currentSchema`-only draft row set), since the resolver only ever joins through a Task's pinned snapshot.
+- **Historical Tasks require a one-time cutover binding.** Deploying the projection table does not rewrite immutable snapshots or replay template saves. The Scene QC backfill marks the current template for future snapshots and inserts reference rows for reviewed historical snapshots without changing existing `Task.content`.
+- **Governed by existing Task Template permissions.** Designating a field as evidence does not introduce a new authorization boundary; it rides `StudioTaskTemplateController`'s existing write-route roles.
+- See [Scene QC](./scene-qc.md) for the full Scene QC evidence-binding design and [`apps/erify_api/docs/SCENE_QC.md`](../../apps/erify_api/docs/SCENE_QC.md) for the evidence-resolution contract.
+
 ## Downstream Consumers
 
 | Consumer                            | What it reads                                                      | Reference                                                                                                                                    |
@@ -226,6 +250,7 @@ A **mechanic** is a client-owned reusable moderation instruction (`ClientMechani
 | Studio Task Action Sheet (reviewer) | `task.snapshotSchema`, `task.content` (no loop filtering)          | [MODERATION_WORKFLOW.md](../../apps/erify_studios/docs/MODERATION_WORKFLOW.md)                                                               |
 | Material asset uploads              | engine-routed content key for file-typed items                     | [JSON_FORM_SUBMISSION_UPLOAD_FLOW.md](../../apps/erify_studios/docs/JSON_FORM_SUBMISSION_UPLOAD_FLOW.md)                                     |
 | Task Submission Reporting           | snapshot field catalog, descriptor helper, content-key helper      | [task-submission-reporting feature doc](./task-submission-reporting.md), [BE design](../../apps/erify_api/docs/TASK_SUBMISSION_REPORTING.md) |
+| Scene QC                             | explicit snapshot evidence refs joined to the Task's submitted image value | [Scene QC feature doc](./scene-qc.md), [backend reference](../../apps/erify_api/docs/SCENE_QC.md) |
 
 ## Version Coexistence
 
@@ -280,6 +305,8 @@ Feature-specific artifact list:
 | Shared schema skill          | [.agents/skills/shared-api-types/SKILL.md](../../.agents/skills/shared-api-types/SKILL.md)                                                           | `template-definition.schema.ts` or task-management exports change             |
 | Shared schema source         | [packages/api-types/src/task-management/template-definition.schema.ts](../../packages/api-types/src/task-management/template-definition.schema.ts) | Field item shape, validation, or schema engine envelope changes               |
 | Seed                         | [apps/erify_api/prisma/seed.ts](../../apps/erify_api/prisma/seed.ts)                                                                               | New canonical patterns; deprecation of old patterns (e.g., `_l2` workarounds) |
+| Scene QC evidence binding    | [docs/features/scene-qc.md](./scene-qc.md)                                                                                                          | `evidence_purpose` binding rules, evidence resolver scope change              |
+| Upload presign skill         | [.agents/skills/file-upload-presign/SKILL.md](../../.agents/skills/file-upload-presign/SKILL.md)                                                    | Scene Profile / Scene Reference upload consumer changes                       |
 
 **Definition of done for refactor/redesign PRs in this area**: every artifact above either has its update committed in the same PR, or has an explicit "no change needed" line in the PR description. Reviewers should treat a missing update as a blocking finding.
 
@@ -293,3 +320,5 @@ Feature-specific artifact list:
 - [x] Builder UX (drag-and-drop, live preview, clone-loop)
 - [x] Snapshot-driven downstream readers (form, uploader, reporting)
 - [x] System-admin cross-studio template management
+- [x] Explicit Scene QC evidence designation (`evidence_purpose`) with immutable snapshot projection
+- [x] Persistent, highlighted Builder guidance for Scene QC's cross-workflow evidence contract

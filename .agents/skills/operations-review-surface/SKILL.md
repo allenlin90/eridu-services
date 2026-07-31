@@ -15,7 +15,7 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 - **Container** (composition, <200 LOC): [`features/show-run-review/components/show-run-summary.tsx`](../../../apps/erify_studios/src/features/show-run-review/components/show-run-summary.tsx)
 - **View model hook**: [`components/show-run-summary/use-show-run-summary.ts`](../../../apps/erify_studios/src/features/show-run-review/components/show-run-summary/use-show-run-summary.ts)
 - **Generic tab panel**: [`components/show-run-summary/show-run-review-tab-panel.tsx`](../../../apps/erify_studios/src/features/show-run-review/components/show-run-summary/show-run-review-tab-panel.tsx)
-- **Operational-day window math**: [`lib/operational-day-range.ts`](../../../apps/erify_studios/src/lib/operational-day-range.ts) + [`features/show-run-review/lib/show-run-review-date-range.ts`](../../../apps/erify_studios/src/features/show-run-review/lib/show-run-review-date-range.ts)
+- **Operational-day window math**: [`lib/operational-day-range.ts`](../../../apps/erify_studios/src/lib/operational-day-range.ts) + [`features/show-run-review/lib/show-run-review-date-range.ts`](../../../apps/erify_studios/src/features/show-run-review/lib/show-run-review-date-range.ts) (FE-owned, read-only surfaces) — server-authoritative counterpart: [`scene-qc-operational-window.util.ts`](../../../apps/erify_api/src/capabilities/scene-qc/scene-qc-operational-window.util.ts)
 - **Summary vs paginated sub-resource queries**: [`features/shows/api/get-show-run-review-summary.ts`](../../../apps/erify_studios/src/features/shows/api/get-show-run-review-summary.ts) + [`get-show-run-review-paginated.ts`](../../../apps/erify_studios/src/features/shows/api/get-show-run-review-paginated.ts)
 - **Merged-dataset review reference**: [`routes/studios/$studioId/task-review/index.tsx`](../../../apps/erify_studios/src/routes/studios/$studioId/task-review/index.tsx)
 - **Task QC evidence viewer**: [`features/tasks/components/task-qc-review-sheet.tsx`](../../../apps/erify_studios/src/features/tasks/components/task-qc-review-sheet.tsx)
@@ -26,6 +26,8 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 **Use**: a studio review screen scoped to an operational day/range that summarizes already-extracted operational facts and drills into them across tabs; adding a tab or filter to an existing Operations surface; a new downstream read surface over the same indexed columns (costs, analytics).
 
 **Don't use**: single-table list routes → [`table-view-pattern`](../table-view-pattern/SKILL.md). Card-based lists → [`studio-list-pattern`](../studio-list-pattern/SKILL.md). The **write** path (extraction) → [`fact-extraction-pipeline`](../fact-extraction-pipeline/SKILL.md). These surfaces are **read-only over extracted facts**; never write actuals from a review screen (see PR 12 §G — Operations review is upstream of economics).
+
+One narrow exception exists: a review capability may persist **its own** normalized decisions — Scene QC writes `SceneQcReview`, `SceneQcDailyConfirmation`, and their pinned children, and nothing else. It still never writes `Task`, `Show`, `ShowCreator`, `ShowPlatform`, actuals, or any lifecycle state. If a new surface needs to write outside its own tables, it is not a review surface.
 
 ## Lean summary + lazy sub-resources (HARD RULE)
 
@@ -54,9 +56,11 @@ route (validateSearch + summary query + operational-day range)
 - **The view-model hook owns** the lazy queries, the per-tab search/filter/pagination handlers (each resets its own page to 1), and the export workflow + `exportingTab` state. Presentation config (columns, copy, filter option lists) stays in the container.
 - **Column defs live in their own module** (`columns.tsx`), keyed by the API row type (`Summary['creators']['exceptions'][number]`), so the panel stays generic.
 
-## Operational-day window is FE-owned (06:00 → 05:59)
+## Operational-day window ownership
 
-The window math is on the **frontend**; the backend endpoint is timezone-agnostic and validates explicit bounds.
+Ownership depends on whether the surface **persists** the window. Read-only surfaces (`/task-review`, `/show-run-review`, `/costs`, `/performance`) keep the frontend-owned contract described below: the FE computes local `06:00 → next-day 05:59` bounds and sends absolute ISO-8601 strings; the endpoint is timezone-agnostic and validates explicit bounds. A surface that **persists** an operational-day-scoped decision must not accept client bounds at all: it takes a date-only `operational_date` and resolves the window server-side from a shared IANA-aware constant, returning `window_start` / `window_end` / `timezone` as provenance. Scene QC is the reference — see [`scene-qc-operational-window.util.ts`](../../../apps/erify_api/src/capabilities/scene-qc/scene-qc-operational-window.util.ts) and `SCENE_QC_OPERATIONAL_TIMEZONE` in `@eridu/api-types/scene-qc`. Do not migrate the read-only surfaces to this contract as a side effect; that is separate work.
+
+The window math for the read-only surfaces is on the **frontend**; the backend endpoint is timezone-agnostic and validates explicit bounds.
 
 - Compute local `06:00 → next-day 05:59` bounds via the shared `operational-day-range` / `show-run-review-date-range` utilities and serialize **absolute ISO-8601 strings** to the API. Do not send a date and let the backend guess the timezone.
 - The backend caps the window (e.g. 31 days) to bound in-memory aggregation; surface the returned validation message, don't pre-guess it.
@@ -124,7 +128,7 @@ Each tab's Export action exports **every matching row across the filter, not the
 
 These surfaces **report** the state of already-extracted `Show` / `ShowCreator` / `ShowPlatform` / `ShowPlatformViolation` columns. They never write them — actuals are populated upstream by the extraction pipeline on task approval. A review screen that mutates an actual is a layering violation (PR 12 §G). Corrections flow through resubmitted tasks (12.4.6), not through the review DataTable.
 
-Task Review exposes pre-confirmation task reads and actions only to `ADMIN`/`MANAGER`. Designer screenshot inspection belongs on the dedicated `/scene-review` route and read model, whose list/detail endpoints admit `DESIGNER`, `ADMIN`, and `MANAGER`. Scene Review stays read-only: selection, due-date edits, status actions, and bulk approval remain absent in the UI and guarded to `ADMIN`/`MANAGER` in the task API. Evidence review should remain screenshot-first and responsive; add future collaboration tools beside the evidence component rather than coupling them to image navigation.
+Task Review exposes pre-confirmation task reads and actions only to `ADMIN`/`MANAGER`. Designer scene inspection belongs on the dedicated `/scene-review` route, whose Scene QC read models and commands admit `DESIGNER`, `ADMIN`, and `MANAGER`. Scene QC is **not** read-only: it persists its own Show-level `PASS`/`MINOR`/`FAIL` outcomes, pinned evidence, and append-only daily confirmations. It still performs no task selection, due-date edit, status action, or bulk approval, and writes no Task or Show state — those remain absent from the UI and guarded to `ADMIN`/`MANAGER` in the task API. Evidence review stays screenshot-first and responsive.
 
 ## Checklist
 
@@ -145,7 +149,8 @@ Task Review exposes pre-confirmation task reads and actions only to `ADMIN`/`MAN
 - [ ] Role/enum filter options send the **persisted** value (lowercase `STUDIO_ROLE`, stored enum), not the UI label; a selector spanning two concepts (role vs `isDutyManager`) maps each via a co-located, unit-tested `to<Filter>QueryParams` translator
 - [ ] Per-tab CSV exports the full filtered set via one shared `runTabExport` helper + shared csv/download utils
 - [ ] No write to any actuals column from the review surface
-- [ ] Read-only review roles use the dedicated Scene Review evidence/detail endpoints without Task Review or mutation access
+- [ ] A review capability writes only its own normalized decision tables — never Task, Show, actuals, or lifecycle state
+- [ ] A surface that persists an operational-day-scoped decision resolves the window server-side from a date-only `operational_date`; only read-only surfaces send FE-computed bounds
 
 ## Related skills
 
