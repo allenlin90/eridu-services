@@ -22,10 +22,10 @@ export const SCENE_QC_EVIDENCE_BINDINGS: readonly SceneQcEvidenceBinding[] = [
     fieldKeys: ['fld_cmkmx9knubz'], // v2 field id (content key); label "Livestream_screenshot", key "field_1775188033306"
     note: 'The only `file`-type field in any active template as of 2026-07-30 (73 templates '
       + 'scanned; every other field is checkbox/number/textarea). Did not surface in the '
-      + '--report candidate scan because validation.accept is empty on this field (no '
-      + 'image-only restriction), not because it lacks image content -- the label '
-      + '"Livestream_screenshot" and required:true make it unambiguous. Confirmed with the '
-      + 'operator before binding.',
+      + 'initial --report candidate scan because validation.accept was empty. The '
+      + '"Livestream_screenshot" label and required:true made the operator-reviewed binding '
+      + 'unambiguous; its live Task Template contract was corrected through the existing '
+      + 'builder to validation.accept=image/* on 2026-07-31 before cutover.',
   },
 ];
 
