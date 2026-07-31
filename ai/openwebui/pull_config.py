@@ -4,7 +4,7 @@ import sys
 import urllib.request
 from urllib.error import HTTPError
 
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SYNCED_DIR = os.path.join(BASE_DIR, "synced")
 KNOWLEDGE_ID = "0f0de3c0-7168-4871-ab99-7ed95af8f953"
 FUNCTION_ID = "company_wiki_sync"
@@ -183,32 +183,53 @@ def main():
         )
     write_json("knowledge-collections.json", collections, indent=2)
 
-    skills_dir = os.path.join(SYNCED_DIR, "skills")
-    os.makedirs(skills_dir, exist_ok=True)
-    written_files = set()
-    skills = pulled["skills"]
-    for skill in skills:
+    write_json("skills-drift.json", build_skills_drift(pulled["skills"]), indent=2)
+
+
+def build_skills_drift(live_skills):
+    """Compare live skill state against ai/openwebui/skills/, the source of truth.
+
+    Skill *content* is not exported here. `ai/openwebui/skills/<id>.md` owns it, so
+    a second copy under `synced/` would be a duplicate free to drift from the
+    original. What this records instead is whether live still matches the repo,
+    and where it doesn't.
+    """
+    sys.path.insert(0, BASE_DIR)
+    from push_config import load_repo_skills  # noqa: PLC0415 - avoids a hard import cycle
+
+    repo = load_repo_skills()
+    entries = []
+
+    for skill in sorted(live_skills, key=lambda item: item.get("id") or ""):
         skill_id = skill.get("id")
-        # Repo-authored adapters live in ai/openwebui/skills/ and are the source
-        # of truth for their own content; re-exporting them here would create a
-        # second copy free to drift from it.
-        if skill_id in ("citation-escalation-contract", "platform-incentive-dispatch"):
+        local = repo.get(skill_id)
+        if local is None:
+            entries.append({"id": skill_id, "state": "live-only", "differs": ["*"]})
             continue
-        content = skill.get("content", "")
-        filename = f"{skill_id}.md"
-        filepath = os.path.join(skills_dir, filename)
-        with open(filepath, "w", encoding="utf-8") as file:
-            file.write(content)
-        written_files.add(filename)
+        differs = [
+            field
+            for field in ("name", "description")
+            if (skill.get(field) or "") != local[field]
+        ]
+        if (skill.get("content") or "").rstrip() != local["content"].rstrip():
+            differs.append("content")
+        entries.append(
+            {
+                "id": skill_id,
+                "state": "drifted" if differs else "in-sync",
+                "differs": differs,
+            }
+        )
 
-    for filename in os.listdir(skills_dir):
-        if filename.endswith(".md") and filename not in written_files:
-            if filename == "citation-escalation-contract.md":
-                continue
-            os.remove(os.path.join(skills_dir, filename))
-            print(f"Removed stale skill file: {filename}")
+    for skill_id in sorted(set(repo) - {item.get("id") for item in live_skills}):
+        entries.append({"id": skill_id, "state": "repo-only", "differs": ["*"]})
 
-    print(f"Saved {len(written_files)} skill files to synced/skills/")
+    drifted = [item["id"] for item in entries if item["state"] != "in-sync"]
+    print(
+        f"Recorded skill drift for {len(entries)} skills"
+        + (f"; {len(drifted)} not in sync: {', '.join(drifted)}" if drifted else "; all in sync")
+    )
+    return entries
 
 
 if __name__ == "__main__":

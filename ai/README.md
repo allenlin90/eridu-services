@@ -117,7 +117,7 @@ ai/
 │  └─ README.md
 ├─ openwebui/
 │  ├─ README.md
-│  ├─ workspace-models.example.json
+│  ├─ models/                     # Workspace Model manifests (source of truth)
 │  ├─ tool-access.example.json
 │  ├─ functions/
 │  │  ├─ README.md

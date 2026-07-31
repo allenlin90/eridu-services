@@ -1,8 +1,10 @@
-# Open WebUI Live Config Knowledge Base
+# Open WebUI Live Config Drift Snapshot
 
-Pulled directly from the deployed Open WebUI instance via its REST API (admin key, read-only calls per `openwebui-rest-api`/`openwebui-groups-permissions`/`openwebui-mcp-tool-integration` skills). No remote state was changed by the pull itself.
+Pulled directly from the deployed Open WebUI instance via its REST API (admin key, read-only calls per `openwebui-rest-api`/`openwebui-groups-permissions`/`openwebui-mcp-tool-integration` skills). No remote state is changed by the pull itself.
 
-This directory is the durable, git-tracked record of **what's actually configured on the live instance** — design, config, and setup for Open WebUI (and, by extension, the LiteLLM-backed assistants it serves). The example manifests one level up (`workspace-models.example.json`, `tool-access.example.json`) are illustrative templates and have drifted from the broader live role-specific roster — treat this directory, not those templates, as the current source of truth for the live setup.
+**This directory is not the source of truth and is not an edit surface.** `../skills/` owns skill content and `../models/` owns assistant configuration; the live instance is a projection of them, applied with `../push_config.py`. What this snapshot records is *what live currently looks like*, so drift from the repo is visible — see `skills-drift.json`.
+
+Everything below describes the live instance as of the last pull. Surfaces this repo does not yet own in Git (groups, tool-server connections, default permissions, knowledge collections) are still managed through the admin UI, and for those this snapshot remains the best available record.
 
 ## Files
 
@@ -12,7 +14,7 @@ This directory is the durable, git-tracked record of **what's actually configure
 | `groups.json` | `GET /api/v1/groups/` | All 11 groups with full `permissions` objects (migrated from the old 13-group Manager/Team-Lead/Member roster to a function-based structure — see Groups roster below) |
 | `tool-servers.json` | `GET /api/v1/configs/tool_servers` | The single registered MCP tool-server connection (`eridu_mcp`) and its group access grants |
 | `default-permissions.json` | `GET /api/v1/users/default/permissions` | Instance-wide default `UserPermissions` baseline |
-| `skills/*.md` | `GET /api/v1/skills/export` | Full content of 25 of the 26 live Open WebUI Skills (the "Eridu Brain"), one file per skill ID, verbatim including YAML frontmatter. The 26th, `citation-escalation-contract`, is tracked separately in `../skills/citation-escalation-contract.md` (repo-authored adapter, not duplicated here). |
+| `skills-drift.json` | `GET /api/v1/skills/export` | Per-skill comparison against `../skills/`, which owns the content: `in-sync`, `drifted` (someone edited it in the UI), `live-only` (not adopted into Git yet), or `repo-only` (never pushed), plus which fields differ. Content itself is deliberately not duplicated here — a second copy would be free to drift from the original. All 27 skills are `in-sync` as of this pull: `../skills/` was seeded by adopting live content verbatim, not by pushing repo content over it. |
 | `knowledge.json` | `GET /api/v1/knowledge/{id}` | The live "Company Wiki" knowledge collection (Phase 1 pilot) — `access_grants` (12: `Org - General` + all 11 pillar/finance/hr groups, all `read`). `files` is `null` here by design — that endpoint never populates it on `0.10.2` (see `ai/openwebui/functions/README.md` gotchas); see `knowledge-files.json` for the real file listing. |
 | `knowledge-files.json` | `GET /api/v1/knowledge/{id}/files` | Actual files attached to the Company Wiki collection — currently 2 (`shared.company-wiki-overview.md`, `shared.governance-ops.md`; each keyed by the document's frontmatter `id`, not its repo path). |
 | `functions.json` | `GET /api/v1/functions/id/{id}` + `.../valves` | The deployed `company_wiki_sync` Sync Pipe Function's metadata, active state, and valves (`api_key` redacted — see `ai/openwebui/.env`). Source content itself is not duplicated here; canonical source is `ai/openwebui/functions/sync-pipe.py`, applied via the deploy steps in `ai/openwebui/functions/README.md`. |
@@ -41,6 +43,25 @@ Real membership: only 3 of the 18 live users are group-assigned today — `Allen
 
 ## Assistants (Workspace Models) roster
 
+> **The prose roster below drifted from `models.json` in this same snapshot.** Seeding `../models/`
+> from the machine-readable export surfaced these mismatches — in every case the manifest matches
+> `models.json`, and this table is the wrong side:
+>
+> | Assistant | This table says | `models.json` actually has |
+> |---|---|---|
+> | `commerce-assistant` | + `Org - General` | no `Org - General` |
+> | `commerce-sales-assistant` | + `Org - General` | no `Org - General`; extra `Commerce - Operation` |
+> | `creator-service-assistant` | + `Org - General` | no `Org - General` |
+> | `eridu-hr-assistant` | + `Org - General` | no `Org - General`; extra `Management team` |
+> | `erisa-adp-assistant` | + `Org - General` | no `Org - General` |
+> | `management-assistant` | + `Org - General` | no `Org - General` |
+> | `performance-assistant` | + `Org - General` | no `Org - General` |
+> | `production-assistant` | + `Org - General`, `Erify - Offset` | `Admins` + `Erify - Onset` only |
+> | `scheduling-assistant` | + `Org - General`, `Erify - Onset` | `Commerce - Operation` + `Erify - Offset` |
+>
+> Whether the *intent* recorded in this prose is what should be live is an open question for a
+> human. Fix it by editing the manifests in `../models/` and pushing, not by editing this table.
+
 Model access grants were cross-checked against the `Group-Skills-revised17/7` sheet's per-group skill grants (a group should only read a model whose bound skills it already holds) — see `ERIQ_design.xlsx` sheets `Group-Skills-revised177`/`Group-Models`/`Skill-Models`. `Org - General` and `Admins` are treated as intentional broad-access baselines exempt from that check (kept as configured live, not narrowed).
 
 | Assistant ID | Display name | Skill IDs | Groups granted access |
@@ -65,7 +86,7 @@ Erify - Offset and Erify - Onset currently hold identical skill grants (`eu-esse
 
 - All assistant IDs referenced in the test plan (`commerce-assistant`, `commerce-sales-assistant`, `performance-assistant`, `production-assistant`, `scheduling-assistant`, `erisa-adp-assistant`) exist live and match this roster.
 - The org is three pillars — **Commerce**, **Erify**, **Erisa** — each now split by function rather than by Manager/Team-Lead/Member tier (Sales/Operation, Offset/Onset, Creator/Campaign), plus cross-cutting `Finance - Manager`, `HR - Manager`, `Org - General`, `Management team`, and `Admins`. This supersedes the tier-based "Business Unit Managers" framing the test plan describes — re-validate that plan's group assumptions before relying on it.
-- `ai/openwebui/README.md`, `workspace-models.example.json`, and `tool-access.example.json` describe a *generic* 3-assistant example and do not yet reflect this live 13-assistant / function-based structure — treat those as stale templates until someone folds this real structure back into canonical docs (a decision for the user, not made here).
+- `workspace-models.example.json` was a *generic* 3-assistant template that never reflected this live 13-assistant / function-based structure; it is superseded by the real per-assistant manifests in `../models/` and has been deleted. `tool-access.example.json` remains a template and still does not reflect live tool-server grants.
 
 ## Known live-config gaps (found during review)
 
@@ -82,11 +103,16 @@ These are discrepancies in the **live** Open WebUI/MCP config itself, observed w
 - **Still open, surfaced not resolved.** `commerce-assistant` already referenced skill id `affiliate-management` (no trailing hyphen, display name "Affiliate Management") before this pass; the CSV explicitly specified `affiliate-management-` (trailing hyphen, display name "Affiliate management ") for the same cell. Both IDs are real, distinct, live skills. Added the hyphenated one alongside the existing one rather than guessing which was the typo — `commerce-assistant` now carries both. Needs a human call on whether one is stale content that should be deleted, or whether the two are genuinely meant to coexist.
 - **Skill id `affiliate-management-` carries a trailing hyphen** (and its display name `Affiliate management ` a trailing space) at the source. `erisa-adp-assistant` and `eridu-brain` both reference the id exactly as `affiliate-management-`, so the synced file is named `skills/affiliate-management-.md` to match byte-for-byte — don't "clean up" the filename without also fixing the id in Open WebUI, or the assistant's `skillIds` reference breaks.
 - **Resolved.** Closed two single-skill gaps between a group's `Group-Skills-revised177` grants and an assistant it already had access to: added `Commerce - Operation` as a read grantee on the `adp-analysis` skill (matches its existing `commerce-assistant` access), and added `Finance - Manager` as a read grantee on the `0002` skill (matches its existing `management-assistant`/Finance Assistant access). Also added `Management team` as a read grantee on `eridu-management-assistant`, which previously had no group access besides `Admins` despite fully qualifying under the skill cross-check. `ERIQ_design.xlsx` updated to match (`Group-Skills-revised177` and `Group-Models` sheets).
-- **Still open, found not fixed.** `skills/talent-development-framework.md`'s live content has unrendered/squashed markdown tables (pipe-table syntax collapsed to run-on text) — this undoes what a prior commit's message describes as "restore markdown tables," implying that fix only edited this repo's local copy without pushing the corrected content back to the live skill via `POST /api/v1/skills/id/talent-development-framework/update`. The two have been out of sync since at least 2026-07-17. Needs a decision: re-push the corrected markdown to the live skill, or accept the squashed version as current truth.
+- **Still open, and worse than previously recorded.** `talent-development-framework`'s markdown tables are squashed (pipe-table syntax collapsed to run-on text) — but so is the repo copy. An earlier note here claimed the repo held a corrected version; checked directly, **both live and repo contain zero pipe-table lines**, so the "restore markdown tables" fix that a prior commit message describes is not present on either side. It needs re-doing from scratch, not re-pushing. `../push_config.py` now provides the push path once someone writes the fix.
+
+- **Still open, live-config quality.** Eight skills have an effectively empty API `description` (0–2 characters): `eu-essentials`, `communication-protocol`, `adp-analysis`, `sales-training`, `affiliate-management`, `affiliate-management-`, `loreal-brand-case`, `talent-development-framework`. Under on-demand loading the model sees only id + name + description before deciding whether to call `view_skill(id)`, so these skills are effectively unloadable unless `$mention`-ed explicitly. Writing them is a content decision for their owners, not something to auto-generate.
+
+- **Still open, needs a decision before the first access reconcile.** Enforcing derived skill grants (`push_config.py access --apply`) both widens and narrows current access. It **widens** because a group that can read a model gains explicit read on every skill that model binds — e.g. `Org - General` reads `eridu-brain`, so it gains read on all 17 of its skills including `financial-guardrails`, `finance-ops`, `hr-ops`, and `legal-process`. Those were already readable *through* the assistant, but an explicit grant also exposes them in the Workspace UI and to `$mention`. It **revokes** five grants no model implies: the public grant on `00000`, `0001`, `citation-escalation-contract`, and `core-principles`, plus `Erisa - Creator` on `affiliate-management` and `Commerce - Sales` on `loreal-brand-case`.
 - **Still open, platform bug.** `GET /api/v1/users/all` returns `groups: []` for every user regardless of actual membership — confirmed by cross-checking against `GET /api/v1/users/{id}` (per-user), which correctly returns e.g. `Kuntapol Cholaweksuwan` (`hr.os@eridu.co.th`) as a real `HR - Manager` member even though the bulk endpoint hid it. Don't trust the bulk endpoint's `groups` field for membership audits; use the per-user endpoint instead.
 - **Stale cached `access_grants` in `models.json`'s `company-wiki-pilot`.** `GET /api/v1/models/export` embeds a cached copy of the Company Wiki collection's `access_grants` (under `meta.knowledge[].access_grants`) that still lists old, pre-migration group UUIDs (`Commerce - Manager`, `Erify - Member`, `Commerce - Team-Lead`, `Erify - Team-Lead`, ...), while `knowledge.json` / `knowledge-collections.json` in the same snapshot correctly show the new 11-group roster for that collection. This is live backend staleness (the models export caches a stale grant copy), not caused by the pull — trust the `knowledge*.json` files for the collection's real grants, not the copy embedded in `models.json`.
 
 ## Handling
 - **Committed to git as the design/config/setup knowledge base for Open WebUI + LiteLLM.** This includes live internal group UUIDs and the full text of company operating docs (finance guardrails, HR policy, sales playbook, etc.) pulled from the "Eridu Brain" skills — kept intentionally, by decision, rather than redacted or excluded.
 - **Full-Context knowledge files are embedded in `models.json`.** A knowledge item attached to a model in *Full Context* mode (e.g. `00-escalation-guide.md` on `creator-service-assistant`) carries its full raw text in `models.json` via `meta.knowledge[].file`. So the "file content is not exported" note on `knowledge-collections.json` applies to the collection-metadata snapshot only — Full-Context attachment text does land here, by design (repo-owned creator ops content, not the excluded TikTok Academy material).
-- This is a **point-in-time pull, not a live sync.** Re-run the same read-only API calls (see `openwebui-rest-api`, `openwebui-groups-permissions`, `openwebui-mcp-tool-integration` skills) and overwrite these files whenever live config changes materially (new/changed assistant, group, tool-server connection, or skill content) so this knowledge base doesn't silently go stale.
+- This is a **point-in-time pull, not a live sync.** Re-run `python3 ai/openwebui/pull_config.py` whenever live config changes — and always in the same change as a `push_config.py --apply` — so the snapshot doesn't silently go stale.
+- **Do not edit files in this directory.** They are overwritten wholesale by the next pull. To change skill content edit `../skills/`; to change an assistant or its access edit `../models/`; then push.

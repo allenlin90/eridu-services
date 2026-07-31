@@ -20,6 +20,9 @@ Keep Open WebUI, LiteLLM, Better Auth, MCP services, and repo policy aligned as 
 | LiteLLM | LLM gateway, model aliases, provider routing, virtual keys, customer budgets, RPM/TPM limits |
 | `erify_api` MCP | Existing private operational MCP surface for read-only studio-scoped tools |
 | `.agents/skills/` | Canonical agent skills and repo implementation guidance |
+| `ai/openwebui/skills/` | **Source of truth** for Open WebUI skill content |
+| `ai/openwebui/models/` | **Source of truth** for Workspace Model manifests, including group access |
+| `ai/openwebui/synced/` | Drift snapshot of the live instance — read-only, never an edit surface |
 | `ai/` | Workspace policy manifests, import/export notes, LiteLLM references, budget-tier policy tables |
 
 ## Required source check
@@ -43,7 +46,7 @@ Before editing AI workspace files, read the relevant existing source:
 - Treat usage tracking as automatic: LiteLLM records forwarded users as customers as requests arrive, with no pre-provisioning or sync step. Budget-tier assignment is a separate, later governance step.
 - Apply per-user budget/rate policy at the LiteLLM customer/end-user layer.
 - On this Railway deployment, manage LiteLLM models, provider credentials, and company model aliases through the LiteLLM Admin UI ("Store Model in DB") or its equivalent Management API (see [litellm-admin-api](../litellm-admin-api/SKILL.md)); `config.yaml` is not conveniently exposed either way. Treat repo `ai/litellm/` files as reference/policy for that surface (or a future repo-managed config path), not an actively-applied config.
-- Use the stable company model aliases (`company-fast`, `company-balanced`, `company-reasoning`, `company-coding`) grouped into access groups (`company-general`, `company-power`, `company-admin`); do not invent a parallel alias taxonomy.
+- The stable company model aliases (`company-fast`, `company-balanced`, `company-reasoning`, `company-coding`, grouped into `company-general`, `company-power`, `company-admin`) are the intended taxonomy but **do not exist on the live LiteLLM instance** — verified via `GET /v1/models`, which returns only raw provider ids. Referencing one today fails with model-not-found. Use a verified live id until the aliases are actually created; do not invent a parallel taxonomy either.
 - Verify LiteLLM/Open WebUI capabilities against the deployed versions (LiteLLM `1.91.0`, Open WebUI `0.10.2` — both pinned) before presenting them as feasible; do not assume latest-docs behavior applies.
 - Keep provider API keys in Railway environment variables, not repo files.
 - Use the existing `erify_api` MCP entrypoint for operational MCP before proposing a separate MCP app.
@@ -65,10 +68,27 @@ When changing LiteLLM policy:
 
 ## Open WebUI decision path
 
+Open WebUI configuration is **Git-first**: `ai/openwebui/skills/` and `ai/openwebui/models/` are the
+source of truth and the live instance is a projection of them, applied with
+`ai/openwebui/push_config.py` and drift-checked with `ai/openwebui/pull_config.py`. A change made in
+the admin UI is drift to be reconciled, not a new version. Run
+[`.agents/workflows/openwebui-sync-delivery.md`](../../workflows/openwebui-sync-delivery.md) to
+deliver a change to both the instance and a PR.
+
+Route by surface:
+
+| Surface | Skill |
+|---|---|
+| Skill content | [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md) |
+| Assistant settings, bindings, access | [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md) |
+| Groups, permissions, grant reconcile | [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) |
+| New capability needing code | [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) |
+| Knowledge collections | [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) |
+
 When changing Open WebUI workspace policy:
 
 1. Define the assistant's business purpose.
-2. Choose a LiteLLM model alias, not a raw provider unless explicitly needed.
+2. Choose a base model verified to exist live (see the alias caveat above).
 3. If the capability needs new code (not just wiring an existing skill/knowledge/tool), use [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) to decide the mechanism (Function, Tool, Tool Server, or — rarely — a Pipelines worker) and where its source lives before writing anything.
 4. Attach only the skills, knowledge, and MCP tools required for the role.
 5. Check `.agents/skills/` before creating any new instruction content.
@@ -89,6 +109,7 @@ When changing MCP policy:
 ## Verification checklist
 
 - [ ] Durable policy lives in Git, not only in a UI.
+- [ ] `synced/` refreshed after any live change, and `skills-drift.json` shows no unexplained drift.
 - [ ] Secrets remain in Railway/env vars.
 - [ ] Open WebUI users map to LiteLLM customers/end users.
 - [ ] Existing `erify_api` MCP surface is respected.
@@ -99,6 +120,7 @@ When changing MCP policy:
 
 - [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — implementation details for eridu_auth acting as the OAuth2/OIDC identity server that Open WebUI (and future consumers) authenticate against
 - [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) — decides which mechanism (Function, Tool, Tool Server, or legacy Pipeline) a new Open WebUI capability should use, and where its source lives, before this skill's Open WebUI decision path attaches it to an assistant
+- [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md) — uploads, drift detection, and PR delivery for the Git-owned skill content this skill declares canonical
 - [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — endpoint reference and call mechanics for scripting Open WebUI configuration changes that this skill governs
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — groups/permissions/access-grant mechanics
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — MCP/tool-server registration mechanics

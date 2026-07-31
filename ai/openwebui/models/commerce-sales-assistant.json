@@ -1,0 +1,45 @@
+{
+  "id": "commerce-sales-assistant",
+  "name": "Commerce - Sales Assistant",
+  "base_model_id": "MiniMax-M3",
+  "is_active": true,
+  "description": "Assistant for the Commerce Sales team",
+  "system": null,
+  "params": {},
+  "capabilities": {
+    "file_context": true,
+    "vision": false,
+    "file_upload": false,
+    "web_search": false,
+    "image_generation": false,
+    "code_interpreter": false,
+    "terminal": false,
+    "citations": true,
+    "status_updates": true,
+    "builtin_tools": true
+  },
+  "builtin_tools": {
+    "code_interpreter": false,
+    "image_generation": false
+  },
+  "skill_ids": [
+    "core-principles",
+    "governance-ops",
+    "commerce",
+    "sales",
+    "eu-essentials",
+    "sales-training"
+  ],
+  "tool_ids": [],
+  "knowledge": [],
+  "access": {
+    "public": false,
+    "write_groups": [
+      "Admins"
+    ],
+    "read_groups": [
+      "Commerce - Operation",
+      "Commerce - Sales"
+    ]
+  }
+}

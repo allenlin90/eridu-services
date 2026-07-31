@@ -8,15 +8,31 @@ Open WebUI should be the user-facing AI workspace. It should provide a small set
 
 ## Files
 
+**Git is the source of truth.** `skills/` and `models/` own the live instance's skill content and
+assistant configuration; the live instance is a projection of them. A change made in the Open WebUI
+admin UI is drift to be reconciled, not a new version.
+
 | File | Purpose |
 |---|---|
-| `workspace-models.example.json` | Example assistant definitions for Workspace Models. |
+| `skills/` | **Source of truth** for Open WebUI skill content, one `<skill-id>.md` per skill. |
+| `models/` | **Source of truth** for Workspace Model (assistant) manifests, including group access. |
+| `push_config.py` | Applies `skills/` and `models/` to the live instance and reconciles derived skill grants. Dry run by default; `--apply` writes. Run as `python3 ai/openwebui/push_config.py all`. |
+| `pull_config.py` | Fetches live config into `synced/` for drift detection. Validates every required response before writing, and exits non-zero without changing snapshots if a read fails. Run as `python3 ai/openwebui/pull_config.py`. |
+| `synced/` | Read-only drift snapshot of the live config (groups, tool-server connections, default permissions, knowledge, and a per-skill drift report). Not an edit surface. |
 | `tool-access.example.json` | Example MCP tool access policy by group. |
-| `skills/` | Open WebUI-importable skill adapters and workspace-facing instructions. |
 | `knowledge/` | Git-authored Markdown knowledge sources and generated manifests for Open WebUI knowledge collections. |
 | `functions/` | Canonical source for Open WebUI Functions (Pipes/Filters/Actions/Events), applied via the Admin API. Function source lives in Open WebUI's own database once deployed, not in Git — this is the reviewed copy. |
-| `synced/` | Git-tracked knowledge base of the **live** Open WebUI config (assistants, groups, tool-server connections, default permissions, and full skill content), pulled read-only via the API. Treat this as the current source of truth for the live setup — the example files above are illustrative templates and may drift from it. |
-| `pull_config.py` | Python script to fetch the current live config (models, groups, skills, tool-servers, etc.) from the Open WebUI instance using its REST API and overwrite the files in `synced/` for Git tracking. It fetches and validates all required responses before writing, then exits non-zero without changing snapshots if a required read fails. Run using `python3 ai/openwebui/pull_config.py`. |
+
+## Delivering a change
+
+Follow [`.agents/workflows/openwebui-sync-delivery.md`](../../.agents/workflows/openwebui-sync-delivery.md),
+or run `/upload-openwebui-skill` with a Markdown skill attached.
+
+```bash
+python3 ai/openwebui/push_config.py all           # dry run: what would change live
+python3 ai/openwebui/push_config.py all --apply   # write
+python3 ai/openwebui/pull_config.py               # refresh the drift snapshot
+```
 
 ## Existing repo skill hierarchy
 
@@ -40,18 +56,28 @@ Relevant existing sources include:
 
 ## Assistant definition pattern
 
-Each assistant should define:
+See [`models/README.md`](models/README.md) for the manifest contract. Each assistant defines a
+display name, business purpose, base model, bound skills, knowledge references, MCP tools, and
+group access.
 
-- Display name
-- LiteLLM model alias
-- Required Open WebUI skill adapters
-- Optional knowledge collections
-- Allowed MCP tools
-- Allowed groups
-- Operational risk level
+## Access model
+
+Access is expressed once, on the model:
+
+```text
+model  -> skills   (manifest `skill_ids`)
+model  -> groups   (manifest `access`)
+skill  -> groups   DERIVED: a group reads a skill iff it reads a model binding that skill
+```
+
+There is no path to a skill except through a model, so the derivation is complete and
+`push_config.py access` enforces it — grants no model implies are revoked. Widen access by editing
+the model manifest, never by hand-editing a skill grant.
 
 ## Skill management rule
 
-Open WebUI may be used to test skills quickly, but stable company skills should be copied back into this directory and updated through pull requests.
+Skills are authored in `skills/` and pushed. Open WebUI can still be used to try something quickly,
+but a UI edit is drift: `synced/skills-drift.json` will flag it, and the next push overwrites it
+unless someone adopts the change back into Git first.
 
 Before adding a new Open WebUI skill, search `.agents/skills/` first. If a matching canonical skill exists, create an adapter that references it instead of duplicating it.

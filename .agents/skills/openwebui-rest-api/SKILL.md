@@ -7,9 +7,11 @@ description: Operate the Open WebUI REST API for models, users, groups, knowledg
 
 Use this skill for the *mechanics* of calling Open WebUI's HTTP API. It does not decide what should change — it executes changes that [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) and [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md) already govern.
 
-For two common, narrower jobs, use the more specific skill instead of re-deriving the workflow from the raw endpoint catalog here:
-- Groups, permissions, or access grants (models/knowledge/tools) → [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md)
+For these narrower jobs, use the more specific skill instead of re-deriving the workflow from the raw endpoint catalog here:
+- Groups, permissions, or access grants (models/knowledge/tools/skills) → [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md)
 - Wiring an MCP or OpenAPI tool server (e.g. this monorepo's `erify_api` MCP) → [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md)
+- Uploading or syncing skill content → [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md)
+- Changing an assistant's settings or bindings → [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md)
 
 ## Before using this skill
 
@@ -32,7 +34,8 @@ For two common, narrower jobs, use the more specific skill instead of re-derivin
 - **Treat bulk/declarative/delete endpoints as destructive actions** (`models/sync`, `*/delete`, `groups/*/update` that touches permissions) — confirm with the user first, same as any other destructive operation in this repo.
 - **Admin-only endpoints** (user list/role changes, group management, global configs) need an admin account's key; a non-admin key gets 401/403.
 - **Don't duplicate assistant/manifest design guidance here** — if the question is "what should this assistant have access to," go back to `openwebui-assistant-adapter`, not this skill.
-- **Synchronizing configuration**: After making any changes to the live Open WebUI settings (e.g. creating/updating models, changing group access, modifying skills, etc.), run `python3 ai/openwebui/pull_config.py` to refresh `ai/openwebui/synced/`. The utility fetches and validates every required response before writing; treat a non-zero exit as a failed sync and do not commit the existing snapshots as fresh.
+- **Prefer `push_config.py` over raw calls for skills, models, and skill grants.** Those three surfaces are Git-owned (`ai/openwebui/skills/`, `ai/openwebui/models/`) and applied by `ai/openwebui/push_config.py`, which already encodes the `/models/import` workaround, knowledge-`type` hydration, and derived-grant reconcile. A hand-rolled `curl` against them writes state the repo does not know about, which the next push silently reverts. Use this skill's raw mechanics for everything else — groups, tool servers, functions, knowledge, users, configs.
+- **Synchronizing configuration**: After any live change, run `python3 ai/openwebui/pull_config.py` to refresh `ai/openwebui/synced/`. The utility fetches and validates every required response before writing; treat a non-zero exit as a failed sync and do not commit the existing snapshots as fresh. `synced/` is a drift snapshot, not an edit surface — it records what live looks like, and `skills-drift.json` records where live and repo disagree.
 
 ## Quick verification
 

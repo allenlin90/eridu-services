@@ -1,0 +1,112 @@
+{
+  "00000": {
+    "name": "Index / Reference Table",
+    "description": "Primary index of all company brain skills, documents, and reference tables."
+  },
+  "0001": {
+    "name": "CLAUDE.md Adapter Guide",
+    "description": "Adapter instructions and documentation references for Claude Code agent workflows."
+  },
+  "00010": {
+    "name": "System Prompt Rules",
+    "description": "System prompt overrides, core instructions, and AI assistant behavior protocols."
+  },
+  "0002": {
+    "name": "Eridu Operational Metrics Framework",
+    "description": "Company KPI dashboard references, performance formulas, and operational indicators."
+  },
+  "adp-analysis": {
+    "name": "ADP analysis",
+    "description": ">"
+  },
+  "affiliate-management": {
+    "name": "Affiliate Management",
+    "description": ""
+  },
+  "affiliate-management-": {
+    "name": "Affiliate management ",
+    "description": ""
+  },
+  "citation-escalation-contract": {
+    "name": "Citation And Escalation Contract",
+    "description": "How to answer from attached Company Wiki knowledge: citation format and the AI Information Gap escalation contract. Always load this skill.",
+    "source": "repo-authored"
+  },
+  "commerce": {
+    "name": "Commerce Operations",
+    "description": "E-commerce account health checks, merchant partner tiering, and GMV growth drivers."
+  },
+  "communication-protocol": {
+    "name": "Communication Protocol",
+    "description": ">"
+  },
+  "content-management": {
+    "name": "Content Management & QC",
+    "description": "Livestream production checks, MC quality standards, and scheduling guidelines."
+  },
+  "core-principles": {
+    "name": "Core Principles",
+    "description": "Company values, operational red lines, grey-area filters, and founder's intent."
+  },
+  "creator-management": {
+    "name": "Creator Management",
+    "description": "Recruiting guidelines, MCN creator lifecycle stages, and platform compliance parameters."
+  },
+  "decisionlog": {
+    "name": "Decision Log Guidelines",
+    "description": "Durable recording procedures for company leadership directives and operational updates."
+  },
+  "eu-essentials": {
+    "name": "EU Essentials",
+    "description": ">"
+  },
+  "finance-ops": {
+    "name": "Finance Operations",
+    "description": "Overdue invoice collection pipelines, payout schedule controls, and tax withholding rules."
+  },
+  "financial-guardrails": {
+    "name": "Financial Guardrails",
+    "description": "Spend approval tiers, pre-approved categories, payment terms, and cash flow thresholds."
+  },
+  "governance-ops": {
+    "name": "Governance Operations",
+    "description": "Weekly meeting cadences, post-mortem incident processes, and decision-log guidelines."
+  },
+  "hr-ops": {
+    "name": "HR Operations",
+    "description": "Hiring protocols, contractor onboarding checklist, employee records, and payroll boundaries."
+  },
+  "legal-process": {
+    "name": "Legal Process & SLAs",
+    "description": "Contract reviews, non-disclosure agreement templates, legal SLAs, and compliance boundaries."
+  },
+  "loreal-brand-case": {
+    "name": "Loreal brand case",
+    "description": ""
+  },
+  "openwebui-litellm-railway-integration-guide": {
+    "name": "Openwebui Litellm Railway Integration Guide",
+    "description": "Guide and reference for the company's Open WebUI 0.9.6 + LiteLLM 1.89.3 Railway integration, including setup, tracing, governance, and version-aware official documentation checks."
+  },
+  "org-chart": {
+    "name": "Org Chart & Roles",
+    "description": "Company organizational structure, pillar ownership, and escalation hierarchies."
+  },
+  "platform-incentive-dispatch": {
+    "name": "Platform Incentive & Resolution Dispatch",
+    "description": "Dispatch and answering rules for ERISA Platform PoC work — violation resolution and incentive allocation (Quarterly Mission, Monthly Campaign, Voucher Allocation) with TikTok Shop. Routes a question to the right SOP workflow, names the owner of the next action, and enforces the latest-policy contract: process steps are stable, parameters are snapshots that must be reconfirmed with the Platform AM. Use whenever the request involves platform violations, appeals, on-call, missions, campaigns, coupons, vouchers, budget allocation, max cap, or the Platform AM / PoC.",
+    "source": "repo-authored"
+  },
+  "sales": {
+    "name": "Sales SOP & Pipelines",
+    "description": "Sales pipeline protocols, deal qualifying criteria, proposal templates, and client onboarding handoffs."
+  },
+  "sales-training": {
+    "name": "Sales Training",
+    "description": ">"
+  },
+  "talent-development-framework": {
+    "name": "Talent Development Framework BiggieG",
+    "description": "SG"
+  }
+}
