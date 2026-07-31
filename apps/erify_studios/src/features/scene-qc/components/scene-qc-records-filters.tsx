@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 
@@ -38,7 +39,7 @@ const RESULT_OPTIONS: Array<{ value: SceneQcResult; label: string }> = [
 ];
 
 function toDateKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return format(date, 'yyyy-MM-dd');
 }
 
 /** §7.5: date-range picker + Client async combobox + platform/result selects. */
