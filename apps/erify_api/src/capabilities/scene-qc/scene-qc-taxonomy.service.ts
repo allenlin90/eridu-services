@@ -161,6 +161,9 @@ export class SceneQcTaxonomyService {
       if (!element || !defect || defect.elementId !== element.id) {
         throw HttpError.badRequest('Scene QC issue selection is invalid or retired');
       }
+      if (input.related_element_id && !related) {
+        throw HttpError.badRequest('Scene QC related element is invalid or retired');
+      }
       const applies = sceneType === 'GRAPHIC_BG' ? element.appliesToGraphicBg : element.appliesToRealBackdrop;
       if (!applies) {
         throw HttpError.badRequest('Scene QC issue element does not apply to this Scene Profile type');

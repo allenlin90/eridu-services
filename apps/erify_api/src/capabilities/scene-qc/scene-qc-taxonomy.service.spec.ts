@@ -93,6 +93,38 @@ describe('sceneQcTaxonomyService', () => {
     }], 'GRAPHIC_BG')).rejects.toThrow(/require a related element/);
   });
 
+  it.each([
+    ['a non-overlap finding', 'misaligned'],
+    ['an overlap finding', 'overlap'],
+  ])('rejects an unknown related element for %s instead of silently dropping it', async (_case, defectKey) => {
+    const { service, tx } = buildHarness();
+    tx.sceneQcTaxonomyElement.findMany.mockResolvedValue([
+      {
+        id: 1n,
+        uid: 'scqce_primary1',
+        key: 'logo',
+        label: 'Logo',
+        appliesToGraphicBg: true,
+        appliesToRealBackdrop: true,
+      },
+    ]);
+    tx.sceneQcTaxonomyDefect.findMany.mockResolvedValue([
+      {
+        id: 2n,
+        uid: 'scqcd_defect1',
+        key: defectKey,
+        label: defectKey === 'overlap' ? 'Overlap' : 'Misaligned',
+        elementId: 1n,
+      },
+    ]);
+
+    await expect(service.resolveFindings([{
+      element_id: 'scqce_primary1',
+      defect_id: 'scqcd_defect1',
+      related_element_id: 'scqce_unknown1',
+    }], 'GRAPHIC_BG')).rejects.toThrow('Scene QC related element is invalid or retired');
+  });
+
   it('snapshots labels and keys for immutable historical findings', async () => {
     const { service, tx } = buildHarness();
     tx.sceneQcTaxonomyElement.findMany.mockResolvedValue([

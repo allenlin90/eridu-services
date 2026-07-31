@@ -175,7 +175,7 @@ describe('scene-qc mutation invalidation scope', () => {
     fail_count: 0,
   };
 
-  it('useConfirmSceneQcDay invalidates exactly the summary/items/records key families -- never Task or Show caches', async () => {
+  it('useConfirmSceneQcDay invalidates exactly the daily/records/report families -- never Task or Show caches', async () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: CONFIRMATION_RESPONSE });
     const { Wrapper, invalidateSpy } = createWrapper();
 
@@ -183,10 +183,18 @@ describe('scene-qc mutation invalidation scope', () => {
     await result.current.mutateAsync({ operational_date: '2026-06-01' });
 
     await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.summary('studio_abc', '2026-06-01') });
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.itemsPrefix('studio_abc', '2026-06-01') });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.dailyPrefix('studio_abc') });
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.recordsPrefix('studio_abc') });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: sceneQcKeys.reportPrefix('studio_abc') });
     });
+    expect(invalidateSpy).toHaveBeenCalledTimes(3);
+
+    expect(sceneQcKeys.itemDetail('studio_abc', '2026-06-01', 'show_1')).toEqual([
+      ...sceneQcKeys.dailyPrefix('studio_abc'),
+      'item',
+      '2026-06-01',
+      'show_1',
+    ]);
 
     const invalidatedKeys = invalidateSpy.mock.calls.map((call) => JSON.stringify(call[0]?.queryKey));
     const flatQueryKeys = invalidatedKeys.join('|');
