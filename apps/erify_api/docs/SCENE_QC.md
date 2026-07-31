@@ -119,7 +119,15 @@ Two standalone NestJS-context scripts, invoked via `ts-node -r tsconfig-paths/re
 - `scripts/backfill-scene-qc-evidence-refs.ts` — `--report` prints candidate Task Template image fields for operator review; the default run is a dry-run; `--apply` (requires `ALLOW_PROD=1` against a non-local database) writes `evidence_purpose: 'scene_qc'` through the real `TaskTemplateService.updateTemplateWithSnapshot` path and backfills historical-snapshot ref rows. Idempotent on replay.
 - `scripts/verify-scene-qc-evidence-bindings.ts` — read-only, requires `--since YYYY-MM-DD`; exits non-zero unless every in-scope `TaskTemplateSnapshot` (referenced by a live Task on a non-deleted, Scene-QC-eligible Show at or after `--since`) is bound or intentionally excluded in `scripts/scene-qc-evidence-binding-map.ts`.
 
-Both scripts are already committed with real operator-reviewed content and are not touched by routine Scene QC feature work.
+Run the production cutover in this order:
+
+1. Before deployment, confirm every mapped evidence field uses an image-only file contract (for example, `accept: "image/*"`). Correct the Task Template through the existing Task Template Builder so the normal immutable snapshot and audit behavior are preserved.
+2. Deploy the consolidated Scene QC migration. The backfill cannot run before this step because its reference table does not exist in the currently deployed schema.
+3. Run the backfill with `--apply` and `ALLOW_PROD=1`.
+4. Run the read-only verifier with the rollout's agreed `--since` date. A non-zero exit blocks enabling Scene QC.
+5. Replay the backfill and verifier once to prove the cutover is idempotent.
+
+The binding map and intentionally-unbound registry contain operator-reviewed production template decisions. Update them only when a real Task Template or rollout scope change requires it.
 
 ## Source References
 

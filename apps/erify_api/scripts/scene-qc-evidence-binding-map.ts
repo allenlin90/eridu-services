@@ -53,4 +53,6 @@ export const SCENE_QC_INTENTIONALLY_UNBOUND: readonly { templateUid: string; rea
   { templateUid: 'ttpl_p2mlMYWkshkhK0P5ho1H', reason: 'Jacob Thailand -BAU July Moderator Workflow -- 162 checkbox/number fields; no file-type field.' },
   { templateUid: 'ttpl_0_NuPiYN-ipylSeAc7Pp', reason: 'Bata Official Store - BAU/Double Day July Moderator Workflow -- 198 checkbox/number fields; no file-type field.' },
   { templateUid: 'ttpl_RZZ-Uw29lMRnQnnszO9u', reason: 'Jacob Thailand -Fashion Week July Moderator Workflow -- 162 checkbox/number fields; no file-type field.' },
+  { templateUid: 'ttpl_dD8qEqeXGsMqw4cDE0Iu', reason: 'Jacob Outlet Pay-Day July Moderator Workflow -- 162 checkbox/number fields; no file-type field.' },
+  { templateUid: 'ttpl_P7fkSu3Y4jEMJi15P-IW', reason: 'Jacob Thailand -Pay-Day July Moderator Workflow -- 162 checkbox/number fields; no file-type field.' },
 ];
