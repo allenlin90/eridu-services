@@ -54,6 +54,19 @@ Relevant existing sources include:
 - `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
 - `.agents/skills/agent-instruction-maintenance/SKILL.md`
 
+## Tests
+
+`push_config.py` decides who loses access, so its pure logic is covered by unit tests —
+no network, no API key, no live instance:
+
+```bash
+python3 ai/openwebui/test_push_config.py
+```
+
+They cover the access derivation (`derive_skill_access`), grant construction
+(`grants_for`), the model diff, the revoke gate's refusal on an unattended run, and
+frontmatter parsing. Run them before changing any of those.
+
 ## Apply on merge (Railway)
 
 The `openwebui-sync` service in the `eridu-services` Railway project applies this
@@ -80,6 +93,10 @@ Without `PUSH_CONFIRM_REVOKES`, a run whose plan contains any revoke **aborts be
 writing anything at all** — not partway through. `push_config.py` builds the complete plan
 across skills, models, and access before the first write precisely so this gate can stop
 all of it. Additive changes land unattended; anything that would remove access does not.
+
+That guarantee covers the revoke gate only. Once past it the writes are applied in
+sequence with no rollback, so an HTTP failure midway leaves earlier writes in place. Re-run
+after fixing the cause — every operation is an idempotent upsert, so a repeat is safe.
 
 `OPEN_WEBUI_HOST` is `http://open-webui.railway.internal:8080` — private networking, same
 project. A slept service wakes on private-network traffic, and `push_config.py` spends a

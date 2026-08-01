@@ -139,6 +139,7 @@ PR       <url> | not opened: <reason>
 
 ## Verification
 
+- [ ] `python3 ai/openwebui/test_push_config.py` passes if `push_config.py` changed.
 - [ ] `push_config.py all` re-run after applying; the remaining diff is understood, not ignored.
 - [ ] Revokes were shown to the user and agreed before `--apply`.
 - [ ] `synced/` refreshed and committed in the same change.

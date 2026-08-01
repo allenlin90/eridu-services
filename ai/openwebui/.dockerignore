@@ -9,3 +9,6 @@ knowledge/
 
 # Deployed via the Open WebUI admin API, not this image.
 functions/
+
+# Tests run in CI/dev, not in the deployed job.
+test_*.py

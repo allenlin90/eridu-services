@@ -39,6 +39,7 @@ SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 SKILL_INDEX = os.path.join(SKILLS_DIR, "index.json")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 ADMIN_GROUP_NAME = "Admins"
+REQUEST_TIMEOUT = 30
 
 EXIT_OK = 0
 EXIT_FAILURE = 1
@@ -91,7 +92,9 @@ class Client:
             f"{self.host}{path}", data=data, headers=self.headers, method=method
         )
         try:
-            with urllib.request.urlopen(request) as response:
+            # Without a timeout a stalled connection hangs the run forever. On
+            # Railway that is a job that never exits and never reports.
+            with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
                 raw = response.read().decode()
                 return json.loads(raw) if raw else None
         except HTTPError as error:
@@ -128,7 +131,13 @@ class Client:
             except PushConfigError as error:
                 cold_boot = any(
                     marker in str(error)
-                    for marker in ("HTTP 502", "HTTP 503", "HTTP 504", "Connection")
+                    for marker in (
+                        "HTTP 502",
+                        "HTTP 503",
+                        "HTTP 504",
+                        "Connection",
+                        "timed out",
+                    )
                 )
                 if not cold_boot or attempt == attempts:
                     raise
@@ -247,6 +256,12 @@ def load_manifests(only=None):
                 f"{path}: 'id' must match the filename stem "
                 f"({manifest.get('id')!r} vs {filename[: -len('.json')]!r})"
             )
+        # Manifests are hand-authored JSON. Checking here means a missing field
+        # reports the file and the field, instead of a bare KeyError traceback
+        # from wherever it was first dereferenced.
+        for field in ("name", "base_model_id"):
+            if not manifest.get(field):
+                raise PushConfigError(f"{path}: missing required field {field!r}")
         if only and manifest["id"] != only:
             continue
         manifests[manifest["id"]] = manifest
@@ -379,6 +394,8 @@ def plan_skills(client, report, only=None):
         )
 
     live = {skill["id"]: skill for skill in client.get("/api/v1/skills/export")}
+    # Orphan detection needs every repo skill, not just the --only subset.
+    all_repo = repo if only is None else load_repo_skills()
     actions = []
 
     for skill_id, skill in repo.items():
@@ -406,8 +423,7 @@ def plan_skills(client, report, only=None):
             lambda i=skill_id, s=skill: client.post(f"/api/v1/skills/id/{i}/update", s)
         )
 
-    orphans = sorted(set(live) - set(load_repo_skills()))
-    for skill_id in orphans:
+    for skill_id in sorted(set(live) - set(all_repo)):
         report.add(
             "live-only",
             f"skill {skill_id}",
@@ -475,7 +491,9 @@ def plan_models(client, report, group_uuids, only=None):
             report.add("update", f"model {model_id}", f"differs: {', '.join(diffs)}")
         payload.append(desired)
 
-    for model_id in sorted(set(live) - set(load_manifests())):
+    # Orphan detection needs every manifest, not just the --only subset.
+    all_manifests = manifests if only is None else load_manifests()
+    for model_id in sorted(set(live) - set(all_manifests)):
         report.add(
             "live-only",
             f"model {model_id}",
@@ -535,7 +553,11 @@ def model_diff(current, desired):
         diffs.append("params")
     current_meta = current.get("meta") or {}
     for field in ("description", "capabilities", "skillIds", "toolIds", "builtinTools"):
-        if (current_meta.get(field) or type(desired["meta"][field])()) != desired["meta"][field]:
+        # A field absent live and empty in the manifest are the same state, but
+        # compare unequal (None != {} != []). Coerce the live side to an empty
+        # value of the manifest's own type so only real differences show up.
+        current_value = current_meta.get(field) or type(desired["meta"][field])()
+        if current_value != desired["meta"][field]:
             diffs.append(f"meta.{field}")
     current_knowledge = [k.get("id") for k in (current_meta.get("knowledge") or [])]
     desired_knowledge = [k.get("id") for k in (desired["meta"].get("knowledge") or [])]
