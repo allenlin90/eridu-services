@@ -425,16 +425,16 @@ pnpm architecture:signals
 `graphify` is an optional local CLI that builds a queryable knowledge graph of a corpus at `graphify-out/`. Setup on macOS is `brew install uv && uv tool install graphifyy`. Nothing in the verification checklist depends on it.
 
 - **Availability check & fallback:** `graphify-out/` is gitignored, so it does not exist on a fresh clone. Treat graphify as available only when both `command -v graphify` succeeds and `graphify-out/graph.json` exists. Otherwise fall back to `rg` and direct file reading without mentioning the tool.
-- When available, use it to orient before reading raw files:
-  - `graphify query "<question>"` — scoped subgraph answering a question
-  - `graphify path "<A>" "<B>"` — how two things relate
-  - `graphify explain "<concept>"` — one focused concept
-  - `graphify-out/wiki/index.md` — broad navigation, when that file exists
-  - `graphify-out/GRAPH_REPORT.md` — broad architecture review only, or when query/path/explain do not surface enough context
+- When available, use it to orient before reading raw files. Reach for it in this order:
+  - `graphify explain "<Symbol>"` — a named symbol's source location, methods, and immediate neighbors. The strongest command; usually cheaper than opening the file.
+  - `graphify path "<A>" "<B>"` — the shortest relationship chain between two symbols. Answers in one line what would otherwise take several greps.
+  - `graphify query "<seed>"` — breadth-first traversal seeded by symbol or keyword match, not natural-language question answering. Seed it with an identifier, not a sentence; a prose question matches literal words and returns noise. Large result sets are truncated — narrow the seed or raise `--budget`.
+  - `graphify-out/GRAPH_REPORT.md` — broad architecture review only, or when the commands above do not surface enough context.
+- Prefer `rg` when you already know the exact identifier and only need its definition or call sites. Graphify earns its cost on relationships and neighborhoods, not on exact-name lookup.
 - **Orientation, not authority.** Use the graph to select what to read, then inspect the canonical source before editing or making an important claim — the same evidence rule that governs QMD and `rg` under the OKF contract.
 - **Does not displace Skill-First Development.** Load the relevant skill from `.agents/skills/` first; use graphify to locate the code that skill applies to.
 - Dirty `graphify-out/` files after a hook or incremental update are expected and are not a reason to skip the tool.
-- After changing code, run `graphify update .` to refresh the graph (AST-only, no API cost).
+- Refresh the graph with `graphify update .` (AST-only, no API cost). On this monorepo that is roughly 30 seconds for a full re-extract, so run it after a batch of changes or before a query you need to be accurate — not after every edit.
 - To build or rebuild a graph, or to run one over another repo or corpus, load the `graphify` skill (`/graphify`).
 - The rule above is the whole contract; no hook or generated instruction block is required for it. Optional per-developer `hook-guard` hooks are described in [`AGENTIC_DEVELOPMENT_SETUP.md`](docs/engineering/AGENTIC_DEVELOPMENT_SETUP.md) §7 and belong in `.claude/settings.local.json`, never in the shared `.claude/settings.json`.
 

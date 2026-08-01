@@ -10,16 +10,18 @@ Canonical rule: `AGENTS.md` § graphify (Knowledge Graph). This file exists only
 
 ## Rule
 
-When available, orient with the graph before reading raw files:
+When available, orient with the graph before reading raw files, in this order:
 
 ```bash
-graphify query "<question>"    # scoped subgraph answering a question
-graphify path "<A>" "<B>"      # how two things relate
-graphify explain "<concept>"   # one focused concept
-graphify update .              # refresh after changing code (AST-only, no API cost)
+graphify explain "<Symbol>"    # source location, methods, immediate neighbors — strongest command
+graphify path "<A>" "<B>"      # shortest relationship chain between two symbols
+graphify query "<seed>"        # BFS seeded by symbol/keyword match, NOT natural-language Q&A
+graphify update .              # refresh after a batch of changes (AST-only, no API cost, ~30s here)
 ```
 
-Use `graphify-out/wiki/index.md` for broad navigation when that file exists. Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or when query/path/explain do not surface enough context.
+Seed `query` with an identifier, not a sentence — a prose question matches literal words and returns noise. Large result sets are truncated; narrow the seed or raise `--budget`.
+
+Prefer `rg` when you already know the exact identifier and only need its definition or call sites. Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or when the commands above do not surface enough context.
 
 This does not displace skill-first development: load the relevant skill from `.agents/skills/` first, then use graphify to locate the code it applies to.
 

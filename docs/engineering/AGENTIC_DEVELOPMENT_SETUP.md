@@ -482,3 +482,21 @@ Restart the shell and confirm the uv tool binary directory is on `PATH`:
 uv tool list
 which graphify
 ```
+
+### Graphify works in your terminal but the agent cannot find it
+
+`uv tool install` puts the binary in `~/.local/bin`, which is normally added to `PATH` by your shell startup files. A desktop-launched agent does not source those files, so its shell can have a different `PATH` than your terminal — `graphify` resolves for you and reports "command not found" for the agent.
+
+Check from inside the agent, not from your terminal:
+
+```bash
+command -v graphify || echo "not on the agent PATH"
+```
+
+If it is missing, either run the agent from a terminal, or link the binary into a directory the agent already has on `PATH` (`/opt/homebrew/bin` on Apple Silicon):
+
+```bash
+ln -sf "$HOME/.local/bin/graphify" /opt/homebrew/bin/graphify
+```
+
+Agents fail safe here: the rule in `AGENTS.md` gates on `command -v graphify`, so an agent that cannot see the binary falls back to `rg` instead of erroring. The cost of not fixing this is that Graphify silently never gets used.
