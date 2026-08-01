@@ -275,7 +275,7 @@ Skills cover these categories:
 - **Docs platform** — SSR auth, Astro/Starlight, doc layering, information architecture, user-facing docs
 - **Architecture** — shared API types, design patterns, SOLID, domain refactoring, data compatibility, environment config, package extraction
 - **Feature-specific** — admin/studio list patterns, task templates, schedule continuity, shift schedules, show production lifecycle, file uploads, spreadsheets, and more
-- **Meta and tooling** — agent instruction maintenance, workflow bridges, code quality, doc hygiene, engineering best practices, database CLI, Playwright, security, skill creation
+- **Meta and tooling** — agent instruction maintenance, workflow bridges, code quality, doc hygiene, engineering best practices, database CLI, Playwright, knowledge-graph build and query (`graphify`), security, skill creation
 - **AI workspace / platform ops** — Open WebUI + LiteLLM + Better Auth SSO governance, MCP exposure and tool access policy, files under `ai/` and `scripts/ai/`
 
 ### Standard Task Workflow
@@ -420,6 +420,23 @@ pnpm architecture:signals
   - `rtk find "*.ts" .` (fallback: `find "*.ts" .`)
 - Do not use `rtk` for commands that require interactive prompts or streaming outputs.
 
+### graphify (Knowledge Graph)
+
+`graphify` is an optional local CLI that builds a queryable knowledge graph of a corpus at `graphify-out/`. Setup on macOS is `brew install uv && uv tool install graphifyy`. Nothing in the verification checklist depends on it.
+
+- **Availability check & fallback:** `graphify-out/` is gitignored, so it does not exist on a fresh clone. Treat graphify as available only when both `command -v graphify` succeeds and `graphify-out/graph.json` exists. Otherwise fall back to `rg` and direct file reading without mentioning the tool.
+- When available, use it to orient before reading raw files:
+  - `graphify query "<question>"` — scoped subgraph answering a question
+  - `graphify path "<A>" "<B>"` — how two things relate
+  - `graphify explain "<concept>"` — one focused concept
+  - `graphify-out/wiki/index.md` — broad navigation, when that file exists
+  - `graphify-out/GRAPH_REPORT.md` — broad architecture review only, or when query/path/explain do not surface enough context
+- **Orientation, not authority.** Use the graph to select what to read, then inspect the canonical source before editing or making an important claim — the same evidence rule that governs QMD and `rg` under the OKF contract.
+- **Does not displace Skill-First Development.** Load the relevant skill from `.agents/skills/` first; use graphify to locate the code that skill applies to.
+- Dirty `graphify-out/` files after a hook or incremental update are expected and are not a reason to skip the tool.
+- After changing code, run `graphify update .` to refresh the graph (AST-only, no API cost).
+- To build or rebuild a graph, or to run one over another repo or corpus, load the `graphify` skill (`/graphify`).
+
 ### Documentation & Link Hygiene
 
 - All markdown files must be formatted in accordance with the repository's native ESLint rules. Run `pnpm lint:markdown` to verify and `pnpm format:markdown` to automatically fix formatting.
@@ -428,16 +445,3 @@ pnpm architecture:signals
 - Never use `file://` URLs in repository documentation. (Note: This is separate from the agent's communication style in chat/artifacts, which must use `file://` links).
 - Prefer markdown links to canonical docs rather than pasting raw path text when the target should be navigable.
 - After editing docs, validate the touched doc tree for broken relative links before finishing.
-
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

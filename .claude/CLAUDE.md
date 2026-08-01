@@ -25,6 +25,3 @@ This file exists because Claude Code auto-loads `.claude/CLAUDE.md`.
 1. Read `../AGENTS.md`.
 2. Load the relevant skill from `../.agents/skills/`.
 3. Use `./memory/` only when you need extra reference depth after reading the canonical guidance.
-# graphify
-- **graphify** (`.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.

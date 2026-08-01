@@ -89,8 +89,9 @@ if ! "$PYTHON" -c "import graphify" 2>/dev/null; then
         _UV_PY=$(uv tool run --from graphifyy python -c "import sys; print(sys.executable)" 2>/dev/null)
         if [ -n "$_UV_PY" ]; then PYTHON="$_UV_PY"; fi
     else
-        "$PYTHON" -m pip install graphifyy -q 2>/dev/null \
-          || "$PYTHON" -m pip install graphifyy -q --break-system-packages 2>&1 | tail -3
+        echo "graphify is not installed, and 'uv' was not found."
+        echo "Install it, then re-run:  brew install uv && uv tool install graphifyy"
+        exit 1
     fi
 fi
 # Write interpreter path for all subsequent steps (persists across invocations)
