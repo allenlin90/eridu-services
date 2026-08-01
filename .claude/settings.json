@@ -8,5 +8,27 @@
       "Bash(pnpm --filter erify_api test:*)",
       "Bash(git add:*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/graphify hook-guard search"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/graphify hook-guard read"
+          }
+        ]
+      }
+    ]
   }
 }
