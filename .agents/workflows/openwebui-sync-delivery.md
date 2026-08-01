@@ -7,6 +7,39 @@ description: Review and deliver a Git-authored Open WebUI skill or model change 
 This workflow turns supplied skill content into a reviewable Git change, validates its model binding
 and access impact, and deploys the complete desired state only after merge.
 
+## End-to-end sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Requester
+    participant Agent as Delivery agent
+    participant Repo as GitHub repository
+    participant Sync as Trusted sync workflow
+    participant WebUI as Open WebUI
+    actor Operator
+
+    Note over Requester,Agent: Claude Code, Codex, OpenCode, Chat, or Cowork
+    Requester->>Agent: Provide Markdown and intended audience
+    Agent->>Repo: Read the skill index and model manifests
+    Agent->>Requester: Show bindings, groups, and direct-use impact
+    Requester-->>Agent: Approve models or intentional Admins-only access
+    Agent->>Repo: Open a PR with canonical files
+    Repo-->>Requester: Reviewable diff with deployment pending
+    Requester->>Repo: Merge the approved PR
+    Repo->>Sync: Trigger from the push to master
+    Sync->>WebUI: Read live state and plan every target
+    alt A revoke requires approval
+        Sync-->>Repo: Stop before every write
+        Operator->>Sync: Re-run with revoke approval
+        Sync->>WebUI: Re-read live state and rebuild the plan
+    end
+    Sync->>WebUI: Apply skills, models, and grants
+    Sync->>WebUI: Perform a fresh readback and re-plan
+    WebUI-->>Sync: No pending actions
+    Sync-->>Repo: Deployment verified
+```
+
 ## Load first
 
 | Change | Skill |

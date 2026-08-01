@@ -37,6 +37,37 @@ python3 ai/openwebui/push_config.py all --apply   # write
 python3 ai/openwebui/pull_config.py               # refresh the drift snapshot
 ```
 
+### Delivery workflow
+
+```mermaid
+flowchart TD
+    A["Markdown attachment or repository edit"] --> B["Read the skill index and model manifests"]
+    B --> C{"Approved existing model binding?"}
+    C -->|Yes| D["Show model groups and direct skill-use impact"]
+    D --> E{"Audience approved?"}
+    E -->|No| F["Stop without opening a PR"]
+    E -->|Yes| G["Write the skill and model binding"]
+    C -->|No| H{"Intentional Admins-only staging?"}
+    H -->|No| F
+    H -->|Yes| I["Write the skill and Admins-only marker"]
+    G --> J["Validate and run an authenticated dry run when available"]
+    I --> J
+    J --> K["Open a PR; deployment remains pending"]
+    K --> L{"PR merged?"}
+    L -->|No| M["No live change"]
+    L -->|Yes| N["Trusted workflow plans skills, models, and grants"]
+    N --> O{"Plan contains revokes?"}
+    O -->|No| P["Apply the complete desired state"]
+    O -->|Yes| Q["Stop before every write"]
+    Q --> R{"Operator approves the revokes?"}
+    R -->|No| S["Leave live state unchanged"]
+    R -->|Yes| P
+    P --> T["Fresh API readback and re-plan"]
+    T --> U{"Required actions remain?"}
+    U -->|Yes| V["Fail deployment and investigate"]
+    U -->|No| W["Deployment verified"]
+```
+
 ### Claude Chat/Cowork distribution
 
 Package the reviewed source:
