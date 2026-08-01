@@ -334,7 +334,7 @@ QMD configuration and indexes are local state. Do not commit them.
 
 ## 7. Install Graphify Optionally
 
-Graphify is an experimental structural index. It is not required for ordinary setup.
+Graphify is an optional structural index. It is not required for ordinary setup, and no verification command depends on it.
 
 ```bash
 uv tool install graphifyy
@@ -347,9 +347,9 @@ Start with deterministic code-focused extraction:
 graphify extract . --code-only
 ```
 
-Do not run `graphify install --project` by default. It can write tool-specific skills and hooks into repository paths already governed by `.agents/`. Any project-scoped installation requires an explicit instruction-reconciliation change.
+Do not run `graphify install --project`, `graphify claude install`, or `graphify hook install` in this repository. Those generators write tool-specific skills, instruction blocks, and hooks into paths already governed by `.agents/` and `.claude/`, using their own defaults. The project-scoped integration is already committed and reconciled: the vendored skill lives at `.agents/skills/graphify/` (see its `VENDOR.md`), the agent-facing rule is `AGENTS.md` § graphify (Knowledge Graph), and the Claude Code hooks are in `.claude/settings.json`. Changing any of those requires an explicit instruction-reconciliation change, not a generator run.
 
-The derived `graphify-out/` directory is ignored by Git.
+The derived `graphify-out/` directory is ignored by Git, so it does not exist until you build it locally. Agent instructions treat Graphify as available only when `command -v graphify` succeeds and `graphify-out/graph.json` exists.
 
 ## 8. GitHub CLI
 
