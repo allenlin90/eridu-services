@@ -20,6 +20,22 @@ Do not place these here:
 - reusable coding-agent skills (`.agents/skills/`);
 - Railway-only service descriptors (`.railway/`).
 
+## Railway services deployed from this repository
+
+Most of the Eridu Railway stack is either a first-party app (`apps/`) or a pinned upstream
+image configured in the Railway dashboard — see
+[ai-platform-release-management](../.agents/skills/ai-platform-release-management/SKILL.md)
+for the pin and rollback policy on those. The table below lists the services whose build
+lives in this repository, so a change here is a change that needs deploying.
+
+| Railway service | Source in repo | What it does | Trigger |
+|---|---|---|---|
+| `openwebui-sync` | [`ai/openwebui/`](../ai/openwebui/) (`Dockerfile`, `railway.json`, `railway-entrypoint.sh`) | Reports drift between the Git-owned Open WebUI config and the live instance; can apply it when explicitly opted in | Daily cron `0 2 * * *` UTC, plus pushes touching `ai/openwebui/**` |
+
+Build and deploy settings for these live in a `railway.json` beside the source, so the
+dashboard is not the only record of how a service is built. Variables and secrets stay in
+Railway — never in `railway.json`.
+
 ## Target Structure
 
 ```text

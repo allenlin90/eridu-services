@@ -30,6 +30,7 @@ Exit codes:
 import json
 import os
 import sys
+import time
 import urllib.request
 from urllib.error import HTTPError
 
@@ -110,6 +111,29 @@ class Client:
 
     def post(self, path, body):
         return self._call("POST", path, body)
+
+    def wait_until_awake(self, attempts=6, delay=5):
+        """Absorb a cold boot before doing any real work.
+
+        Open WebUI runs with Serverless enabled, so it sleeps after 10 minutes
+        with no outbound traffic. A request over the private network wakes it,
+        but the first one can return 502 while it spins up. Spending that on a
+        read means every later call meets a service that is already awake --
+        and it doubles as the key/permission smoke test.
+        """
+        for attempt in range(1, attempts + 1):
+            try:
+                self.get("/api/v1/auths/")
+                return
+            except PushConfigError as error:
+                cold_boot = any(
+                    marker in str(error)
+                    for marker in ("HTTP 502", "HTTP 503", "HTTP 504", "Connection")
+                )
+                if not cold_boot or attempt == attempts:
+                    raise
+                print(f"  waking Open WebUI (attempt {attempt}/{attempts})...")
+                time.sleep(delay)
 
 
 def build_client():
@@ -619,6 +643,7 @@ def parse_args(argv):
 def main(argv):
     options = parse_args(argv)
     client = build_client()
+    client.wait_until_awake()
 
     group_uuids = {group["name"]: group["id"] for group in client.get("/api/v1/groups/")}
     targets = ["skills", "models", "access"] if options["target"] == "all" else [options["target"]]
