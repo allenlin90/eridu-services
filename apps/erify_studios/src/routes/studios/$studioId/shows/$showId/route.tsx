@@ -111,6 +111,17 @@ function StudioShowDetailLayout() {
               Submitted Tasks
             </Link>
           )}
+          {hasAccess('showIssues') && (
+            <Link
+              to="/studios/$studioId/shows/$showId/issues"
+              params={{ studioId, showId }}
+              search={{ page: 1, limit: 25 }}
+              className={TAB_LINK_CLASS}
+              activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
+            >
+              Issues
+            </Link>
+          )}
           {hasAccess('showAudits') && (
             <Link
               to="/studios/$studioId/shows/$showId/audits"
