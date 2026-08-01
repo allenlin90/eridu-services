@@ -11,6 +11,7 @@ Use this workflow for a large committed scope that needs several reviewable PRs 
 - The work is too large for one reviewable implementation PR.
 - Partial merges to `master` would leave an incomplete workflow, incompatible intermediate state, or misleading current-truth documentation.
 - One or more committed PRDs share a coherent release and acceptance boundary.
+- The work is a fullstack feature split across backend and frontend PRs (see Scene QC, #343, and the Phase 5 item 9 show-issue-ownership program): a backend-only merge is typically a complete API with no operator-visible workflow until its frontend PR lands, so default to this workflow for backend/frontend splits rather than merging the backend slice to `master` directly.
 
 If each slice is independently safe and useful on `master`, use normal direct-to-`master` PRs instead.
 
