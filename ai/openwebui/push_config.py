@@ -610,12 +610,51 @@ def plan_access(client, report, group_uuids, pending=()):
         report.add("grant", f"skill-access {skill_id}", " ".join(detail))
         planned.append((skill_id, desired))
 
+    # A skill nobody can reach derives no access at all. That is the rule working,
+    # but it is almost always an oversight rather than a decision -- surface it
+    # instead of leaving it buried in the per-skill lines.
+    report_unreachable(manifests, repo_skills, derived)
+
     return [
         lambda i=skill_id, g=desired: client.post(
             f"/api/v1/skills/id/{i}/access/update", {"access_grants": g}
         )
         for skill_id, desired in planned
     ]
+
+
+def report_unreachable(manifests, repo_skills, derived):
+    """Name the skills nobody can read, and say which of the two reasons applies.
+
+    Unbound and bound-to-an-unreadable-model look identical in the grant output
+    but need different fixes, so don't collapse them into one message.
+    """
+    unbound, unreadable = [], []
+    for skill_id in sorted(repo_skills):
+        entry = derived.get(skill_id) or {}
+        if entry.get("read") or entry.get("public"):
+            continue
+        binders = [
+            model_id
+            for model_id, manifest in manifests.items()
+            if skill_id in (manifest.get("skill_ids") or [])
+        ]
+        (unreadable if binders else unbound).append((skill_id, binders))
+
+    if unbound:
+        print(f"\n  UNREACHABLE -- no model binds these {len(unbound)} skill(s):")
+        for skill_id, _ in unbound:
+            print(f"    {skill_id}")
+        print("  Add each to a model's skill_ids in ai/openwebui/models/, or delete it.")
+
+    if unreadable:
+        print(
+            f"\n  UNREACHABLE -- these {len(unreadable)} skill(s) are bound, but only to "
+            "model(s) no group can read:"
+        )
+        for skill_id, binders in unreadable:
+            print(f"    {skill_id}  (via {', '.join(binders)})")
+        print("  Grant a group access to the model, or bind the skill elsewhere.")
 
 
 def confirm_revokes(report, assume_yes):

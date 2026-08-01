@@ -57,7 +57,30 @@ Adopting a skill that already exists live works the other way: pull its content 
 first, so the repo baseline is what live actually has. Never seed a Git file from a rewritten or
 summarized copy — that turns adoption into an unreviewed content change.
 
-### 2. Diff against live
+### 2. Bind it to at least one model
+
+**An uploaded skill nobody binds is readable by nobody.** Access is derived from models, so a
+skill with no binding derives an empty grant set — live, in Git, and invisible.
+`push_config.py access` prints an `UNREACHABLE` block listing any such skills.
+
+Add the skill id to the `skill_ids` array of each assistant that should carry it, in
+`ai/openwebui/models/<id>.json`. Choosing the models *is* choosing the audience; there is no
+separate group step.
+
+Then show the resulting access before writing anything:
+
+```bash
+python3 ai/openwebui/push_config.py access
+```
+
+Name the groups that gain read. Binding to a broad assistant like `eridu-brain` reaches every
+group that reads it — check that list rather than assuming the skill's topic implies its
+audience.
+
+If no existing assistant serves the intended audience, stop and say so. A new assistant or a new
+group is a separate decision, not a side effect of an upload.
+
+### 3. Diff against live
 
 ```bash
 python3 ai/openwebui/push_config.py skills --only <id>
@@ -67,7 +90,7 @@ Dry run by default. Read the diff before writing anything: `create` means new, `
 `differs: content` means the live copy will be replaced, and `live-only` means a skill exists in
 Open WebUI that Git does not own yet.
 
-### 3. Push, gated
+### 4. Push, gated
 
 A skill whose PR has not merged is granted to `Admins` only, so unreviewed content cannot reach
 staff:
@@ -86,7 +109,7 @@ aborted on a revoke, or if the change did not match the service's watch patterns
 python3 ai/openwebui/push_config.py all --apply
 ```
 
-### 4. Refresh the snapshot and open the PR
+### 5. Refresh the snapshot and open the PR
 
 ```bash
 python3 ai/openwebui/pull_config.py
@@ -117,6 +140,7 @@ it succeeded, and never imply a step ran when it did not:
 | Step | Reported as |
 |---|---|
 | File written | path + `created` / `updated` |
+| Bound to | model ids, or `NONE — unreachable by anyone` |
 | Live push | `pushed` / `skipped (not configured)` / `failed: <reason>` |
 | Access | `admins-only (PR pending)` / `derived: <groups>` / `skipped` |
 | PR | URL, or why none was opened |
@@ -129,11 +153,13 @@ key is available. Do not report a push that did not happen.
 ## Quality gate
 
 - [ ] Filename stem matches the intended skill id byte-exactly.
-- [ ] Frontmatter has a non-empty `description` that says *when* to load the skill.
+- [ ] `index.json` entry exists with a non-empty `description` saying *when* to load the skill.
+- [ ] Bound to at least one model, and `push_config.py access` reports no `UNREACHABLE` entry for it.
+- [ ] The groups the binding grants were named to the user before the manifest edit was committed.
 - [ ] Dry run reviewed before `--apply`.
 - [ ] Unmerged content pushed with `--pending`, not with full derived grants.
 - [ ] `pull_config.py` re-run and `synced/` committed in the same change.
-- [ ] Chat status report states all four outcomes, including skipped steps.
+- [ ] Chat status report states every outcome, including skipped steps.
 
 ## Related Skills
 

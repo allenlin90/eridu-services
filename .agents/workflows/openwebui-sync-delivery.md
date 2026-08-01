@@ -49,8 +49,14 @@ Never work on `master`. Branch name states the surface: `feat/openwebui-skill-<i
 - Skill → `ai/openwebui/skills/<id>.md`, following the frontmatter contract in `openwebui-skill-sync`.
 - Model → `ai/openwebui/models/<id>.json`, following the manifest contract in `openwebui-assistant-adapter`.
 
-For an attachment, write the file verbatim except for the frontmatter block. Do not rewrite,
+For an attachment, write the file verbatim and add its `index.json` entry. Do not rewrite,
 summarize, or "improve" the user's content — it is theirs, and the PR is where it gets reviewed.
+
+**A new skill must also be bound to at least one model in the same change.** Access is derived
+from models, so an unbound skill is readable by nobody — live, committed, and inert. Add its id
+to the `skill_ids` of each assistant that should carry it, then run
+`python3 ai/openwebui/push_config.py access` and name the groups that gain read *before*
+committing. `push_config.py` prints an `UNREACHABLE` block for any skill no model binds.
 
 ### 4. Dry run
 
