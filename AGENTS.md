@@ -436,6 +436,7 @@ pnpm architecture:signals
 - Dirty `graphify-out/` files after a hook or incremental update are expected and are not a reason to skip the tool.
 - After changing code, run `graphify update .` to refresh the graph (AST-only, no API cost).
 - To build or rebuild a graph, or to run one over another repo or corpus, load the `graphify` skill (`/graphify`).
+- The rule above is the whole contract; no hook or generated instruction block is required for it. Optional per-developer `hook-guard` hooks are described in [`AGENTIC_DEVELOPMENT_SETUP.md`](docs/engineering/AGENTIC_DEVELOPMENT_SETUP.md) §7 and belong in `.claude/settings.local.json`, never in the shared `.claude/settings.json`.
 
 ### Documentation & Link Hygiene
 

@@ -22,4 +22,4 @@ Keep this list current — anything not listed here should match upstream.
 3. Reconcile `AGENTS.md` § graphify (Knowledge Graph) and `.agents/rules/graphify.md` if the CLI surface changed.
 4. Run `pnpm agents:index && pnpm agents:validate`.
 
-Do not let `graphify claude install` or `graphify hook install` rewrite repository instruction files. Those generators write a `## graphify` block into `CLAUDE.md` and hooks into `.claude/settings.json` using their own defaults, which conflict with this repository's canonical layout.
+Do not let `graphify claude install` or `graphify hook install` rewrite repository instruction files. Those generators write a `## graphify` block into `CLAUDE.md` and hooks into `.claude/settings.json` using their own defaults, which conflict with this repository's canonical layout. The agent-facing rule belongs in `AGENTS.md`, where Claude Code, Codex, and OpenCode all read it. `hook-guard` hooks are a per-developer opt-in in `.claude/settings.local.json` — see [Agentic Development Setup](../../../docs/engineering/AGENTIC_DEVELOPMENT_SETUP.md) §7.
