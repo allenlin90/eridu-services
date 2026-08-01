@@ -13,7 +13,6 @@
     ]
   },
   "deploy": {
-    "cronSchedule": "0 2 * * *",
     "restartPolicyType": "NEVER"
   }
 }

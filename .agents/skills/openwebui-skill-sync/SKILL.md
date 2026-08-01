@@ -77,10 +77,13 @@ python3 ai/openwebui/push_config.py skills --only <id> --apply
 python3 ai/openwebui/push_config.py access --pending <id> --apply
 ```
 
-After the PR merges, drop `--pending` so the derived group grants take effect:
+After the PR merges this happens on its own: merging to `master` deploys the
+`openwebui-sync` Railway service, and deploying it runs `push_config.py --apply`, which
+recomputes grants without the `--pending` override. Run it by hand only if the deploy
+aborted on a revoke, or if the change did not match the service's watch patterns:
 
 ```bash
-python3 ai/openwebui/push_config.py access --apply
+python3 ai/openwebui/push_config.py all --apply
 ```
 
 ### 4. Refresh the snapshot and open the PR

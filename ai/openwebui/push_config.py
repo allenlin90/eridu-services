@@ -350,11 +350,13 @@ class Report:
             self.changed = True
         self.lines.append((status, target, detail))
 
-    def render(self, applied):
+    def render(self, applying):
+        # Planning always runs before any write, so these describe intent, not
+        # completed work. The applied count is printed once at the end.
         verb = {
-            True: {"create": "created", "update": "updated", "grant": "granted"},
+            True: {"create": "create", "update": "update", "grant": "set"},
             False: {"create": "would create", "update": "would update", "grant": "would set"},
-        }[applied]
+        }[applying]
         for status, target, detail in self.lines:
             label = verb.get(status, status)
             print(f"  [{label}] {target}" + (f"  {detail}" if detail else ""))
@@ -367,7 +369,8 @@ class Report:
 # --------------------------------------------------------------------------
 
 
-def push_skills(client, report, only=None, apply=False):
+def plan_skills(client, report, only=None):
+    """Return the writes needed to make live match the repo. Writes nothing."""
     repo = load_repo_skills(only)
     if not repo:
         raise PushConfigError(
@@ -376,13 +379,13 @@ def push_skills(client, report, only=None, apply=False):
         )
 
     live = {skill["id"]: skill for skill in client.get("/api/v1/skills/export")}
+    actions = []
 
     for skill_id, skill in repo.items():
         current = live.get(skill_id)
         if current is None:
             report.add("create", f"skill {skill_id}")
-            if apply:
-                client.post("/api/v1/skills/create", skill)
+            actions.append(lambda s=skill: client.post("/api/v1/skills/create", s))
             continue
 
         diffs = [
@@ -399,8 +402,9 @@ def push_skills(client, report, only=None, apply=False):
             report.add("unchanged", f"skill {skill_id}")
             continue
         report.add("update", f"skill {skill_id}", f"differs: {', '.join(diffs)}")
-        if apply:
-            client.post(f"/api/v1/skills/id/{skill_id}/update", skill)
+        actions.append(
+            lambda i=skill_id, s=skill: client.post(f"/api/v1/skills/id/{i}/update", s)
+        )
 
     orphans = sorted(set(live) - set(load_repo_skills()))
     for skill_id in orphans:
@@ -410,8 +414,11 @@ def push_skills(client, report, only=None, apply=False):
             "exists live but not in ai/openwebui/skills/ -- adopt it into Git or delete it live",
         )
 
+    return actions
 
-def push_models(client, report, group_uuids, only=None, apply=False):
+
+def plan_models(client, report, group_uuids, only=None):
+    """Return the writes needed to make live match the manifests. Writes nothing."""
     manifests = load_manifests(only)
     if not manifests:
         raise PushConfigError(
@@ -468,17 +475,18 @@ def push_models(client, report, group_uuids, only=None, apply=False):
             report.add("update", f"model {model_id}", f"differs: {', '.join(diffs)}")
         payload.append(desired)
 
-    if apply and payload:
-        # /api/v1/models/model/update returns a bare 500 on 0.10.2; /import upserts
-        # cleanly and preserves access_grants across the round trip.
-        client.post("/api/v1/models/import", {"models": payload})
-
     for model_id in sorted(set(live) - set(load_manifests())):
         report.add(
             "live-only",
             f"model {model_id}",
             "exists live but has no manifest -- adopt it into ai/openwebui/models/ or delete it live",
         )
+
+    if not payload:
+        return []
+    # /api/v1/models/model/update returns a bare 500 on 0.10.2; /import upserts
+    # cleanly and preserves access_grants across the round trip.
+    return [lambda: client.post("/api/v1/models/import", {"models": payload})]
 
 
 def hydrate_knowledge(client, manifest, current):
@@ -540,7 +548,8 @@ def model_diff(current, desired):
     return diffs
 
 
-def push_access(client, report, group_uuids, pending=(), apply=False, assume_yes=False):
+def plan_access(client, report, group_uuids, pending=()):
+    """Return the grant writes needed. Writes nothing; records revokes on the report."""
     manifests = load_manifests()
     derived = derive_skill_access(manifests, pending)
     repo_skills = load_repo_skills()
@@ -579,27 +588,35 @@ def push_access(client, report, group_uuids, pending=(), apply=False, assume_yes
         report.add("grant", f"skill-access {skill_id}", " ".join(detail))
         planned.append((skill_id, desired))
 
-    if not apply or not planned:
+    return [
+        lambda i=skill_id, g=desired: client.post(
+            f"/api/v1/skills/id/{i}/access/update", {"access_grants": g}
+        )
+        for skill_id, desired in planned
+    ]
+
+
+def confirm_revokes(report, assume_yes):
+    """Gate every write on the revokes across ALL targets, before any of them run.
+
+    This runs after the full plan is built and before the first write, so an
+    unapproved revoke leaves the instance untouched rather than half-updated
+    with skills and models already pushed.
+    """
+    if not report.revokes or assume_yes:
         return
-
-    if report.revokes and not assume_yes:
-        print("\n  REVOKES -- these groups lose read access:")
-        for skill_id, removed in report.revokes:
-            print(f"    {skill_id}: {', '.join(removed)}")
-        if not sys.stdin.isatty():
-            # Unattended run (Railway, CI). Refusing is the safe default: nobody
-            # is present to weigh a revoke, and --yes is how an operator says
-            # they already have.
-            raise PushConfigError(
-                "revokes require confirmation and stdin is not a terminal; "
-                "re-run with --yes only if these revokes are intended"
-            )
-        answer = input("\n  Proceed with revokes? [y/N] ").strip().lower()
-        if answer != "y":
-            raise PushConfigError("aborted before applying access changes")
-
-    for skill_id, desired in planned:
-        client.post(f"/api/v1/skills/id/{skill_id}/access/update", {"access_grants": desired})
+    print("\n  REVOKES -- these groups lose access:")
+    for skill_id, removed in report.revokes:
+        print(f"    {skill_id}: {', '.join(removed)}")
+    if not sys.stdin.isatty():
+        # Unattended run (Railway, CI). Refusing is the safe default: nobody is
+        # present to weigh a revoke, and --yes is how an operator says they have.
+        raise PushConfigError(
+            "revokes require confirmation and stdin is not a terminal; "
+            "nothing was written. Re-run with --yes only if these revokes are intended"
+        )
+    if input("\n  Proceed with revokes? [y/N] ").strip().lower() != "y":
+        raise PushConfigError("aborted before writing anything")
 
 
 # --------------------------------------------------------------------------
@@ -649,28 +666,32 @@ def main(argv):
     targets = ["skills", "models", "access"] if options["target"] == "all" else [options["target"]]
     report = Report()
 
+    # Plan every target first, write nothing. A revoke found while planning
+    # `access` must be able to stop the `skills` and `models` writes too, and it
+    # can only do that if none of them have happened yet.
+    actions = []
     for target in targets:
         print(f"\n== {target} ==")
         section = Report()
         if target == "skills":
-            push_skills(client, section, options["only"], options["apply"])
+            actions += plan_skills(client, section, options["only"])
         elif target == "models":
-            push_models(client, section, group_uuids, options["only"], options["apply"])
+            actions += plan_models(client, section, group_uuids, options["only"])
         else:
-            push_access(
-                client,
-                section,
-                group_uuids,
-                options["pending"],
-                options["apply"],
-                options["assume_yes"],
-            )
+            actions += plan_access(client, section, group_uuids, options["pending"])
         section.render(options["apply"])
         report.lines.extend(section.lines)
         report.changed = report.changed or section.changed
+        report.revokes.extend(section.revokes)
 
     if options["apply"]:
-        print("\nApplied. Run `python3 ai/openwebui/pull_config.py` to refresh synced/.")
+        confirm_revokes(report, options["assume_yes"])
+        for action in actions:
+            action()
+        print(
+            f"\nApplied {len(actions)} change(s). "
+            "Run `python3 ai/openwebui/pull_config.py` to refresh synced/."
+        )
         return EXIT_OK
     if report.changed:
         print("\nDry run. Re-run with --apply to write these changes.")

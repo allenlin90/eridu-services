@@ -103,15 +103,26 @@ Target `master` on `allenlin/eridu-services`. The PR body states:
 - whether live was pushed or skipped, and whether grants are still `--pending`;
 - the post-merge command, when one is outstanding.
 
-### 9. Post-merge
+### 9. Post-merge — usually automatic
+
+Merging to `master` deploys the `openwebui-sync` Railway service, and deploying it **is** what
+runs `push_config.py --apply`. That widens `--pending` skills from `Admins` to their derived
+groups with no manual step.
+
+Two cases still need a human:
+
+- **The run aborted on a revoke.** Intended: the service does not set `PUSH_CONFIRM_REVOKES`, so
+  any plan containing a revoke stops before writing anything at all. Review the revokes, then
+  apply locally once with `--yes`.
+- **Nothing deployed.** The change did not match the service's watch patterns (`skills/**`,
+  `models/**`, runner files).
 
 ```bash
-python3 ai/openwebui/push_config.py access --apply
+python3 ai/openwebui/push_config.py all --apply
 python3 ai/openwebui/pull_config.py
 ```
 
-This widens `--pending` skills from `Admins` to their derived groups. Until it runs, the merged
-skill is live but reachable only by admins.
+Commit the refreshed `synced/` afterwards — the Railway run writes to Open WebUI, not to Git.
 
 ## Status Report
 

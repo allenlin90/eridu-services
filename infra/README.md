@@ -30,7 +30,7 @@ lives in this repository, so a change here is a change that needs deploying.
 
 | Railway service | Source in repo | What it does | Trigger |
 |---|---|---|---|
-| `openwebui-sync` | [`ai/openwebui/`](../ai/openwebui/) (`Dockerfile`, `railway.json`, `railway-entrypoint.sh`) | Reports drift between the Git-owned Open WebUI config and the live instance; can apply it when explicitly opted in | Daily cron `0 2 * * *` UTC, plus pushes touching `ai/openwebui/**` |
+| `openwebui-sync` | [`ai/openwebui/`](../ai/openwebui/) (`Dockerfile`, `railway.json`, `railway-entrypoint.sh`) | Applies the Git-owned Open WebUI skill and model config to the live instance | Merge to `master` touching `ai/openwebui/skills/**`, `models/**`, or the runner's own files. Deploying the service *is* the run — it has no cron and exits after one pass. |
 
 Build and deploy settings for these live in a `railway.json` beside the source, so the
 dashboard is not the only record of how a service is built. Variables and secrets stay in

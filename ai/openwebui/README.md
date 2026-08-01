@@ -54,34 +54,36 @@ Relevant existing sources include:
 - `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
 - `.agents/skills/agent-instruction-maintenance/SKILL.md`
 
-## Scheduled drift check (Railway)
+## Apply on merge (Railway)
 
-The `openwebui-sync` service in the `eridu-services` Railway project runs
-`push_config.py` from this directory on a daily cron (`0 2 * * *` UTC). `Dockerfile` and
-`railway-entrypoint.sh` here are its build and entrypoint.
+The `openwebui-sync` service in the `eridu-services` Railway project applies this
+directory to the live instance. `Dockerfile`, `railway.json`, and `railway-entrypoint.sh`
+here are its build.
 
-**It is read-only by default.** The deployment's exit status carries the result:
+**Deploying it is what runs it.** The service has no cron and
+`restartPolicyType: NEVER`, so the container runs `push_config.py` once per deployment and
+exits. Its watch patterns cover `skills/**`, `models/**`, and the runner's own files on
+`master`, which makes a merge touching Open WebUI config the trigger. Nothing polls, and
+there is no HTTP surface holding an admin key.
 
-| Exit | Railway shows | Meaning |
-|---|---|---|
-| 0 | success | live matches the repo |
-| 2 | crashed | drift — someone changed config in the admin UI |
-| 1 | crashed | failure |
-| 3 | crashed | `OPEN_WEBUI_API_KEY` not set |
-
-A crashed daily run is the signal to investigate, not an outage.
-
-Writing from the runner takes two separate opt-ins, so neither happens on a schedule:
+The trade-off is deliberate: config edited directly in the Open WebUI admin UI is *not*
+detected when it happens. It gets reverted at the next merge that runs the apply, because
+Git is the source of truth. To check on demand, run `push_config.py all` locally.
 
 | Variable | Effect |
 |---|---|
 | `PUSH_TARGET` | `skills` / `models` / `access` / `all` (default `all`) |
-| `PUSH_APPLY=1` | write instead of dry-run |
-| `PUSH_CONFIRM_REVOKES=1` | permit revoking access grants; without it a run that would revoke aborts before writing anything |
+| `PUSH_APPLY=1` | write; unset means the run only reports a diff |
+| `PUSH_CONFIRM_REVOKES=1` | permit revoking access grants |
 
-`OPEN_WEBUI_HOST` is a Railway reference to Open WebUI's own public domain, so it follows
-the service. The public domain is deliberate rather than private DNS: Open WebUI has
-`sleep_application` enabled, and only proxy traffic wakes a sleeping service.
+Without `PUSH_CONFIRM_REVOKES`, a run whose plan contains any revoke **aborts before
+writing anything at all** — not partway through. `push_config.py` builds the complete plan
+across skills, models, and access before the first write precisely so this gate can stop
+all of it. Additive changes land unattended; anything that would remove access does not.
+
+`OPEN_WEBUI_HOST` is `http://open-webui.railway.internal:8080` — private networking, same
+project. A slept service wakes on private-network traffic, and `push_config.py` spends a
+retrying read first to absorb the cold boot.
 
 `OPEN_WEBUI_API_KEY` is an admin key — it can revoke grants and delete skills. Set it in
 the Railway dashboard, and rotate it there if it leaks.
