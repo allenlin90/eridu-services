@@ -141,7 +141,7 @@ knowledge/ OKF source
 | `rg` | Exact identifiers, paths, symbols, and low-latency source search | Recommended |
 | RTK | Compress verbose shell output and transparently rewrite supported commands | Recommended |
 | QMD (`@tobilu/qmd`) | BM25, vector, and reranked search over Markdown collections | Recommended pilot |
-| Graphify (`graphifyy`) | Tree-sitter code graph, relationship/path queries, architecture report | Experimental pilot |
+| Graphify (`graphifyy`) | Tree-sitter code graph, relationship/path queries, architecture report | Optional; skill and agent rule committed, local index opt-in |
 | OKF | Portable Markdown/frontmatter knowledge format | Format pilot; no runtime required |
 | `uv` | Isolated Graphify installation | Required only for the recommended Graphify install path |
 | `jq` | JSON inspection and shell-integration support | Recommended |
@@ -153,6 +153,8 @@ QMD and Graphify overlap only partially:
 - Use Graphify for imports, calls, ownership boundaries, dependencies, and cross-file paths.
 - Use `rg` first for exact names when semantic interpretation adds no value.
 - Use OKF metadata to improve routing, provenance, lifecycle checks, and portability of canonical knowledge.
+
+Both indexes are local derived state and neither is committed. Agent behavior for Graphify — availability check, query surface, and its relationship to skill-first development — is defined once in `AGENTS.md` § graphify (Knowledge Graph); this guide does not restate it.
 
 ## Installation
 

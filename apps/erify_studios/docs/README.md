@@ -6,7 +6,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 
 1. [Phase 3 Closure Summary](../../../docs/roadmap/PHASE_3.md)
 2. [Phase 4 — Complete](../../../docs/roadmap/PHASE_4.md)
-3. [Phase 5 — Show Production Lifecycle Gap Closure (planned, next up)](../../../docs/roadmap/PHASE_5.md)
+3. [Phase 5 — Show Production Lifecycle Gap Closure (in progress)](../../../docs/roadmap/PHASE_5.md)
 
 ## Canonical Docs
 
@@ -35,6 +35,6 @@ Active (in progress):
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Remaining cancellation-queue and task-warning follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
 3. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-4. [Show-Level Issue Ownership](../../erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md) — 📐 Cross-app Phase 5 item 8 design locked for implementation
+4. [Show-Level Issue Ownership](../../erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md) — 📐 Cross-app Phase 5 item 9 design locked for implementation
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.

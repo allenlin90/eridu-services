@@ -129,6 +129,7 @@ Correct timing matters:
 - `frontend-state-management`
 - `frontend-testing-patterns`
 - `frontend-ui-components`
+- `graphify`
 - `jsonb-analytics-snapshot`
 - `litellm-admin-api`
 - `local-database-cli`
