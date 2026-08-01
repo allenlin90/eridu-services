@@ -72,7 +72,12 @@ def load_env():
 
 class Client:
     def __init__(self, host, api_key):
-        self.host = host.rstrip("/")
+        host = host.strip().rstrip("/")
+        if "://" not in host:
+            # Railway reference variables resolve to a bare domain
+            # (`${{Open WebUI.RAILWAY_PUBLIC_DOMAIN}}`), with no scheme to prepend.
+            host = f"https://{host}"
+        self.host = host
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -557,6 +562,14 @@ def push_access(client, report, group_uuids, pending=(), apply=False, assume_yes
         print("\n  REVOKES -- these groups lose read access:")
         for skill_id, removed in report.revokes:
             print(f"    {skill_id}: {', '.join(removed)}")
+        if not sys.stdin.isatty():
+            # Unattended run (Railway, CI). Refusing is the safe default: nobody
+            # is present to weigh a revoke, and --yes is how an operator says
+            # they already have.
+            raise PushConfigError(
+                "revokes require confirmation and stdin is not a terminal; "
+                "re-run with --yes only if these revokes are intended"
+            )
         answer = input("\n  Proceed with revokes? [y/N] ").strip().lower()
         if answer != "y":
             raise PushConfigError("aborted before applying access changes")

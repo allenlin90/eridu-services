@@ -54,6 +54,38 @@ Relevant existing sources include:
 - `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
 - `.agents/skills/agent-instruction-maintenance/SKILL.md`
 
+## Scheduled drift check (Railway)
+
+The `openwebui-sync` service in the `eridu-services` Railway project runs
+`push_config.py` from this directory on a daily cron (`0 2 * * *` UTC). `Dockerfile` and
+`railway-entrypoint.sh` here are its build and entrypoint.
+
+**It is read-only by default.** The deployment's exit status carries the result:
+
+| Exit | Railway shows | Meaning |
+|---|---|---|
+| 0 | success | live matches the repo |
+| 2 | crashed | drift — someone changed config in the admin UI |
+| 1 | crashed | failure |
+| 3 | crashed | `OPEN_WEBUI_API_KEY` not set |
+
+A crashed daily run is the signal to investigate, not an outage.
+
+Writing from the runner takes two separate opt-ins, so neither happens on a schedule:
+
+| Variable | Effect |
+|---|---|
+| `PUSH_TARGET` | `skills` / `models` / `access` / `all` (default `all`) |
+| `PUSH_APPLY=1` | write instead of dry-run |
+| `PUSH_CONFIRM_REVOKES=1` | permit revoking access grants; without it a run that would revoke aborts before writing anything |
+
+`OPEN_WEBUI_HOST` is a Railway reference to Open WebUI's own public domain, so it follows
+the service. The public domain is deliberate rather than private DNS: Open WebUI has
+`sleep_application` enabled, and only proxy traffic wakes a sleeping service.
+
+`OPEN_WEBUI_API_KEY` is an admin key — it can revoke grants and delete skills. Set it in
+the Railway dashboard, and rotate it there if it leaks.
+
 ## Assistant definition pattern
 
 See [`models/README.md`](models/README.md) for the manifest contract. Each assistant defines a
