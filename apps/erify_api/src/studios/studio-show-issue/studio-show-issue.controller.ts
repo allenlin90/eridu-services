@@ -14,6 +14,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { CurrentUser } from '@eridu/auth-sdk/adapters/nestjs/current-user.decorator';
 
 import { BaseStudioController } from '../base-studio.controller';
+import { ShowAuditQueryDto } from '../studio-show/schemas/studio-show-audit.schema';
 
 import type { AuthenticatedRequest, AuthenticatedUser } from '@/lib/auth/jwt-auth.guard';
 import { StudioProtected } from '@/lib/decorators/studio-protected.decorator';
@@ -77,10 +78,9 @@ export class StudioShowIssueController extends BaseStudioController {
   async audits(
     @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
     @Param('issueId', new UidValidationPipe(SHOW_ISSUE_UID_PREFIX, 'ShowIssue')) issueId: string,
-    @Query() query: { page?: number; limit?: number },
+    @Query() query: ShowAuditQueryDto,
   ) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 25;
+    const { page, limit } = query;
     const { items, total } = await this.showIssueWorkflowService.getShowIssueAudits(studioId, issueId, {
       skip: (page - 1) * limit,
       take: limit,

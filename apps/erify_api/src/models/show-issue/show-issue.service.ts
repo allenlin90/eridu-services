@@ -92,8 +92,17 @@ export class ShowIssueService extends BaseModelService {
     expectedVersion: number,
     payload: UpdateShowIssueFieldsPayload,
   ): Promise<ShowIssueWithRelations> {
-    if (payload.status !== undefined && current.status === 'RESOLVED') {
-      throw HttpError.badRequest('Cannot start a resolved issue; reopen it first.');
+    if (payload.status !== undefined) {
+      if (current.status === 'RESOLVED') {
+        throw HttpError.badRequest('Cannot start a resolved issue; reopen it first.');
+      }
+      if (current.status !== 'OPEN') {
+        throw HttpError.badRequest('Issue is already in progress.');
+      }
+    }
+
+    if (payload.category !== undefined && current.origin === 'FACT_EXTRACTION') {
+      throw HttpError.badRequest('Category cannot be changed for an automated issue — it is part of the reconciliation identity.');
     }
 
     const data: Prisma.ShowIssueUpdateInput = {};

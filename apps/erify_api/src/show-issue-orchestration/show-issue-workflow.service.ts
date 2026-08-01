@@ -7,7 +7,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { HttpError } from '@/lib/errors/http-error.util';
 import { AuditService } from '@/models/audit/audit.service';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { ShowRepository } from '@/models/show/show.repository';
+import { ShowService } from '@/models/show/show.service';
 import type {
   CreateShowIssueDto,
   EscalateShowIssueDto,
@@ -41,7 +41,7 @@ const PRIVILEGED_ROLES: readonly string[] = [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANA
 export class ShowIssueWorkflowService {
   constructor(
     private readonly showIssueService: ShowIssueService,
-    private readonly showRepository: ShowRepository,
+    private readonly showService: ShowService,
     private readonly studioMembershipService: StudioMembershipService,
     private readonly userService: UserService,
     private readonly auditService: AuditService,
@@ -314,7 +314,7 @@ export class ShowIssueWorkflowService {
   }
 
   private async requireShow(studioUid: string, showUid: string) {
-    const show = await this.showRepository.findByUidAndStudioUid(showUid, studioUid);
+    const show = await this.showService.findByUidAndStudioUid(showUid, studioUid);
     if (!show) {
       throw HttpError.notFound('Show', showUid);
     }

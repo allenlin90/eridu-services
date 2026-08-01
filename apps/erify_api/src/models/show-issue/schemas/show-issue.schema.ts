@@ -158,7 +158,7 @@ const reopenShowIssueTransformSchema = reopenShowIssueInputSchema.transform((dat
 }));
 export class ReopenShowIssueDto extends createZodDto(reopenShowIssueTransformSchema) {
   declare version: number;
-  declare reason: string | undefined;
+  declare reason: string;
 }
 
 const escalateShowIssueTransformSchema = escalateShowIssueInputSchema.transform((data) => ({

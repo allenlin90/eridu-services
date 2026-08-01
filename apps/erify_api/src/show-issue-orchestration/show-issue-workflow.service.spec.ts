@@ -9,7 +9,7 @@ import { ShowIssueWorkflowService } from './show-issue-workflow.service';
 
 import { AuditService } from '@/models/audit/audit.service';
 import { StudioMembershipService } from '@/models/membership/studio-membership.service';
-import { ShowRepository } from '@/models/show/show.repository';
+import { ShowService } from '@/models/show/show.service';
 import type { ShowIssueWithRelations } from '@/models/show-issue/schemas/show-issue.schema';
 import { ShowIssueService } from '@/models/show-issue/show-issue.service';
 import { UserService } from '@/models/user/user.service';
@@ -84,7 +84,7 @@ describe('showIssueWorkflowService', () => {
     reopenShowIssue: jest.fn(),
     escalateShowIssue: jest.fn(),
   };
-  const showRepositoryMock = { findByUidAndStudioUid: jest.fn() };
+  const showServiceMock = { findByUidAndStudioUid: jest.fn() };
   const studioMembershipServiceMock = { findStudioMemberByUserAndStudio: jest.fn() };
   const userServiceMock = { getUserByExtId: jest.fn() };
   const auditServiceMock = { create: jest.fn(), countForTargets: jest.fn(), findForTargets: jest.fn() };
@@ -110,7 +110,7 @@ describe('showIssueWorkflowService', () => {
       providers: [
         ShowIssueWorkflowService,
         { provide: ShowIssueService, useValue: showIssueServiceMock },
-        { provide: ShowRepository, useValue: showRepositoryMock },
+        { provide: ShowService, useValue: showServiceMock },
         { provide: StudioMembershipService, useValue: studioMembershipServiceMock },
         { provide: UserService, useValue: userServiceMock },
         { provide: AuditService, useValue: auditServiceMock },
@@ -130,7 +130,7 @@ describe('showIssueWorkflowService', () => {
 
   describe('createShowIssue', () => {
     it('resolves the show and creates a MANUAL issue with an audit CREATE row', async () => {
-      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({ id: 10n } as any);
+      showServiceMock.findByUidAndStudioUid.mockResolvedValue({ id: 10n } as any);
       const created = createShowIssue();
       showIssueServiceMock.createShowIssue.mockResolvedValue(created);
 
@@ -154,7 +154,7 @@ describe('showIssueWorkflowService', () => {
     });
 
     it('rejects an owner who is not an active member of the studio', async () => {
-      showRepositoryMock.findByUidAndStudioUid.mockResolvedValue({ id: 10n } as any);
+      showServiceMock.findByUidAndStudioUid.mockResolvedValue({ id: 10n } as any);
       studioMembershipServiceMock.findStudioMemberByUserAndStudio.mockResolvedValue(null);
 
       await expect(

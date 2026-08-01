@@ -104,7 +104,16 @@ export const updateShowIssueInputSchema = z.object({
   evidence: z.string().nullable().optional(),
   owner_id: z.string().startsWith(UID_PREFIXES.USER).nullable().optional(),
   due_at: z.iso.datetime().nullable().optional(),
-});
+}).refine(
+  (data) => data.category !== undefined
+    || data.severity !== undefined
+    || data.status !== undefined
+    || data.title !== undefined
+    || data.evidence !== undefined
+    || data.owner_id !== undefined
+    || data.due_at !== undefined,
+  { message: 'At least one editable field must be provided.' },
+);
 
 export const resolveShowIssueInputSchema = z.object({
   version: z.number().int().nonnegative(),
@@ -114,7 +123,7 @@ export const resolveShowIssueInputSchema = z.object({
 
 export const reopenShowIssueInputSchema = z.object({
   version: z.number().int().nonnegative(),
-  reason: z.string().min(1).optional(),
+  reason: z.string().min(1, 'Reason is required'),
 });
 
 export const escalateShowIssueInputSchema = z.object({

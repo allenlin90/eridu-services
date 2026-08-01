@@ -203,6 +203,22 @@ describe('showIssueService', () => {
       expect(repository.updateWithVersionCheck).not.toHaveBeenCalled();
     });
 
+    it('rejects re-starting an already IN_PROGRESS issue (no-op transition)', async () => {
+      const current = createShowIssue({ status: 'IN_PROGRESS' });
+      await expect(
+        service.updateShowIssueFields(current, current.version, { status: 'IN_PROGRESS' }),
+      ).rejects.toThrow('Issue is already in progress.');
+      expect(repository.updateWithVersionCheck).not.toHaveBeenCalled();
+    });
+
+    it('rejects a category change on a FACT_EXTRACTION issue (reconciliation identity)', async () => {
+      const current = createShowIssue({ origin: 'FACT_EXTRACTION', showCreatorId: 7n });
+      await expect(
+        service.updateShowIssueFields(current, current.version, { category: 'OTHER' }),
+      ).rejects.toThrow('Category cannot be changed for an automated issue — it is part of the reconciliation identity.');
+      expect(repository.updateWithVersionCheck).not.toHaveBeenCalled();
+    });
+
     it('translates a stale version into a 409', async () => {
       const current = createShowIssue({ version: 3 });
       repository.updateWithVersionCheck.mockRejectedValue(

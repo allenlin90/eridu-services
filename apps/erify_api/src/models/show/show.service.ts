@@ -75,6 +75,15 @@ export class ShowService extends BaseModelService {
   }
 
   /**
+   * Studio-scoped show lookup for other capabilities that need to resolve a
+   * show UID without depending on `ShowRepository` directly (RT-05).
+   * @internal
+   */
+  async findByUidAndStudioUid(uid: string, studioUid: string) {
+    return this.showRepository.findByUidAndStudioUid(uid, studioUid);
+  }
+
+  /**
    * @internal
    */
   async findPaginatedWithTaskSummary(...args: Parameters<ShowRepository['findPaginatedWithTaskSummary']>): ReturnType<ShowRepository['findPaginatedWithTaskSummary']> {

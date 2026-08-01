@@ -77,3 +77,19 @@ ALTER TABLE "show_issues" ADD CONSTRAINT "show_issues_show_platform_violation_id
 
 -- AddForeignKey
 ALTER TABLE "audit_targets" ADD CONSTRAINT "audit_targets_show_issue_id_fkey" FOREIGN KEY ("show_issue_id") REFERENCES "show_issues"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- CUSTOM SQL START: origin/source exclusive-arc integrity
+-- `origin`/`show_creator_id`/`show_platform_violation_id` are plain columns
+-- (no DB enum, no application-level trigger), so `ShowIssueService`'s
+-- `assertOriginSourceArc` check is the only thing stopping a MANUAL row from
+-- carrying an automated source FK, or a FACT_EXTRACTION row from carrying
+-- zero or two. Any direct Prisma/raw-SQL write that bypasses that service
+-- method — including future reconciliation-workflow code — would silently
+-- corrupt the arc without this constraint. See
+-- docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md "Proposed model".
+ALTER TABLE "show_issues"
+    ADD CONSTRAINT "show_issues_origin_source_arc_check"
+    CHECK (
+      ("origin" = 'MANUAL' AND num_nonnulls("show_creator_id", "show_platform_violation_id") = 0)
+      OR ("origin" = 'FACT_EXTRACTION' AND num_nonnulls("show_creator_id", "show_platform_violation_id") = 1)
+    );
