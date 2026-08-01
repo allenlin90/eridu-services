@@ -1,0 +1,11 @@
+# The admin API key must never be baked into an image. Railway clones from Git so
+# .env is absent there anyway, but a local `docker build` would otherwise copy it.
+.env
+.env.*
+
+# Knowledge collections are not read by push_config.py, and some of this material is
+# third-party (TikTok Academy). No reason to ship it.
+knowledge/
+
+# Deployed via the Open WebUI admin API, not this image.
+functions/
