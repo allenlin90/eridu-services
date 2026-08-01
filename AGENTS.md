@@ -422,7 +422,7 @@ pnpm architecture:signals
 
 ### graphify (Knowledge Graph)
 
-`graphify` is an optional local CLI that builds a queryable knowledge graph of a corpus at `graphify-out/`. Setup on macOS is `brew install uv && uv tool install graphifyy`. Nothing in the verification checklist depends on it.
+`graphify` is an optional local CLI that builds a queryable knowledge graph of a corpus at `graphify-out/`. Installation, the optional Claude Code hooks, and troubleshooting live in [`AGENTIC_DEVELOPMENT_SETUP.md`](docs/engineering/AGENTIC_DEVELOPMENT_SETUP.md) §7. Nothing in the verification checklist depends on it.
 
 - **Availability check & fallback:** `graphify-out/` is gitignored, so it does not exist on a fresh clone. Treat graphify as available only when both `command -v graphify` succeeds and `graphify-out/graph.json` exists. Otherwise fall back to `rg` and direct file reading without mentioning the tool.
 - When available, use it to orient before reading raw files. Reach for it in this order:
