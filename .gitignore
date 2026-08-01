@@ -53,6 +53,9 @@ yarn-error.log*
 # Claude Code harness runtime artifacts
 .claude/scheduled_tasks.lock
 
+# Per-developer Claude Code settings (opt-in hooks, personal permissions)
+.claude/settings.local.json
+
 
 # Superpowers brainstorming mockups (local-only)
 .superpowers/

@@ -334,7 +334,7 @@ QMD configuration and indexes are local state. Do not commit them.
 
 ## 7. Install Graphify Optionally
 
-Graphify is an experimental structural index. It is not required for ordinary setup.
+Graphify is an optional structural index. It is not required for ordinary setup, and no verification command depends on it.
 
 ```bash
 uv tool install graphifyy
@@ -347,9 +347,44 @@ Start with deterministic code-focused extraction:
 graphify extract . --code-only
 ```
 
-Do not run `graphify install --project` by default. It can write tool-specific skills and hooks into repository paths already governed by `.agents/`. Any project-scoped installation requires an explicit instruction-reconciliation change.
+Do not run `graphify install --project`, `graphify claude install`, or `graphify hook install` in this repository. Those generators write tool-specific skills, instruction blocks, and hooks into paths already governed by `.agents/` and `.claude/`, using their own defaults. The portable integration is already committed and reconciled: the vendored skill lives at `.agents/skills/graphify/` (see its `VENDOR.md`), and the agent-facing rule is `AGENTS.md` § graphify (Knowledge Graph). Changing either requires an explicit instruction-reconciliation change, not a generator run.
 
-The derived `graphify-out/` directory is ignored by Git.
+The derived `graphify-out/` directory is ignored by Git, so it does not exist until you build it locally. Agent instructions treat Graphify as available only when `command -v graphify` succeeds and `graphify-out/graph.json` exists.
+
+### Optional Claude Code hooks
+
+Graphify ships a `hook-guard` subcommand that reminds an agent to orient with the graph before falling back to raw search. This is a per-developer preference, not a repository default, so it stays out of the shared `.claude/settings.json`. Opt in by adding it to `.claude/settings.local.json`, which is ignored by Git:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v graphify >/dev/null 2>&1 && graphify hook-guard search || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v graphify >/dev/null 2>&1 && graphify hook-guard read || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The `command -v` guard makes the hook a no-op when Graphify is not installed, and `hook-guard` itself stays quiet until `graphify-out/graph.json` exists. The `Read|Glob` matcher fires on every file read and is the noisier of the two; drop it if you only want the search-path reminder.
+
+Agents behave correctly without these hooks — `AGENTS.md` already carries the rule for Claude Code, Codex, and OpenCode. The hooks only add in-session reinforcement.
 
 ## 8. GitHub CLI
 
@@ -447,3 +482,21 @@ Restart the shell and confirm the uv tool binary directory is on `PATH`:
 uv tool list
 which graphify
 ```
+
+### Graphify works in your terminal but the agent cannot find it
+
+`uv tool install` puts the binary in `~/.local/bin`, which is normally added to `PATH` by your shell startup files. A desktop-launched agent does not source those files, so its shell can have a different `PATH` than your terminal — `graphify` resolves for you and reports "command not found" for the agent.
+
+Check from inside the agent, not from your terminal:
+
+```bash
+command -v graphify || echo "not on the agent PATH"
+```
+
+If it is missing, either run the agent from a terminal, or link the binary into a directory the agent already has on `PATH` (`/opt/homebrew/bin` on Apple Silicon):
+
+```bash
+ln -sf "$HOME/.local/bin/graphify" /opt/homebrew/bin/graphify
+```
+
+Agents fail safe here: the rule in `AGENTS.md` gates on `command -v graphify`, so an agent that cannot see the binary falls back to `rg` instead of erroring. The cost of not fixing this is that Graphify silently never gets used.
