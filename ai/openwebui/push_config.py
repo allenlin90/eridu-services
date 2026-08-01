@@ -10,14 +10,12 @@ Usage:
 Targets:
     skills   Skill content from ai/openwebui/skills/*.md
     models   Workspace Model manifests from ai/openwebui/models/*.json
-    access   Derived skill->group grants (models are the only source of skill access)
+    access   Derived skill->group grants (model audiences plus Admin write access)
     all      skills, then models, then access
 
 Options:
     --apply          Perform writes. Without it the script only reports a diff.
     --only ID        Restrict to a single skill or model id.
-    --pending ID     Treat skill ID as not-yet-merged: grant Admins only,
-                     regardless of what the model manifests derive.
     --yes            Skip the interactive confirmation for revokes.
 
 Exit codes:
@@ -280,8 +278,7 @@ def admins_only_skills(index=None):
     A skill uploaded without a model binding would otherwise derive no access and
     be readable by nobody. Marking it `"access": "admins-only"` grants Admins
     instead, so it is testable while its audience is still being decided. The
-    field is a declarative fallback -- it lives in Git and survives merges, unlike
-    the transient `--pending` flag.
+    field is a declarative fallback, reviewed in Git and preserved across deploys.
     """
     index = load_skill_index() if index is None else index
     return {
@@ -291,12 +288,13 @@ def admins_only_skills(index=None):
     }
 
 
-def derive_skill_access(manifests, pending=(), staged=()):
+def derive_skill_access(manifests, staged=()):
     """Skill->group access is derived, never authored directly.
 
-    A group may read a skill exactly when it can read at least one model that
-    binds the skill. There is no path to a skill except through a model, so this
-    derivation is the complete access story -- anything else live is drift.
+    A group must be able to read every skill bound to a model it can read or edit.
+    Open WebUI 0.10.2 applies this same skill read grant to model-bound use, direct
+    menu selection, and `$` mentions, so a model audience also becomes the skill's
+    direct audience. Only Admins may edit canonical skill content.
     """
     derived = {}
     for manifest in manifests.values():
@@ -308,9 +306,7 @@ def derive_skill_access(manifests, pending=(), staged=()):
                 skill_id, {"read": set(), "write": set(), "public": False}
             )
             entry["read"] |= readers
-            # A group that can edit a model must also be able to edit the skills
-            # it binds, or the model becomes uneditable in practice.
-            entry["write"] |= writers
+            entry["write"].add(ADMIN_GROUP_NAME)
             if access.get("public"):
                 entry["public"] = True
 
@@ -324,13 +320,6 @@ def derive_skill_access(manifests, pending=(), staged=()):
                 "write": {ADMIN_GROUP_NAME},
                 "public": False,
             }
-
-    for skill_id in pending:
-        derived[skill_id] = {
-            "read": {ADMIN_GROUP_NAME},
-            "write": {ADMIN_GROUP_NAME},
-            "public": False,
-        }
 
     return derived
 
@@ -374,6 +363,31 @@ def grants_for(resource_type, resource_id, read, write, public, group_uuids):
 
 def grant_key(grant):
     return (grant["principal_type"], grant["principal_id"], grant["permission"])
+
+
+def record_grant_delta(report, target, current, desired, group_uuids):
+    """Record human-readable grant changes and gate every removal before writes."""
+    current_keys = {grant_key(grant) for grant in current}
+    desired_keys = {grant_key(grant) for grant in desired}
+    uuid_names = {uuid: name for name, uuid in group_uuids.items()}
+
+    def label(key):
+        principal_type, principal_id, permission = key
+        if principal_type == "user" and principal_id == "*":
+            return f"public:{permission}"
+        return f"{uuid_names.get(principal_id, principal_id)}:{permission}"
+
+    added = sorted(label(key) for key in desired_keys - current_keys)
+    removed = sorted(label(key) for key in current_keys - desired_keys)
+    if removed:
+        report.revokes.append((target, removed))
+
+    detail = []
+    if added:
+        detail.append(f"+{', '.join(added)}")
+    if removed:
+        detail.append(f"-{', '.join(removed)}")
+    return " ".join(detail)
 
 
 # --------------------------------------------------------------------------
@@ -517,7 +531,17 @@ def plan_models(client, report, group_uuids, only=None):
             if not diffs:
                 report.add("unchanged", f"model {model_id}")
                 continue
-            report.add("update", f"model {model_id}", f"differs: {', '.join(diffs)}")
+            grant_detail = record_grant_delta(
+                report,
+                f"model {model_id}",
+                current.get("access_grants") or [],
+                desired["access_grants"],
+                group_uuids,
+            )
+            detail = f"differs: {', '.join(diffs)}"
+            if grant_detail:
+                detail += f"; grants {grant_detail}"
+            report.add("update", f"model {model_id}", detail)
         payload.append(desired)
 
     # Orphan detection needs every manifest, not just the --only subset.
@@ -599,11 +623,11 @@ def model_diff(current, desired):
     return diffs
 
 
-def plan_access(client, report, group_uuids, pending=()):
+def plan_access(client, report, group_uuids, show_unreachable=True):
     """Return the grant writes needed. Writes nothing; records revokes on the report."""
     manifests = load_manifests()
     staged = admins_only_skills()
-    derived = derive_skill_access(manifests, pending, staged)
+    derived = derive_skill_access(manifests, staged)
     repo_skills = load_repo_skills()
     live = {skill["id"]: skill for skill in client.get("/api/v1/skills/export")}
 
@@ -615,35 +639,32 @@ def plan_access(client, report, group_uuids, pending=()):
         )
         current = (live.get(skill_id) or {}).get("access_grants") or []
 
-        desired_keys = {grant_key(g) for g in desired}
-        current_keys = {grant_key(g) for g in current}
-        if desired_keys == current_keys:
+        if {grant_key(g) for g in desired} == {grant_key(g) for g in current}:
             report.add("unchanged", f"skill-access {skill_id}")
             continue
 
-        uuid_names = {uuid: name for name, uuid in group_uuids.items()}
-
-        def label(key):
-            return f"{uuid_names.get(key[1], key[1])}:{key[2]}"
-
-        added = sorted(label(key) for key in desired_keys - current_keys)
-        removed = sorted(label(key) for key in current_keys - desired_keys)
-        detail = []
-        if added:
-            detail.append(f"+{', '.join(added)}")
-        if removed:
-            detail.append(f"-{', '.join(removed)}")
-            report.revokes.append((skill_id, removed))
+        detail = record_grant_delta(
+            report, f"skill {skill_id}", current, desired, group_uuids
+        )
         if not entry["read"] and not entry["public"]:
-            detail.append("(no model binds this skill)")
+            binders = [
+                model_id
+                for model_id, manifest in manifests.items()
+                if skill_id in (manifest.get("skill_ids") or [])
+            ]
+            if binders:
+                detail += " (bound model has no reader group; Admin manages the skill)"
+            else:
+                detail += " (no model binds this skill)"
 
-        report.add("grant", f"skill-access {skill_id}", " ".join(detail))
+        report.add("grant", f"skill-access {skill_id}", detail)
         planned.append((skill_id, desired))
 
     # A skill nobody can reach derives no access at all. That is the rule working,
     # but it is almost always an oversight rather than a decision -- surface it
     # instead of leaving it buried in the per-skill lines.
-    report_unreachable(manifests, repo_skills, derived, staged)
+    if show_unreachable:
+        report_unreachable(manifests, repo_skills, derived, staged)
 
     return [
         lambda i=skill_id, g=desired: client.post(
@@ -654,7 +675,7 @@ def plan_access(client, report, group_uuids, pending=()):
 
 
 def report_unreachable(manifests, repo_skills, derived, staged=()):
-    """Name the skills nobody can read, and say which reason applies.
+    """Name skills with no usable model audience, and say which reason applies.
 
     Unbound, bound-to-an-unreadable-model, and deliberately staged Admins-only
     look similar in the grant output but mean different things, so don't collapse
@@ -708,8 +729,8 @@ def report_unreachable(manifests, repo_skills, derived, staged=()):
 
     if unreadable:
         print(
-            f"\n  UNREACHABLE -- these {len(unreadable)} skill(s) are bound, but only to "
-            "model(s) no group can read:"
+            f"\n  NO MODEL AUDIENCE -- these {len(unreadable)} skill(s) are bound, but only "
+            "to model(s) no group can read (Admins retain skill management access):"
         )
         for skill_id, binders in unreadable:
             print(f"    {skill_id}  (via {', '.join(binders)})")
@@ -726,8 +747,8 @@ def confirm_revokes(report, assume_yes):
     if not report.revokes or assume_yes:
         return
     print("\n  REVOKES -- these groups lose access:")
-    for skill_id, removed in report.revokes:
-        print(f"    {skill_id}: {', '.join(removed)}")
+    for resource, removed in report.revokes:
+        print(f"    {resource}: {', '.join(removed)}")
     if not sys.stdin.isatty():
         # Unattended run (Railway, CI). Refusing is the safe default: nobody is
         # present to weigh a revoke, and --yes is how an operator says they have.
@@ -753,7 +774,6 @@ def parse_args(argv):
         "target": argv[0],
         "apply": False,
         "only": None,
-        "pending": [],
         "assume_yes": False,
     }
     index = 1
@@ -763,14 +783,11 @@ def parse_args(argv):
             options["apply"] = True
         elif argument == "--yes":
             options["assume_yes"] = True
-        elif argument in ("--only", "--pending"):
+        elif argument == "--only":
             index += 1
             if index >= len(argv):
                 raise PushConfigError(f"{argument} requires a value")
-            if argument == "--only":
-                options["only"] = argv[index]
-            else:
-                options["pending"].append(argv[index])
+            options["only"] = argv[index]
         else:
             raise PushConfigError(f"unknown argument: {argument}")
         index += 1
@@ -798,7 +815,7 @@ def main(argv):
         elif target == "models":
             actions += plan_models(client, section, group_uuids, options["only"])
         else:
-            actions += plan_access(client, section, group_uuids, options["pending"])
+            actions += plan_access(client, section, group_uuids)
         section.render(options["apply"])
         report.lines.extend(section.lines)
         report.changed = report.changed or section.changed
@@ -808,6 +825,25 @@ def main(argv):
         confirm_revokes(report, options["assume_yes"])
         for action in actions:
             action()
+
+        verification_actions = []
+        for target in targets:
+            verification = Report()
+            if target == "skills":
+                verification_actions += plan_skills(client, verification, options["only"])
+            elif target == "models":
+                verification_actions += plan_models(
+                    client, verification, group_uuids, options["only"]
+                )
+            else:
+                verification_actions += plan_access(
+                    client, verification, group_uuids, show_unreachable=False
+                )
+        if verification_actions:
+            raise PushConfigError(
+                "post-apply verification found changes that did not persist; "
+                "run a dry run and inspect the live state before retrying"
+            )
         print(
             f"\nApplied {len(actions)} change(s). "
             "Run `python3 ai/openwebui/pull_config.py` to refresh synced/."

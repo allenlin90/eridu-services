@@ -10,7 +10,7 @@ Use this skill for the *mechanics* of calling Open WebUI's HTTP API. It does not
 For these narrower jobs, use the more specific skill instead of re-deriving the workflow from the raw endpoint catalog here:
 - Groups, permissions, or access grants (models/knowledge/tools/skills) → [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md)
 - Wiring an MCP or OpenAPI tool server (e.g. this monorepo's `erify_api` MCP) → [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md)
-- Uploading or syncing skill content → [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md)
+- Uploading or syncing skill content → [upload-openwebui-skill](../upload-openwebui-skill/SKILL.md)
 - Changing an assistant's settings or bindings → [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md)
 
 ## Before using this skill

@@ -11,6 +11,7 @@ import os
 import sys
 import unittest
 from contextlib import redirect_stdout
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -22,6 +23,8 @@ from push_config import (  # noqa: E402
     grant_key,
     grants_for,
     model_diff,
+    plan_models,
+    record_grant_delta,
     split_frontmatter,
     unquote,
 )
@@ -93,13 +96,12 @@ class DeriveSkillAccess(unittest.TestCase):
         derived = derive_skill_access({}, staged=["new-skill"])
         self.assertFalse(derived["new-skill"]["public"])
 
-    def test_pending_overrides_to_admins_only(self):
+    def test_model_writer_does_not_gain_skill_write_access(self):
         derived = derive_skill_access(
-            {"m": manifest("m", ["a"], read=["Org - General"], public=True)},
-            pending=["a"],
+            {"m": manifest("m", ["a"], write=["Commerce - Operation"])}
         )
-        self.assertEqual(derived["a"]["read"], {"Admins"})
-        self.assertFalse(derived["a"]["public"])
+        self.assertEqual(derived["a"]["read"], {"Commerce - Operation"})
+        self.assertEqual(derived["a"]["write"], {"Admins"})
 
 
 class GrantsFor(unittest.TestCase):
@@ -120,6 +122,47 @@ class GrantsFor(unittest.TestCase):
 
     def test_empty_derivation_produces_no_grants(self):
         self.assertEqual(grants_for("skill", "s", [], [], False, GROUPS), [])
+
+
+class GrantDelta(unittest.TestCase):
+    @staticmethod
+    def grant(principal_id, permission="read", principal_type="group"):
+        return {
+            "principal_type": principal_type,
+            "principal_id": principal_id,
+            "permission": permission,
+        }
+
+    def test_removal_is_recorded_for_revoke_confirmation(self):
+        report = Report()
+        detail = record_grant_delta(
+            report,
+            "model helper",
+            [self.grant("uuid-commerce")],
+            [self.grant("uuid-org")],
+            GROUPS,
+        )
+        self.assertEqual(report.revokes, [("model helper", ["Commerce - Operation:read"])])
+        self.assertIn("+Org - General:read", detail)
+        self.assertIn("-Commerce - Operation:read", detail)
+
+    def test_addition_does_not_trigger_revoke_confirmation(self):
+        report = Report()
+        record_grant_delta(
+            report, "model helper", [], [self.grant("uuid-org")], GROUPS
+        )
+        self.assertEqual(report.revokes, [])
+
+    def test_public_grant_has_a_clear_label(self):
+        report = Report()
+        detail = record_grant_delta(
+            report,
+            "model helper",
+            [self.grant("*", principal_type="user")],
+            [],
+            GROUPS,
+        )
+        self.assertEqual(detail, "-public:read")
 
 
 class ModelDiff(unittest.TestCase):
@@ -185,6 +228,58 @@ class ModelDiff(unittest.TestCase):
             },
         }
         self.assertNotIn("meta.knowledge", model_diff(current, d))
+
+
+class PlanModels(unittest.TestCase):
+    def test_model_grant_removal_reaches_the_global_revoke_gate(self):
+        model_manifest = {
+            "id": "helper",
+            "name": "Helper",
+            "base_model_id": "base",
+            "skill_ids": [],
+            "access": {"read_groups": ["Org - General"]},
+        }
+        current = {
+            "id": "helper",
+            "name": "Helper",
+            "base_model_id": "base",
+            "is_active": True,
+            "params": {},
+            "meta": {
+                "description": None,
+                "capabilities": {},
+                "skillIds": [],
+                "toolIds": [],
+                "builtinTools": {},
+            },
+            "access_grants": [
+                {
+                    "principal_type": "group",
+                    "principal_id": "uuid-commerce",
+                    "permission": "read",
+                }
+            ],
+        }
+
+        class FakeClient:
+            def get(self, path):
+                self.assert_path(path)
+                return [current]
+
+            @staticmethod
+            def assert_path(path):
+                if path != "/api/v1/models/export":
+                    raise AssertionError(path)
+
+        report = Report()
+        with patch("push_config.load_manifests", return_value={"helper": model_manifest}):
+            actions = plan_models(FakeClient(), report, GROUPS)
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(
+            report.revokes,
+            [("model helper", ["Commerce - Operation:read"])],
+        )
 
 
 class ConfirmRevokes(unittest.TestCase):

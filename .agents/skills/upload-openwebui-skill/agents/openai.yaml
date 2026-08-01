@@ -1,0 +1,6 @@
+interface:
+  display_name: "Upload Open WebUI Skill"
+  short_description: "Record a skill, model binding, and access impact in a deployment PR"
+  default_prompt: "Use $upload-openwebui-skill to preserve the supplied Markdown, review model and direct skill access, and open a PR for post-merge deployment."
+policy:
+  allow_implicit_invocation: false

@@ -54,16 +54,16 @@ ready to apply.
 
 ## Access is decided here
 
-A group that can read a model gets read on every skill that model binds. There is no other path to
-a skill — a user cannot reach one except through a model — so `access` plus `skill_ids` in these
-manifests is the complete access story, and anything else live is drift to be reconciled away.
+A group that can read or edit a model gets read on every skill that model binds. Open WebUI `0.10.2`
+uses the same skill read grant for model-bound execution, direct menu selection, and `$` mentions.
+Binding therefore defines the reconciled audience but is not an exclusive model-only path.
 
 Practical consequence: **adding a group to a model widens that group's reach to every skill the
 model binds.** Before granting access, read the model's `skill_ids` and confirm the group should
 see all of them. Narrowing means splitting the model, not hand-editing a skill grant.
 
-`write_groups` implies read, and also grants write on the bound skills — a group that can edit a
-model must be able to edit what it binds.
+`write_groups` implies model and skill read. It does not grant skill write; canonical skill content
+remains Admin-managed.
 
 ## Applying
 
@@ -105,7 +105,7 @@ Engineering assistants:
 
 ## Related Skills
 
-- [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md) — the skill content this manifest binds
+- [upload-openwebui-skill](../upload-openwebui-skill/SKILL.md) — the skill content this manifest binds
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — group creation and the derived-grant reconcile
 - [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — endpoint mechanics and `0.10.2` gotchas
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — implements the `tool_ids` field

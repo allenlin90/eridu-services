@@ -8,6 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SYNCED_DIR = os.path.join(BASE_DIR, "synced")
 KNOWLEDGE_ID = "0f0de3c0-7168-4871-ab99-7ed95af8f953"
 FUNCTION_ID = "company_wiki_sync"
+REQUEST_TIMEOUT = 30
 
 
 class PullConfigError(RuntimeError):
@@ -20,7 +21,7 @@ def load_env():
     if os.path.exists(env_path):
         with open(env_path, encoding="utf-8") as file:
             for line in file:
-                if "=" in line:
+                if "=" in line and not line.lstrip().startswith("#"):
                     key, value = line.strip().split("=", 1)
                     env[key.strip()] = value.strip()
     return env
@@ -29,7 +30,7 @@ def load_env():
 def api_get(host, headers, path):
     request = urllib.request.Request(f"{host}{path}", headers=headers)
     try:
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
             return json.loads(response.read().decode())
     except HTTPError as error:
         raise PullConfigError(
@@ -53,6 +54,9 @@ def main():
         raise PullConfigError(
             "OPEN_WEBUI_API_KEY or OPEN_WEBUI_HOST not found in the environment or .env"
         )
+    host = host.strip().rstrip("/")
+    if "://" not in host:
+        host = f"https://{host}"
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -101,15 +105,6 @@ def main():
     if "api_key" in function_data["valves"]:
         function_data["valves"]["api_key"] = "<redacted, see ai/openwebui/.env>"
 
-    os.makedirs(SYNCED_DIR, exist_ok=True)
-    write_json("models.json", models)
-    write_json("groups.json", groups)
-    write_json("tool-servers.json", pulled["tool_servers"])
-    write_json("default-permissions.json", pulled["default_permissions"])
-    write_json("knowledge.json", pulled["knowledge"])
-    write_json("knowledge-files.json", knowledge_files)
-    write_json("functions.json", function_data, indent=2)
-
     # Retrieval + embedding config (secret keys redacted). Captures the RAG
     # settings -- Top K, hybrid search, reranker, chunking, and the embedding
     # model -- that the models/knowledge exports do not include.
@@ -142,7 +137,6 @@ def main():
         "config": redact(api_get(host, headers, "/api/v1/retrieval/config")),
         "embedding": redact(api_get(host, headers, "/api/v1/retrieval/embedding")),
     }
-    write_json("retrieval-config.json", retrieval_config, indent=2)
 
     # Metadata for every knowledge collection (id, name, description,
     # access_grants, file list). File CONTENT is intentionally not exported --
@@ -181,9 +175,26 @@ def main():
                 "files": files,
             }
         )
-    write_json("knowledge-collections.json", collections, indent=2)
+    skills_drift = build_skills_drift(pulled["skills"])
 
-    write_json("skills-drift.json", build_skills_drift(pulled["skills"]), indent=2)
+    # Fetch and validate every remote surface before touching the snapshot tree.
+    # A late API failure must leave the previous complete snapshot intact rather
+    # than producing a misleading mixture of old and new files.
+    snapshots = {
+        "models.json": (models, 4),
+        "groups.json": (groups, 4),
+        "tool-servers.json": (pulled["tool_servers"], 4),
+        "default-permissions.json": (pulled["default_permissions"], 4),
+        "knowledge.json": (pulled["knowledge"], 4),
+        "knowledge-files.json": (knowledge_files, 4),
+        "functions.json": (function_data, 2),
+        "retrieval-config.json": (retrieval_config, 2),
+        "knowledge-collections.json": (collections, 2),
+        "skills-drift.json": (skills_drift, 2),
+    }
+    os.makedirs(SYNCED_DIR, exist_ok=True)
+    for filename, (data, indent) in snapshots.items():
+        write_json(filename, data, indent=indent)
 
 
 def build_skills_drift(live_skills):

@@ -97,6 +97,20 @@ Current contract:
 
 Reorganization may simplify or relocate supporting patterns and references, but it must not remove the `pr-ready` bridge while developers rely on its client entrypoints.
 
+## Open WebUI skill delivery entrypoints
+
+`upload-openwebui-skill` is the canonical ID for the Git-first Open WebUI delivery workflow:
+
+- Claude Code: `/upload-openwebui-skill` through native shared-skill discovery;
+- Codex: explicit `$upload-openwebui-skill` through `agents/openai.yaml`;
+- OpenCode: the exact `upload-openwebui-skill` native skill ID;
+- Claude Chat/Cowork: the separately packaged skill under
+  `ai/openwebui/claude-skills/upload-openwebui-skill/`.
+
+All entrypoints preserve supplied Markdown, review model binding and the direct-use implication of
+skill read grants, create a pull request, and report deployment as pending merge. Only the trusted
+post-merge workflow receives the Open WebUI key and writes live state.
+
 ## Deprecation Policy
 
 A public ID may be renamed or removed only through a compatibility window:

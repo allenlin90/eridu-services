@@ -16,6 +16,8 @@ admin UI is drift to be reconciled, not a new version.
 |---|---|
 | `skills/` | **Source of truth** for Open WebUI skill content, one `<skill-id>.md` per skill. |
 | `models/` | **Source of truth** for Workspace Model (assistant) manifests, including group access. |
+| `claude-skills/` | Source for installable Claude Chat/Cowork skills. These agents create PRs and never receive the production Open WebUI key. |
+| `package_claude_skill.py` | Packages the Chat/Cowork `upload-openwebui-skill` folder as a correctly rooted ZIP. |
 | `push_config.py` | Applies `skills/` and `models/` to the live instance and reconciles derived skill grants. Dry run by default; `--apply` writes. Run as `python3 ai/openwebui/push_config.py all`. |
 | `pull_config.py` | Fetches live config into `synced/` for drift detection. Validates every required response before writing, and exits non-zero without changing snapshots if a read fails. Run as `python3 ai/openwebui/pull_config.py`. |
 | `synced/` | Read-only drift snapshot of the live config (groups, tool-server connections, default permissions, knowledge, and a per-skill drift report). Not an edit surface. |
@@ -26,13 +28,29 @@ admin UI is drift to be reconciled, not a new version.
 ## Delivering a change
 
 Follow [`.agents/workflows/openwebui-sync-delivery.md`](../../.agents/workflows/openwebui-sync-delivery.md),
-or run `/upload-openwebui-skill` with a Markdown skill attached.
+run `/upload-openwebui-skill` in Claude Code, invoke `$upload-openwebui-skill` in a compatible agent,
+or install the packaged skill in Claude Chat/Cowork.
 
 ```bash
 python3 ai/openwebui/push_config.py all           # dry run: what would change live
 python3 ai/openwebui/push_config.py all --apply   # write
 python3 ai/openwebui/pull_config.py               # refresh the drift snapshot
 ```
+
+### Claude Chat/Cowork distribution
+
+Package the reviewed source:
+
+```bash
+python3 ai/openwebui/package_claude_skill.py /tmp/upload-openwebui-skill.zip
+```
+
+An Anthropic organization owner uploads the ZIP under **Customize → Skills** and enables it for the
+intended organization or workspace users. Those users also need GitHub access capable of creating a
+branch and pull request in `allenlin90/eridu-services`.
+
+The shared skill records content, bindings, and access impact in Git. It never asks for an Open WebUI
+key and never writes live state. The trusted `master` workflow deploys after review and merge.
 
 ## Existing repo skill hierarchy
 
@@ -74,7 +92,7 @@ Two workflows own the live instance. Neither needs a service to maintain.
 | Workflow | Trigger | Does |
 |---|---|---|
 | [`openwebui-sync.yml`](../../.github/workflows/openwebui-sync.yml) | push to `master` touching `skills/**`, `models/**`, or `push_config.py` | `push_config.py all --apply` |
-| [`openwebui-drift.yml`](../../.github/workflows/openwebui-drift.yml) | Mondays 02:17 UTC, or manual | read-only compare; opens/updates a `openwebui-drift` issue when live and repo disagree, closes it when they agree again |
+| [`openwebui-drift.yml`](../../.github/workflows/openwebui-drift.yml) | Mondays 02:17 UTC, or manual | read-only compare; opens/updates a redacted `openwebui-drift` issue when live and repo disagree, closes it when they agree again |
 
 The sync workflow is `push` on `master` only. **Never add `pull_request`** — this repository
 is public, and a fork PR would gain access to an Open WebUI admin key.
@@ -94,9 +112,10 @@ To apply a plan that does revoke, run the sync workflow manually
 (`workflow_dispatch`) with **Allow revoking access grants** checked. That is a deliberate
 human action, not something a merge can do.
 
-That guarantee covers the revoke gate only. Once past it the writes are applied in sequence
-with no rollback, so an HTTP failure midway leaves earlier writes in place. Re-run after
-fixing the cause — every operation is an idempotent upsert, so a repeat is safe.
+That guarantee covers the revoke gate only. Once past it the writes are applied in sequence with no
+rollback, so an HTTP failure midway can leave earlier writes in place. A fresh readback follows every
+successful action sequence and fails if required changes did not persist. Fix the cause and rerun;
+the operations are idempotent upserts.
 
 ### Configuration
 
@@ -126,12 +145,13 @@ Access is expressed once, on the model:
 ```text
 model  -> skills   (manifest `skill_ids`)
 model  -> groups   (manifest `access`)
-skill  -> groups   DERIVED: a group reads a skill iff it reads a model binding that skill
+skill  -> groups   DERIVED: model audiences read; Admins write canonical skill content
 ```
 
-There is no path to a skill except through a model, so the derivation is complete and
-`push_config.py access` enforces it — grants no model implies are revoked. Widen access by editing
-the model manifest, never by hand-editing a skill grant.
+Open WebUI `0.10.2` filters model-bound, menu-selected, and `$`-mentioned skill ids through the same
+skill read grants. A model audience therefore also gets direct menu and mention use of each bound
+skill. `push_config.py access` enforces that version-specific relationship and reserves skill write
+access for Admins. Widen access by editing the model manifest, never by hand-editing a skill grant.
 
 ## Skill management rule
 

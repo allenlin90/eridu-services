@@ -5,7 +5,7 @@ The live instance is a projection of this directory — a skill edited in the Op
 drift, recorded in [`../synced/skills-drift.json`](../synced/skills-drift.json).
 
 Full authoring contract and workflow:
-[`openwebui-skill-sync`](../../../.agents/skills/openwebui-skill-sync/SKILL.md).
+[`upload-openwebui-skill`](../../../.agents/skills/upload-openwebui-skill/SKILL.md).
 
 ## File contract
 
@@ -65,7 +65,9 @@ python3 ai/openwebui/pull_config.py                    # refresh the drift snaps
 
 ## Access
 
-Not set here. A group reads a skill exactly when it can read a Workspace Model that binds it — see
+Not authored here. A group reads a skill when it can read a Workspace Model that binds it. On Open
+WebUI `0.10.2`, that read grant also permits direct menu and `$`-mention use; it is not restricted to
+the model path. Canonical skill write access remains Admin-only. See
 [`../models/README.md`](../models/README.md).
 
 ## Repo-authored adapters
@@ -89,7 +91,7 @@ to it rather than a copy.
 Current canonical AI workspace skills:
 
 - `.agents/skills/ai-workspace-control-plane/SKILL.md`
-- `.agents/skills/openwebui-skill-sync/SKILL.md`
+- `.agents/skills/upload-openwebui-skill/SKILL.md`
 - `.agents/skills/openwebui-assistant-adapter/SKILL.md`
 - `.agents/skills/openwebui-groups-permissions/SKILL.md`
 - `.agents/skills/openwebui-rest-api/SKILL.md`

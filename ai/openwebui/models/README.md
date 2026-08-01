@@ -51,8 +51,10 @@ python3 ai/openwebui/push_config.py models --apply    # write
 - **A Full-Context `type: "file"` attachment cannot be reconstructed from the API.** It exists only
   inside the model object, so it must already be attached live; re-attach it in the UI and re-run
   `pull_config.py` if it is ever lost.
-- **This file decides skill access.** A group that can read a model gets read on every skill the
-  model binds — that derivation is the *only* path to a skill. See
+- **This file decides reconciled skill read access.** A group that can read or edit a model gets read
+  on every skill the model binds. In Open WebUI `0.10.2`, that grant permits model-bound execution,
+  direct menu selection, and `$` mention; binding is not a model-only path. Skill write remains
+  Admin-only. See
   [`openwebui-groups-permissions`](../../../.agents/skills/openwebui-groups-permissions/SKILL.md).
 - **Applied via `POST /api/v1/models/import`**, not `/model/update`, which returns a bare `500` on
   this instance.
@@ -60,6 +62,7 @@ python3 ai/openwebui/push_config.py models --apply    # write
 ## Adding a model
 
 1. Create `<id>.json` here.
-2. `python3 ai/openwebui/push_config.py models --only <id>` and read the diff.
-3. `... --apply`, then `python3 ai/openwebui/push_config.py access --apply` to grant its skills.
-4. `python3 ai/openwebui/pull_config.py` and commit `synced/` in the same change.
+2. `python3 ai/openwebui/push_config.py models --only <id>` and read the diff when authorized
+   credentials are available.
+3. Open and merge a reviewed PR; the `master` workflow applies models and skill grants together.
+4. Refresh `synced/` after successful deployment when an observed-state snapshot is required.

@@ -79,7 +79,7 @@ Route by surface:
 
 | Surface | Skill |
 |---|---|
-| Skill content | [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md) |
+| Skill content | [upload-openwebui-skill](../upload-openwebui-skill/SKILL.md) |
 | Assistant settings, bindings, access | [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md) |
 | Groups, permissions, grant reconcile | [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) |
 | New capability needing code | [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) |
@@ -120,7 +120,7 @@ When changing MCP policy:
 
 - [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — implementation details for eridu_auth acting as the OAuth2/OIDC identity server that Open WebUI (and future consumers) authenticate against
 - [openwebui-extensibility-design](../openwebui-extensibility-design/SKILL.md) — decides which mechanism (Function, Tool, Tool Server, or legacy Pipeline) a new Open WebUI capability should use, and where its source lives, before this skill's Open WebUI decision path attaches it to an assistant
-- [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md) — uploads, drift detection, and PR delivery for the Git-owned skill content this skill declares canonical
+- [upload-openwebui-skill](../upload-openwebui-skill/SKILL.md) — PR-first delivery and drift handling for Git-owned skill content
 - [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — endpoint reference and call mechanics for scripting Open WebUI configuration changes that this skill governs
 - [openwebui-groups-permissions](../openwebui-groups-permissions/SKILL.md) — groups/permissions/access-grant mechanics
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — MCP/tool-server registration mechanics

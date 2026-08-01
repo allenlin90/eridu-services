@@ -64,11 +64,12 @@ Open WebUI stores per-resource sharing as normalized grants, not as a field on t
 Do not hand-edit a skill's access grants. Skill access is computed from the Workspace Model
 manifests in `ai/openwebui/models/`:
 
-> A group may read a skill exactly when it can read at least one model that binds that skill.
-> `write_groups` on a model additionally grant write on its bound skills.
+> A group may read a skill exactly when it can read or edit at least one model that binds that skill.
+> Only Admins receive write on canonical skill content.
 
-A user has no path to a skill except through a model, so this derivation is the complete access
-story. Anything else live is drift.
+Open WebUI `0.10.2` uses that same read grant for model-bound execution, direct menu selection, and
+`$` mentions. Model binding therefore defines the reconciled read audience, but does not create an
+exclusive model-only path. Anything outside the derived read grants and Admin write grant is drift.
 
 ```bash
 python3 ai/openwebui/push_config.py access            # dry run: shows + adds and - revokes
@@ -127,4 +128,4 @@ per-group tool subsets out of an MCP connection anyway (multiple filtered connec
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — register a tool server before granting groups access to it
 - [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) — governs the underlying access policy
 - [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md) — the model manifests that skill grants are derived from
-- [openwebui-skill-sync](../openwebui-skill-sync/SKILL.md) — pushes skill content and triggers the derived-grant reconcile
+- [upload-openwebui-skill](../upload-openwebui-skill/SKILL.md) — records skill content and triggers the post-merge derived-grant reconcile

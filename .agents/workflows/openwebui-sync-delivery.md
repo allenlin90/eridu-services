@@ -1,153 +1,105 @@
 ---
-description: Deliver an Open WebUI skill or model change to the live instance and to a pull request in one pass
+description: Review and deliver a Git-authored Open WebUI skill or model change through a PR and post-merge deployment
 ---
 
 # Open WebUI Sync Delivery Workflow
 
-End-to-end sequence for getting a Git-authored Open WebUI change (a skill, a Workspace Model, or
-both) onto the live instance **and** into a reviewable pull request.
+This workflow turns supplied skill content into a reviewable Git change, validates its model binding
+and access impact, and deploys the complete desired state only after merge.
 
-This is what `/upload-openwebui-skill` runs. It also runs unattended from Cowork, where the live
-push half degrades to a reported skip.
-
-## Trigger Conditions
-
-Run when any of these are true:
-
-1. A Markdown skill is attached in chat for upload to Open WebUI.
-2. `ai/openwebui/skills/*.md` or `ai/openwebui/models/*.json` changed.
-3. `synced/skills-drift.json` reports `drifted`, `live-only`, or `repo-only` entries.
-4. Group membership or model access changed, so derived skill grants need recomputing.
-
-## Load First
+## Load first
 
 | Change | Skill |
-|---|---|
-| Skill content | [openwebui-skill-sync](../skills/openwebui-skill-sync/SKILL.md) |
-| Model settings, skill bindings, access | [openwebui-assistant-adapter](../skills/openwebui-assistant-adapter/SKILL.md) |
-| Groups, permissions, grant reconcile | [openwebui-groups-permissions](../skills/openwebui-groups-permissions/SKILL.md) |
-| Endpoint mechanics, `0.10.2` gotchas | [openwebui-rest-api](../skills/openwebui-rest-api/SKILL.md) |
-| Whether the change is even the right shape | [ai-workspace-control-plane](../skills/ai-workspace-control-plane/SKILL.md) |
+| --- | --- |
+| Skill content | [upload-openwebui-skill](../skills/upload-openwebui-skill/SKILL.md) |
+| Model settings and bindings | [openwebui-assistant-adapter](../skills/openwebui-assistant-adapter/SKILL.md) |
+| Groups and grant reconciliation | [openwebui-groups-permissions](../skills/openwebui-groups-permissions/SKILL.md) |
+| REST behavior and version caveats | [openwebui-rest-api](../skills/openwebui-rest-api/SKILL.md) |
+| Control-plane placement | [ai-workspace-control-plane](../skills/ai-workspace-control-plane/SKILL.md) |
 
 ## Steps
 
-### 1. Classify
+### 1. Classify and branch
 
-Decide which surface actually changed. Skill content and model configuration are different files
-with different review stakes — do not fold a model access change into a "skill upload" PR without
-saying so.
+Separate skill content, model binding, and model audience changes in the PR summary even when they
+ship together. Work on a branch such as `feat/openwebui-skill-<id>`, never directly on `master`.
 
-If the capability needs new code rather than new instructions, stop and use
-[openwebui-extensibility-design](../skills/openwebui-extensibility-design/SKILL.md) instead.
+### 2. Record the skill verbatim
 
-### 2. Branch
+Write the Markdown to `ai/openwebui/skills/<id>.md` and add its `name` and load-bearing description
+to `ai/openwebui/skills/index.json`. Do not rewrite user-supplied content.
 
-Never work on `master`. Branch name states the surface: `feat/openwebui-skill-<id>`.
+### 3. Review binding and access
 
-### 3. Land the file
+Ask which existing models should carry the skill. Show each model's current groups before editing.
+Adding a group to a model grants that group every skill the model binds, not only the new one.
 
-- Skill → `ai/openwebui/skills/<id>.md`, following the frontmatter contract in `openwebui-skill-sync`.
-- Model → `ai/openwebui/models/<id>.json`, following the manifest contract in `openwebui-assistant-adapter`.
+Open WebUI 0.10.2 uses the same skill read grants for model-bound execution, direct menu selection,
+and `$` mentions. State that complete access impact; do not describe a binding as model-only.
 
-For an attachment, write the file verbatim and add its `index.json` entry. Do not rewrite,
-summarize, or "improve" the user's content — it is theirs, and the PR is where it gets reviewed.
-
-**A new skill must also be bound to at least one model in the same change.** Access is derived
-from models, so an unbound skill is readable by nobody — live, committed, and inert. Add its id
-to the `skill_ids` of each assistant that should carry it, then run
-`python3 ai/openwebui/push_config.py access` and name the groups that gain read *before*
-committing. `push_config.py` prints an `UNREACHABLE` block for any skill no model binds.
+A new skill must either be bound to an approved model or carry an explicitly chosen
+`"access": "admins-only"` marker. Never silently default to Admins and never leave it unbound and
+unmarked.
 
 ### 4. Dry run
+
+When an authorized key is available, run:
 
 ```bash
 python3 ai/openwebui/push_config.py all
 ```
 
-Exit `2` means differences exist; exit `0` means live already matches; exit `3` means no API key is
-configured (see step 7). Read the diff. Anything under `access` prefixed `-` is a **revoke** — a
-group losing access — and needs the user's explicit agreement before applying.
+Exit `2` means differences exist; `0` means in sync; `3` means the key or host is unavailable. Name
+all grant additions and revokes. Do not expose the detailed output in public logs or issues.
 
-### 5. Push, gated on merge
+In Claude Chat or Cowork, missing production credentials is expected. Continue with the Git change
+and mark live verification as not performed.
 
-```bash
-python3 ai/openwebui/push_config.py skills --only <id> --apply
-python3 ai/openwebui/push_config.py access --pending <id> --apply
-```
+### 5. Validate and open the PR
 
-`--pending` grants `Admins` only. Unreviewed content stays out of staff hands while the PR is open.
-If the PR is abandoned, the worst outcome is an Admins-only skill, not company-wide policy nobody
-approved.
+Run the applicable tests and `pnpm agents:validate`, then open a PR against `master`. The body states:
 
-Model changes have no `--pending` equivalent — a model's access **is** its manifest. Apply model
-changes only after the user has seen the diff.
+- skill files and model manifests changed;
+- model bindings;
+- groups gaining or losing model and direct skill use;
+- dry-run result, or that it was unavailable;
+- deployment is pending merge.
 
-### 6. Refresh the snapshot
+Do not write unmerged content or access grants to production.
 
-```bash
-python3 ai/openwebui/pull_config.py
-```
+### 6. Deploy after merge
 
-Commit `ai/openwebui/synced/` in the same change. A snapshot refreshed in a later PR is how the
-repo goes quietly stale.
+A merge touching the canonical skill, model, or sync paths runs `openwebui-sync.yml`, which applies
+`push_config.py all --apply`. The script plans every target before writing, gates skill and model
+grant revocations, then re-reads the live state and fails if a required write did not persist.
 
-### 7. Cowork / no-key degrade
-
-`ai/openwebui/.env` is gitignored, so a fresh checkout has no key and `push_config.py` exits `3`.
-That is a supported mode, not an error:
-
-- Complete steps 3, 6 (skip — nothing to pull), and 8.
-- Report the push as `skipped (not configured)` with the exact command to run later.
-- Never report a push, a grant change, or a live state you did not verify.
-
-### 8. Open the PR
-
-Target `master` on `allenlin/eridu-services`. The PR body states:
-
-- which skills and models changed;
-- the derived access delta, revokes called out separately;
-- whether live was pushed or skipped, and whether grants are still `--pending`;
-- the post-merge command, when one is outstanding.
-
-### 9. Post-merge — usually automatic
-
-Merging to `master` runs the `openwebui-sync` GitHub Actions workflow, which applies
-`push_config.py all --apply`. That widens `--pending` skills from `Admins` to their derived
-groups with no manual step.
-
-Two cases still need a human:
-
-- **The run aborted on a revoke.** Intended: the service does not set `PUSH_CONFIRM_REVOKES`, so
-  any plan containing a revoke stops before writing anything at all. Review the revokes, then
-  apply locally once with `--yes`.
-- **The workflow did not run.** The change did not match its path filters (`skills/**`,
-  `models/**`, `push_config.py`).
+An unattended revoke is deliberately blocked. After explicit review, an authorized operator may run:
 
 ```bash
-python3 ai/openwebui/push_config.py all --apply
-python3 ai/openwebui/pull_config.py
+python3 ai/openwebui/push_config.py all --apply --yes
 ```
 
-Commit the refreshed `synced/` afterwards — the workflow writes to Open WebUI, not back to Git.
+### 7. Refresh observed state when appropriate
 
-## Status Report
+After a successful authorized deployment or audit, run `python3 ai/openwebui/pull_config.py`. It
+fetches and validates every API surface before changing `ai/openwebui/synced/`. The canonical skill
+and manifest files remain the deployment source of truth.
 
-Report every step with an explicit outcome. A step that was skipped is reported as skipped, with the
-reason — silence reads as success.
+## Status report
 
 ```text
-File     ai/openwebui/skills/<id>.md — created
-Push     pushed (live) | skipped (not configured) | failed: <reason>
-Access   admins-only (PR pending) | derived: <groups> | skipped
-Snapshot synced/ refreshed | skipped (no key)
-PR       <url> | not opened: <reason>
+File        ai/openwebui/skills/<id>.md — created | updated
+Binding     <model ids> | admins-only (intentional, no model yet)
+Access      <groups and direct-use implication> | not verified (no key)
+PR          <url> | not opened: <reason>
+Deployment  pending merge | applied and verified | blocked: <reason>
 ```
 
 ## Verification
 
-- [ ] `python3 ai/openwebui/test_push_config.py` passes if `push_config.py` changed.
-- [ ] `push_config.py all` re-run after applying; the remaining diff is understood, not ignored.
-- [ ] Revokes were shown to the user and agreed before `--apply`.
-- [ ] `synced/` refreshed and committed in the same change.
-- [ ] `pnpm agents:validate` passes if any `.agents/` file changed.
-- [ ] Status report states all outcomes, including skips.
+- [ ] `python3 ai/openwebui/test_push_config.py`
+- [ ] Authenticated dry run reviewed when credentials are available.
+- [ ] Revokes require explicit approval before apply.
+- [ ] No live write occurs before merge.
+- [ ] `pnpm agents:validate` passes for agent-content changes.
+- [ ] PR state and deployment state are reported separately.

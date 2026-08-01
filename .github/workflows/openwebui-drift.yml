@@ -37,15 +37,17 @@ jobs:
           python3 ai/openwebui/push_config.py all > drift.txt 2>&1
           status=$?
           set -e
-          cat drift.txt
           # 0 = in sync, 2 = differences found, anything else = a real failure.
           echo "status=$status" >> "$GITHUB_OUTPUT"
-          {
-            echo "### Open WebUI drift check"
-            echo '```'
-            cat drift.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -eq 0 ]; then
+            echo "### Open WebUI drift check: in sync" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$status" -eq 2 ]; then
+            echo "### Open WebUI drift check: differences detected" >> "$GITHUB_STEP_SUMMARY"
+            echo "Run the authenticated dry-run locally for details." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Open WebUI drift check: failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Inspect locally; live configuration is intentionally omitted from public logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
           if [ "$status" -ne 0 ] && [ "$status" -ne 2 ]; then
             exit "$status"
           fi
@@ -56,7 +58,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          # drift.txt is machine output from our own script, not user input.
           {
             echo "The live Open WebUI instance no longer matches \`ai/openwebui/\`."
             echo
@@ -64,13 +65,16 @@ jobs:
             echo "Git is the source of truth, so the next merge that runs the apply"
             echo "workflow will revert it. Decide which side is right before that happens."
             echo
-            echo '```'
-            cat drift.txt
-            echo '```'
+            echo "The detailed diff is deliberately excluded because this repository is public."
+            echo "An authorized operator can reproduce it locally with:"
+            echo
+            echo '\`python3 ai/openwebui/push_config.py all\`'
             echo
             echo "[Workflow run]($RUN_URL)"
           } > body.md
 
+          gh label create openwebui-drift --color B60205 \
+            --description "Live Open WebUI differs from Git" --force
           existing=$(gh issue list --state open --label openwebui-drift \
             --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
@@ -85,6 +89,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          gh label create openwebui-drift --color B60205 \
+            --description "Live Open WebUI differs from Git" --force
           existing=$(gh issue list --state open --label openwebui-drift \
             --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
