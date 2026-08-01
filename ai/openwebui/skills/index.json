@@ -21,11 +21,11 @@
   },
   "affiliate-management": {
     "name": "Affiliate Management",
-    "description": ""
+    "description": "Use when planning or governing affiliate GMV operations, creator tiers, incentives, and vendor qualification."
   },
   "affiliate-management-": {
     "name": "Affiliate management ",
-    "description": ""
+    "description": "Use when applying the legacy Affiliate Management SOP retained under its byte-exact live skill id."
   },
   "citation-escalation-contract": {
     "name": "Citation And Escalation Contract",
@@ -82,7 +82,7 @@
   },
   "loreal-brand-case": {
     "name": "Loreal brand case",
-    "description": ""
+    "description": "Use when preparing the L'Oreal OneAffiliate brand-case pitch structure, commerce plan, and execution evidence."
   },
   "openwebui-litellm-railway-integration-guide": {
     "name": "Openwebui Litellm Railway Integration Guide",

@@ -107,9 +107,15 @@ Reorganization may simplify or relocate supporting patterns and references, but 
 - Claude Chat/Cowork: the separately packaged skill under
   `ai/openwebui/claude-skills/upload-openwebui-skill/`.
 
+The Chat/Cowork package is a thin adapter: every run reads the canonical skill and workflow from the
+current `master` branch instead of carrying a second procedure. Its installation and GitHub access
+contract is documented in the
+[Claude Chat and Cowork setup](../../ai/openwebui/claude-skills/README.md).
+
 All entrypoints preserve supplied Markdown, review model binding and the direct-use implication of
-skill read grants, create a pull request, and report deployment as pending merge. Only the trusted
-post-merge workflow receives the Open WebUI key and writes live state.
+skill read grants, create a pull request, and report deployment as pending merge. A secret-free PR
+workflow validates the desired state. Only the trusted post-merge workflow receives the Open WebUI
+key and writes live state.
 
 ## Deprecation Policy
 

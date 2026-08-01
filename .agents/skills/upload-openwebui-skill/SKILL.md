@@ -54,7 +54,9 @@ new skill both unbound and unmarked.
 
 4. Show additions and revokes. A revoke requires explicit operator approval and `--yes` in the
    unattended deploy; otherwise the merge workflow stops before any write.
-5. Validate and open a PR against `master`. Do not push unmerged content live.
+5. Run `python3 ai/openwebui/validate_config.py`, validate the affected agent content, and open a PR
+   against `master`. The secret-free PR workflow repeats the binding and audience checks. Do not push
+   unmerged content live.
 6. After merge, `.github/workflows/openwebui-sync.yml` applies the complete Git state and performs a
    fresh readback check. If the workflow is blocked by a revoke, an authorized operator reviews it
    and runs `python3 ai/openwebui/push_config.py all --apply --yes` locally.
@@ -92,6 +94,7 @@ Never say “uploaded” until the merge deployment and readback have succeeded.
 - [ ] Direct menu and `$`-mention access was included in the access explanation.
 - [ ] No new group or model was introduced implicitly.
 - [ ] Dry-run revokes were called out separately.
+- [ ] `python3 ai/openwebui/validate_config.py` passes.
 - [ ] `python3 ai/openwebui/test_push_config.py` passes when sync logic changed.
 - [ ] `pnpm agents:validate` passes.
 - [ ] PR and deployment status are reported separately.

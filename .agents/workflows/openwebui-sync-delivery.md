@@ -25,6 +25,7 @@ sequenceDiagram
     Agent->>Requester: Show bindings, groups, and direct-use impact
     Requester-->>Agent: Approve models or intentional Admins-only access
     Agent->>Repo: Open a PR with canonical files
+    Repo->>Repo: Run secret-free policy and test checks
     Repo-->>Requester: Reviewable diff with deployment pending
     Requester->>Repo: Merge the approved PR
     Repo->>Sync: Trigger from the push to master
@@ -90,7 +91,9 @@ and mark live verification as not performed.
 
 ### 5. Validate and open the PR
 
-Run the applicable tests and `pnpm agents:validate`, then open a PR against `master`. The body states:
+Run the applicable tests, `python3 ai/openwebui/validate_config.py`, and `pnpm agents:validate`, then
+open a PR against `master`. `openwebui-validate.yml` repeats the repository checks on the pull
+request without production credentials. The body states:
 
 - skill files and model manifests changed;
 - model bindings;
@@ -131,6 +134,8 @@ Deployment  pending merge | applied and verified | blocked: <reason>
 ## Verification
 
 - [ ] `python3 ai/openwebui/test_push_config.py`
+- [ ] `python3 ai/openwebui/validate_config.py`
+- [ ] The secret-free pull-request validation passes.
 - [ ] Authenticated dry run reviewed when credentials are available.
 - [ ] Revokes require explicit approval before apply.
 - [ ] No live write occurs before merge.
