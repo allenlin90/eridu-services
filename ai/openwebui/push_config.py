@@ -39,6 +39,7 @@ SKILLS_DIR = os.path.join(BASE_DIR, "skills")
 SKILL_INDEX = os.path.join(SKILLS_DIR, "index.json")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 ADMIN_GROUP_NAME = "Admins"
+ADMINS_ONLY = "admins-only"
 REQUEST_TIMEOUT = 30
 
 EXIT_OK = 0
@@ -273,7 +274,24 @@ def load_manifests(only=None):
 # --------------------------------------------------------------------------
 
 
-def derive_skill_access(manifests, pending=()):
+def admins_only_skills(index=None):
+    """Skills staged as Admins-only in index.json.
+
+    A skill uploaded without a model binding would otherwise derive no access and
+    be readable by nobody. Marking it `"access": "admins-only"` grants Admins
+    instead, so it is testable while its audience is still being decided. The
+    field is a declarative fallback -- it lives in Git and survives merges, unlike
+    the transient `--pending` flag.
+    """
+    index = load_skill_index() if index is None else index
+    return {
+        skill_id
+        for skill_id, entry in index.items()
+        if (entry or {}).get("access") == ADMINS_ONLY
+    }
+
+
+def derive_skill_access(manifests, pending=(), staged=()):
     """Skill->group access is derived, never authored directly.
 
     A group may read a skill exactly when it can read at least one model that
@@ -295,6 +313,17 @@ def derive_skill_access(manifests, pending=()):
             entry["write"] |= writers
             if access.get("public"):
                 entry["public"] = True
+
+    # A staged skill falls back to Admins only when no model binds it. A binding
+    # always wins -- once the audience is decided, the derivation is the truth and
+    # the staging marker is stale.
+    for skill_id in staged:
+        if not derived.get(skill_id, {}).get("read"):
+            derived[skill_id] = {
+                "read": {ADMIN_GROUP_NAME},
+                "write": {ADMIN_GROUP_NAME},
+                "public": False,
+            }
 
     for skill_id in pending:
         derived[skill_id] = {
@@ -573,7 +602,8 @@ def model_diff(current, desired):
 def plan_access(client, report, group_uuids, pending=()):
     """Return the grant writes needed. Writes nothing; records revokes on the report."""
     manifests = load_manifests()
-    derived = derive_skill_access(manifests, pending)
+    staged = admins_only_skills()
+    derived = derive_skill_access(manifests, pending, staged)
     repo_skills = load_repo_skills()
     live = {skill["id"]: skill for skill in client.get("/api/v1/skills/export")}
 
@@ -613,7 +643,7 @@ def plan_access(client, report, group_uuids, pending=()):
     # A skill nobody can reach derives no access at all. That is the rule working,
     # but it is almost always an oversight rather than a decision -- surface it
     # instead of leaving it buried in the per-skill lines.
-    report_unreachable(manifests, repo_skills, derived)
+    report_unreachable(manifests, repo_skills, derived, staged)
 
     return [
         lambda i=skill_id, g=desired: client.post(
@@ -623,12 +653,41 @@ def plan_access(client, report, group_uuids, pending=()):
     ]
 
 
-def report_unreachable(manifests, repo_skills, derived):
-    """Name the skills nobody can read, and say which of the two reasons applies.
+def report_unreachable(manifests, repo_skills, derived, staged=()):
+    """Name the skills nobody can read, and say which reason applies.
 
-    Unbound and bound-to-an-unreadable-model look identical in the grant output
-    but need different fixes, so don't collapse them into one message.
+    Unbound, bound-to-an-unreadable-model, and deliberately staged Admins-only
+    look similar in the grant output but mean different things, so don't collapse
+    them into one message.
     """
+    still_staged = sorted(
+        skill_id
+        for skill_id in staged
+        if not any(
+            skill_id in (manifest.get("skill_ids") or [])
+            for manifest in manifests.values()
+        )
+    )
+    if still_staged:
+        print(
+            f"\n  STAGED -- {len(still_staged)} skill(s) marked "
+            f'"access": "{ADMINS_ONLY}" in index.json, readable by Admins only:'
+        )
+        for skill_id in still_staged:
+            print(f"    {skill_id}")
+        print("  Bind each to a model to give it a real audience, then drop the marker.")
+
+    bound_but_staged = sorted(set(staged) - set(still_staged))
+    if bound_but_staged:
+        print(
+            f"\n  STALE MARKER -- {len(bound_but_staged)} skill(s) carry "
+            f'"access": "{ADMINS_ONLY}" but are now bound to a model, so the marker '
+            "does nothing:"
+        )
+        for skill_id in bound_but_staged:
+            print(f"    {skill_id}")
+        print("  Remove the field from index.json.")
+
     unbound, unreadable = [], []
     for skill_id in sorted(repo_skills):
         entry = derived.get(skill_id) or {}

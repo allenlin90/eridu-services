@@ -22,19 +22,18 @@ Do not place these here:
 
 ## Railway services deployed from this repository
 
-Most of the Eridu Railway stack is either a first-party app (`apps/`) or a pinned upstream
-image configured in the Railway dashboard — see
+**None today.** Every Railway service in the Eridu stack is either a first-party app
+(`apps/`) or a pinned upstream image configured in the dashboard — see
 [ai-platform-release-management](../.agents/skills/ai-platform-release-management/SKILL.md)
-for the pin and rollback policy on those. The table below lists the services whose build
-lives in this repository, so a change here is a change that needs deploying.
+for the pin and rollback policy on those.
 
-| Railway service | Source in repo | What it does | Trigger |
-|---|---|---|---|
-| `openwebui-sync` | [`ai/openwebui/`](../ai/openwebui/) (`Dockerfile`, `railway.json`, `railway-entrypoint.sh`) | Applies the Git-owned Open WebUI skill and model config to the live instance | Merge to `master` touching `ai/openwebui/skills/**`, `models/**`, or the runner's own files. Deploying the service *is* the run — it has no cron and exits after one pass. |
+Open WebUI configuration is applied by GitHub Actions, not by a Railway service:
+[`openwebui-sync.yml`](../.github/workflows/openwebui-sync.yml) on merge, and
+[`openwebui-drift.yml`](../.github/workflows/openwebui-drift.yml) weekly. A short script run
+on a merge event does not justify a service to build, deploy, and maintain.
 
-Build and deploy settings for these live in a `railway.json` beside the source, so the
-dashboard is not the only record of how a service is built. Variables and secrets stay in
-Railway — never in `railway.json`.
+If a service whose build lives in this repository is ever added, list it here — a change to
+its source is then visibly a change that needs deploying.
 
 ## Target Structure
 

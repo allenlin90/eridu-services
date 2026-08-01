@@ -1,0 +1,55 @@
+name: Open WebUI sync
+
+# Applies the Git-owned Open WebUI config after it lands on master.
+#
+# `push` on master only. NEVER add `pull_request` -- this repository is public,
+# and a fork PR would gain access to an Open WebUI admin key.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "ai/openwebui/skills/**"
+      - "ai/openwebui/models/**"
+      - "ai/openwebui/push_config.py"
+  workflow_dispatch:
+    inputs:
+      confirm_revokes:
+        description: "Allow revoking access grants (a plan containing any revoke otherwise aborts)"
+        type: boolean
+        default: false
+
+concurrency:
+  # Two applies racing would interleave writes against the same instance.
+  group: openwebui-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # push_config.py is stdlib-only, so there is nothing to install.
+      - name: Apply
+        env:
+          OPEN_WEBUI_HOST: ${{ vars.OPEN_WEBUI_HOST }}
+          OPEN_WEBUI_API_KEY: ${{ secrets.OPEN_WEBUI_API_KEY }}
+          # Bound through env, never interpolated into the script body -- a
+          # workflow_dispatch input is caller-supplied.
+          CONFIRM_REVOKES: ${{ inputs.confirm_revokes }}
+        run: |
+          # Without --yes, a plan containing any revoke aborts before writing
+          # anything. That is the intended default: removing someone's access
+          # should not happen because a PR merged.
+          if [ "$CONFIRM_REVOKES" = "true" ]; then
+            python3 ai/openwebui/push_config.py all --apply --yes
+          else
+            python3 ai/openwebui/push_config.py all --apply
+          fi

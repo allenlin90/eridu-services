@@ -111,8 +111,8 @@ Target `master` on `allenlin/eridu-services`. The PR body states:
 
 ### 9. Post-merge — usually automatic
 
-Merging to `master` deploys the `openwebui-sync` Railway service, and deploying it **is** what
-runs `push_config.py --apply`. That widens `--pending` skills from `Admins` to their derived
+Merging to `master` runs the `openwebui-sync` GitHub Actions workflow, which applies
+`push_config.py all --apply`. That widens `--pending` skills from `Admins` to their derived
 groups with no manual step.
 
 Two cases still need a human:
@@ -120,15 +120,15 @@ Two cases still need a human:
 - **The run aborted on a revoke.** Intended: the service does not set `PUSH_CONFIRM_REVOKES`, so
   any plan containing a revoke stops before writing anything at all. Review the revokes, then
   apply locally once with `--yes`.
-- **Nothing deployed.** The change did not match the service's watch patterns (`skills/**`,
-  `models/**`, runner files).
+- **The workflow did not run.** The change did not match its path filters (`skills/**`,
+  `models/**`, `push_config.py`).
 
 ```bash
 python3 ai/openwebui/push_config.py all --apply
 python3 ai/openwebui/pull_config.py
 ```
 
-Commit the refreshed `synced/` afterwards — the Railway run writes to Open WebUI, not to Git.
+Commit the refreshed `synced/` afterwards — the workflow writes to Open WebUI, not back to Git.
 
 ## Status Report
 

@@ -77,6 +77,22 @@ class DeriveSkillAccess(unittest.TestCase):
         derived = derive_skill_access({"m": manifest("m", ["a"], read=["Admins"])})
         self.assertNotIn("orphan", derived)
 
+    def test_staged_skill_falls_back_to_admins(self):
+        # Uploaded with no binding yet: readable by Admins, not by nobody.
+        derived = derive_skill_access({}, staged=["new-skill"])
+        self.assertEqual(derived["new-skill"]["read"], {"Admins"})
+        self.assertEqual(derived["new-skill"]["write"], {"Admins"})
+
+    def test_binding_beats_the_staged_marker(self):
+        derived = derive_skill_access(
+            {"m": manifest("m", ["a"], read=["Org - General"])}, staged=["a"]
+        )
+        self.assertEqual(derived["a"]["read"], {"Org - General"})
+
+    def test_staged_does_not_grant_public(self):
+        derived = derive_skill_access({}, staged=["new-skill"])
+        self.assertFalse(derived["new-skill"]["public"])
+
     def test_pending_overrides_to_admins_only(self):
         derived = derive_skill_access(
             {"m": manifest("m", ["a"], read=["Org - General"], public=True)},

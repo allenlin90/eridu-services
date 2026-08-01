@@ -67,43 +67,51 @@ They cover the access derivation (`derive_skill_access`), grant construction
 (`grants_for`), the model diff, the revoke gate's refusal on an unattended run, and
 frontmatter parsing. Run them before changing any of those.
 
-## Apply on merge (Railway)
+## Apply on merge (GitHub Actions)
 
-The `openwebui-sync` service in the `eridu-services` Railway project applies this
-directory to the live instance. `Dockerfile`, `railway.json`, and `railway-entrypoint.sh`
-here are its build.
+Two workflows own the live instance. Neither needs a service to maintain.
 
-**Deploying it is what runs it.** The service has no cron and
-`restartPolicyType: NEVER`, so the container runs `push_config.py` once per deployment and
-exits. Its watch patterns cover `skills/**`, `models/**`, and the runner's own files on
-`master`, which makes a merge touching Open WebUI config the trigger. Nothing polls, and
-there is no HTTP surface holding an admin key.
+| Workflow | Trigger | Does |
+|---|---|---|
+| [`openwebui-sync.yml`](../../.github/workflows/openwebui-sync.yml) | push to `master` touching `skills/**`, `models/**`, or `push_config.py` | `push_config.py all --apply` |
+| [`openwebui-drift.yml`](../../.github/workflows/openwebui-drift.yml) | Mondays 02:17 UTC, or manual | read-only compare; opens/updates a `openwebui-drift` issue when live and repo disagree, closes it when they agree again |
 
-The trade-off is deliberate: config edited directly in the Open WebUI admin UI is *not*
-detected when it happens. It gets reverted at the next merge that runs the apply, because
-Git is the source of truth. To check on demand, run `push_config.py all` locally.
+The sync workflow is `push` on `master` only. **Never add `pull_request`** — this repository
+is public, and a fork PR would gain access to an Open WebUI admin key.
 
-| Variable | Effect |
-|---|---|
-| `PUSH_TARGET` | `skills` / `models` / `access` / `all` (default `all`) |
-| `PUSH_APPLY=1` | write; unset means the run only reports a diff |
-| `PUSH_CONFIRM_REVOKES=1` | permit revoking access grants |
+The drift workflow exists because the sync workflow only sees changes that arrive through
+Git. Someone editing a skill or a grant in the Open WebUI admin UI produces no Git event, so
+without the weekly check it would go unnoticed until a merge silently reverted it.
 
-Without `PUSH_CONFIRM_REVOKES`, a run whose plan contains any revoke **aborts before
-writing anything at all** — not partway through. `push_config.py` builds the complete plan
-across skills, models, and access before the first write precisely so this gate can stop
-all of it. Additive changes land unattended; anything that would remove access does not.
+### The revoke gate
 
-That guarantee covers the revoke gate only. Once past it the writes are applied in
-sequence with no rollback, so an HTTP failure midway leaves earlier writes in place. Re-run
-after fixing the cause — every operation is an idempotent upsert, so a repeat is safe.
+A run whose plan contains any revoke **aborts before writing anything at all** — not partway
+through. `push_config.py` builds the complete plan across skills, models, and access before
+the first write precisely so this gate can stop all of it. Additive changes land unattended;
+anything that would remove access does not.
 
-`OPEN_WEBUI_HOST` is `http://open-webui.railway.internal:8080` — private networking, same
-project. A slept service wakes on private-network traffic, and `push_config.py` spends a
-retrying read first to absorb the cold boot.
+To apply a plan that does revoke, run the sync workflow manually
+(`workflow_dispatch`) with **Allow revoking access grants** checked. That is a deliberate
+human action, not something a merge can do.
 
-`OPEN_WEBUI_API_KEY` is an admin key — it can revoke grants and delete skills. Set it in
-the Railway dashboard, and rotate it there if it leaks.
+That guarantee covers the revoke gate only. Once past it the writes are applied in sequence
+with no rollback, so an HTTP failure midway leaves earlier writes in place. Re-run after
+fixing the cause — every operation is an idempotent upsert, so a repeat is safe.
+
+### Configuration
+
+| Name | Where | Value |
+|---|---|---|
+| `OPEN_WEBUI_HOST` | repository **variable** | the instance's public URL |
+| `OPEN_WEBUI_API_KEY` | repository **secret** | an admin key |
+
+A GitHub runner is outside Railway, so it reaches Open WebUI over the public domain rather
+than `open-webui.railway.internal`. That is a real step down from private networking — the
+key travels over TLS from GitHub's runners — accepted in exchange for deleting the service
+that would otherwise exist only to run a short script.
+
+`OPEN_WEBUI_API_KEY` can revoke grants and delete skills. Rotate it in Open WebUI and update
+the secret if it leaks.
 
 ## Assistant definition pattern
 

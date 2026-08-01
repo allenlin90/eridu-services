@@ -30,7 +30,7 @@ Content and metadata are separate files:
 - `ai/openwebui/skills/<skill-id>.md` — the content, whole and unmodified. What the file contains is
   exactly what Open WebUI stores. No frontmatter is added or stripped.
 - `ai/openwebui/skills/index.json` — `{ "<skill-id>": { "name", "description" } }`, the skill's API
-  fields.
+  fields, plus an optional `"access": "admins-only"` marker for a skill no model binds yet.
 
 Metadata stays out of the `.md` on purpose: it is what lets a skill adopted from the live instance
 round-trip byte-for-byte instead of showing a permanent phantom diff. Some skills' content begins
@@ -57,17 +57,18 @@ Adopting a skill that already exists live works the other way: pull its content 
 first, so the repo baseline is what live actually has. Never seed a Git file from a rewritten or
 summarized copy — that turns adoption into an unreviewed content change.
 
-### 2. Bind it to at least one model
+### 2. Ask which models carry it, and whether their audience changes
 
-**An uploaded skill nobody binds is readable by nobody.** Access is derived from models, so a
-skill with no binding derives an empty grant set — live, in Git, and invisible.
-`push_config.py access` prints an `UNREACHABLE` block listing any such skills.
+Two questions, always asked when not supplied — never guessed:
 
-Add the skill id to the `skill_ids` array of each assistant that should carry it, in
-`ai/openwebui/models/<id>.json`. Choosing the models *is* choosing the audience; there is no
-separate group step.
+1. **Which assistants should carry this skill?** List the models in `ai/openwebui/models/`
+   with their current groups so the choice is informed.
+2. **Should any of those assistants reach more groups than they do now?** Adding a group to a
+   model is a separate, larger change — it widens that group's access to **every** skill the
+   model binds, not just this one. Name the full `skill_ids` list before making the edit.
 
-Then show the resulting access before writing anything:
+Then add the skill id to each chosen model's `skill_ids`, and show the result before writing
+anything:
 
 ```bash
 python3 ai/openwebui/push_config.py access
@@ -79,6 +80,22 @@ audience.
 
 If no existing assistant serves the intended audience, stop and say so. A new assistant or a new
 group is a separate decision, not a side effect of an upload.
+
+#### Default when no model is given: Admins only
+
+**Never leave a new skill unbound and unmarked** — it would derive an empty grant set and be
+readable by nobody, which looks identical to a successful upload.
+
+Mark it in `index.json` instead:
+
+```json
+"foo": { "name": "Foo", "description": "...", "access": "admins-only" }
+```
+
+That grants Admins read and write, so the skill is testable while its audience is still being
+decided. Unlike the transient `--pending` flag, this lives in Git and survives merges.
+`push_config.py access` reports it under `STAGED`, and reports the marker as a `STALE MARKER`
+once a model does bind the skill — a binding always wins, so remove the field then.
 
 ### 3. Diff against live
 
@@ -100,10 +117,10 @@ python3 ai/openwebui/push_config.py skills --only <id> --apply
 python3 ai/openwebui/push_config.py access --pending <id> --apply
 ```
 
-After the PR merges this happens on its own: merging to `master` deploys the
-`openwebui-sync` Railway service, and deploying it runs `push_config.py --apply`, which
-recomputes grants without the `--pending` override. Run it by hand only if the deploy
-aborted on a revoke, or if the change did not match the service's watch patterns:
+After the PR merges this happens on its own: merging to `master` runs the `openwebui-sync`
+GitHub Actions workflow, which applies `push_config.py all --apply` and recomputes grants
+without the `--pending` override. Run it by hand only if the workflow aborted on a revoke, or
+if the change did not match its path filters:
 
 ```bash
 python3 ai/openwebui/push_config.py all --apply
@@ -140,7 +157,7 @@ it succeeded, and never imply a step ran when it did not:
 | Step | Reported as |
 |---|---|
 | File written | path + `created` / `updated` |
-| Bound to | model ids, or `NONE — unreachable by anyone` |
+| Bound to | model ids, or `admins-only (staged, no model yet)` |
 | Live push | `pushed` / `skipped (not configured)` / `failed: <reason>` |
 | Access | `admins-only (PR pending)` / `derived: <groups>` / `skipped` |
 | PR | URL, or why none was opened |
@@ -154,7 +171,8 @@ key is available. Do not report a push that did not happen.
 
 - [ ] Filename stem matches the intended skill id byte-exactly.
 - [ ] `index.json` entry exists with a non-empty `description` saying *when* to load the skill.
-- [ ] Bound to at least one model, and `push_config.py access` reports no `UNREACHABLE` entry for it.
+- [ ] Bound to at least one model, **or** marked `"access": "admins-only"` — never left unbound and unmarked.
+- [ ] `push_config.py access` reports no `UNREACHABLE` or `STALE MARKER` entry for it.
 - [ ] The groups the binding grants were named to the user before the manifest edit was committed.
 - [ ] Dry run reviewed before `--apply`.
 - [ ] Unmerged content pushed with `--pending`, not with full derived grants.
