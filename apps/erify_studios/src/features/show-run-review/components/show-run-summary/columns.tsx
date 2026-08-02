@@ -302,9 +302,9 @@ export const issueColumns: ColumnDef<ShowRunReviewIssue>[] = [
     ),
   },
   {
-    accessorKey: 'show_id',
+    accessorKey: 'show_name',
     header: 'Show',
-    cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.show_id}</span>,
+    cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.show_name}</span>,
   },
   {
     accessorKey: 'due_at',

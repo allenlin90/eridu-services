@@ -262,7 +262,7 @@ describe('showRunReviewService', () => {
         version: 1,
         createdAt: new Date('2026-05-12T09:00:00.000Z'),
         updatedAt: new Date('2026-05-12T09:00:00.000Z'),
-        show: { uid: 'show_1' },
+        show: { uid: 'show_1', name: 'Morning Show' },
         owner: null,
         createdBy: null,
         escalatedBy: null,

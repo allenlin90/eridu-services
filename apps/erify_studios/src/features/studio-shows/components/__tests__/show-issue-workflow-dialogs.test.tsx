@@ -68,6 +68,7 @@ function makeIssue(): ShowIssueApiResponse {
   return {
     id: 'issue_1',
     show_id: 'show_1',
+    show_name: 'Morning Show',
     category: 'EQUIPMENT',
     origin: 'MANUAL',
     severity: 'HIGH',

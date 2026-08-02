@@ -48,6 +48,7 @@ function renderTable(props: Partial<React.ComponentProps<typeof ShowIssuesTable>
   const issue: ShowIssueApiResponse = {
     id: 'issue_1',
     show_id: 'show_1',
+    show_name: 'Morning Show',
     category: 'EQUIPMENT',
     origin: 'MANUAL',
     severity: 'HIGH',

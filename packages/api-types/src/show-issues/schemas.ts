@@ -44,6 +44,7 @@ const showIssueActorRefSchema = z.object({
 export const showIssueApiResponseSchema = z.object({
   id: z.string().startsWith(UID_PREFIXES.SHOW_ISSUE),
   show_id: z.string().startsWith(UID_PREFIXES.SHOW),
+  show_name: z.string(),
   category: showIssueCategorySchema,
   origin: showIssueOriginSchema,
   severity: showIssueSeveritySchema,

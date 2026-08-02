@@ -95,6 +95,7 @@ describe('run-review paginated response contracts', () => {
     expectRoundTrip(showIssueApiResponseSchema, {
       id: 'issue_abc',
       show_id: 'show_abc',
+      show_name: 'Morning Show',
       category: 'EQUIPMENT',
       origin: 'MANUAL',
       severity: 'HIGH',

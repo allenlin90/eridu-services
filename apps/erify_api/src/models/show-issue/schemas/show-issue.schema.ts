@@ -29,7 +29,7 @@ export type ShowIssueRecord = ShowIssue;
  * fixed — a dedicated `include` parameter is not exposed to callers.
  */
 export const showIssueDetailInclude = {
-  show: { select: { uid: true } },
+  show: { select: { uid: true, name: true } },
   owner: { select: { uid: true, name: true } },
   createdBy: { select: { uid: true, name: true } },
   escalatedBy: { select: { uid: true, name: true } },
@@ -214,6 +214,7 @@ export function toShowIssueApiResponse(issue: ShowIssueWithRelations) {
   return showIssueApiResponseSchema.parse({
     id: issue.uid,
     show_id: issue.show.uid,
+    show_name: issue.show.name,
     category: issue.category,
     origin: issue.origin,
     severity: issue.severity,
