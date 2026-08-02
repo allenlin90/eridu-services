@@ -25,6 +25,7 @@ concurrency:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   apply:
@@ -52,4 +53,39 @@ jobs:
             python3 ai/openwebui/push_config.py all --apply --yes
           else
             python3 ai/openwebui/push_config.py all --apply
+          fi
+
+      # A misconfigured secret/variable or an unattended revoke-gate abort
+      # both leave live silently out of sync with Git with only a red X in
+      # Actions to show for it -- exactly what let this workflow's first run
+      # (missing OPEN_WEBUI_HOST/OPEN_WEBUI_API_KEY) go unnoticed until the
+      # weekly drift check found it independently. File an issue instead.
+      - name: Open a failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "The Open WebUI sync workflow failed to apply \`ai/openwebui/\` to the"
+            echo "live instance. Live is now out of sync with the merged Git state."
+            echo
+            echo "Common causes: \`OPEN_WEBUI_HOST\`/\`OPEN_WEBUI_API_KEY\` missing or"
+            echo "invalid, or the plan contains a revoke and needs a manual"
+            echo "\`workflow_dispatch\` run with \"Allow revoking access grants\" checked."
+            echo "Check the run log for the actual cause -- live configuration is"
+            echo "intentionally omitted from public logs."
+            echo
+            echo "[Workflow run]($RUN_URL)"
+          } > body.md
+
+          gh label create openwebui-sync-failed --color B60205 \
+            --description "Open WebUI sync workflow failed to apply" --force
+          existing=$(gh issue list --state open --label openwebui-sync-failed \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --title "Open WebUI sync failed" \
+              --label openwebui-sync-failed --body-file body.md
           fi

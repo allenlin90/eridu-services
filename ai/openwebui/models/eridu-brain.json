@@ -25,7 +25,6 @@
   },
   "skill_ids": [
     "org-chart",
-    "00010",
     "sales",
     "legal-process",
     "hr-ops",
@@ -40,7 +39,7 @@
     "commerce",
     "talent-development-framework",
     "openwebui-litellm-railway-integration-guide",
-    "affiliate-management-"
+    "citation-escalation-contract"
   ],
   "tool_ids": [
     "server:mcp:eridu_mcp"
