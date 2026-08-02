@@ -233,6 +233,18 @@ describe('showIssueWorkflowService', () => {
         service.updateShowIssue('std_1', 'issue_1', { severity: 'HIGH' } as any, MEMBER.extId, 'member'),
       ).rejects.toMatchObject({ status: 403 });
     });
+
+    it('short-circuits a semantic no-op edit (same value as current) without writing or auditing', async () => {
+      const issue = createShowIssue({ severity: 'MEDIUM' });
+      showIssueServiceMock.getShowIssueByUidAndStudio.mockResolvedValue(issue);
+
+      await expect(
+        service.updateShowIssue('std_1', 'issue_1', { version: 1, severity: 'MEDIUM' } as any, ACTOR.extId, 'admin'),
+      ).resolves.toBeDefined();
+
+      expect(showIssueServiceMock.updateShowIssueFields).not.toHaveBeenCalled();
+      expect(auditServiceMock.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('resolveShowIssue — authorization matrix', () => {

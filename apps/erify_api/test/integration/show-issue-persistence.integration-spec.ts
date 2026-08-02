@@ -268,4 +268,57 @@ describe('real database Show Issue persistence safety', () => {
     await prisma.showCreator.deleteMany({ where: { showId: show.id } });
     await prisma.creator.deleteMany({ where: { uid: creator.uid } });
   });
+
+  // `ShowIssueService.assertOriginSourceArc` enforces this in application
+  // code, but only for callers that go through it. These two cases write
+  // directly through `prisma.showIssue.create`, bypassing that guard, to
+  // prove the origin/source exclusive arc also holds as a database CHECK
+  // constraint — so a future direct-Prisma caller (e.g. the not-yet-built
+  // reconciliation workflow, or a raw migration/backfill script) cannot
+  // silently corrupt the arc.
+  it('rejects a MANUAL issue with an automated source FK at the database CHECK constraint', async () => {
+    const suffix = uniqueSuffix();
+    const { show } = await createFixture(suffix);
+    const creator = await prisma.creator.create({
+      data: { uid: `creator_it_${suffix}`, name: `${INTEGRATION_NAME_PREFIX}creator:${suffix}`, aliasName: 'Alias', metadata: {} },
+    });
+    const showCreator = await prisma.showCreator.create({
+      data: { uid: `show_mc_it_${suffix}`, show: { connect: { id: show.id } }, creator: { connect: { id: creator.id } }, metadata: {} },
+    });
+
+    await expect(
+      prisma.showIssue.create({
+        data: {
+          uid: `issue_it_bad_manual_${suffix}`,
+          show: { connect: { id: show.id } },
+          category: 'CREATOR_ATTENDANCE',
+          origin: 'MANUAL',
+          severity: 'LOW',
+          title: 'Invalid MANUAL issue with a source FK',
+          showCreator: { connect: { id: showCreator.id } },
+        },
+      }),
+    ).rejects.toThrow(/show_issues_origin_source_arc_check/);
+
+    await prisma.showCreator.deleteMany({ where: { showId: show.id } });
+    await prisma.creator.deleteMany({ where: { uid: creator.uid } });
+  });
+
+  it('rejects a FACT_EXTRACTION issue with zero automated sources at the database CHECK constraint', async () => {
+    const suffix = uniqueSuffix();
+    const { show } = await createFixture(suffix);
+
+    await expect(
+      prisma.showIssue.create({
+        data: {
+          uid: `issue_it_bad_auto_${suffix}`,
+          show: { connect: { id: show.id } },
+          category: 'PLATFORM_VIOLATION',
+          origin: 'FACT_EXTRACTION',
+          severity: 'LOW',
+          title: 'Invalid FACT_EXTRACTION issue with no source',
+        },
+      }),
+    ).rejects.toThrow(/show_issues_origin_source_arc_check/);
+  });
 });

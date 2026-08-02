@@ -183,6 +183,23 @@ export class ShowIssueWorkflowService {
       ? (dto.ownerId ? await this.resolveActiveOwner(studioUid, dto.ownerId) : null)
       : undefined;
 
+    // Semantic no-op guard: a field can be "provided" (passes the schema's
+    // at-least-one-field refine) while carrying the value the issue already
+    // has — e.g. a resubmitted form. Skip the write and the audit row rather
+    // than bumping `version` and recording an empty-looking `issue_updated`
+    // entry for a mutation nothing actually observed.
+    const hasRealChange = dto.status !== undefined
+      || (dto.category !== undefined && dto.category !== issue.category)
+      || (dto.severity !== undefined && dto.severity !== issue.severity)
+      || (dto.title !== undefined && dto.title !== issue.title)
+      || (dto.evidence !== undefined && dto.evidence !== issue.evidence)
+      || (dto.dueAt !== undefined && (dto.dueAt?.getTime() ?? null) !== (issue.dueAt?.getTime() ?? null))
+      || (ownerId !== undefined && ownerId !== (issue.ownerId ?? null));
+
+    if (!hasRealChange) {
+      return toShowIssueApiResponse(issue);
+    }
+
     const updated = await this.showIssueService.updateShowIssueFields(issue, dto.version, {
       category: dto.category,
       severity: dto.severity,
