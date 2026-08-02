@@ -136,7 +136,7 @@ export const ISSUE_CSV_COLUMNS: CsvColumn<CsvRow>[] = [
   { key: 'category', label: 'Category' },
   { key: 'severity', label: 'Severity' },
   { key: 'status', label: 'Status' },
-  { key: 'show_id', label: 'Show' },
+  { key: 'show_name', label: 'Show' },
   { key: 'due_at', label: 'Due At' },
 ];
 
@@ -146,7 +146,7 @@ export function toIssueCsvRow(r: ShowRunReviewIssue): CsvRow {
     category: s(r.category),
     severity: s(r.severity),
     status: s(r.status),
-    show_id: s(r.show_id),
+    show_name: s(r.show_name),
     due_at: s(r.due_at),
   };
 }
