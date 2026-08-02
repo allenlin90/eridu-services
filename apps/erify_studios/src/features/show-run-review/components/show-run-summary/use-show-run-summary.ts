@@ -11,6 +11,7 @@ import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show
 import { getShowRunReviewErrorMessage } from '@/features/show-run-review/lib/get-show-run-review-error-message';
 import {
   exportShowRunReviewCreators,
+  exportShowRunReviewIssues,
   exportShowRunReviewShows,
   exportShowRunReviewTasks,
   exportShowRunReviewViolations,
@@ -19,10 +20,12 @@ import {
 import type { GetShowRunReviewPaginatedParams } from '@/features/shows/api/get-show-run-review-paginated';
 import {
   getShowRunReviewCreators,
+  getShowRunReviewIssues,
   getShowRunReviewShows,
   getShowRunReviewTasks,
   getShowRunReviewViolations,
   useShowRunReviewCreatorsQuery,
+  useShowRunReviewIssuesQuery,
   useShowRunReviewShowsQuery,
   useShowRunReviewTasksQuery,
   useShowRunReviewViolationsQuery,
@@ -35,7 +38,7 @@ type UseShowRunSummaryInput = {
   studioId: string;
 };
 
-type PageKey = 'creators_page' | 'violations_page' | 'tasks_page' | 'shows_page';
+type PageKey = 'creators_page' | 'violations_page' | 'tasks_page' | 'shows_page' | 'issues_page';
 
 /**
  * View model for the Show Run Review summary surface: owns the four lazy
@@ -62,6 +65,9 @@ export function useShowRunSummary({ data, search, onSearchChange, studioId }: Us
       shows_search: undefined,
       shows_completeness: undefined,
       shows_page: undefined,
+      issues_search: undefined,
+      issues_severity: undefined,
+      issues_page: undefined,
     });
   };
 
@@ -118,6 +124,19 @@ export function useShowRunSummary({ data, search, onSearchChange, studioId }: Us
     activeTab === 'shows',
   );
 
+  const issuesQuery = useShowRunReviewIssuesQuery(
+    studioId,
+    {
+      date_from: data.date_from,
+      date_to: data.date_to,
+      page: search.issues_page ?? 1,
+      limit: SHOW_RUN_REVIEW_PAGE_SIZE,
+      search: search.issues_search,
+      severity: search.issues_severity,
+    },
+    activeTab === 'issues',
+  );
+
   const createPaginationChangeHandler = (pageKey: PageKey) =>
     (updater: Updater<PaginationState>) => {
       const currentPage = search[pageKey] ?? 1;
@@ -130,6 +149,7 @@ export function useShowRunSummary({ data, search, onSearchChange, studioId }: Us
   const violationsPaginationChange = createPaginationChangeHandler('violations_page');
   const tasksPaginationChange = createPaginationChangeHandler('tasks_page');
   const showsPaginationChange = createPaginationChangeHandler('shows_page');
+  const issuesPaginationChange = createPaginationChangeHandler('issues_page');
 
   // Search / filter change handlers — each resets its tab's page to 1.
   const onCreatorsSearchChange = (val: string | undefined) =>
@@ -151,6 +171,11 @@ export function useShowRunSummary({ data, search, onSearchChange, studioId }: Us
     onSearchChange({ shows_search: val, shows_page: 1 });
   const onShowsCompletenessChange = (val: string | undefined) =>
     onSearchChange({ shows_completeness: val, shows_page: 1 });
+
+  const onIssuesSearchChange = (val: string | undefined) =>
+    onSearchChange({ issues_search: val, issues_page: 1 });
+  const onIssuesSeverityChange = (val: string | undefined) =>
+    onSearchChange({ issues_severity: val, issues_page: 1 });
 
   // Export the FULL filtered set for a tab (not the current page): refetch the
   // same endpoint with the active filters and limit = total, then serialize.
@@ -222,6 +247,15 @@ export function useShowRunSummary({ data, search, onSearchChange, studioId }: Us
       exportShowRunReviewShows,
     );
 
+  const handleExportIssues = () =>
+    runTabExport(
+      'issues',
+      issuesQuery.data?.meta.total ?? 0,
+      { search: search.issues_search, severity: search.issues_severity },
+      getShowRunReviewIssues,
+      exportShowRunReviewIssues,
+    );
+
   return {
     activeTab,
     setActiveTab,
@@ -265,6 +299,16 @@ export function useShowRunSummary({ data, search, onSearchChange, studioId }: Us
       onFilterChange: onShowsCompletenessChange,
       onPaginationChange: showsPaginationChange,
       onExport: handleExportShows,
+    },
+    issues: {
+      query: issuesQuery,
+      page: search.issues_page ?? 1,
+      searchValue: search.issues_search,
+      filterValue: search.issues_severity,
+      onSearchChange: onIssuesSearchChange,
+      onFilterChange: onIssuesSeverityChange,
+      onPaginationChange: issuesPaginationChange,
+      onExport: handleExportIssues,
     },
   };
 }

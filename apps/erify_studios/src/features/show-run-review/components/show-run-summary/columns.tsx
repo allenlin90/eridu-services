@@ -1,8 +1,18 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
 import { Clock, XCircle } from 'lucide-react';
 
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import { Badge } from '@eridu/ui';
+
+import type { ShowRunReviewIssue } from '@/features/shows/api/get-show-run-review-paginated';
+import {
+  getShowIssueSeverityBadgeClassName,
+  getShowIssueStatusBadgeVariant,
+  SHOW_ISSUE_CATEGORY_LABELS,
+  SHOW_ISSUE_SEVERITY_LABELS,
+  SHOW_ISSUE_STATUS_LABELS,
+} from '@/features/studio-shows/lib/show-issue-labels';
 
 export type CreatorException = ShowRunReviewSummary['creators']['exceptions'][number];
 export type PlatformViolation = ShowRunReviewSummary['platforms']['violations'][number];
@@ -250,5 +260,59 @@ export const showColumns: ColumnDef<ShowsSummaryRow>[] = [
         </Badge>
       );
     },
+  },
+];
+
+// Show Run Review issues columns definition. Deliberately lean — read-only
+// analytics drill-in, not the full canonical show-detail Issues tab column
+// set (no owner-assignment actions). Reuses the same label/badge helpers as
+// the canonical Issues tab (studio-shows/lib/show-issue-labels.ts) so the two
+// surfaces stay visually consistent.
+export const issueColumns: ColumnDef<ShowRunReviewIssue>[] = [
+  {
+    accessorKey: 'title',
+    header: 'Title',
+    meta: { className: 'whitespace-normal break-words min-w-[180px]' },
+    cell: ({ row }) => <span className="font-semibold text-sm whitespace-normal break-words">{row.original.title}</span>,
+  },
+  {
+    accessorKey: 'category',
+    header: 'Category',
+    cell: ({ row }) => <span className="text-xs">{SHOW_ISSUE_CATEGORY_LABELS[row.original.category]}</span>,
+  },
+  {
+    accessorKey: 'severity',
+    header: 'Severity',
+    cell: ({ row }) => {
+      const severity = row.original.severity;
+      return (
+        <Badge variant="outline" className={getShowIssueSeverityBadgeClassName(severity)}>
+          {SHOW_ISSUE_SEVERITY_LABELS[severity]}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => (
+      <Badge variant={getShowIssueStatusBadgeVariant(row.original.status)}>
+        {SHOW_ISSUE_STATUS_LABELS[row.original.status]}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: 'show_id',
+    header: 'Show',
+    cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.show_id}</span>,
+  },
+  {
+    accessorKey: 'due_at',
+    header: 'Due Date',
+    cell: ({ row }) => (
+      <span className="text-xs text-muted-foreground">
+        {row.original.due_at ? format(new Date(row.original.due_at), 'MMM d, yyyy') : '—'}
+      </span>
+    ),
   },
 ];

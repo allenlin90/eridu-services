@@ -12,10 +12,20 @@ const mocks = vi.hoisted(() => ({
   getShowRunReviewShows: vi.fn(),
   getShowRunReviewTasks: vi.fn(),
   getShowRunReviewViolations: vi.fn(),
+  getShowRunReviewIssues: vi.fn(),
   exportShowRunReviewCreators: vi.fn(),
   exportShowRunReviewShows: vi.fn(),
   exportShowRunReviewTasks: vi.fn(),
   exportShowRunReviewViolations: vi.fn(),
+  exportShowRunReviewIssues: vi.fn(),
+  useShowRunReviewIssuesQuery: vi.fn(() => ({
+    data: {
+      data: [] as Array<{ id: string; title: string }>,
+      meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
+    },
+    isFetching: false,
+    isLoading: false,
+  })),
 }));
 
 vi.mock('@eridu/ui', () => ({
@@ -55,6 +65,8 @@ vi.mock('@/features/shows/api/get-show-run-review-paginated', () => ({
   getShowRunReviewShows: mocks.getShowRunReviewShows,
   getShowRunReviewTasks: mocks.getShowRunReviewTasks,
   getShowRunReviewViolations: mocks.getShowRunReviewViolations,
+  getShowRunReviewIssues: mocks.getShowRunReviewIssues,
+  useShowRunReviewIssuesQuery: mocks.useShowRunReviewIssuesQuery,
   useShowRunReviewCreatorsQuery: () => ({
     data: {
       data: [],
@@ -94,6 +106,7 @@ vi.mock('@/features/show-run-review/lib/show-run-review-csv', () => ({
   exportShowRunReviewShows: mocks.exportShowRunReviewShows,
   exportShowRunReviewTasks: mocks.exportShowRunReviewTasks,
   exportShowRunReviewViolations: mocks.exportShowRunReviewViolations,
+  exportShowRunReviewIssues: mocks.exportShowRunReviewIssues,
 }));
 
 const summary: ShowRunReviewSummary = {
@@ -120,6 +133,10 @@ const summary: ShowRunReviewSummary = {
   tasks: {
     incomplete_phase_checks_count: 0,
     incomplete_tasks: [],
+  },
+  issues: {
+    unresolved_count: 2,
+    unresolved_by_severity: { low: 0, medium: 0, high: 1, critical: 1 },
   },
 };
 
@@ -156,5 +173,134 @@ describe('showRunSummary', () => {
       dateFrom: summary.date_from,
       dateTo: summary.date_to,
     });
+  });
+
+  it('shows the unresolved issue count on the Issues tab nav badge', () => {
+    render(
+      <ShowRunSummary
+        data={summary}
+        search={{ tab: 'creators' }}
+        onSearchChange={vi.fn()}
+        studioId="std_123"
+      />,
+    );
+
+    // Tab nav renders a count badge next to the "Issues" label — matches
+    // data.issues.unresolved_count (2 in the shared fixture).
+    const issuesTabButton = screen.getByRole('button', { name: /Issues/ });
+    expect(issuesTabButton).toHaveTextContent('2');
+  });
+
+  it('switches to the issues tab and resets every tab\'s filters, including its own', async () => {
+    const user = userEvent.setup();
+    const onSearchChange = vi.fn();
+
+    render(
+      <ShowRunSummary
+        data={summary}
+        search={{ tab: 'creators' }}
+        onSearchChange={onSearchChange}
+        studioId="std_123"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Issues/ }));
+
+    expect(onSearchChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tab: 'issues',
+        issues_search: undefined,
+        issues_severity: undefined,
+        issues_page: undefined,
+      }),
+    );
+  });
+
+  it('requests issues with the resolved date range, severity filter, and page when the issues tab is active', () => {
+    render(
+      <ShowRunSummary
+        data={summary}
+        search={{ tab: 'issues', issues_severity: 'HIGH', issues_page: 2 }}
+        onSearchChange={vi.fn()}
+        studioId="std_123"
+      />,
+    );
+
+    expect(mocks.useShowRunReviewIssuesQuery).toHaveBeenCalledWith(
+      'std_123',
+      {
+        date_from: summary.date_from,
+        date_to: summary.date_to,
+        page: 2,
+        limit: 10,
+        search: undefined,
+        severity: 'HIGH',
+      },
+      true,
+    );
+  });
+
+  it('renders the empty-issues message and disables export when the issues query returns no rows', () => {
+    mocks.useShowRunReviewIssuesQuery.mockReturnValueOnce({
+      data: { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } },
+      isFetching: false,
+      isLoading: false,
+    });
+
+    render(
+      <ShowRunSummary
+        data={summary}
+        search={{ tab: 'issues' }}
+        onSearchChange={vi.fn()}
+        studioId="std_123"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+  });
+
+  it('enables export and fetches the full filtered set when the issues query returns rows', async () => {
+    const user = userEvent.setup();
+    mocks.useShowRunReviewIssuesQuery.mockReturnValueOnce({
+      data: {
+        data: [{ id: 'issue_1', title: 'Broken mic' }],
+        meta: { page: 1, limit: 10, total: 3, totalPages: 1 },
+      },
+      isFetching: false,
+      isLoading: false,
+    });
+    mocks.getShowRunReviewIssues.mockResolvedValue({
+      data: [{ id: 'issue_1', title: 'Broken mic' }],
+      meta: { page: 1, limit: 3, total: 3, totalPages: 1 },
+    });
+
+    render(
+      <ShowRunSummary
+        data={summary}
+        search={{ tab: 'issues' }}
+        onSearchChange={vi.fn()}
+        studioId="std_123"
+      />,
+    );
+
+    const exportButton = screen.getByRole('button', { name: 'Export CSV' });
+    expect(exportButton).not.toBeDisabled();
+
+    await user.click(exportButton);
+
+    await waitFor(() => {
+      expect(mocks.getShowRunReviewIssues).toHaveBeenCalledWith('std_123', {
+        date_from: summary.date_from,
+        date_to: summary.date_to,
+        page: 1,
+        limit: 3,
+        search: undefined,
+        severity: undefined,
+      });
+    });
+    expect(mocks.exportShowRunReviewIssues).toHaveBeenCalledWith(
+      [{ id: 'issue_1', title: 'Broken mic' }],
+      { dateFrom: summary.date_from, dateTo: summary.date_to },
+    );
   });
 });

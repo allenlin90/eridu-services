@@ -11,6 +11,7 @@ import {
 
 import {
   creatorColumns,
+  issueColumns,
   showColumns,
   taskColumns,
   violationColumns,
@@ -168,6 +169,35 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
               onPaginationChange={vm.shows.onPaginationChange}
               isExporting={vm.exportingTab === 'shows'}
               onExport={vm.shows.onExport}
+            />
+          )}
+
+          {vm.activeTab === 'issues' && (
+            <ShowRunReviewTabPanel
+              searchPlaceholder="Search issue titles..."
+              searchValue={vm.issues.searchValue}
+              onSearchChange={vm.issues.onSearchChange}
+              filterPlaceholder="All Severities"
+              filterValue={vm.issues.filterValue}
+              onFilterChange={vm.issues.onFilterChange}
+              filterOptions={[
+                { value: 'ALL', label: 'All Severities' },
+                { value: 'CRITICAL', label: 'CRITICAL' },
+                { value: 'HIGH', label: 'HIGH' },
+                { value: 'MEDIUM', label: 'MEDIUM' },
+                { value: 'LOW', label: 'LOW' },
+              ]}
+              columns={issueColumns}
+              rows={vm.issues.query.data?.data ?? []}
+              isLoading={vm.issues.query.isLoading}
+              isFetching={vm.issues.query.isFetching}
+              emptyMessage="No unresolved show issues recorded for this day range."
+              page={vm.issues.page}
+              total={vm.issues.query.data?.meta.total ?? 0}
+              pageCount={vm.issues.query.data?.meta.totalPages ?? 0}
+              onPaginationChange={vm.issues.onPaginationChange}
+              isExporting={vm.exportingTab === 'issues'}
+              onExport={vm.issues.onExport}
             />
           )}
         </CardContent>
