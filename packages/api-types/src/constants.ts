@@ -32,4 +32,5 @@ export const UID_PREFIXES = {
   SCENE_QC_TAXONOMY_ELEMENT: 'scqce',
   SCENE_QC_TAXONOMY_DEFECT: 'scqcd',
   SCENE_QC_AMENDMENT: 'scqca',
+  SHOW_ISSUE: 'issue',
 } as const;

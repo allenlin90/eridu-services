@@ -53,6 +53,7 @@ export type AuditTargetWithRelations = AuditTarget & {
   showCreator?: { uid: string } | null;
   showPlatform?: { uid: string } | null;
   studioShift?: { uid: string } | null;
+  showIssue?: { uid: string } | null;
 };
 
 /** `Audit` row with its `AuditTarget` rows eagerly included. */

@@ -16,6 +16,7 @@ import { GoogleSheetsCreatorController } from '@/google-sheets/creators/google-s
 import { ProfileController } from '@/me/profile/profile.controller';
 import { PrismaService } from '@/prisma/prisma.service';
 import { StudioShowController } from '@/studios/studio-show/studio-show.controller';
+import { StudioShowIssueController } from '@/studios/studio-show-issue/studio-show-issue.controller';
 
 /**
  * Extracts every registered Express route's method + path from the booted
@@ -62,6 +63,7 @@ describe('HTTP application module graph', () => {
     );
     expect(app.get(ProfileController)).toBeInstanceOf(ProfileController);
     expect(app.get(StudioShowController)).toBeInstanceOf(StudioShowController);
+    expect(app.get(StudioShowIssueController)).toBeInstanceOf(StudioShowIssueController);
     await expect(
       app.get(PrismaService).isHealthy(),
     ).resolves.toBe(true);
