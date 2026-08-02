@@ -9,12 +9,18 @@ type ShowIssueOwnerFieldProps = {
   value: string;
   onChange: (value: string) => void;
   /**
-   * The current owner's display name, known from the issue being edited.
-   * The member search only returns its first page (`limit: 20`), so an
-   * already-assigned owner outside that page would otherwise have no
-   * matching option and the combobox would render "Select option..."
-   * instead of their name.
+   * The issue's original owner UID and display name, known up front from
+   * the issue being edited. The member search only returns its first page
+   * (`limit: 20`), so an already-assigned owner outside that page would
+   * otherwise have no matching option and the combobox would render
+   * "Select option..." instead of their name.
+   *
+   * `initialLabel` must only ever be shown for `initialOwnerId` — pairing it
+   * with whatever `value` currently is, instead of checking it's still the
+   * original UID, would misattribute it to a newly selected owner once
+   * that new owner also falls outside the search page.
    */
+  initialOwnerId?: string;
   initialLabel?: string;
   disabled?: boolean;
 };
@@ -29,6 +35,7 @@ export const ShowIssueOwnerField = memo(({
   studioId,
   value,
   onChange,
+  initialOwnerId,
   initialLabel,
   disabled,
 }: ShowIssueOwnerFieldProps) => {
@@ -40,11 +47,20 @@ export const ShowIssueOwnerField = memo(({
       value: member.user_id,
       label: `${member.user_name} (${member.user_email})`,
     }));
-    if (value && initialLabel && !fromSearch.some((option) => option.value === value)) {
-      return [{ value, label: initialLabel }, ...fromSearch];
+    // Only reuse the cached label when the selection is still the original
+    // owner — once the user picks someone else, that new UID must resolve
+    // from real search results or show no label, never the old owner's name.
+    if (
+      value
+      && initialOwnerId
+      && initialLabel
+      && value === initialOwnerId
+      && !fromSearch.some((option) => option.value === value)
+    ) {
+      return [{ value: initialOwnerId, label: initialLabel }, ...fromSearch];
     }
     return fromSearch;
-  }, [data, value, initialLabel]);
+  }, [data, value, initialOwnerId, initialLabel]);
 
   return (
     <div className="space-y-1.5">
