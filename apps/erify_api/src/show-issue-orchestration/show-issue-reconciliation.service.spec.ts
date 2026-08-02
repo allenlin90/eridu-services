@@ -495,6 +495,46 @@ describe('showIssueReconciliationService', () => {
     });
   });
 
+  describe('applySignals cap', () => {
+    it('rejects a call with more signals than the cap before touching the DB', async () => {
+      const showIssueService = buildShowIssueService();
+      const auditService = buildAuditService();
+      const service = new ShowIssueReconciliationService(
+        showIssueService as unknown as ShowIssueService,
+        auditService as unknown as AuditService,
+      );
+      const signals = Array.from({ length: 26 }, (_, i) => ({
+        kind: 'platform_violation_superseded' as const,
+        showPlatformViolationId: BigInt(i),
+        violationUid: `spv_${i}`,
+      }));
+
+      await expect(service.applySignals(signals, showId)).rejects.toThrow(/26 signals/);
+
+      expect(showIssueService.findActiveAutomatedIssueByShowPlatformViolation).not.toHaveBeenCalled();
+      expect(showIssueService.resolveShowIssue).not.toHaveBeenCalled();
+      expect(auditService.create).not.toHaveBeenCalled();
+    });
+
+    it('allows a call exactly at the cap', async () => {
+      const showIssueService = buildShowIssueService();
+      const auditService = buildAuditService();
+      const service = new ShowIssueReconciliationService(
+        showIssueService as unknown as ShowIssueService,
+        auditService as unknown as AuditService,
+      );
+      const signals = Array.from({ length: 25 }, (_, i) => ({
+        kind: 'platform_violation_superseded' as const,
+        showPlatformViolationId: BigInt(i),
+        violationUid: `spv_${i}`,
+      }));
+
+      await expect(service.applySignals(signals, showId)).resolves.toBeUndefined();
+
+      expect(showIssueService.findActiveAutomatedIssueByShowPlatformViolation).toHaveBeenCalledTimes(25);
+    });
+  });
+
   describe('normalizeViolationSeverity', () => {
     it.each([
       ['CRITICAL', 'CRITICAL'],

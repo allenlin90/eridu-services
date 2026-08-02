@@ -13,6 +13,21 @@ const PLATFORM_VIOLATION_ISSUE_TITLE = 'Platform violation detected';
 const SOURCE_CORRECTED_RESOLUTION_NOTE = 'Automatically resolved: underlying source corrected.';
 
 /**
+ * `applySignals` processes each signal with a sequential lookup + mutation +
+ * audit write, inside the fact-extraction transaction. A `show_platform_violation`
+ * multiselect submission emits one `platform_violation_superseded` signal per
+ * previously-active row plus one `platform_violation_opened` signal per newly
+ * selected row, and the multiselect option count is template-configured, not
+ * backend-bounded. This cap turns an oversized submission into a fast, clear
+ * `extractor_error` (the whole fact write, extraction audit, and any partial
+ * issue writes roll back together — see `FactExtractionProcessor.applyAndAudit`)
+ * instead of letting one task submission run an unbounded number of sequential
+ * statements inside an open transaction. Real violation catalogs are single-
+ * digit to low-tens of types; this is generous headroom, not a realistic ceiling.
+ */
+const MAX_SIGNALS_PER_CALL = 25;
+
+/**
  * Automated attendance / platform-violation issue reconciliation. Called
  * synchronously from `FactExtractionProcessor.applyAndAudit` inside the same
  * CLS transaction as the fact's own column write and extraction audit — see
@@ -34,6 +49,14 @@ export class ShowIssueReconciliationService {
   ) {}
 
   async applySignals(signals: ShowIssueReconciliationSignal[], showId: bigint): Promise<void> {
+    if (signals.length > MAX_SIGNALS_PER_CALL) {
+      throw new Error(
+        `ShowIssueReconciliationService received ${signals.length} signals in one call, `
+        + `exceeding the ${MAX_SIGNALS_PER_CALL} cap. Refusing to run an unbounded number of `
+        + 'sequential lookups/mutations/audits inside the fact-extraction transaction.',
+      );
+    }
+
     for (const signal of signals) {
       switch (signal.kind) {
         case 'attendance_missing':
