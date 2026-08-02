@@ -33,8 +33,8 @@ const PRIVILEGED_ROLES: readonly string[] = [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANA
  * the "Module Boundary" section of
  * docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
  *
- * Automated reconciliation (`ShowIssueReconciliationService`) is a later
- * pass; this service only ever writes `origin: 'MANUAL'` issues and validates
+ * Automated reconciliation lives in the sibling `ShowIssueReconciliationService`;
+ * this service only ever writes `origin: 'MANUAL'` issues and validates
  * that automated fields stay immutable through every public method here.
  */
 @Injectable()

@@ -44,6 +44,31 @@ export class ShowIssueRepository extends BaseRepository<
     }) as Promise<ShowIssueWithRelations | null>;
   }
 
+  // Reconciliation identity lookups. Both map 1:1 onto the model's unique
+  // constraints (`(showCreatorId, category, origin)` and
+  // `showPlatformViolationId`), so at most one active row can ever match —
+  // used by ShowIssueReconciliationService to find the automated issue that
+  // already owns a given source before deciding create/reopen/refresh/resolve.
+  async findActiveByShowCreatorCategoryOrigin(
+    showCreatorId: bigint,
+    category: string,
+    origin: string,
+  ): Promise<ShowIssueWithRelations | null> {
+    return this.delegate.findFirst({
+      where: { showCreatorId, category, origin, deletedAt: null },
+      include: showIssueDetailInclude,
+    }) as Promise<ShowIssueWithRelations | null>;
+  }
+
+  async findActiveByShowPlatformViolationId(
+    showPlatformViolationId: bigint,
+  ): Promise<ShowIssueWithRelations | null> {
+    return this.delegate.findFirst({
+      where: { showPlatformViolationId, deletedAt: null },
+      include: showIssueDetailInclude,
+    }) as Promise<ShowIssueWithRelations | null>;
+  }
+
   // Engineering decision: studio-scoped lookup joins through Show.studio,
   // since ShowIssue itself carries no direct studio FK — mirrors
   // ShowRepository.findByUidAndStudioUid. IDOR safety (a studio member must

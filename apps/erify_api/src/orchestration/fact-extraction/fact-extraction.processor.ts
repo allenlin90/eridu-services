@@ -17,6 +17,7 @@ import { AuditService } from '@/models/audit/audit.service';
 import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
+import { ShowIssueReconciliationService } from '@/show-issue-orchestration/show-issue-reconciliation.service';
 
 export type ProcessedFact = {
   decision: ExtractionDecision;
@@ -84,6 +85,7 @@ export class FactExtractionProcessor {
     private readonly showService: ShowService,
     private readonly showCreatorService: ShowCreatorService,
     private readonly showPlatformService: ShowPlatformService,
+    private readonly showIssueReconciliationService: ShowIssueReconciliationService,
   ) {}
 
   /**
@@ -128,6 +130,18 @@ export class FactExtractionProcessor {
         },
         targets: targetIds,
       });
+
+      // Reconciliation runs AFTER the extraction audit write but INSIDE this
+      // same `@Transactional()` scope — a required automated issue must
+      // never be missing while its triggering fact is committed. Errors
+      // propagate uncaught so the whole transaction (extractor's column
+      // write + extraction audit + reconciliation) rolls back together; the
+      // outer `FactExtractionService` catch reports `extractor_error` for
+      // this fact without failing the rest of the task submission.
+      if (decision.signals && decision.signals.length > 0) {
+        await this.showIssueReconciliationService.applySignals(decision.signals, ctx.showId);
+      }
+
       return { decision, auditUid: audit.uid };
     }
 

@@ -33,7 +33,7 @@ function buildViolationService(overrides: {
   return {
     replaceForTaskField: jest.fn().mockResolvedValue({
       created: overrides.created ?? [
-        { uid: 'spv_new', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'r' },
+        { id: 501n, uid: 'spv_new', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'r' },
       ],
       superseded: overrides.superseded ?? [],
     }),
@@ -102,6 +102,14 @@ describe('showPlatformViolationExtractor', () => {
       action: 'CREATE',
       oldValue: [],
       newValue: [{ violation_type: 'COPYRIGHT', severity: 'WARNING', reason: 'r' }],
+      signals: [{
+        kind: 'platform_violation_opened',
+        showPlatformViolationId: 501n,
+        violationUid: 'spv_new',
+        showPlatformId: 200n,
+        severity: 'WARNING',
+        reason: 'r',
+      }],
     });
   });
 
@@ -109,7 +117,7 @@ describe('showPlatformViolationExtractor', () => {
     const showPlatformService = buildShowPlatformService();
     const violationService = buildViolationService({
       created: [],
-      superseded: [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'old' }],
+      superseded: [{ id: 601n, uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'old' }],
     });
     const extractor = new ShowPlatformViolationExtractor(
       showPlatformService,
@@ -126,6 +134,11 @@ describe('showPlatformViolationExtractor', () => {
       action: 'UPDATE',
       oldValue: [{ violation_type: 'COPYRIGHT', severity: 'WARNING', reason: 'old' }],
       newValue: [],
+      signals: [{
+        kind: 'platform_violation_superseded',
+        showPlatformViolationId: 601n,
+        violationUid: 'spv_old',
+      }],
     });
   });
 

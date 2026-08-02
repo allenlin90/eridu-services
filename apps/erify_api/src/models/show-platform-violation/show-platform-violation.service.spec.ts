@@ -6,17 +6,21 @@ import { ShowPlatformViolationService } from './show-platform-violation.service'
 import type { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 
 function buildRepository(overrides: {
-  existing?: Array<{ uid: string; violationType: string; severity: string; reason?: string }>;
+  existing?: Array<{ id: bigint; uid: string; violationType: string; severity: string; reason?: string }>;
   existsActiveInShow?: boolean;
 } = {}): jest.Mocked<ShowPlatformViolationRepository> {
   return {
     lockActiveInShow: jest.fn().mockResolvedValue(overrides.existsActiveInShow ?? true),
     findActiveByTaskField: jest.fn().mockResolvedValue(
       overrides.existing
-      ?? [{ uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'prior reason' }],
+      ?? [{ id: 1n, uid: 'spv_old', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'prior reason' }],
     ),
     supersedeActiveByTaskField: jest.fn().mockResolvedValue({ count: 1 }),
     createMany: jest.fn().mockResolvedValue({ count: 1 }),
+    // `createMany` doesn't return created rows; the service resolves ids by
+    // re-querying on the client-generated uids it just wrote.
+    findByUids: jest.fn().mockImplementation(async (uids: string[]) =>
+      uids.map((uid, index) => ({ uid, id: BigInt(9000 + index) }))),
   } as unknown as jest.Mocked<ShowPlatformViolationRepository>;
 }
 
@@ -87,6 +91,7 @@ describe('showPlatformViolationService', () => {
     expect(result).toEqual({
       created: [
         {
+          id: 9000n,
           uid: 'spv_new',
           violationType: 'DEFAMATION',
           severity: 'WARNING',
@@ -95,6 +100,7 @@ describe('showPlatformViolationService', () => {
       ],
       superseded: [
         {
+          id: 1n,
           uid: 'spv_old',
           violationType: 'COPYRIGHT',
           severity: 'WARNING',
@@ -124,6 +130,7 @@ describe('showPlatformViolationService', () => {
     expect(result.created).toEqual([]);
     expect(result.superseded).toEqual([
       {
+        id: 1n,
         uid: 'spv_old',
         violationType: 'COPYRIGHT',
         severity: 'WARNING',
@@ -135,8 +142,8 @@ describe('showPlatformViolationService', () => {
   it('short-circuits without writing when the incoming set matches the stored set including reason', async () => {
     const repository = buildRepository({
       existing: [
-        { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'same reason text' },
-        { uid: 'spv_b', violationType: 'DEFAMATION', severity: 'WARNING', reason: 'same reason text' },
+        { id: 2n, uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'same reason text' },
+        { id: 3n, uid: 'spv_b', violationType: 'DEFAMATION', severity: 'WARNING', reason: 'same reason text' },
       ],
     });
     const service = new ShowPlatformViolationService(
@@ -175,7 +182,7 @@ describe('showPlatformViolationService', () => {
   it('rewrites rows when only the reason text changes', async () => {
     const repository = buildRepository({
       existing: [
-        { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'original reason' },
+        { id: 5n, uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'original reason' },
       ],
     });
     const service = new ShowPlatformViolationService(
@@ -203,7 +210,7 @@ describe('showPlatformViolationService', () => {
     expect(repository.createMany).toHaveBeenCalledTimes(1);
     expect(result.created).toHaveLength(1);
     expect(result.superseded).toEqual([
-      { uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'original reason' },
+      { id: 5n, uid: 'spv_a', violationType: 'COPYRIGHT', severity: 'WARNING', reason: 'original reason' },
     ]);
   });
 
