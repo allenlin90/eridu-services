@@ -1,0 +1,10 @@
+{
+  "unbound": {
+    "00000": "Imported from the pre-Git live instance; model ownership and audience remain undecided, so no access is derived.",
+    "0001": "Imported from the pre-Git live instance; model ownership and audience remain undecided, so no access is derived.",
+    "platform-incentive-dispatch": "Imported from the pre-Git live instance; model ownership and audience remain undecided, so no access is derived."
+  },
+  "no_model_audience": {
+    "citation-escalation-contract": "The company-wiki-pilot model has no declared audience while the pilot remains unavailable to users."
+  }
+}

@@ -1,0 +1,47 @@
+name: Validate Open WebUI configuration
+
+on:
+  pull_request:
+    paths:
+      - "ai/openwebui/skills/**"
+      - "ai/openwebui/models/**"
+      - "ai/openwebui/claude-skills/**"
+      - "ai/openwebui/package_claude_skill.py"
+      - "ai/openwebui/push_config.py"
+      - "ai/openwebui/pull_config.py"
+      - "ai/openwebui/validate_config.py"
+      - "ai/openwebui/test_*.py"
+      - "ai/openwebui/skill-delivery-exceptions.json"
+      - ".agents/skills/upload-openwebui-skill/**"
+      - ".agents/workflows/openwebui-sync-delivery.md"
+      - ".github/workflows/openwebui-validate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate repository policy
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ -n "$BASE_SHA" ]]; then
+            python3 ai/openwebui/validate_config.py --base-ref "$BASE_SHA"
+          else
+            python3 ai/openwebui/validate_config.py
+          fi
+      - name: Run unit tests
+        run: python3 -m unittest discover -s ai/openwebui -p "test_*.py"
+      - name: Verify the Cowork package
+        run: |
+          python3 ai/openwebui/package_claude_skill.py /tmp/upload-openwebui-skill.zip
+          python3 -m zipfile -l /tmp/upload-openwebui-skill.zip

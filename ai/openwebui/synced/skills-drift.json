@@ -1,0 +1,137 @@
+[
+  {
+    "id": "00000",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "0001",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "00010",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "0002",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "adp-analysis",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "affiliate-management",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "affiliate-management-",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "citation-escalation-contract",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "commerce",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "communication-protocol",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "content-management",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "core-principles",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "creator-management",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "decisionlog",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "eu-essentials",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "finance-ops",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "financial-guardrails",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "governance-ops",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "hr-ops",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "legal-process",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "loreal-brand-case",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "openwebui-litellm-railway-integration-guide",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "org-chart",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "platform-incentive-dispatch",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "sales",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "sales-training",
+    "state": "in-sync",
+    "differs": []
+  },
+  {
+    "id": "talent-development-framework",
+    "state": "in-sync",
+    "differs": []
+  }
+]

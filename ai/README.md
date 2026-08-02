@@ -28,6 +28,7 @@ Use these actual agent skills before changing AI workspace files:
 - `.agents/skills/openwebui-rest-api/SKILL.md`
 - `.agents/skills/openwebui-groups-permissions/SKILL.md`
 - `.agents/skills/openwebui-mcp-tool-integration/SKILL.md`
+- `.agents/skills/upload-openwebui-skill/SKILL.md`
 - `.agents/skills/litellm-admin-api/SKILL.md`
 - `.agents/skills/wiki-knowledge-maintainer/SKILL.md`
 - `.agents/skills/ai-platform-release-management/SKILL.md`
@@ -117,7 +118,7 @@ ai/
 │  └─ README.md
 ├─ openwebui/
 │  ├─ README.md
-│  ├─ workspace-models.example.json
+│  ├─ models/                     # Workspace Model manifests (source of truth)
 │  ├─ tool-access.example.json
 │  ├─ functions/
 │  │  ├─ README.md

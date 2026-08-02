@@ -1,0 +1,98 @@
+name: Open WebUI drift check
+
+# Weekly read-only comparison of the live instance against the repo.
+#
+# The apply workflow covers changes that arrive through Git. This covers the
+# other direction: someone editing skills, models, or grants in the Open WebUI
+# admin UI, which produces no Git event and would otherwise go unnoticed until
+# the next merge silently reverted it.
+on:
+  schedule:
+    # Mondays 02:17 UTC. Off the hour on purpose -- :00 is when every scheduled
+    # workflow on GitHub fires at once and runners queue.
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Compare live against the repo
+        id: check
+        env:
+          OPEN_WEBUI_HOST: ${{ vars.OPEN_WEBUI_HOST }}
+          OPEN_WEBUI_API_KEY: ${{ secrets.OPEN_WEBUI_API_KEY }}
+        run: |
+          set +e
+          python3 ai/openwebui/push_config.py all > drift.txt 2>&1
+          status=$?
+          set -e
+          # 0 = in sync, 2 = differences found, anything else = a real failure.
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" -eq 0 ]; then
+            echo "### Open WebUI drift check: in sync" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$status" -eq 2 ]; then
+            echo "### Open WebUI drift check: differences detected" >> "$GITHUB_STEP_SUMMARY"
+            echo "Run the authenticated dry-run locally for details." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Open WebUI drift check: failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Inspect locally; live configuration is intentionally omitted from public logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$status" -ne 0 ] && [ "$status" -ne 2 ]; then
+            exit "$status"
+          fi
+
+      - name: Open or update the drift issue
+        if: steps.check.outputs.status == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "The live Open WebUI instance no longer matches \`ai/openwebui/\`."
+            echo
+            echo "Someone changed skills, models, or access grants in the admin UI."
+            echo "Git is the source of truth, so the next merge that runs the apply"
+            echo "workflow will revert it. Decide which side is right before that happens."
+            echo
+            echo "The detailed diff is deliberately excluded because this repository is public."
+            echo "An authorized operator can reproduce it locally with:"
+            echo
+            echo '\`python3 ai/openwebui/push_config.py all\`'
+            echo
+            echo "[Workflow run]($RUN_URL)"
+          } > body.md
+
+          gh label create openwebui-drift --color B60205 \
+            --description "Live Open WebUI differs from Git" --force
+          existing=$(gh issue list --state open --label openwebui-drift \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --title "Open WebUI config drift" \
+              --label openwebui-drift --body-file body.md
+          fi
+
+      - name: Close the drift issue when back in sync
+        if: steps.check.outputs.status == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create openwebui-drift --color B60205 \
+            --description "Live Open WebUI differs from Git" --force
+          existing=$(gh issue list --state open --label openwebui-drift \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --comment "Live matches the repo again."
+          fi

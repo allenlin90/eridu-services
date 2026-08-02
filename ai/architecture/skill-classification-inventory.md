@@ -2,7 +2,7 @@
 
 Reference input for Phase 1/3 content migration (see `llm-knowledge-base-plan.md`), not actioned yet. Classifies each currently-live Open WebUI skill against the plan's Skills Versus Knowledge categories, so migration has a concrete starting point once content owners are ready to review and classify their department's material. Building and testing the sync/retrieval pipeline does not depend on this document — the pipeline is content-agnostic by design.
 
-Source: `ai/openwebui/synced/skills/*.md` (19 files) cross-referenced against `models.json` (assistant attachment) and `groups.json` (group grants), as of the point-in-time pull recorded in `ai/openwebui/synced/`.
+Source: `ai/openwebui/skills/*.md` cross-referenced against `models.json` (assistant attachment) and `groups.json` (group grants), as of the point-in-time pull recorded in `ai/openwebui/synced/`. Skill content moved out of `synced/skills/` when `ai/openwebui/skills/` became the source of truth.
 
 ## Per-file classification
 

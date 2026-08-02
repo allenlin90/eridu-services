@@ -42,7 +42,7 @@ When following a procedure, take real values from the CRM, Partner Portal and
 Working Sheet. **Never re-introduce a real identifier into this directory.**
 
 The source `.docx` is **not committed** (same platform-confidentiality rule as
-`creator-services/`: see [`../../synced/skills/creator-management.md`](../../synced/skills/creator-management.md)).
+`creator-services/`: see [`../../skills/creator-management.md`](../../skills/creator-management.md)).
 The 21 embedded screenshots and three workflow diagrams
 (`Violation Handling Workflow.png`, `Incentive Management: End-to-End Loop
 (Overview).png`, `Incentive Management: Voucher Allocation`) are likewise not
