@@ -1,15 +1,18 @@
 {
   "00000": {
     "name": "Index / Reference Table",
-    "description": "Primary index of all company brain skills, documents, and reference tables."
+    "description": "Primary index of all company brain skills, documents, and reference tables.",
+    "access": "admins-only"
   },
   "0001": {
     "name": "CLAUDE.md Adapter Guide",
-    "description": "Adapter instructions and documentation references for Claude Code agent workflows."
+    "description": "Adapter instructions and documentation references for Claude Code agent workflows.",
+    "access": "admins-only"
   },
   "00010": {
     "name": "System Prompt Rules",
-    "description": "System prompt overrides, core instructions, and AI assistant behavior protocols."
+    "description": "System prompt overrides, core instructions, and AI assistant behavior protocols.",
+    "access": "admins-only"
   },
   "0002": {
     "name": "Eridu Operational Metrics Framework",
@@ -22,10 +25,6 @@
   "affiliate-management": {
     "name": "Affiliate Management",
     "description": "Use when planning or governing affiliate GMV operations, creator tiers, incentives, and vendor qualification."
-  },
-  "affiliate-management-": {
-    "name": "Affiliate management ",
-    "description": "Use when applying the legacy Affiliate Management SOP retained under its byte-exact live skill id."
   },
   "citation-escalation-contract": {
     "name": "Citation And Escalation Contract",

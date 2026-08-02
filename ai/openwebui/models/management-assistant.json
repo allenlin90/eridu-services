@@ -29,7 +29,8 @@
     "finance-ops",
     "governance-ops",
     "eu-essentials",
-    "0002"
+    "0002",
+    "citation-escalation-contract"
   ],
   "tool_ids": [
     "server:mcp:eridu_mcp"

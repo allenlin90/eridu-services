@@ -9,7 +9,8 @@
   "capabilities": {},
   "builtin_tools": {},
   "skill_ids": [
-    "citation-escalation-contract"
+    "citation-escalation-contract",
+    "core-principles"
   ],
   "tool_ids": [],
   "knowledge": [
