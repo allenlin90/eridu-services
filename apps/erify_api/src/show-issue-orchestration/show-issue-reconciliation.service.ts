@@ -38,7 +38,7 @@ const MAX_SIGNALS_PER_CALL = MAX_PLATFORM_VIOLATIONS_PER_FIELD * 2;
  * Automated attendance / platform-violation issue reconciliation. Called
  * synchronously from `FactExtractionProcessor.applyAndAudit` inside the same
  * CLS transaction as the fact's own column write and extraction audit — see
- * docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md "Automated Reconciliation" and
+ * docs/SHOW_ISSUE_OWNERSHIP.md "Automated Reconciliation" and
  * "Module Boundary".
  *
  * Every mutation here is `origin: 'FACT_EXTRACTION'`, `createdById: null` /

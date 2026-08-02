@@ -52,7 +52,7 @@ export class ShowRunReviewService {
     // Unresolved issue counts run through the same repository `where` builder
     // as `getShowRunReviewIssues` (via `ShowIssueService`/`ShowIssueRepository`),
     // so this badge and the paginated sub-resource's default-filtered total
-    // cannot drift — see docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+    // cannot drift — see docs/SHOW_ISSUE_OWNERSHIP.md.
     const unresolvedBySeverity = await this.showIssueService.getUnresolvedIssueSeverityCounts({
       studioUid,
       dateFrom: start,

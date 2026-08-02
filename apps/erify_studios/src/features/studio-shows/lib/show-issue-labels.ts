@@ -7,7 +7,7 @@ import type {
 
 /**
  * Display labels and badge styling for show issue enums. See
- * apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md (Domain Contract).
+ * apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md (Domain Contract).
  */
 
 export const SHOW_ISSUE_CATEGORY_LABELS: Record<ShowIssueCategory, string> = {

@@ -14,7 +14,7 @@ type UseShowIssuesProps = {
  * Feature hook for the show detail Issues tab: owns URL-synced pagination
  * and filter state (via `useTableUrlState`) and the server query. See
  * `.agents/skills/table-view-pattern` and
- * apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ * apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md.
  */
 export function useShowIssues({ studioId, showId }: UseShowIssuesProps) {
   const queryClient = useQueryClient();

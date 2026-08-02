@@ -41,7 +41,7 @@ const SHOW_ISSUE_WRITE_ROLES = [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER];
  * studio-scoped collection: ShowIssue has its own UID, audit trail,
  * pagination, and soft-delete lifecycle, so it is not nested under
  * `/shows/:id/`. `show_id` is a create field and a list filter instead.
- * See docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ * See docs/SHOW_ISSUE_OWNERSHIP.md.
  */
 @StudioProtected() // All active studio members can read
 @Controller('studios/:studioId/show-issues')

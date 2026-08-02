@@ -40,7 +40,7 @@ import { ShowIssueOrchestrationModule } from '@/show-issue-orchestration/show-is
  * need to fire extraction *after* a task update belong in
  * `TaskOrchestrationModule`, not here. Show-issue modules never import this
  * module back, so no `forwardRef` is needed — see "Module Boundary" in
- * docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ * docs/SHOW_ISSUE_OWNERSHIP.md.
  *
  * `FactExtractionProcessor` is an internal `@Transactional()` boundary that
  * pairs each indexed-column write with its audit envelope (and, when the

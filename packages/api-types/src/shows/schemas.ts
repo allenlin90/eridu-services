@@ -518,7 +518,7 @@ export const showRunReviewShowsRangeRowSchema = z.object({
  * Unresolved (OPEN + IN_PROGRESS) show-issue counts by severity for the Show
  * Run Review summary badge. Computed by the same repository `where` builder
  * as the `/run-review/issues` sub-resource, so the two cannot drift — see
- * apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ * apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md.
  */
 export const showRunReviewIssueSeverityCountsSchema = z.object({
   low: z.number().int(),

@@ -6,7 +6,7 @@ import { UID_PREFIXES } from '../constants.js';
  * Show-level issue ownership contract (Phase 5 item 9). Advisory operational
  * record for exceptions that need ownership and resolution — distinct from
  * Task (executable work) and Audit (immutable history). See
- * apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ * apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md.
  */
 
 export const showIssueCategorySchema = z.enum([

@@ -4,7 +4,7 @@ import type { ShowIssueSeverity } from '@eridu/api-types/show-issues';
  * Normalizes `ShowPlatformViolation.severity` — a free-form uppercase string
  * defaulted to `'WARNING'` at the schema level — onto the closed
  * `ShowIssue` severity set. Deterministic mapping table from
- * docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md "Automated Reconciliation".
+ * docs/SHOW_ISSUE_OWNERSHIP.md "Automated Reconciliation".
  */
 export function normalizeViolationSeverity(sourceSeverity: string): ShowIssueSeverity {
   switch (sourceSeverity) {

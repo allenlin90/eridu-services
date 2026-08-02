@@ -25,7 +25,7 @@ function uniqueSuffix(): string {
  * the paginated sub-resource run through `ShowIssueRepository.buildWhere` in
  * PostgreSQL (`take`/`skip`/`count`/`groupBy`) — this proves the count/list
  * parity against the real query planner, not a mocked repository.
- * See docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ * See docs/SHOW_ISSUE_OWNERSHIP.md.
  */
 describe('real database Show Run Review issue count/list parity', () => {
   let moduleRef: TestingModule;

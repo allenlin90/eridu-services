@@ -19,7 +19,7 @@ type ShowIssueActionsCellProps = {
 
 /**
  * Row actions for a show issue, gated by role + ownership per the
- * Authorization matrix in SHOW_ISSUE_OWNERSHIP_DESIGN.md. The backend
+ * Authorization matrix in SHOW_ISSUE_OWNERSHIP.md. The backend
  * enforces these rules regardless; this only avoids presenting an action
  * that would always 403 (e.g. a non-owner member trying to resolve someone
  * else's issue).

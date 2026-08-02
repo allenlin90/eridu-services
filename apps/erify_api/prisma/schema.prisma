@@ -933,7 +933,7 @@ model ShowPlatformViolation {
 // with submission/template semantics) and Audit (immutable history, no
 // current-state fields). Manual issues and automated attendance/platform
 // violation issues share this model and workflow. See
-// docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md. This feature is advisory only:
+// docs/SHOW_ISSUE_OWNERSHIP.md. This feature is advisory only:
 // an unresolved issue never blocks or causes a Show state transition.
 //
 // category/origin/severity/status/resolutionCode are closed string enums

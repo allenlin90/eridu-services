@@ -1,7 +1,7 @@
 /**
  * Signal channel from a fact extractor into `ShowIssueReconciliationService`.
  * A small in-process discriminated union, not a published domain event and
- * not a generic event bus — see docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md
+ * not a generic event bus — see docs/SHOW_ISSUE_OWNERSHIP.md
  * "Automated Reconciliation".
  *
  * Extractors that already hold the source row (creator / violation) attach

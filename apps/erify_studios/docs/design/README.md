@@ -8,7 +8,6 @@ Design/proposal/in-progress documents for `erify_studios`.
 2. [Sidebar Redesign](./SIDEBAR_REDESIGN.md) — Incremental navigation rollout; core regrouping shipped
 3. [Creator Availability Hardening Frontend Design](./CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
 4. [Studio Schedule Management](./STUDIO_SCHEDULE_MANAGEMENT_DESIGN.md) — ⏸️ Deferred Phase 5 reference (revisit for Client Portal)
-5. [Show-Level Issue Ownership](../../../erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md) — 📐 Cross-app Phase 5 item 9 design locked for implementation
 
 ## Note
 
@@ -21,3 +20,4 @@ Design/proposal/in-progress documents for `erify_studios`.
   - [../TASK_SUBMISSION_REPORTING.md](../TASK_SUBMISSION_REPORTING.md)
   - [../COMPENSATION_LINE_ITEMS.md](../COMPENSATION_LINE_ITEMS.md)
   - [../CLIENT_MECHANICS_MANAGEMENT.md](../CLIENT_MECHANICS_MANAGEMENT.md)
+  - [../../erify_api/docs/SHOW_ISSUE_OWNERSHIP.md](../../erify_api/docs/SHOW_ISSUE_OWNERSHIP.md)

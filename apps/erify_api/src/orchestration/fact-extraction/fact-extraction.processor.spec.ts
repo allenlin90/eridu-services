@@ -339,7 +339,7 @@ describe('factExtractionProcessor', () => {
       // reconciliation threw — the `@Transactional()` boundary around this
       // whole method call is what rolls both back together with the failed
       // reconciliation attempt. See fact-extraction-pipeline skill /
-      // docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md "Transaction boundary".
+      // docs/SHOW_ISSUE_OWNERSHIP.md "Transaction boundary".
       expect(extractor.apply).toHaveBeenCalled();
       expect(auditService.create).toHaveBeenCalledTimes(1);
     });

@@ -31,7 +31,7 @@ const PRIVILEGED_ROLES: readonly string[] = [STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANA
  * coverage on top of `ShowIssueService`'s single-model persistence. Composes
  * `ShowIssueService`, `StudioMembershipService`, and `AuditService` — see
  * the "Module Boundary" section of
- * docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ * docs/SHOW_ISSUE_OWNERSHIP.md.
  *
  * Automated reconciliation lives in the sibling `ShowIssueReconciliationService`;
  * this service only ever writes `origin: 'MANUAL'` issues and validates

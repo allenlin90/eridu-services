@@ -8,7 +8,7 @@ import { PrismaModule } from '@/prisma/prisma.module';
 
 // Owns repository and single-model service behavior. Exports only
 // ShowIssueService — the repository stays private, per the design doc's
-// module boundary (docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md).
+// module boundary (docs/SHOW_ISSUE_OWNERSHIP.md).
 @Module({
   imports: [PrismaModule, UidGeneratorModule],
   providers: [ShowIssueService, ShowIssueRepository],

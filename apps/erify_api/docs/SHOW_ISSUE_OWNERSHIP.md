@@ -1,7 +1,6 @@
-# Show-Level Issue Ownership Design
+# Show-Level Issue Ownership
 
-> **Status**: Design locked; Delivery Sequence steps 1–5 shipped (backend manual workflow, show-detail Issues tab, automated attendance/platform-violation reconciliation, Show Run Review summary counts and paginated Issues sub-resource). Feature complete.
-> **Roadmap**: [Phase 5 item 9](../../../../docs/roadmap/PHASE_5.md#9-show-level-issue-ownership)
+> **Roadmap**: [Phase 5 item 9](../../../docs/roadmap/PHASE_5.md#9-show-level-issue-ownership)
 
 ## Purpose
 
@@ -10,8 +9,6 @@ Show issues are advisory operational records for exceptions that need ownership 
 This feature introduces a dedicated `ShowIssue` model. It does not reuse `Task`, because tasks describe executable work and carry submission/template semantics. It does not reuse `Audit`, because audits describe immutable history rather than current ownership, due dates, severity, and resolution state.
 
 ## Scope
-
-The first implementation supports:
 
 - manual issues for creator attendance, equipment, utilities, platform problems, post-production follow-up, and other show-specific exceptions;
 - automated issues for active `ShowPlatformViolation` rows and `ShowCreator.attendanceMissing` facts;
@@ -30,20 +27,13 @@ The feature remains advisory. An unresolved issue does not block or cause a show
 | Notifications for issue changes | Phase 5 item 15 |
 | Show state transitions or transition blocking | Phase 5 items 18 and 19 |
 | Unified live-control dashboard | Phase 5 item 20 |
-| Comments, mentions, attachments, and watchers | Future collaboration work; evidence is plain text in item 9 |
+| Comments, mentions, attachments, and watchers | Future collaboration work; evidence is plain text |
 | Configurable escalation policies, timers, or background jobs | Promote with item 15 or a separate policy workstream when a real delivery/escalation consumer exists |
 | General-purpose domain event engine or NestJS CQRS migration | Reconsider only when a second independent consumer needs durable delivery |
 
 ## Domain Contract
 
 ### Status lifecycle
-
-```text
-OPEN -> IN_PROGRESS -> RESOLVED
-  |          |             |
-  +----------+-------------+-> RESOLVED
-                         RESOLVED -> OPEN (reopen)
-```
 
 ```mermaid
 stateDiagram-v2
@@ -62,7 +52,7 @@ stateDiagram-v2
 - Reopening preserves the same issue identity and clears the previous resolution fields after recording an audit entry.
 - There is no public delete action. Resolution is the normal terminal workflow.
 
-### Proposed model
+### Model
 
 `ShowIssue` is anchored directly to `Show` and uses typed nullable foreign keys for its closed set of automated sources.
 
@@ -77,7 +67,7 @@ stateDiagram-v2
 | `title`, `evidence` | Required concise title and optional plain-text evidence. Automated reconciliation copies the current source reason into evidence. |
 | `ownerId`, `dueAt` | Nullable owner `User` foreign key and due date. Assignment validates an active membership in the issue's studio. |
 | `createdById` | Nullable `User` foreign key. Null denotes a system-created issue. |
-| `escalationLevel` | Non-negative integer, initially `0`; item 9 supports explicit manual escalation only. |
+| `escalationLevel` | Non-negative integer, initially `0`; explicit manual escalation only. |
 | `escalatedAt`, `escalatedById`, `escalationNote` | Latest escalation state. Full history remains in `Audit`. |
 | `resolvedAt`, `resolvedById`, `resolutionCode`, `resolutionNote` | Resolution record. Codes: `FIXED`, `SOURCE_CORRECTED`, `NO_LONGER_APPLICABLE`, `DUPLICATE`, `OTHER`. |
 | `showCreatorId` | Nullable typed source FK for attendance anomalies. |
@@ -93,7 +83,7 @@ erDiagram
     ShowPlatform ||--o{ ShowPlatformViolation : "has"
     User ||--o{ ShowIssue : "owner / createdBy / resolvedBy / escalatedBy (all nullable)"
     Audit ||--o{ AuditTarget : "envelope"
-    AuditTarget }o--|| ShowIssue : "SHOW_ISSUE target (new)"
+    AuditTarget }o--|| ShowIssue : "SHOW_ISSUE target"
 
     ShowIssue {
       bigint id PK
@@ -118,9 +108,7 @@ erDiagram
     }
 ```
 
-**Why the ERD looks unchanged since [#356](https://github.com/allenlin90/eridu-services/pull/356):** it is. `ShowIssue`, `origin`, `showCreatorId`, and `showPlatformViolationId` were all added by step 1 (#356) with zero writers for `origin: 'FACT_EXTRACTION'` — steps 2–3 (#356, #358) only ever wrote `origin: 'MANUAL'` through the human workflow. This PR (step 4, [#361](https://github.com/allenlin90/eridu-services/pull/361)) adds no schema — it is the first code path that actually sets `origin: 'FACT_EXTRACTION'` and populates those two FKs. See "What step 4 changes" under [Automated Reconciliation](#automated-reconciliation) for the behavioral diff.
-
-Required constraints and indexes:
+Constraints and indexes:
 
 - unique `uid`;
 - unique `showPlatformViolationId` when present;
@@ -131,11 +119,9 @@ Required constraints and indexes:
 - service validation that a typed source belongs to the same show as `showId`;
 - service validation that `FACT_EXTRACTION` has exactly one supported typed source and `MANUAL` has neither automated source FK.
 
-Prisma must generate the migration. Any database `CHECK` constraints needed to enforce the origin/source arc are added only inside that generated migration using the repository's custom-SQL markers.
-
 ### Audit extension
 
-Add `SHOW_ISSUE` to the shared audit target contract and a typed nullable `showIssueId` foreign key to `AuditTarget`. Record `CREATE` or `UPDATE` audit rows for:
+`SHOW_ISSUE` is part of the shared audit target contract, with a typed nullable `showIssueId` foreign key on `AuditTarget`. `CREATE` or `UPDATE` audit rows record:
 
 - issue creation;
 - assignment or due-date changes;
@@ -179,24 +165,13 @@ The list endpoint uses offset pagination and supports `show_id`, `owner_id`, `st
 
 All request/response schemas live in `@eridu/api-types`, use snake_case externally, and map to camelCase service payloads.
 
+Show Run Review's `GET /studios/:studioId/shows/run-review/issues` sub-resource reuses `showIssueApiResponseSchema` verbatim for its rows (see [Read Surfaces And Performance](#read-surfaces-and-performance)) and additionally carries `show_name`, since that surface spans multiple shows.
+
 ## Automated Reconciliation
-
-### What step 4 changes
-
-Everything in this section shipped in step 4 ([#361](https://github.com/allenlin90/eridu-services/pull/361), the fourth breakdown PR under the [#357](https://github.com/allenlin90/eridu-services/pull/357) integration program). Nothing here was buildable from steps 1–3 alone:
-
-| | Steps 1–3 (#356, #358) | Step 4 (#361) |
-| --- | --- | --- |
-| `ShowIssue` schema, `origin`/typed-source columns | Added, but `origin: 'FACT_EXTRACTION'` had no writer | Unchanged (no migration in #361) |
-| Who can create/resolve an issue | A human, through `StudioShowIssueController` → `ShowIssueWorkflowService` | Adds a second, system-authored path: `FactExtractionProcessor` → `ShowIssueReconciliationService` |
-| `CreatorAttendanceMissingExtractor` / `ShowPlatformViolationExtractor` | Wrote `ShowCreator.attendanceMissing` / `ShowPlatformViolation` rows only — no `ShowIssue` was ever touched by a task submission | `ExtractionDecision`'s `write` variant now also carries `signals[]`, consumed by the new reconciliation service in the same transaction |
-| Show-detail Issues tab (#358) | Rendered whatever issues existed — always `MANUAL` in practice, since nothing produced `FACT_EXTRACTION` rows yet | First tab load that can show a `FACT_EXTRACTION` issue an operator didn't create by hand |
-
-In short: steps 1–3 built the container and the human-facing half of the workflow; step 4 is what makes `origin: 'FACT_EXTRACTION'` a real, populated state instead of a schema value nothing ever set. The "Module Boundary: before → after step 4" diagram below shows the same delta at the module-dependency level.
 
 ### Signals
 
-Use a small in-process discriminated union owned by the show-issue workflow:
+A small in-process discriminated union owned by the show-issue workflow:
 
 ```text
 attendance_missing(showCreatorUid, evidence)
@@ -244,7 +219,7 @@ flowchart TD
 
 Manual issues are never automatically resolved or overwritten.
 
-Platform violation severity is currently an uppercase free-form string with `WARNING` as the default. Normalize it deterministically:
+Platform violation severity is an uppercase free-form string with `WARNING` as the default. It is normalized deterministically:
 
 | Source severity | Issue severity |
 | --- | --- |
@@ -257,7 +232,7 @@ Platform violation severity is currently an uppercase free-form string with `WAR
 
 `FactExtractionProcessor` applies the fact, writes its extraction audit, and invokes `ShowIssueReconciliationService.applySignals(...)` inside the same CLS transaction. The relevant extractors return the typed signals with the source UIDs they created, superseded, or updated.
 
-If issue reconciliation fails, the fact write and extraction audit roll back together and the extraction result reports an error through the existing task-submission behavior. A fact must not commit while its required automated issue is missing. Manager edits to an already-completed task already re-run extraction and provide the immediate correction path; a general extraction retry queue remains outside item 9.
+If issue reconciliation fails, the fact write and extraction audit roll back together and the extraction result reports an error through the existing task-submission behavior. A fact must not commit while its required automated issue is missing. Manager edits to an already-completed task re-run extraction and provide the immediate correction path; a general extraction retry queue is out of scope.
 
 **Bounding `show_platform_violation` cardinality — two gates, not one.** A `show_platform_violation` multiselect submission can replace an existing selection wholesale, emitting one `platform_violation_superseded` signal per previously-active row plus one `platform_violation_opened` signal per newly selected row. The primary gate is at content-validation time, before the task can transition to `COMPLETED`: `task-content-validator.ts` rejects a `show_platform_violation` field selecting more than `MAX_PLATFORM_VIOLATIONS_PER_FIELD` (`N = 20`, a documented domain estimate — see the constant's doc comment) entries, in `TaskService.updateTaskContentAndStatusCore` / `TaskValidationService.validateContent`, so an oversized selection never reaches extraction and never leaves a task stuck `COMPLETED` with a failed reconciliation. `ShowIssueReconciliationService`'s own `MAX_SIGNALS_PER_CALL` (`2N = 40`) is a second, defensive backstop sized to comfortably fit the worst case a content-valid submission can produce — a full N-to-N replacement (N superseded + N created) — so it only ever trips if the two gates drift out of sync, not on any submission the content gate already accepted.
 
@@ -326,34 +301,15 @@ FactExtractionProcessor
        -> ShowIssueService
        -> ShowCreatorService / ShowPlatformViolationService
        -> AuditService
-```
 
-**Before → after step 4** — the manual side (left) shipped in #356/#358 and is unchanged; `FactExtractionModule`'s dependency on the show-issue modules (right, dashed) did not exist until this PR:
-
-```mermaid
-flowchart LR
-    subgraph before["Before step 4 (#356, #358)"]
-        direction TB
-        C1[StudioShowIssueController] --> W1[ShowIssueWorkflowService]
-        W1 --> S1[ShowIssueService]
-        FE1[FactExtractionProcessor] -.->|no dependency| S1
-    end
-
-    subgraph after["After step 4 (#361, this PR)"]
-        direction TB
-        C2[StudioShowIssueController] --> W2[ShowIssueWorkflowService]
-        W2 --> S2[ShowIssueService]
-        FE2[FactExtractionProcessor] ==>|new| R2[ShowIssueReconciliationService]
-        R2 ==>|new| S2
-    end
-
-    before ~~~ after
+ShowRunReviewService
+  -> ShowIssueService
 ```
 
 - `ShowIssueModule` owns repository and single-model service behavior and exports only `ShowIssueService`.
 - `ShowIssueOrchestrationModule` owns manual workflow and automated reconciliation services.
 - The controller imports the orchestration module; it does not assemble cross-model rules.
-- `FactExtractionModule` imports the orchestration module in one direction. The show-issue modules do not import fact extraction, so no `forwardRef` is needed.
+- `FactExtractionModule` and `ShowOrchestrationModule` each import `ShowIssueModule` in one direction. The show-issue modules do not import fact extraction or show orchestration, so no `forwardRef` is needed.
 - Existing task, audit, and show services remain unchanged in responsibility. This feature does not create a cross-cutting event module.
 
 This orchestration pattern can be applied to other services when one model mutation has one required downstream workflow. Introduce a durable outbox and independent consumers only when the same committed change must fan out to at least two separately retryable concerns, such as issue reconciliation plus notifications.
@@ -362,31 +318,10 @@ This orchestration pattern can be applied to other services when one model mutat
 
 ### Show detail
 
-Add an **Issues** tab to the existing show detail shell. It uses the canonical collection filtered by `show_id`, URL-backed pagination and filters, and row actions based on authorization. The create dialog is available to Admin and Manager users.
+An **Issues** tab on the existing show detail shell uses the canonical collection filtered by `show_id`, URL-backed pagination and filters, and row actions based on authorization. The create dialog is available to Admin and Manager users.
 
 ### Show Run Review
 
-Extend the lean `run-review` summary with unresolved issue counts by severity and add a lazy `/run-review/issues` paginated sub-resource. Both use the same repository `where` builder as the canonical issue list so the summary badge and rows cannot drift.
+The lean `run-review` summary carries unresolved issue counts by severity (`issues.unresolved_count`, `issues.unresolved_by_severity`), and a lazy `GET /studios/:studioId/shows/run-review/issues` paginated sub-resource lists the underlying rows. Both use the same repository `where` builder as the canonical issue list, so the summary badge and rows cannot drift; the sub-resource defaults to unresolved (`OPEN`/`IN_PROGRESS`) when no explicit `status` filter is given, which is what keeps the two counts equal under the same filters.
 
-Issue pagination, filtering, and counting execute in PostgreSQL with `take`, `skip`, and `count`. `date_from` and `date_to` filter the linked show's scheduled `startTime`, matching the Show Run Review range contract. The implementation must not load a show graph and slice issues in memory. The existing 31-day operational review bound remains in place.
-
-## Delivery Sequence
-
-1. Shared enums/schemas, Prisma model and generated migration, model repository/service, audit-target extension, and model tests.
-2. Manual workflow API with authorization, optimistic locking, audit coverage, and controller/service tests.
-3. Show detail Issues tab with create/edit/resolve/reopen flows and frontend tests.
-4. Transactional attendance and platform-violation reconciliation with replay, correction, and rollback tests.
-5. Show Run Review summary counts and lazy paginated Issues tab with count/list parity tests.
-
-## Acceptance Scenarios
-
-- A Manager creates, assigns, escalates, resolves, and reopens a manual equipment issue; each semantic change is queryable in issue audit history.
-- An assigned active member starts and resolves their issue but cannot reassign it, change severity, escalate it, or reopen it.
-- Completing a task that records missing creator attendance atomically writes the attendance fact, extraction audit, and one automated issue.
-- Correcting the same attendance fact to present resolves that issue without creating another row.
-- Replaying either attendance state is idempotent.
-- Creating and superseding platform violations creates and source-resolves exactly one issue per violation row.
-- A reconciliation failure leaves neither the fact mutation nor its extraction audit committed.
-- Show detail lists only the selected show's issues with real server pagination.
-- Show Run Review's unresolved count equals the total returned by its issues sub-resource under the same filters.
-- No issue mutation changes show status, emits a notification, or requires an event-bus dependency.
+Issue pagination, filtering, and counting execute in PostgreSQL with `take`, `skip`, and `count`, capped at a 100-row page size — unlike the other Show Run Review sub-resources (creators, violations, tasks, shows), which slice an already-bounded in-memory show graph, this endpoint pages PostgreSQL directly. `date_from` and `date_to` filter the linked show's scheduled `startTime`, matching the Show Run Review range contract. The existing 31-day operational review bound remains in place.

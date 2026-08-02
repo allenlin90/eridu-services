@@ -13,7 +13,7 @@ import { UserModule } from '@/models/user/user.module';
  * Owns both show-issue workflows: the manual workflow (authorization,
  * optimistic locking, audit coverage) and automated reconciliation
  * (`ShowIssueReconciliationService`, invoked by `FactExtractionProcessor` —
- * see "Module Boundary" in docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md).
+ * see "Module Boundary" in docs/SHOW_ISSUE_OWNERSHIP.md).
  * `FactExtractionModule` imports this module in one direction; show-issue
  * modules never import fact-extraction, so no `forwardRef` is needed.
  */

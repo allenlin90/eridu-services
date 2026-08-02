@@ -60,7 +60,7 @@ export const STUDIO_ROUTE_ACCESS = {
   // isAM tab gating in shows/$showId/route.tsx). Create/escalate/reopen and
   // full-field edit are further restricted to ADMIN/MANAGER inside the
   // Issues tab itself — this key only gates whether the tab is reachable at
-  // all. See docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md Authorization.
+  // all. See apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md Authorization.
   showIssues: [
     STUDIO_ROLE.MEMBER,
     STUDIO_ROLE.DESIGNER,

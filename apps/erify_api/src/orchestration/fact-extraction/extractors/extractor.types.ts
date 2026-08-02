@@ -76,7 +76,7 @@ export type ExtractionDecision =
      * this write's audit row. Optional — most extractors have no downstream
      * issue-reconciliation hook. See
      * `.agents/skills/fact-extraction-pipeline/SKILL.md` and
-     * docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md "Automated Reconciliation".
+     * docs/SHOW_ISSUE_OWNERSHIP.md "Automated Reconciliation".
      */
     signals?: ShowIssueReconciliationSignal[];
   }

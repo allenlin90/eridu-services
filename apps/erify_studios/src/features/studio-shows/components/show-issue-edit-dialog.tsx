@@ -36,7 +36,7 @@ type ShowIssueEditDialogProps = {
    * `full`: Admin/Manager — any field. `start-only`: the assigned member on
    * their own OPEN issue — the backend only accepts `{ version, status:
    * 'IN_PROGRESS' }` from them, so the dialog presents nothing else that
-   * would only 403. See SHOW_ISSUE_OWNERSHIP_DESIGN.md Authorization.
+   * would only 403. See SHOW_ISSUE_OWNERSHIP.md Authorization.
    */
   mode: 'full' | 'start-only';
 };
