@@ -188,7 +188,7 @@
     ],
     "created_at": 1784734306,
     "updated_at": 1784734306,
-    "file_count": 29,
+    "file_count": 28,
     "files": [
       {
         "id": "7b27787d-952e-4490-90e2-29d45fe58591",
@@ -239,10 +239,6 @@
         "name": "06-live-base.md"
       },
       {
-        "id": "f0721082-81e7-4ca4-8d27-dcd7ae0cf069",
-        "name": "06-live-base.md"
-      },
-      {
         "id": "0ec79555-b4bb-45d0-a0c9-1558d19d3c75",
         "name": "06-payments-finance--setting-up-payout-information.md"
       },
@@ -251,7 +247,7 @@
         "name": "07-payments-finance--payout-cycles-timelines.md"
       },
       {
-        "id": "0100b279-1f4a-4e33-8bad-26e165d0a283",
+        "id": "83dcefe8-f834-47ac-961c-0eb2a637c01f",
         "name": "07-support-non-exclusive.md"
       },
       {
@@ -299,11 +295,11 @@
         "name": "18-official-programs-campaigns-in--terms-conditions-for-specific-programsca.md"
       },
       {
-        "id": "19f3d5c2-e064-489e-9e4a-84eb7de71f34",
+        "id": "90224e3b-3312-4ea5-8e28-3aa9af90e424",
         "name": "common-violations.md"
       },
       {
-        "id": "a84d02d9-761f-48a6-b3db-b68a81ba0cef",
+        "id": "32e5ebf8-7730-4259-a1d6-3adcd17a5ae5",
         "name": "glossary.md"
       }
     ]

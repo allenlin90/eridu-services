@@ -20,6 +20,21 @@ Do not place these here:
 - reusable coding-agent skills (`.agents/skills/`);
 - Railway-only service descriptors (`.railway/`).
 
+## Railway services deployed from this repository
+
+**None today.** Every Railway service in the Eridu stack is either a first-party app
+(`apps/`) or a pinned upstream image configured in the dashboard — see
+[ai-platform-release-management](../.agents/skills/ai-platform-release-management/SKILL.md)
+for the pin and rollback policy on those.
+
+Open WebUI configuration is applied by GitHub Actions, not by a Railway service:
+[`openwebui-sync.yml`](../.github/workflows/openwebui-sync.yml) on merge, and
+[`openwebui-drift.yml`](../.github/workflows/openwebui-drift.yml) weekly. A short script run
+on a merge event does not justify a service to build, deploy, and maintain.
+
+If a service whose build lives in this repository is ever added, list it here — a change to
+its source is then visibly a change that needs deploying.
+
 ## Target Structure
 
 ```text

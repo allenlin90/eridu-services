@@ -33,6 +33,8 @@ Treat `model-groups.example.yaml` as a reference for what to configure (or for a
 
 Stable, provider-agnostic aliases: `company-fast`, `company-balanced`, `company-reasoning`, `company-coding`.
 
+**These are the intended taxonomy, not live state.** Verified against the deployed LiteLLM instance: `GET /v1/models` returns only raw provider ids, none of the `company-*` aliases. Use these names when creating aliases; do not reference one as an existing model until it has been created, or the call fails with model-not-found.
+
 Access groups bundle aliases for team virtual keys:
 
 | Access group | Aliases |

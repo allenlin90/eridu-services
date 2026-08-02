@@ -2,7 +2,7 @@
 
 This directory is for Git-authored, reviewed Markdown knowledge that can be synced into Open WebUI knowledge collections or served through a documentation-only MCP service.
 
-Do not put Open WebUI skill adapters here. Skill adapters belong in `../skills/`, and live exported skill snapshots belong in `../synced/skills/`.
+Do not put Open WebUI skill content here. It belongs in `../skills/`, which is its source of truth.
 
 Recommended layout:
 

@@ -140,6 +140,7 @@ Correct timing matters:
 - `openwebui-groups-permissions`
 - `openwebui-mcp-tool-integration`
 - `openwebui-rest-api`
+- `upload-openwebui-skill`
 - `orchestration-service-nestjs`
 - `package-extraction-strategy`
 - `plan-workflow-completeness`

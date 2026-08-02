@@ -47,7 +47,7 @@ Keep the wiki in this monorepo, but outside `ai/openwebui/skills/`.
 | Path | Purpose |
 | --- | --- |
 | `ai/openwebui/skills/` | Repo-authored adapters or exports for Open WebUI assistant behavior. Canonical engineering skills remain under `.agents/skills/`. |
-| `ai/openwebui/synced/skills/` | Read-only point-in-time export of live Open WebUI skill content. |
+| `ai/openwebui/skills/` | Source of truth for Open WebUI skill content; live is a projection of it. |
 | `ai/openwebui/knowledge/company-wiki/` | Git-authored company facts, policies, and SOPs used to build knowledge collections. |
 
 The human entrypoint is `README.md`. Machine routing and collection membership come from generated metadata, not a manually maintained `index.md`.

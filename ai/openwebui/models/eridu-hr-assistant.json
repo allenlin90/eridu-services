@@ -1,0 +1,49 @@
+{
+  "id": "eridu-hr-assistant",
+  "name": "Eridu - HR Assistant",
+  "base_model_id": "MiniMax-M3",
+  "is_active": true,
+  "description": "Assistant for the Eridu HR team",
+  "system": null,
+  "params": {},
+  "capabilities": {
+    "file_context": true,
+    "vision": false,
+    "file_upload": false,
+    "web_search": false,
+    "image_generation": false,
+    "code_interpreter": false,
+    "terminal": false,
+    "citations": true,
+    "status_updates": true,
+    "builtin_tools": true
+  },
+  "builtin_tools": {
+    "code_interpreter": false,
+    "image_generation": false
+  },
+  "skill_ids": [
+    "core-principles",
+    "org-chart",
+    "talent-development-framework",
+    "governance-ops",
+    "eu-essentials",
+    "communication-protocol",
+    "hr-ops",
+    "legal-process"
+  ],
+  "tool_ids": [
+    "server:mcp:eridu_mcp"
+  ],
+  "knowledge": [],
+  "access": {
+    "public": false,
+    "write_groups": [
+      "Admins"
+    ],
+    "read_groups": [
+      "HR - Manager",
+      "Management team"
+    ]
+  }
+}

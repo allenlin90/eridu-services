@@ -1,0 +1,60 @@
+{
+  "id": "creator-service-assistant",
+  "name": "Erisa - Creator Service Assistant",
+  "base_model_id": "MiniMax-M3",
+  "is_active": true,
+  "description": "Assistant for the Erisa Creator Service team",
+  "system": "\n\nTone: direct, pragmatic, creator-retention and GMV focused.\"",
+  "params": {},
+  "capabilities": {
+    "file_context": true,
+    "vision": false,
+    "file_upload": false,
+    "web_search": false,
+    "image_generation": false,
+    "code_interpreter": false,
+    "terminal": false,
+    "citations": true,
+    "status_updates": true,
+    "builtin_tools": true
+  },
+  "builtin_tools": {
+    "code_interpreter": false,
+    "image_generation": false
+  },
+  "skill_ids": [
+    "core-principles",
+    "creator-management",
+    "governance-ops",
+    "eu-essentials",
+    "affiliate-management",
+    "citation-escalation-contract"
+  ],
+  "tool_ids": [],
+  "knowledge": [
+    {
+      "id": "8fa78477-cf8a-4fbb-b9d3-fb86a0bc24fb",
+      "type": "collection",
+      "name": "creator-services-tiktok-shop"
+    },
+    {
+      "id": "e38f8016-8401-4340-b765-fd437a3b4441",
+      "type": "file",
+      "name": "00-escalation-guide.md"
+    },
+    {
+      "id": "63295df8-91cc-4c02-896a-42961776069a",
+      "type": "collection",
+      "name": "tiktok-academy-articles"
+    }
+  ],
+  "access": {
+    "public": false,
+    "write_groups": [
+      "Admins"
+    ],
+    "read_groups": [
+      "Erisa - Creator"
+    ]
+  }
+}

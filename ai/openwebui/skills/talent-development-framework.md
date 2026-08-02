@@ -6,12 +6,15 @@ Version: 1.1 — July 2026 | Owner: Country Manager + HR | Review: Quarterly
 
 Terminology (v1.1): QSG = company/pillar-level Quarterly Strategic Goal, set at the company QRV and recorded in quarterly-strategic-goals.md. Each QSG is broken down into multiple initiatives — smaller weekly/monthly goals — and team members are assigned to initiatives, not to QSGs directly. What v1.0 of this document called a member's "QSG" is now an initiative.
 
+
 Related documents:
 
 quarterly-strategic-goals.md — the company/pillar QSGs and key metric targets for the quarter; initiatives should ladder into these
 eridu-operational-metrics-framework.md — the company metrics that all initiative outputs must ladder up to
 hr-confidential.md — salary bands, incentive rates, bonus pool, promotion salary adjustments (restricted access: Founder, CM, HR only — never quote its contents through this framework)
 hr-ops.md — general compensation and promotion policy
+
+
 
 1. Purpose
 biggieG is ERIDU's operating system for talent development. It gives every manager one consistent, repeatable loop to grow their people, and gives HR and management a common language to evaluate readiness, promotion, and compensation across pillars.
@@ -30,6 +33,7 @@ Rules of the level system:
 A member's level is a single, whole-person designation — but their skill map is granular: they may sit at L2 in some skills and L1 in others. The skill map (not the title) drives initiative design.
 Promotion requires the full row: a member is promotable to level N only when they demonstrate level-N behavior across all skill categories for a sustained period (see Section 7 — 3+ months of evidence, per promotion policy).
 L0 → L1 transition is governed by probation confirmation, not this promotion process — but the L0 column defines the bar a probationer must clear.
+
 
 3. The Quarterly Cycle
 Synchronized with the company review cadence (Metrics Framework §7):
@@ -197,6 +201,7 @@ Initiative: Complete all onboarding modules, pass competency tests on core tools
 Metric served: Probation completion rate (HR); plus the team's operational metric their daily tasks feed.
 Success criteria: Probation checklist 100% complete; supervisor attestation of error-free delivery; on track for confirmation at day 90/119.
 
+
 7. Step 3a — Promotion
 Promotion follows the confidential promotion framework (hr-confidential); biggieG operationalizes it through the matrix:
 Readiness definition. A member is promotion-ready when their Skill Map shows "Solid" at the next level in all 10 categories, sustained across at least 3 months (one full assessed quarter, typically evidenced across two consecutive quarters), with the evidence coming primarily from delivered initiatives.
@@ -225,5 +230,6 @@ Governance currently has 2 categories (Information, Resource) vs 3 in the radar 
 Salary bands, incentive rates, and bonus pool are TBD in hr-confidential — biggieG's compensation linkage activates fully once the Founder finalizes them (tracked in Metrics Framework §8).
 v1.1 terminology change (QSG = company/pillar goal; member goals renamed initiatives) must be reflected in any manager training material or forms derived from v1.0.
 Review this document quarterly (CM + HR), alongside the incentive-structure, metrics-framework, and quarterly-strategic-goals reviews.
+
 
 biggieG — ERIDU Talent Development Framework. Internal use. Compensation figures are never stored in or surfaced through this document.

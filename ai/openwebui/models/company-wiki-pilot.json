@@ -1,0 +1,28 @@
+{
+  "id": "company-wiki-pilot",
+  "name": "Company Wiki (Pilot)",
+  "base_model_id": "MiniMax-M3",
+  "is_active": true,
+  "description": "Pilot assistant answering staff questions from the reviewed Company Wiki. Cites sources, escalates gaps instead of guessing. Phase 2 pilot -- access not yet widened beyond admin.",
+  "system": null,
+  "params": {},
+  "capabilities": {},
+  "builtin_tools": {},
+  "skill_ids": [
+    "citation-escalation-contract",
+    "core-principles"
+  ],
+  "tool_ids": [],
+  "knowledge": [
+    {
+      "id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
+      "type": "collection",
+      "name": "Company Wiki"
+    }
+  ],
+  "access": {
+    "public": false,
+    "write_groups": [],
+    "read_groups": []
+  }
+}

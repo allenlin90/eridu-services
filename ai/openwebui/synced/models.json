@@ -28,7 +28,6 @@
                 "loreal-brand-case",
                 "eu-essentials",
                 "creator-management",
-                "affiliate-management-",
                 "adp-analysis",
                 "content-management"
             ],
@@ -42,35 +41,35 @@
         },
         "access_grants": [
             {
-                "id": "3fcb416a-cb61-413d-9c4b-fd9f42909530",
-                "resource_type": "model",
-                "resource_id": "commerce-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1784873422
-            },
-            {
-                "id": "d1cb2861-e766-453b-98f0-162d0b0b399f",
+                "id": "b807aec8-b766-4b61-92f1-571418ad826a",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1784873422
+                "created_at": 1785674779
             },
             {
-                "id": "18761e9c-7308-443b-ac82-fd57c5a4a352",
+                "id": "59d80b98-13e3-43ba-a57d-6ae80088acd2",
                 "resource_type": "model",
                 "resource_id": "commerce-assistant",
                 "principal_type": "group",
                 "principal_id": "50e407d9-4756-4aeb-9ac9-3f99d275e3b7",
                 "permission": "read",
-                "created_at": 1784873422
+                "created_at": 1785674779
+            },
+            {
+                "id": "3d3359b9-f1c6-4824-91f3-e095618ac29a",
+                "resource_type": "model",
+                "resource_id": "commerce-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1785674779
             }
         ],
         "is_active": true,
-        "updated_at": 1784873422,
+        "updated_at": 1785674779,
         "created_at": 1783441939
     },
     {
@@ -158,10 +157,13 @@
         "meta": {
             "profile_image_url": null,
             "description": "Pilot assistant answering staff questions from the reviewed Company Wiki. Cites sources, escalates gaps instead of guessing. Phase 2 pilot -- access not yet widened beyond admin.",
-            "capabilities": null,
+            "capabilities": {},
             "skillIds": [
-                "citation-escalation-contract"
+                "citation-escalation-contract",
+                "core-principles"
             ],
+            "toolIds": [],
+            "builtinTools": {},
             "knowledge": [
                 {
                     "id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
@@ -171,112 +173,94 @@
                     "meta": null,
                     "access_grants": [
                         {
-                            "id": "4283f1d7-0ab9-4df4-8e16-455fa14a5bd0",
+                            "id": "c37e0d7c-2835-4754-a92b-bc8785710cf5",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "3728dd04-6c44-41d0-9836-49c70593af45",
+                            "principal_id": "ac8a3e5d-76d0-486b-9c9a-576e6c587b1b",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "e106c804-2eec-49c9-8bc8-d03d4744cfa5",
+                            "id": "db3d273d-2123-43ab-abd4-cf4b275c3693",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "fdfc0f31-8adf-4fa3-8d69-e907c5541894",
+                            "principal_id": "13b52c81-eff3-47e4-80a8-10c665e37784",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "253c37bb-69fa-4580-bc89-6d450c568d05",
+                            "id": "05f61178-76fb-4b5b-8602-a67670f3b1b5",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "5ce9a10e-6161-41d7-9fbe-24cfd6d5cb85",
+                            "principal_id": "0309e329-3af8-44e6-a666-994e08b816c8",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "75fef625-9fc8-4f1a-a0cb-d22310efc714",
+                            "id": "3b609e5d-ea6c-43b6-a0c4-bd9ae4b383e7",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "7b35c753-4d87-46c3-896c-d43fb188da9f",
+                            "principal_id": "a56a6a87-6942-4b4a-a7d0-eb86f9862859",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "da7bcdd6-a453-4d6d-aab2-a4f2dd1c7368",
+                            "id": "243894d4-46b9-4e90-8a85-3519c2e3f00e",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "8a37f184-4ac5-4226-9852-50b88029b181",
+                            "principal_id": "a0c6d928-ed7a-4528-95dd-887a82a97752",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "e452d1df-b035-4587-bcb5-373a5d2e28da",
+                            "id": "53a63e4d-574c-4330-9237-11c2de4453d1",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "06a13d90-8f63-40ac-9371-b202eefd1f22",
+                            "principal_id": "9c912c64-6bfe-4c0d-a8e5-f416d8e5fe56",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "ef1114f0-9ca2-4163-991a-b3d19ee39101",
+                            "id": "2bb8ec00-0243-449c-88ac-46f0ef7ed9f5",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "4c0e8df2-0dc7-44ef-a7ed-a7abae84956f",
+                            "principal_id": "768416a7-4602-4471-af88-2aa36e43b5b1",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "d6cd6201-f254-47db-b38c-53ac02a9268b",
+                            "id": "d36d8084-727d-4f99-b5ef-4de0b5371a80",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "02ec2465-b5f3-4e9f-93b5-ca87b46f0936",
+                            "principal_id": "50e407d9-4756-4aeb-9ac9-3f99d275e3b7",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "e681fc7f-4fa4-47a1-97bc-c33c11897bde",
+                            "id": "8623eadc-4ca4-41a6-aa3e-7abb1b623694",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "4fb7717c-fb34-44ee-bf67-a14033664ec8",
+                            "principal_id": "e5867280-ba3e-4463-bba4-bdae77469876",
                             "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         },
                         {
-                            "id": "9b8092c8-cc24-416e-ae45-1576ca6343f8",
+                            "id": "f3de36f5-2c03-44dc-ba1f-f0ce5903bbf0",
                             "resource_type": "knowledge",
                             "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
                             "principal_type": "group",
-                            "principal_id": "d29a3ec1-ab9c-4544-8a87-1a21fc0dfd81",
+                            "principal_id": "414dfc1d-7fe3-48cd-b148-8497bd695b73",
                             "permission": "read",
-                            "created_at": 1783915916
-                        },
-                        {
-                            "id": "fc990554-126a-43db-bf10-952e28aa01b2",
-                            "resource_type": "knowledge",
-                            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
-                            "principal_type": "group",
-                            "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
-                            "permission": "read",
-                            "created_at": 1783915916
-                        },
-                        {
-                            "id": "f6befd2f-89a3-4ca1-ac2f-361b97b8fd93",
-                            "resource_type": "knowledge",
-                            "resource_id": "0f0de3c0-7168-4871-ab99-7ed95af8f953",
-                            "principal_type": "group",
-                            "principal_id": "072d90e6-b38c-4a75-ac28-ef7c69a7535c",
-                            "permission": "read",
-                            "created_at": 1783915916
+                            "created_at": 1784303350
                         }
                     ],
                     "created_at": 1783915061,
@@ -289,7 +273,7 @@
         },
         "access_grants": [],
         "is_active": true,
-        "updated_at": 1783935262,
+        "updated_at": 1785674779,
         "created_at": 1783935262
     },
     {
@@ -320,8 +304,10 @@
                 "creator-management",
                 "governance-ops",
                 "eu-essentials",
-                "affiliate-management-"
+                "affiliate-management",
+                "citation-escalation-contract"
             ],
+            "toolIds": [],
             "builtinTools": {
                 "code_interpreter": false,
                 "image_generation": false
@@ -333,18 +319,40 @@
                     "name": "creator-services-tiktok-shop",
                     "description": "ERISA creator-service knowledge: TikTok Shop Thailand creator FAQ, platform policies, violation handling, and terminology (Thai-primary). Ask about commissions, payouts, product listing, violations, campaigns, RS Tier, or creator programs.",
                     "meta": null,
-                    "access_grants": [],
+                    "access_grants": [
+                        {
+                            "id": "5bd8057f-79c4-4161-b316-d9e6fcd45d72",
+                            "resource_type": "knowledge",
+                            "resource_id": "8fa78477-cf8a-4fbb-b9d3-fb86a0bc24fb",
+                            "principal_type": "group",
+                            "principal_id": "a0c6d928-ed7a-4528-95dd-887a82a97752",
+                            "permission": "read",
+                            "created_at": 1784874394
+                        },
+                        {
+                            "id": "49198529-7772-48e1-a95a-d25ed30b3914",
+                            "resource_type": "knowledge",
+                            "resource_id": "8fa78477-cf8a-4fbb-b9d3-fb86a0bc24fb",
+                            "principal_type": "group",
+                            "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                            "permission": "read",
+                            "created_at": 1784874394
+                        },
+                        {
+                            "id": "3453a830-0dc3-4eba-b23b-20155c36f420",
+                            "resource_type": "knowledge",
+                            "resource_id": "8fa78477-cf8a-4fbb-b9d3-fb86a0bc24fb",
+                            "principal_type": "group",
+                            "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                            "permission": "write",
+                            "created_at": 1784874394
+                        }
+                    ],
                     "created_at": 1784734306,
                     "updated_at": 1784734306,
-                    "user": {
-                        "id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-                        "name": "Allen",
-                        "role": "admin",
-                        "email": "ht016746@gmail.com"
-                    },
+                    "files": null,
                     "write_access": true,
-                    "type": "collection",
-                    "files": []
+                    "type": "collection"
                 },
                 {
                     "id": "e38f8016-8401-4340-b765-fd437a3b4441",
@@ -414,7 +422,35 @@
                     "name": "tiktok-academy-articles",
                     "description": "TikTok Shop Academy articles (Thailand, Thai-primary) scraped from seller-th.tiktok.com/university - official published guides on selling, creator tools, payments, policies, violations, campaigns, and platform features. Reference source for the Erisa Creator Service Assistant; complements the curated creator-services-tiktok-shop knowledge base.",
                     "meta": null,
-                    "access_grants": [],
+                    "access_grants": [
+                        {
+                            "id": "7cbc4698-c522-4267-8b95-06817196c023",
+                            "resource_type": "knowledge",
+                            "resource_id": "63295df8-91cc-4c02-896a-42961776069a",
+                            "principal_type": "group",
+                            "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                            "permission": "read",
+                            "created_at": 1784874377
+                        },
+                        {
+                            "id": "d94e460d-89b6-40a4-95c0-8f9ed0ef6b7c",
+                            "resource_type": "knowledge",
+                            "resource_id": "63295df8-91cc-4c02-896a-42961776069a",
+                            "principal_type": "group",
+                            "principal_id": "a0c6d928-ed7a-4528-95dd-887a82a97752",
+                            "permission": "read",
+                            "created_at": 1784874377
+                        },
+                        {
+                            "id": "1d5f5cd4-23b2-49e1-b9f8-708ff2c8180e",
+                            "resource_type": "knowledge",
+                            "resource_id": "63295df8-91cc-4c02-896a-42961776069a",
+                            "principal_type": "group",
+                            "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                            "permission": "write",
+                            "created_at": 1784874377
+                        }
+                    ],
                     "created_at": 1784824108,
                     "updated_at": 1784824108,
                     "files": null,
@@ -425,35 +461,35 @@
         },
         "access_grants": [
             {
-                "id": "1eb2e038-40d9-4d55-95c4-71e86bcf5264",
-                "resource_type": "model",
-                "resource_id": "creator-service-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1784874318
-            },
-            {
-                "id": "0e9cdb57-d707-46ad-b4cc-6d1b34998b95",
+                "id": "5a01daae-2ea3-453e-a040-76d023e8ce2d",
                 "resource_type": "model",
                 "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1784874318
+                "created_at": 1785674779
             },
             {
-                "id": "ff14c47e-1a13-412e-aa63-8e6a8365e8a0",
+                "id": "89a7f592-6f38-48dd-bd49-c00019e352d4",
                 "resource_type": "model",
                 "resource_id": "creator-service-assistant",
                 "principal_type": "group",
                 "principal_id": "a0c6d928-ed7a-4528-95dd-887a82a97752",
                 "permission": "read",
-                "created_at": 1784874318
+                "created_at": 1785674779
+            },
+            {
+                "id": "1cf91e84-bbe0-4687-b303-195c0f4c464a",
+                "resource_type": "model",
+                "resource_id": "creator-service-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1785674779
             }
         ],
         "is_active": true,
-        "updated_at": 1784874318,
+        "updated_at": 1785674779,
         "created_at": 1783441944
     },
     {
@@ -465,7 +501,7 @@
             "system": "You are operating with the ERIDU Company Brain \u2014 a structured knowledge base for ERIDU, a content commerce enabler in Thailand.\n\n## Project history\n\nThis brain was designed and built across multiple sessions between the Founder and Claude. Here's the journey:\n\n**Session 1 \u2014 Architecture design:**\n- Started from a design summary document the Founder had prepared from a prior brainstorming session\n- Pressure-tested the two-layer architecture (principles + operations)\n- Added key refinements: decision routing layer, constraints vs authorities separation, graduated escalation model (act / notify / propose / escalate), \"what we don't do\" section, conflict resolution rule\n- Founder approved all changes except adding client management as a separate domain (stays under Commerce)\n\n**Session 2 \u2014 Layer 1 built:**\n- Drafted CLAUDE.md (Layer 0), core-principles.md, financial-guardrails.md\n- Founder provided company context: ERIDU is a content commerce enabler (not a marketing agency), three pillars (Commerce, Erify, ERISA), GMV is the north star metric, TikTok Shop and Shopee are primary platforms\n- Captured founder intent through Q&A: \"Own it fully. Drive results pragmatically.\"\n- Sensitive financial data (cash position, opex breakdown) moved to confidential layer\n- Finance items consolidated from core-principles into financial-guardrails (single source of truth)\n- Added governance-ops.md (communication, documentation, meetings, reviews, post-mortems) \u2014 split from core-principles to manage word count\n- Core principles landed at ~2,000 words in the sweet spot\n\n**Session 3 \u2014 Layer 2 operational skills:**\n- creator-management.md: Full ERISA operational skill including three revenue models (paid packages #1 now, fee-sharing #1 long-term potential, ADP #3 growing), complete ADP playbook (SPCC, vendor requirements, brand evaluation, recruit lists A-D, review cadence), Superstar vs Everyone Else model (20 human-serviced VVIPs, rest bot-serviced), fee-sharing table with actual percentages, renewal SLA (60-day process), AMP description\n- content-management.md: Erify operations including standard vs premium livestream definitions (SpatialStream), 14 studios (S/M/L), MC management (Standard/Flexible/Campaign types, all contractors), scheduling constraints (<250 THB/hour, dual-MC <1%, campaign MC <5%), peak hours and campaign days\n- commerce.md: Account management, 4 growth drivers (livestream, short video, affiliate, shopping center), 12-month growth roadmap, product sourcing, Soi Bear Fulfilment (inactive)\n- sales.md: Sales playbook, deal pipeline matching CRM stages, commission structure (1% fee, 2% retention, 1% incremental GMV)\n\n**Session 4 \u2014 Finance, HR, Legal + Confidential layer:**\n- finance-ops.md: Comprehensive finance calendar (date-by-date), monthly close timeline (14-day process), detailed reconciliation processes (MC, creator, Shopee SLP with 1-day turnaround windows), tax compliance verified against Thai law (WHT by 15th e-filing, VAT by 23rd, SSO by 15th), petty cash policy (10K float, 2K per transaction)\n- hr-ops.md: Thai Labor Protection Act compliance (LPA Amendment 2025 \u2014 maternity 120 days/60 days paid, paternity 15 days), probation (119 days contract / 90 days internal with monthly evaluation), PIP process (verbal \u2192 written \u2192 30-60 day PIP \u2192 termination), promotion/bonus/incentive guidelines, attendance and tardiness escalation\n- legal-process.md: Contract review workflow and SLAs, PDPA compliance checklist, platform TOS compliance, dispute resolution, document retention\n- finance-confidential.md: Cash position (~1 month reserve, TIGHT status), opex breakdown (400K MC + 200K creator + 900K fixed), credit terms (client/vendor/contractor), P&L review process (separate EF, EA, Overall reviews), cash conversion cycle framework, internal audit schedule\n- hr-confidential.md: Salary bands, incentive structure, bonus pool, promotion guidelines, contractor rate cards (all with TBD placeholders)\n\n**Session 4 continued \u2014 Quality check and packaging:**\n- Cross-file consistency check across all 13 files \u2014 found and fixed: 1 conflict (monthly close timeline vs reconciliation timing), 2 inconsistencies (diamond approval chain, 30K vs 50K threshold clarification)\n- Packaged as Claude Code plugin with YAML frontmatter on all SKILL.md files\n- Created plugin.json manifest, README, and project custom instruction for Claude.ai\n\n**Key design decisions made along the way:**\n- Revenue model determines fee structure, not creator type (critical ERISA insight)\n- Short video owned by Erify, temporarily outsourced to ERISA\n- Never entice managed creators FROM TikTok TO Shopee (but TO TikTok is fine)\n- Confidential information never shared between competing platforms\n- Commerce/Client Success always owns the client relationship, even when Erify or ERISA leads delivery\n- Platform partners can also be clients (when they commission services)\n- All MCs are contractors, not employees\n- Finance prepares P&L but doesn't participate in review meetings\n- Separate P&L reviews: EF (Head of Content + CM), EA (Head of Creator + CM), Overall (CM + Founder)\n\n**Outstanding items:**\n- Employee handbook (standalone, Thai language required)\n- Org chart document\n- Employment contract templates\n- AMP detailed playbook (from Head of Creator)\n- Paid package on-time SLA targets (from Head of Creator)\n- Erify scheduling steps and turnaround times\n- Client onboarding detailed process\n- Fill [TBD] placeholders in hr-confidential.md (salary bands, rates, bonus pool)\n- Fill [TBD] placeholders in finance-confidential.md (credit limits by tier)\n- Phase 2: build agents (one per domain = principles layer + operational skill + agent persona)\n\n## How to use the brain\n\nThe brain has layers. Follow this loading priority:\n\n**Always reference (Layer 0 + Layer 1):**\n- CLAUDE.md \u2014 identity, routing rules, conflict resolution. Read this first for any request.\n- core-principles.md \u2014 business model, boundaries, authorities, escalation, founder intent\n- financial-guardrails.md \u2014 spend tiers, payment terms, P&L triggers\n- governance-ops.md \u2014 communication, documentation, meetings, reviews, post-mortems\n\n**Reference when relevant (Layer 2 \u2014 by domain):**\n- creator-management.md \u2014 when the request involves creators, affiliates, MCN, campaigns (ADP/AMP), ERISA\n- content-management.md \u2014 when the request involves livestream, short video, MCs, studio, Erify\n- commerce.md \u2014 when the request involves enablement, account management, key accounts, growth roadmap\n- sales.md \u2014 when the request involves pipeline, deals, proposals, quotations, commissions\n- finance-ops.md \u2014 when the request involves invoicing, payments, tax filing, reconciliation, monthly close\n- hr-ops.md \u2014 when the request involves hiring, onboarding, payroll, leave, attendance, HR policies\n- legal-process.md \u2014 when the request involves contracts, PDPA, compliance, disputes\n\n**Reference when relevant (Confidential layer):**\n- finance-confidential.md \u2014 when the request involves cash position, cost breakdown, credit terms, P&L review process, cash conversion cycle, or audit\n- hr-confidential.md \u2014 when the request involves salary bands, incentive structures, bonus allocation, promotion guidelines, or contractor rate cards\n\n**Important:** This project contains confidential financial and HR data. Do not share outputs from this project that reference specific numbers from the confidential files.\n\n## Rules\n\n1. Layer 1 always wins. If an operational skill conflicts with core principles or financial guardrails, follow the principles layer.\n2. Follow the decision routing rules in CLAUDE.md to determine which operational skill applies.\n3. When a request spans multiple domains, reference multiple operational skills. Principles break any tie.\n4. Do not invent policies or numbers not documented in the brain. If the brain doesn't cover something, say so.\n5. Write for decisions, not documentation. Be direct, pragmatic, results-oriented \u2014 matching ERIDU's tone.\n6. When referencing Thai law compliance (labor, tax, PDPA), note that the brain was verified against regulations as of March 2026. Recommend confirming with external counsel for any legal decisions.\n7. When using Eridu MCP, default studio ID is std_OBXMKm0gW4IGQUNQzp4E\n8. User default timezone is UTC+7"
         },
         "meta": {
-            "profile_image_url": "/static/favicon.png",
+            "profile_image_url": null,
             "description": "Central Eridu Brain",
             "capabilities": {
                 "file_context": true,
@@ -480,15 +516,8 @@
                 "usage": true,
                 "builtin_tools": true
             },
-            "suggestion_prompts": null,
-            "tags": [
-                {
-                    "name": "eridu-brain"
-                }
-            ],
             "skillIds": [
                 "org-chart",
-                "00010",
                 "sales",
                 "legal-process",
                 "hr-ops",
@@ -503,11 +532,15 @@
                 "commerce",
                 "talent-development-framework",
                 "openwebui-litellm-railway-integration-guide",
-                "affiliate-management-"
+                "citation-escalation-contract"
             ],
-            "defaultFeatureIds": [
-                "web_search"
+            "toolIds": [
+                "server:mcp:eridu_mcp"
             ],
+            "builtinTools": {
+                "code_interpreter": false,
+                "image_generation": false
+            },
             "knowledge": [
                 {
                     "id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
@@ -517,93 +550,90 @@
                     "meta": null,
                     "access_grants": [
                         {
-                            "id": "9022395e-76c1-4bc5-ad3a-d5bcd32b01ab",
+                            "id": "c7c2b315-0de2-4151-bf91-cc3de698f105",
                             "resource_type": "knowledge",
                             "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
-                            "principal_type": "user",
-                            "principal_id": "*",
+                            "principal_type": "group",
+                            "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                             "permission": "read",
-                            "created_at": 1781609002
+                            "created_at": 1783834068
+                        },
+                        {
+                            "id": "8c282dfd-4f66-4c2c-8fd1-7a5de24cc6db",
+                            "resource_type": "knowledge",
+                            "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+                            "principal_type": "group",
+                            "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
+                            "permission": "read",
+                            "created_at": 1783834068
                         }
                     ],
                     "created_at": 1781609002,
                     "updated_at": 1781609002,
-                    "user": {
-                        "id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-                        "name": "Allen",
-                        "role": "admin",
-                        "email": "ht016746@gmail.com"
-                    },
+                    "files": null,
                     "write_access": true,
                     "type": "collection"
                 }
-            ],
-            "toolIds": [
-                "server:mcp:eridu_mcp"
-            ],
-            "builtinTools": {
-                "code_interpreter": false,
-                "image_generation": false
-            }
+            ]
         },
         "access_grants": [
             {
-                "id": "00653641-7eb5-4746-86ea-2261e95400ba",
+                "id": "b51b39a7-181d-4a53-83fb-86cc31d84165",
                 "resource_type": "model",
                 "resource_id": "eridu-brain",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1784303376
+                "created_at": 1785674780
             },
             {
-                "id": "d0a90d22-70bd-4ad1-a10f-ebb6acaf247e",
-                "resource_type": "model",
-                "resource_id": "eridu-brain",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1784303376
-            },
-            {
-                "id": "e87d7c99-4c3a-4799-81ca-a3fe32a8ca43",
-                "resource_type": "model",
-                "resource_id": "eridu-brain",
-                "principal_type": "group",
-                "principal_id": "414dfc1d-7fe3-48cd-b148-8497bd695b73",
-                "permission": "read",
-                "created_at": 1784303376
-            },
-            {
-                "id": "9083f1e0-a1b7-4eab-8dd9-3abfb6f15968",
+                "id": "a2d879c5-a255-46db-8737-516caebaf1d5",
                 "resource_type": "model",
                 "resource_id": "eridu-brain",
                 "principal_type": "group",
                 "principal_id": "0309e329-3af8-44e6-a666-994e08b816c8",
                 "permission": "read",
-                "created_at": 1784303376
+                "created_at": 1785674780
             },
             {
-                "id": "24f4cfd0-673f-41ce-bd83-e9479170aee7",
+                "id": "05529ac5-0f86-4875-b436-808105dca84f",
                 "resource_type": "model",
                 "resource_id": "eridu-brain",
                 "principal_type": "group",
                 "principal_id": "13b52c81-eff3-47e4-80a8-10c665e37784",
                 "permission": "read",
-                "created_at": 1784303376
+                "created_at": 1785674780
             },
             {
-                "id": "e981e9e2-02d9-4a93-8846-53cf742cf672",
+                "id": "d1d590f8-029a-483c-8391-6bc073d574a6",
                 "resource_type": "model",
                 "resource_id": "eridu-brain",
                 "principal_type": "group",
                 "principal_id": "ac8a3e5d-76d0-486b-9c9a-576e6c587b1b",
                 "permission": "read",
-                "created_at": 1784303376
+                "created_at": 1785674780
+            },
+            {
+                "id": "489aa3eb-52a0-40a9-a4d0-409165d18003",
+                "resource_type": "model",
+                "resource_id": "eridu-brain",
+                "principal_type": "group",
+                "principal_id": "414dfc1d-7fe3-48cd-b148-8497bd695b73",
+                "permission": "read",
+                "created_at": 1785674780
+            },
+            {
+                "id": "314fa199-1817-4f9c-9e6e-b980bd2262b4",
+                "resource_type": "model",
+                "resource_id": "eridu-brain",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1785674780
             }
         ],
         "is_active": false,
-        "updated_at": 1784303376,
+        "updated_at": 1785674780,
         "created_at": 1781707840
     },
     {
@@ -615,7 +645,7 @@
             "system": "\"You are ERIQ, ERIDU's company AI, in general governance mode \u2014 available to everyone at ERIDU.\n\nYour scope: company identity, org structure and roles, governance rules, communication and work-alignment protocols, decision authority and escalation, financial guardrail principles, company metrics, and talent development (BiggieG framework). Answer from your mapped skills only \u2014 EU essentials is your governance base; org-chart, metrics framework, financial guardrails, communication protocol, and BiggieG give the detail.\n\nRules:\n- Never invent policies, numbers, or targets. If your skills don't cover it, say so and name the owner per the org chart.\n- Never quote or estimate confidential data (cash position, costs, salaries, rates, deal values) \u2014 even if asked.\n- For domain-specific operations (sales, campaigns, livestream, finance processing, HR cases), point the user to the relevant specialist agent or their team lead.\n- Enforce the work alignment protocol: flag requests missing deadline, single owner, deliverable, or scope limits.\n- When in doubt, apply the escalation framework: act / notify / propose / escalate.\n\nTone: direct, pragmatic, decision-oriented. Default English; Thai when asked.\""
         },
         "meta": {
-            "profile_image_url": "/static/favicon.png",
+            "profile_image_url": null,
             "description": null,
             "capabilities": {
                 "file_context": true,
@@ -629,30 +659,31 @@
                 "status_updates": true,
                 "builtin_tools": true
             },
-            "suggestion_prompts": null,
-            "tags": [],
             "skillIds": [
                 "eu-essentials",
                 "0002",
                 "communication-protocol",
                 "talent-development-framework",
                 "org-chart",
-                "financial-guardrails"
-            ]
+                "financial-guardrails",
+                "core-principles"
+            ],
+            "toolIds": [],
+            "builtinTools": {}
         },
         "access_grants": [
             {
-                "id": "0b518169-fc9b-4fc3-b8ad-352a905bd832",
+                "id": "5d45906a-c1ac-4761-8f1a-d004d7cf6cc8",
                 "resource_type": "model",
                 "resource_id": "eridu-general",
                 "principal_type": "user",
                 "principal_id": "*",
                 "permission": "read",
-                "created_at": 1784603211
+                "created_at": 1785674780
             }
         ],
         "is_active": true,
-        "updated_at": 1784603211,
+        "updated_at": 1785674780,
         "created_at": 1783664407
     },
     {
@@ -840,11 +871,11 @@
             "skillIds": [
                 "core-principles",
                 "creator-management",
-                "affiliate-management-",
                 "governance-ops",
                 "adp-analysis",
                 "eu-essentials"
             ],
+            "toolIds": [],
             "builtinTools": {
                 "code_interpreter": false,
                 "image_generation": false
@@ -852,35 +883,35 @@
         },
         "access_grants": [
             {
-                "id": "27a1e131-78af-482c-afd4-8e0a608c1d27",
-                "resource_type": "model",
-                "resource_id": "erisa-adp-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1784873486
-            },
-            {
-                "id": "62a8a9a4-4613-4e16-8913-d6244b42f0e1",
+                "id": "a34dac39-4f98-4a7f-b944-728c0ac8cdd3",
                 "resource_type": "model",
                 "resource_id": "erisa-adp-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1784873486
+                "created_at": 1785674780
             },
             {
-                "id": "69c85add-5734-4bdb-8f2b-947e80bd58ac",
+                "id": "c461374c-481f-4017-8ee2-dfecb8c6b4b1",
                 "resource_type": "model",
                 "resource_id": "erisa-adp-assistant",
                 "principal_type": "group",
                 "principal_id": "a56a6a87-6942-4b4a-a7d0-eb86f9862859",
                 "permission": "read",
-                "created_at": 1784873486
+                "created_at": 1785674780
+            },
+            {
+                "id": "2892932c-9fde-4caf-8130-13b2aaef50e6",
+                "resource_type": "model",
+                "resource_id": "erisa-adp-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1785674780
             }
         ],
         "is_active": false,
-        "updated_at": 1784873486,
+        "updated_at": 1785674780,
         "created_at": 1783441943
     },
     {
@@ -911,7 +942,8 @@
                 "finance-ops",
                 "governance-ops",
                 "eu-essentials",
-                "0002"
+                "0002",
+                "citation-escalation-contract"
             ],
             "toolIds": [
                 "server:mcp:eridu_mcp"
@@ -929,23 +961,27 @@
                     "meta": null,
                     "access_grants": [
                         {
-                            "id": "9022395e-76c1-4bc5-ad3a-d5bcd32b01ab",
+                            "id": "c7c2b315-0de2-4151-bf91-cc3de698f105",
                             "resource_type": "knowledge",
                             "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
-                            "principal_type": "user",
-                            "principal_id": "*",
+                            "principal_type": "group",
+                            "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                             "permission": "read",
-                            "created_at": 1781609002
+                            "created_at": 1783834068
+                        },
+                        {
+                            "id": "8c282dfd-4f66-4c2c-8fd1-7a5de24cc6db",
+                            "resource_type": "knowledge",
+                            "resource_id": "1e2c85f9-7d72-4e96-aa30-5a60244e1d57",
+                            "principal_type": "group",
+                            "principal_id": "b62ac290-77f4-4eef-921d-b5f4341f7528",
+                            "permission": "read",
+                            "created_at": 1783834068
                         }
                     ],
                     "created_at": 1781609002,
                     "updated_at": 1781609002,
-                    "user": {
-                        "id": "5d310dd7-4b9a-49ad-8c33-ed44439d75bb",
-                        "name": "Allen",
-                        "role": "admin",
-                        "email": "ht016746@gmail.com"
-                    },
+                    "files": null,
                     "write_access": true,
                     "type": "collection"
                 }
@@ -953,35 +989,35 @@
         },
         "access_grants": [
             {
-                "id": "d4fe2aac-75df-489a-95d7-49f093be4e30",
+                "id": "accd0c30-a79e-49ee-8856-c91fe2e07e16",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
                 "permission": "read",
-                "created_at": 1784873620
+                "created_at": 1785674780
             },
             {
-                "id": "a0bf2b65-6998-4caa-9bde-6b778b52466b",
-                "resource_type": "model",
-                "resource_id": "management-assistant",
-                "principal_type": "group",
-                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
-                "permission": "write",
-                "created_at": 1784873620
-            },
-            {
-                "id": "ab6e5af0-94bf-44aa-a39f-207d5974fcd2",
+                "id": "4cabab3e-9a39-4817-8bd5-cc04d4a9d5dc",
                 "resource_type": "model",
                 "resource_id": "management-assistant",
                 "principal_type": "group",
                 "principal_id": "0309e329-3af8-44e6-a666-994e08b816c8",
                 "permission": "read",
-                "created_at": 1784873620
+                "created_at": 1785674780
+            },
+            {
+                "id": "01c52285-6a97-48cd-9d27-63a9e7d0485d",
+                "resource_type": "model",
+                "resource_id": "management-assistant",
+                "principal_type": "group",
+                "principal_id": "17e06578-d8e0-4134-81e3-a859c5f158b1",
+                "permission": "write",
+                "created_at": 1785674780
             }
         ],
         "is_active": true,
-        "updated_at": 1784873620,
+        "updated_at": 1785674780,
         "created_at": 1783424729
     },
     {

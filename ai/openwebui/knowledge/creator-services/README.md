@@ -132,7 +132,7 @@ Known-answer checks for the assistant (see the package `README.md` for full deta
 ## Confidentiality
 
 Per the platform-confidentiality rule in
-[`../../synced/skills/creator-management.md`](../../synced/skills/creator-management.md),
+[`../../skills/creator-management.md`](../../skills/creator-management.md),
 the source Excel (`CS_TikTok_Shop__Knowledge_Base.xlsx`) is not committed. If it
 must be versioned, keep it in restricted storage and record its location +
 snapshot date in the PR description. Phase 2 scraped TikTok Academy content is

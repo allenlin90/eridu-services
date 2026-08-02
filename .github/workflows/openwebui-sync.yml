@@ -1,0 +1,91 @@
+name: Open WebUI sync
+
+# Applies the Git-owned Open WebUI config after it lands on master.
+#
+# `push` on master only. NEVER add `pull_request` -- this repository is public,
+# and a fork PR would gain access to an Open WebUI admin key.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "ai/openwebui/skills/**"
+      - "ai/openwebui/models/**"
+      - "ai/openwebui/push_config.py"
+  workflow_dispatch:
+    inputs:
+      confirm_revokes:
+        description: "Allow revoking access grants (a plan containing any revoke otherwise aborts)"
+        type: boolean
+        default: false
+
+concurrency:
+  # Two applies racing would interleave writes against the same instance.
+  group: openwebui-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # push_config.py is stdlib-only, so there is nothing to install.
+      - name: Apply
+        env:
+          OPEN_WEBUI_HOST: ${{ vars.OPEN_WEBUI_HOST }}
+          OPEN_WEBUI_API_KEY: ${{ secrets.OPEN_WEBUI_API_KEY }}
+          # Bound through env, never interpolated into the script body -- a
+          # workflow_dispatch input is caller-supplied.
+          CONFIRM_REVOKES: ${{ inputs.confirm_revokes }}
+        run: |
+          # Without --yes, a plan containing any revoke aborts before writing
+          # anything. That is the intended default: removing someone's access
+          # should not happen because a PR merged.
+          if [ "$CONFIRM_REVOKES" = "true" ]; then
+            python3 ai/openwebui/push_config.py all --apply --yes
+          else
+            python3 ai/openwebui/push_config.py all --apply
+          fi
+
+      # A misconfigured secret/variable or an unattended revoke-gate abort
+      # both leave live silently out of sync with Git with only a red X in
+      # Actions to show for it -- exactly what let this workflow's first run
+      # (missing OPEN_WEBUI_HOST/OPEN_WEBUI_API_KEY) go unnoticed until the
+      # weekly drift check found it independently. File an issue instead.
+      - name: Open a failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "The Open WebUI sync workflow failed to apply \`ai/openwebui/\` to the"
+            echo "live instance. Live is now out of sync with the merged Git state."
+            echo
+            echo "Common causes: \`OPEN_WEBUI_HOST\`/\`OPEN_WEBUI_API_KEY\` missing or"
+            echo "invalid, or the plan contains a revoke and needs a manual"
+            echo "\`workflow_dispatch\` run with \"Allow revoking access grants\" checked."
+            echo "Check the run log for the actual cause -- live configuration is"
+            echo "intentionally omitted from public logs."
+            echo
+            echo "[Workflow run]($RUN_URL)"
+          } > body.md
+
+          gh label create openwebui-sync-failed --color B60205 \
+            --description "Open WebUI sync workflow failed to apply" --force
+          existing=$(gh issue list --state open --label openwebui-sync-failed \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --title "Open WebUI sync failed" \
+              --label openwebui-sync-failed --body-file body.md
+          fi

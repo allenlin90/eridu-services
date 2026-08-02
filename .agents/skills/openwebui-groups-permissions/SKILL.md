@@ -50,7 +50,7 @@ it does not grant MCP server registration, which is always admin-only regardless
 
 Open WebUI stores per-resource sharing as normalized grants, not as a field on the group:
 
-- Each grant: `{resource_type: model|knowledge|tool|prompt, resource_id, principal_type: user|group, principal_id, permission: read|write}`.
+- Each grant: `{resource_type: model|knowledge|tool|skill|prompt, resource_id, principal_type: user|group, principal_id, permission: read|write}`.
 - `principal_type: user` with `principal_id: "*"` means public/open access.
 - To restrict a resource: set its visibility to private/restricted when creating/updating it, then
   grant specific groups or users read/write via that resource's own `.../access/update` endpoint
@@ -58,6 +58,36 @@ Open WebUI stores per-resource sharing as normalized grants, not as a field on t
   [openwebui-rest-api's endpoint catalog](../openwebui-rest-api/references/endpoints.md) for the
   models/knowledge/tools CRUD paths themselves — this skill only covers the access-control layer on
   top of them.
+
+## Skill grants are derived, never authored
+
+Do not hand-edit a skill's access grants. Skill access is computed from the Workspace Model
+manifests in `ai/openwebui/models/`:
+
+> A group may read a skill exactly when it can read or edit at least one model that binds that skill.
+> Only Admins receive write on canonical skill content.
+
+Open WebUI `0.10.2` uses that same read grant for model-bound execution, direct menu selection, and
+`$` mentions. Model binding therefore defines the reconciled read audience, but does not create an
+exclusive model-only path. Anything outside the derived read grants and Admin write grant is drift.
+
+```bash
+python3 ai/openwebui/push_config.py access            # dry run: shows + adds and - revokes
+python3 ai/openwebui/push_config.py access --apply    # reconcile
+```
+
+This is an **enforcing** reconcile: grants no model implies are revoked, not left alone. Two rules
+follow.
+
+- **Always dry-run first and show the user every `-` line before applying.** A revoke removes real
+  access from real people.
+- **Widen access by editing the model manifest, not the skill.** Adding a group to a model grants
+  it every skill that model binds — check the full `skill_ids` list first. To grant a subset, split
+  the model.
+
+A skill no model binds derives an empty grant set and loses all access. That is intended — an
+unreachable skill should not be quietly readable — but `push_config.py` labels it
+`(no model binds this skill)` so it is a decision, not an accident.
 
 **Don't confuse workspace Tools with Tool Server connections.** `POST /api/v1/tools/id/{id}/access/update`
 grants a single custom-code Tool per group/user — genuinely per-tool. An MCP or OpenAPI **Tool
@@ -84,6 +114,8 @@ per-group tool subsets out of an MCP connection anyway (multiple filtered connec
 
 ## Quality gate
 
+- [ ] Skill grants derived via `push_config.py access`, not hand-edited.
+- [ ] Every revoke in the dry run shown to the user and agreed before `--apply`.
 - [ ] New group or resource starts private/default-deny, not public, unless policy explicitly says otherwise.
 - [ ] Group membership and permission changes match `ai/mcp/README.md` / `ai/openwebui/tool-access.example.json`, not an ad hoc decision.
 - [ ] `features.direct_tool_servers` not granted to a group that shouldn't be adding its own tool servers.
@@ -95,4 +127,5 @@ per-group tool subsets out of an MCP connection anyway (multiple filtered connec
 - [openwebui-rest-api](../openwebui-rest-api/SKILL.md) — auth and call mechanics this skill builds on
 - [openwebui-mcp-tool-integration](../openwebui-mcp-tool-integration/SKILL.md) — register a tool server before granting groups access to it
 - [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) — governs the underlying access policy
-- [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md) — defines each assistant's "allowed groups"
+- [openwebui-assistant-adapter](../openwebui-assistant-adapter/SKILL.md) — the model manifests that skill grants are derived from
+- [upload-openwebui-skill](../upload-openwebui-skill/SKILL.md) — records skill content and triggers the post-merge derived-grant reconcile
