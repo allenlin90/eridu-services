@@ -1,6 +1,6 @@
 import type { Prisma, ShowIssue } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
-import type z from 'zod';
+import { z } from 'zod';
 
 import type {
   ShowIssueCategory,
@@ -19,7 +19,7 @@ import {
   updateShowIssueInputSchema,
 } from '@eridu/api-types/show-issues';
 
-import { paginationQuerySchema } from '@/lib/pagination/pagination.schema';
+import { paginationBaseSchema, transformPagination } from '@/lib/pagination/pagination.schema';
 
 // Re-exported Prisma types for service/repository consumption (schemas CAN import Prisma)
 export type ShowIssueRecord = ShowIssue;
@@ -170,7 +170,17 @@ export class EscalateShowIssueDto extends createZodDto(escalateShowIssueTransfor
   declare escalationNote: string | undefined;
 }
 
-const listShowIssuesQuerySchema = paginationQuerySchema.and(listShowIssuesFilterSchema);
+// The shared `paginationQuerySchema` only requires `limit >= 1` with no
+// ceiling, so the canonical collection composes its own bound (matching the
+// 100-row cap used by the show-audits sub-resource) instead of accepting an
+// unbounded `take` at the repository.
+const listShowIssuesPaginationSchema = paginationBaseSchema.extend({
+  limit: z.coerce.number().int().min(1).max(100).optional().default(25),
+  sort: z.enum(['asc', 'desc']).optional().default('desc'),
+});
+const listShowIssuesQuerySchema = listShowIssuesPaginationSchema
+  .and(listShowIssuesFilterSchema)
+  .transform(transformPagination);
 export class ListShowIssuesQueryDto extends createZodDto(listShowIssuesQuerySchema) {
   declare page: number;
   declare limit: number;
