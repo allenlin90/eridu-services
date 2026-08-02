@@ -12,6 +12,7 @@ import { ShowService } from '@/models/show/show.service';
 import { ShowCreatorService } from '@/models/show-creator/show-creator.service';
 import { ShowPlatformService } from '@/models/show-platform/show-platform.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ShowIssueReconciliationService } from '@/show-issue-orchestration/show-issue-reconciliation.service';
 
 // Mock Prisma client wired into the CLS transactional adapter — `@Transactional()`
 // in the processor needs a Prisma adapter to resolve a transactional client, but
@@ -64,6 +65,7 @@ describe('factExtractionProcessor', () => {
   let auditService: jest.Mocked<AuditService>;
   let showService: jest.Mocked<ShowService>;
   let showCreatorService: jest.Mocked<ShowCreatorService>;
+  let showIssueReconciliationService: jest.Mocked<ShowIssueReconciliationService>;
 
   beforeEach(async () => {
     mockPrismaForCls.$transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => {
@@ -143,6 +145,12 @@ describe('factExtractionProcessor', () => {
             ensureValidActualTimeRange: jest.fn(),
           },
         },
+        {
+          provide: ShowIssueReconciliationService,
+          useValue: {
+            applySignals: jest.fn().mockResolvedValue(undefined as never),
+          },
+        },
       ],
     }).compile();
 
@@ -150,6 +158,7 @@ describe('factExtractionProcessor', () => {
     auditService = module.get(AuditService);
     showService = module.get(ShowService);
     showCreatorService = module.get(ShowCreatorService);
+    showIssueReconciliationService = module.get(ShowIssueReconciliationService);
   });
 
   it('writes a CREATE/UPDATE audit alongside a successful extractor decision', async () => {
@@ -246,6 +255,94 @@ describe('factExtractionProcessor', () => {
     // The extractor ran inside the same TX before audit threw; the rollback
     // is enforced by `@Transactional()` once the audit insert fails.
     expect(extractor.apply).toHaveBeenCalled();
+  });
+
+  describe('show-issue reconciliation hook', () => {
+    it('invokes reconciliation with the decision signals and the extraction context showId after the audit write', async () => {
+      const signals = [{
+        kind: 'attendance_missing' as const,
+        showCreatorId: 101n,
+        showCreatorUid: 'show_mc_alpha',
+        evidence: 'Sick leave.',
+      }];
+      const extractor = buildExtractor({
+        kind: 'write',
+        action: 'UPDATE',
+        oldValue: false,
+        newValue: true,
+        signals,
+      });
+
+      const result = await processor.applyAndAudit(extractor, fact, ctx, showTargets);
+
+      expect(auditService.create).toHaveBeenCalledTimes(1);
+      expect(showIssueReconciliationService.applySignals).toHaveBeenCalledWith(signals, ctx.showId);
+      // Audit write happens before reconciliation — assert call order via
+      // mock invocation order timestamps captured on the shared jest clock.
+      const auditOrder = auditService.create.mock.invocationCallOrder[0]!;
+      const reconciliationOrder = showIssueReconciliationService.applySignals.mock.invocationCallOrder[0]!;
+      expect(auditOrder).toBeLessThan(reconciliationOrder);
+      expect(result.auditUid).toBeDefined();
+    });
+
+    it('does not invoke reconciliation when the write decision carries no signals', async () => {
+      const extractor = buildExtractor({
+        kind: 'write',
+        action: 'CREATE',
+        oldValue: null,
+        newValue: '2026-05-23T18:30:00.000Z',
+      });
+
+      await processor.applyAndAudit(extractor, fact, ctx, showTargets);
+
+      expect(showIssueReconciliationService.applySignals).not.toHaveBeenCalled();
+    });
+
+    it('does not invoke reconciliation on a noop or skip decision', async () => {
+      const noopExtractor = buildExtractor({ kind: 'noop', reason: 'value_unchanged' });
+      await processor.applyAndAudit(noopExtractor, fact, ctx, showTargets);
+
+      const skipExtractor = buildExtractor({
+        kind: 'skip',
+        action: 'SKIPPED_LOWER_PRIORITY',
+        skippedBy: 'MANAGER',
+        attemptedValue: 'x',
+      });
+      await processor.applyAndAudit(skipExtractor, fact, ctx, showTargets);
+
+      expect(showIssueReconciliationService.applySignals).not.toHaveBeenCalled();
+    });
+
+    it('rolls back the extractor write and its audit row when reconciliation throws (same transaction)', async () => {
+      const signals = [{
+        kind: 'attendance_missing' as const,
+        showCreatorId: 101n,
+        showCreatorUid: 'show_mc_alpha',
+        evidence: 'Sick leave.',
+      }];
+      const extractor = buildExtractor({
+        kind: 'write',
+        action: 'UPDATE',
+        oldValue: false,
+        newValue: true,
+        signals,
+      });
+      showIssueReconciliationService.applySignals.mockRejectedValue(
+        new Error('reconciliation failed'),
+      );
+
+      await expect(processor.applyAndAudit(extractor, fact, ctx, showTargets)).rejects.toThrow(
+        'reconciliation failed',
+      );
+
+      // The extractor's own write and the extraction audit both ran before
+      // reconciliation threw — the `@Transactional()` boundary around this
+      // whole method call is what rolls both back together with the failed
+      // reconciliation attempt. See fact-extraction-pipeline skill /
+      // docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md "Transaction boundary".
+      expect(extractor.apply).toHaveBeenCalled();
+      expect(auditService.create).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('applyPairedShowActuals', () => {

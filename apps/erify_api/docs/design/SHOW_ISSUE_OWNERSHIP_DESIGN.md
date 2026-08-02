@@ -1,6 +1,6 @@
 # Show-Level Issue Ownership Design
 
-> **Status**: Design locked; Delivery Sequence steps 1–3 shipped (backend manual workflow + show-detail Issues tab); steps 4–5 (automated reconciliation, Show Run Review) not started
+> **Status**: Design locked; Delivery Sequence steps 1–4 shipped (backend manual workflow, show-detail Issues tab, automated attendance/platform-violation reconciliation); step 5 (Show Run Review) not started
 > **Roadmap**: [Phase 5 item 9](../../../../docs/roadmap/PHASE_5.md#9-show-level-issue-ownership)
 
 ## Purpose
@@ -45,6 +45,16 @@ OPEN -> IN_PROGRESS -> RESOLVED
                          RESOLVED -> OPEN (reopen)
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> OPEN : create (manual or automated)
+    OPEN --> IN_PROGRESS : start (Admin/Manager, or assigned member on own issue)
+    OPEN --> RESOLVED : resolve
+    IN_PROGRESS --> RESOLVED : resolve
+    RESOLVED --> OPEN : reopen (Admin/Manager)
+    RESOLVED --> RESOLVED : re-resolve blocked; must reopen first
+```
+
 - New manual and automated issues start `OPEN`.
 - Starting work sets `IN_PROGRESS`.
 - Resolution requires a resolution code and note for a user action.
@@ -74,6 +84,41 @@ OPEN -> IN_PROGRESS -> RESOLVED
 | `showPlatformViolationId` | Nullable typed source FK for platform violations. |
 | `version` | Optimistic lock, incremented on semantic issue mutations. |
 | `createdAt`, `updatedAt`, `deletedAt` | Standard timestamps and soft-delete compatibility. No public delete endpoint is exposed. |
+
+```mermaid
+erDiagram
+    Show ||--o{ ShowIssue : "scopes (showId)"
+    ShowCreator |o--o| ShowIssue : "automated source, 0..1 (unique per category+origin)"
+    ShowPlatformViolation |o--o| ShowIssue : "automated source, 0..1 (unique)"
+    ShowPlatform ||--o{ ShowPlatformViolation : "has"
+    User ||--o{ ShowIssue : "owner / createdBy / resolvedBy / escalatedBy (all nullable)"
+    Audit ||--o{ AuditTarget : "envelope"
+    AuditTarget }o--|| ShowIssue : "SHOW_ISSUE target (new)"
+
+    ShowIssue {
+      bigint id PK
+      string uid
+      bigint showId FK
+      string category "CREATOR_ATTENDANCE | EQUIPMENT | UTILITY | PLATFORM_VIOLATION | POST_PRODUCTION_FOLLOW_UP | OTHER"
+      string origin "MANUAL | FACT_EXTRACTION"
+      string severity "LOW | MEDIUM | HIGH | CRITICAL"
+      string status "OPEN | IN_PROGRESS | RESOLVED"
+      string title
+      string evidence "nullable"
+      bigint ownerId FK "nullable"
+      datetime dueAt "nullable"
+      bigint createdById FK "nullable, null = system-created"
+      int escalationLevel
+      bigint escalatedById FK "nullable"
+      bigint resolvedById FK "nullable, null = system-resolved"
+      string resolutionCode "nullable"
+      bigint showCreatorId FK "nullable, unique with (category, origin)"
+      bigint showPlatformViolationId FK "nullable, unique"
+      int version
+    }
+```
+
+**Why the ERD looks unchanged since [#356](https://github.com/allenlin90/eridu-services/pull/356):** it is. `ShowIssue`, `origin`, `showCreatorId`, and `showPlatformViolationId` were all added by step 1 (#356) with zero writers for `origin: 'FACT_EXTRACTION'` — steps 2–3 (#356, #358) only ever wrote `origin: 'MANUAL'` through the human workflow. This PR (step 4, [#361](https://github.com/allenlin90/eridu-services/pull/361)) adds no schema — it is the first code path that actually sets `origin: 'FACT_EXTRACTION'` and populates those two FKs. See "What step 4 changes" under [Automated Reconciliation](#automated-reconciliation) for the behavioral diff.
 
 Required constraints and indexes:
 
@@ -136,6 +181,19 @@ All request/response schemas live in `@eridu/api-types`, use snake_case external
 
 ## Automated Reconciliation
 
+### What step 4 changes
+
+Everything in this section shipped in step 4 ([#361](https://github.com/allenlin90/eridu-services/pull/361), the fourth breakdown PR under the [#357](https://github.com/allenlin90/eridu-services/pull/357) integration program). Nothing here was buildable from steps 1–3 alone:
+
+| | Steps 1–3 (#356, #358) | Step 4 (#361) |
+| --- | --- | --- |
+| `ShowIssue` schema, `origin`/typed-source columns | Added, but `origin: 'FACT_EXTRACTION'` had no writer | Unchanged (no migration in #361) |
+| Who can create/resolve an issue | A human, through `StudioShowIssueController` → `ShowIssueWorkflowService` | Adds a second, system-authored path: `FactExtractionProcessor` → `ShowIssueReconciliationService` |
+| `CreatorAttendanceMissingExtractor` / `ShowPlatformViolationExtractor` | Wrote `ShowCreator.attendanceMissing` / `ShowPlatformViolation` rows only — no `ShowIssue` was ever touched by a task submission | `ExtractionDecision`'s `write` variant now also carries `signals[]`, consumed by the new reconciliation service in the same transaction |
+| Show-detail Issues tab (#358) | Rendered whatever issues existed — always `MANUAL` in practice, since nothing produced `FACT_EXTRACTION` rows yet | First tab load that can show a `FACT_EXTRACTION` issue an operator didn't create by hand |
+
+In short: steps 1–3 built the container and the human-facing half of the workflow; step 4 is what makes `origin: 'FACT_EXTRACTION'` a real, populated state instead of a schema value nothing ever set. The "Module Boundary: before → after step 4" diagram below shows the same delta at the module-dependency level.
+
 ### Signals
 
 Use a small in-process discriminated union owned by the show-issue workflow:
@@ -159,6 +217,31 @@ This is a synchronous method contract, not a published domain event and not a ge
 | Platform violation row is superseded | Resolve the linked issue with `SOURCE_CORRECTED`. |
 | Same signal is replayed | No duplicate row and no audit when semantic state is unchanged. |
 
+```mermaid
+flowchart TD
+    A{Signal kind} -->|attendance_missing| B{Existing automated<br/>CREATOR_ATTENDANCE issue?}
+    B -->|none| B1[Create OPEN issue<br/>severity HIGH]
+    B -->|RESOLVED, SOURCE_CORRECTED| B2[Reopen + refresh evidence]
+    B -->|RESOLVED, other code| B3[No-op — manual closure is sticky]
+    B -->|OPEN / IN_PROGRESS| B4[Refresh evidence if changed,<br/>else no-op]
+
+    A -->|attendance_present| C{Existing automated issue?}
+    C -->|none| C1[No-op]
+    C -->|already SOURCE_CORRECTED| C2[No-op — replay idempotent]
+    C -->|OPEN / IN_PROGRESS| C3[Resolve: SOURCE_CORRECTED]
+
+    A -->|platform_violation_opened| D{Existing automated<br/>PLATFORM_VIOLATION issue<br/>for this violation id?}
+    D -->|none| D1[Create OPEN issue<br/>severity = normalizeViolationSeverity]
+    D -->|exists| D2[Refresh evidence if changed,<br/>else no-op]
+
+    A -->|platform_violation_superseded| E{Existing automated issue?}
+    E -->|none| E1[No-op]
+    E -->|already SOURCE_CORRECTED| E2[No-op — replay idempotent]
+    E -->|OPEN / IN_PROGRESS| E3[Resolve: SOURCE_CORRECTED]
+
+    F[MANUAL issue occupying the identity] -.->|any signal, all branches| G[Never touched]
+```
+
 Manual issues are never automatically resolved or overwritten.
 
 Platform violation severity is currently an uppercase free-form string with `WARNING` as the default. Normalize it deterministically:
@@ -176,6 +259,59 @@ Platform violation severity is currently an uppercase free-form string with `WAR
 
 If issue reconciliation fails, the fact write and extraction audit roll back together and the extraction result reports an error through the existing task-submission behavior. A fact must not commit while its required automated issue is missing. Manager edits to an already-completed task already re-run extraction and provide the immediate correction path; a general extraction retry queue remains outside item 9.
 
+**Bounding `show_platform_violation` cardinality — two gates, not one.** A `show_platform_violation` multiselect submission can replace an existing selection wholesale, emitting one `platform_violation_superseded` signal per previously-active row plus one `platform_violation_opened` signal per newly selected row. The primary gate is at content-validation time, before the task can transition to `COMPLETED`: `task-content-validator.ts` rejects a `show_platform_violation` field selecting more than `MAX_PLATFORM_VIOLATIONS_PER_FIELD` (`N = 20`, a documented domain estimate — see the constant's doc comment) entries, in `TaskService.updateTaskContentAndStatusCore` / `TaskValidationService.validateContent`, so an oversized selection never reaches extraction and never leaves a task stuck `COMPLETED` with a failed reconciliation. `ShowIssueReconciliationService`'s own `MAX_SIGNALS_PER_CALL` (`2N = 40`) is a second, defensive backstop sized to comfortably fit the worst case a content-valid submission can produce — a full N-to-N replacement (N superseded + N created) — so it only ever trips if the two gates drift out of sync, not on any submission the content gate already accepted.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant OP as Operator
+    participant VAL as TaskValidationService
+    participant ORC as TaskOrchestrationService
+    participant SVC as FactExtractionService
+    participant PROC as FactExtractionProcessor
+    participant EXT as Attendance / Violation Extractor
+    participant MODEL as ShowCreatorService /<br/>ShowPlatformViolationService
+    participant REC as ShowIssueReconciliationService
+    participant ISSUE as ShowIssueService
+    participant AUD as AuditService
+
+    OP->>VAL: submit task content (-> COMPLETED)
+    alt show_platform_violation selects > N (=20) entries
+        VAL-->>OP: reject — TaskValidationError<br/>(task stays out of COMPLETED)
+    else content valid
+        VAL-->>ORC: content accepted
+        ORC->>SVC: extractFromTask(taskUid)
+        SVC->>PROC: applyAndAudit(extractor, fact, ctx)
+        activate PROC
+        Note over PROC: single @Transactional() scope
+        PROC->>EXT: apply(fact, ctx)
+        EXT->>MODEL: updateActuals / replaceForTaskField
+        MODEL-->>EXT: written
+        EXT-->>PROC: { kind: 'write', signals: [...] }
+        PROC->>AUD: create(extraction audit)
+        AUD-->>PROC: auditUid
+        PROC->>REC: applySignals(signals, showId)
+
+        alt signals.length > 2N (=40) — defensive backstop only
+            REC-->>PROC: throw
+            Note over PROC,MODEL: whole transaction rolls back —<br/>fact write, extraction audit, and any<br/>partial issue writes all undone
+            PROC-->>SVC: error (classified extractor_error)
+        else within cap (the only reachable path for content-valid input)
+            loop each signal
+                REC->>ISSUE: findActiveAutomatedIssueBy...
+                ISSUE-->>REC: existing issue or null
+                REC->>ISSUE: createShowIssue / resolveShowIssue /<br/>reopenShowIssue / updateShowIssueFields
+                ISSUE-->>REC: updated ShowIssue
+                REC->>AUD: create(SHOW_ISSUE audit)
+            end
+            REC-->>PROC: void
+            deactivate PROC
+            PROC-->>SVC: { decision, auditUid }
+            SVC-->>ORC: outcome written
+        end
+    end
+```
+
 ## Module Boundary
 
 ```text
@@ -190,6 +326,28 @@ FactExtractionProcessor
        -> ShowIssueService
        -> ShowCreatorService / ShowPlatformViolationService
        -> AuditService
+```
+
+**Before → after step 4** — the manual side (left) shipped in #356/#358 and is unchanged; `FactExtractionModule`'s dependency on the show-issue modules (right, dashed) did not exist until this PR:
+
+```mermaid
+flowchart LR
+    subgraph before["Before step 4 (#356, #358)"]
+        direction TB
+        C1[StudioShowIssueController] --> W1[ShowIssueWorkflowService]
+        W1 --> S1[ShowIssueService]
+        FE1[FactExtractionProcessor] -.->|no dependency| S1
+    end
+
+    subgraph after["After step 4 (#361, this PR)"]
+        direction TB
+        C2[StudioShowIssueController] --> W2[ShowIssueWorkflowService]
+        W2 --> S2[ShowIssueService]
+        FE2[FactExtractionProcessor] ==>|new| R2[ShowIssueReconciliationService]
+        R2 ==>|new| S2
+    end
+
+    before ~~~ after
 ```
 
 - `ShowIssueModule` owns repository and single-model service behavior and exports only `ShowIssueService`.

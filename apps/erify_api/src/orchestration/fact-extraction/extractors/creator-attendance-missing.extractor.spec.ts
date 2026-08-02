@@ -69,6 +69,12 @@ describe('creatorAttendanceMissingExtractor', () => {
       action: 'UPDATE',
       oldValue: false,
       newValue: true,
+      signals: [{
+        kind: 'attendance_missing',
+        showCreatorId: 101n,
+        showCreatorUid: 'show_mc_alpha',
+        evidence: 'Sick leave.',
+      }],
     });
     expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
       'show_mc_alpha',
@@ -117,6 +123,11 @@ describe('creatorAttendanceMissingExtractor', () => {
       action: 'UPDATE',
       oldValue: true,
       newValue: false,
+      signals: [{
+        kind: 'attendance_present',
+        showCreatorId: 101n,
+        showCreatorUid: 'show_mc_alpha',
+      }],
     });
     expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
       'show_mc_alpha',
@@ -241,7 +252,13 @@ describe('creatorAttendanceMissingExtractor', () => {
       ctx,
     );
 
-    expect(decision).toMatchObject({ kind: 'write', action: 'UPDATE' });
+    expect(decision).toMatchObject({
+      kind: 'write',
+      action: 'UPDATE',
+      // Evidence-refresh replay: the flag didn't change, but the resolved
+      // reason drifted, so reconciliation still needs the fresh evidence.
+      signals: [{ kind: 'attendance_missing', showCreatorId: 101n, evidence: 'Sick leave.' }],
+    });
     expect(showCreatorService.updateActuals).toHaveBeenCalledWith(
       'show_mc_alpha',
       10n,

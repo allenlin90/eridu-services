@@ -69,6 +69,34 @@ export class ShowIssueService extends BaseModelService {
     return this.showIssueRepository.findByUidAndStudio(uid, studioUid);
   }
 
+  /**
+   * Reconciliation identity lookup for creator-sourced automated issues
+   * (`origin: 'FACT_EXTRACTION'` only — the unique constraint is keyed on
+   * `(showCreatorId, category, origin)`, so a MANUAL issue can never occupy
+   * this identity). Used by `ShowIssueReconciliationService`.
+   */
+  async findActiveAutomatedIssueByShowCreator(
+    showCreatorId: bigint,
+    category: string,
+  ): Promise<ShowIssueWithRelations | null> {
+    return this.showIssueRepository.findActiveByShowCreatorCategoryOrigin(
+      showCreatorId,
+      category,
+      'FACT_EXTRACTION',
+    );
+  }
+
+  /**
+   * Reconciliation identity lookup for platform-violation-sourced automated
+   * issues, keyed 1:1 by the unique `showPlatformViolationId` FK. Used by
+   * `ShowIssueReconciliationService`.
+   */
+  async findActiveAutomatedIssueByShowPlatformViolation(
+    showPlatformViolationId: bigint,
+  ): Promise<ShowIssueWithRelations | null> {
+    return this.showIssueRepository.findActiveByShowPlatformViolationId(showPlatformViolationId);
+  }
+
   async listShowIssues(
     filters: ListShowIssuesFilters,
     opts: { skip?: number; take?: number },

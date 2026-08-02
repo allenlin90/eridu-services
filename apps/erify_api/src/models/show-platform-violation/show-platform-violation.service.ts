@@ -15,6 +15,7 @@ export type ShowPlatformViolationEntry = Omit<
 >;
 
 export type ShowPlatformViolationSummary = {
+  id: bigint;
   uid: string;
   violationType: string;
   severity: string;
@@ -103,14 +104,25 @@ export class ShowPlatformViolationService extends BaseModelService {
       await this.showPlatformViolationRepository.createMany(records);
     }
 
+    // `createMany` does not return the inserted rows, so resolve their
+    // internal bigint ids by the client-generated `uid`s we just wrote —
+    // needed by `ShowIssueReconciliationService` to key an issue to this
+    // violation row without a redundant lookup later.
+    const createdRows = records.length > 0
+      ? await this.showPlatformViolationRepository.findByUids(records.map((record) => record.uid))
+      : [];
+    const createdIdByUid = new Map(createdRows.map((row) => [row.uid, row.id]));
+
     return {
       created: records.map((record) => ({
+        id: createdIdByUid.get(record.uid)!,
         uid: record.uid,
         violationType: record.violationType,
         severity: record.severity,
         reason: record.reason,
       })),
       superseded: existing.map((row) => ({
+        id: row.id,
         uid: row.uid,
         violationType: row.violationType,
         severity: row.severity,

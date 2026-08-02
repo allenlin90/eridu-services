@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { ShowIssueReconciliationService } from './show-issue-reconciliation.service';
 import { ShowIssueWorkflowService } from './show-issue-workflow.service';
 
 import { AuditModule } from '@/models/audit/audit.module';
@@ -9,11 +10,12 @@ import { ShowIssueModule } from '@/models/show-issue/show-issue.module';
 import { UserModule } from '@/models/user/user.module';
 
 /**
- * Owns the manual show-issue workflow (authorization, optimistic locking,
- * audit coverage). Automated reconciliation
- * (`ShowIssueReconciliationService` + `FactExtractionModule` wiring) is a
- * later pass — see docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md "Delivery
- * Sequence".
+ * Owns both show-issue workflows: the manual workflow (authorization,
+ * optimistic locking, audit coverage) and automated reconciliation
+ * (`ShowIssueReconciliationService`, invoked by `FactExtractionProcessor` —
+ * see "Module Boundary" in docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md).
+ * `FactExtractionModule` imports this module in one direction; show-issue
+ * modules never import fact-extraction, so no `forwardRef` is needed.
  */
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { UserModule } from '@/models/user/user.module';
     UserModule,
     AuditModule,
   ],
-  providers: [ShowIssueWorkflowService],
-  exports: [ShowIssueWorkflowService],
+  providers: [ShowIssueWorkflowService, ShowIssueReconciliationService],
+  exports: [ShowIssueWorkflowService, ShowIssueReconciliationService],
 })
 export class ShowIssueOrchestrationModule {}
