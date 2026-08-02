@@ -3,6 +3,8 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Prisma, ShowIssue } from '@prisma/client';
 
+import type { ShowIssueSeverity } from '@eridu/api-types/show-issues';
+
 import type {
   ListShowIssuesFilters,
   ShowIssueWithRelations,
@@ -129,6 +131,13 @@ export class ShowIssueRepository extends BaseRepository<
     if (filters.ownerUid) {
       where.owner = { uid: filters.ownerUid };
     }
+    // `statusIn` is checked before the exact-match `status` filter so that,
+    // if a caller ever passed both, `status` (the more specific single-value
+    // predicate) wins by overwriting `where.status` below. Callers should
+    // only ever pass one.
+    if (filters.statusIn) {
+      where.status = { in: filters.statusIn };
+    }
     if (filters.status) {
       where.status = filters.status;
     }
@@ -146,6 +155,36 @@ export class ShowIssueRepository extends BaseRepository<
     }
 
     return where;
+  }
+
+  // Engineering decision: aggregation, not simple CRUD — earns a dedicated
+  // repository method per the persistence matrix (RT-05 / repository-pattern
+  // -nestjs). Reuses `buildWhere` with a forced `statusIn: ['OPEN',
+  // 'IN_PROGRESS']` so the unresolved-count definition can never drift from
+  // the paginated issue list's own filtering. Prisma's `groupBy` omits
+  // severities with zero matching rows, so every key is backfilled to 0
+  // before merging in the query results — callers always get a stable shape.
+  async countUnresolvedBySeverity(
+    filters: ListShowIssuesFilters,
+  ): Promise<Record<ShowIssueSeverity, number>> {
+    const where = this.buildWhere({ ...filters, statusIn: ['OPEN', 'IN_PROGRESS'] });
+
+    const grouped = await this.delegate.groupBy({
+      by: ['severity'],
+      where,
+      _count: true,
+    });
+
+    const counts: Record<ShowIssueSeverity, number> = {
+      LOW: 0,
+      MEDIUM: 0,
+      HIGH: 0,
+      CRITICAL: 0,
+    };
+    for (const row of grouped) {
+      counts[row.severity as ShowIssueSeverity] = row._count;
+    }
+    return counts;
   }
 
   // Engineering decision: optimistic-lock update mirrors

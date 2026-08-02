@@ -514,6 +514,19 @@ export const showRunReviewShowsRangeRowSchema = z.object({
   status: z.string(),
 });
 
+/**
+ * Unresolved (OPEN + IN_PROGRESS) show-issue counts by severity for the Show
+ * Run Review summary badge. Computed by the same repository `where` builder
+ * as the `/run-review/issues` sub-resource, so the two cannot drift — see
+ * apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+ */
+export const showRunReviewIssueSeverityCountsSchema = z.object({
+  low: z.number().int(),
+  medium: z.number().int(),
+  high: z.number().int(),
+  critical: z.number().int(),
+});
+
 export const showRunReviewSummarySchema = z.object({
   date_from: z.string(),
   date_to: z.string(),
@@ -538,6 +551,10 @@ export const showRunReviewSummarySchema = z.object({
   tasks: z.object({
     incomplete_phase_checks_count: z.number().int(),
     incomplete_tasks: z.array(showRunReviewIncompleteTaskSchema),
+  }),
+  issues: z.object({
+    unresolved_count: z.number().int(),
+    unresolved_by_severity: showRunReviewIssueSeverityCountsSchema,
   }),
 });
 

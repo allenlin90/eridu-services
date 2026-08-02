@@ -2,19 +2,26 @@ import { ShowRunReviewService } from './show-run-review.service';
 
 import { HttpError } from '@/lib/errors/http-error.util';
 import type { ShowService } from '@/models/show/show.service';
+import type { ShowIssueService } from '@/models/show-issue/show-issue.service';
 import type { StudioService } from '@/models/studio/studio.service';
 
 describe('showRunReviewService', () => {
   let service: ShowRunReviewService;
   let showService: { getShowsForReview: jest.Mock };
   let studioService: { getStudioById: jest.Mock };
+  let showIssueService: { getUnresolvedIssueSeverityCounts: jest.Mock; listShowIssues: jest.Mock };
 
   beforeEach(() => {
     showService = { getShowsForReview: jest.fn() };
     studioService = { getStudioById: jest.fn() };
+    showIssueService = {
+      getUnresolvedIssueSeverityCounts: jest.fn().mockResolvedValue({ LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 }),
+      listShowIssues: jest.fn().mockResolvedValue({ data: [], total: 0 }),
+    };
     service = new ShowRunReviewService(
       showService as unknown as ShowService,
       studioService as unknown as StudioService,
+      showIssueService as unknown as ShowIssueService,
     );
   });
 
@@ -148,6 +155,16 @@ describe('showRunReviewService', () => {
       expect(result.tasks.incomplete_phase_checks_count).toBe(1);
       expect(result.tasks.incomplete_tasks).toHaveLength(0);
 
+      expect(result.issues).toEqual({
+        unresolved_count: 0,
+        unresolved_by_severity: { low: 0, medium: 0, high: 0, critical: 0 },
+      });
+      expect(showIssueService.getUnresolvedIssueSeverityCounts).toHaveBeenCalledWith({
+        studioUid,
+        dateFrom: new Date('2026-05-12T06:00:00.000Z'),
+        dateTo: new Date('2026-05-13T05:59:59.999Z'),
+      });
+
       // Verify the new paginated sub-resource helper methods
       const creatorsRes = await service.getShowRunReviewCreators(studioUid, {
         date_from: '2026-05-12T06:00:00.000Z',
@@ -218,6 +235,124 @@ describe('showRunReviewService', () => {
           status: 'MISSING STARTS',
         }),
       );
+    });
+  });
+
+  describe('getShowRunReviewIssues', () => {
+    const studioUid = 'std_test123';
+    const range = { date_from: '2026-05-12T06:00:00.000Z', date_to: '2026-05-13T05:59:59.999Z' };
+
+    function mockIssueRow(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 1n,
+        uid: 'issue_1',
+        category: 'EQUIPMENT',
+        origin: 'MANUAL',
+        severity: 'HIGH',
+        status: 'OPEN',
+        title: 'Broken mic',
+        evidence: null,
+        dueAt: null,
+        escalationLevel: 0,
+        escalatedAt: null,
+        escalationNote: null,
+        resolvedAt: null,
+        resolutionCode: null,
+        resolutionNote: null,
+        version: 1,
+        createdAt: new Date('2026-05-12T09:00:00.000Z'),
+        updatedAt: new Date('2026-05-12T09:00:00.000Z'),
+        show: { uid: 'show_1' },
+        owner: null,
+        createdBy: null,
+        escalatedBy: null,
+        resolvedBy: null,
+        showCreator: null,
+        showPlatformViolation: null,
+        ...overrides,
+      };
+    }
+
+    // The design doc's core contract: the summary's unresolved count and this
+    // sub-resource's default-filtered total must match under the same
+    // studioUid/date range with no extra filters — otherwise the summary
+    // badge and the drill-in tab can silently disagree.
+    it('acceptance scenario: summary unresolved_count equals this method\'s total under the same filters', async () => {
+      studioService.getStudioById.mockResolvedValue({ id: BigInt(1) } as any);
+      showService.getShowsForReview.mockResolvedValue([]);
+      showIssueService.getUnresolvedIssueSeverityCounts.mockResolvedValue({
+        LOW: 1,
+        MEDIUM: 2,
+        HIGH: 0,
+        CRITICAL: 0,
+      });
+      showIssueService.listShowIssues.mockResolvedValue({
+        data: [mockIssueRow(), mockIssueRow({ id: 2n, uid: 'issue_2' }), mockIssueRow({ id: 3n, uid: 'issue_3' })],
+        total: 3,
+      });
+
+      const summary = await service.getShowRunReviewSummary(studioUid, range);
+      const issuesRes = await service.getShowRunReviewIssues(studioUid, range);
+
+      expect(summary.issues.unresolved_count).toBe(3);
+      expect(issuesRes.total).toBe(3);
+      expect(summary.issues.unresolved_count).toBe(issuesRes.total);
+    });
+
+    it('defaults to unresolved (OPEN + IN_PROGRESS) statusIn when no status query param is given', async () => {
+      showIssueService.listShowIssues.mockResolvedValue({ data: [], total: 0 });
+
+      await service.getShowRunReviewIssues(studioUid, range);
+
+      expect(showIssueService.listShowIssues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          studioUid,
+          status: undefined,
+          statusIn: ['OPEN', 'IN_PROGRESS'],
+        }),
+        { skip: 0, take: 10 },
+      );
+    });
+
+    it('drops the default statusIn when an explicit status filter is provided', async () => {
+      showIssueService.listShowIssues.mockResolvedValue({ data: [], total: 0 });
+
+      await service.getShowRunReviewIssues(studioUid, { ...range, status: 'RESOLVED' });
+
+      expect(showIssueService.listShowIssues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'RESOLVED',
+          statusIn: undefined,
+        }),
+        { skip: 0, take: 10 },
+      );
+    });
+
+    it('paginates via skip/take and maps rows through the shared API response shape', async () => {
+      showIssueService.listShowIssues.mockResolvedValue({
+        data: [mockIssueRow()],
+        total: 1,
+      });
+
+      const result = await service.getShowRunReviewIssues(studioUid, { ...range, page: 2, limit: 5 });
+
+      expect(showIssueService.listShowIssues).toHaveBeenCalledWith(
+        expect.anything(),
+        { skip: 5, take: 5 },
+      );
+      expect(result.total).toBe(1);
+      expect(result.items[0]).toEqual(expect.objectContaining({ id: 'issue_1', title: 'Broken mic' }));
+    });
+
+    // The design doc requires issue pagination/filtering/counting to run in
+    // PostgreSQL via the canonical repository — not an in-memory slice of the
+    // show graph the other four sub-resources load.
+    it('does not load the show graph for review (no in-memory slicing)', async () => {
+      showIssueService.listShowIssues.mockResolvedValue({ data: [], total: 0 });
+
+      await service.getShowRunReviewIssues(studioUid, range);
+
+      expect(showService.getShowsForReview).not.toHaveBeenCalled();
     });
   });
 });

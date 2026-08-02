@@ -89,6 +89,10 @@ export type ListShowIssuesFilters = {
   showUid?: string;
   ownerUid?: string;
   status?: string;
+  // Additive multi-value status filter, used by Show Run Review to default to
+  // "unresolved" (OPEN + IN_PROGRESS) without changing `status`'s existing
+  // exact-match behavior — see ShowIssueRepository.buildWhere.
+  statusIn?: string[];
   severity?: string;
   category?: string;
   origin?: string;
