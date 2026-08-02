@@ -1,6 +1,6 @@
 # Show-Level Issue Ownership Design
 
-> **Status**: Design locked; implementation not started
+> **Status**: Design locked; Delivery Sequence steps 1–3 shipped (backend manual workflow + show-detail Issues tab); steps 4–5 (automated reconciliation, Show Run Review) not started
 > **Roadmap**: [Phase 5 item 9](../../../../docs/roadmap/PHASE_5.md#9-show-level-issue-ownership)
 
 ## Purpose

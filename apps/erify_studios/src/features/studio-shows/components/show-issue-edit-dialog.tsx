@@ -219,6 +219,7 @@ function ShowIssueEditDialogBody({ issue, onOpenChange, studioId, showId, mode }
             studioId={studioId}
             value={form.ownerId}
             onChange={(value) => setForm((prev) => prev && ({ ...prev, ownerId: value }))}
+            initialLabel={issue.owner?.name}
           />
 
           <div className="space-y-1.5">
