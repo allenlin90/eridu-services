@@ -45,6 +45,16 @@ OPEN -> IN_PROGRESS -> RESOLVED
                          RESOLVED -> OPEN (reopen)
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> OPEN : create (manual or automated)
+    OPEN --> IN_PROGRESS : start (Admin/Manager, or assigned member on own issue)
+    OPEN --> RESOLVED : resolve
+    IN_PROGRESS --> RESOLVED : resolve
+    RESOLVED --> OPEN : reopen (Admin/Manager)
+    RESOLVED --> RESOLVED : re-resolve blocked; must reopen first
+```
+
 - New manual and automated issues start `OPEN`.
 - Starting work sets `IN_PROGRESS`.
 - Resolution requires a resolution code and note for a user action.
@@ -74,6 +84,39 @@ OPEN -> IN_PROGRESS -> RESOLVED
 | `showPlatformViolationId` | Nullable typed source FK for platform violations. |
 | `version` | Optimistic lock, incremented on semantic issue mutations. |
 | `createdAt`, `updatedAt`, `deletedAt` | Standard timestamps and soft-delete compatibility. No public delete endpoint is exposed. |
+
+```mermaid
+erDiagram
+    Show ||--o{ ShowIssue : "scopes (showId)"
+    ShowCreator |o--o| ShowIssue : "automated source, 0..1 (unique per category+origin)"
+    ShowPlatformViolation |o--o| ShowIssue : "automated source, 0..1 (unique)"
+    ShowPlatform ||--o{ ShowPlatformViolation : "has"
+    User ||--o{ ShowIssue : "owner / createdBy / resolvedBy / escalatedBy (all nullable)"
+    Audit ||--o{ AuditTarget : "envelope"
+    AuditTarget }o--|| ShowIssue : "SHOW_ISSUE target (new)"
+
+    ShowIssue {
+      bigint id PK
+      string uid
+      bigint showId FK
+      string category "CREATOR_ATTENDANCE | EQUIPMENT | UTILITY | PLATFORM_VIOLATION | POST_PRODUCTION_FOLLOW_UP | OTHER"
+      string origin "MANUAL | FACT_EXTRACTION"
+      string severity "LOW | MEDIUM | HIGH | CRITICAL"
+      string status "OPEN | IN_PROGRESS | RESOLVED"
+      string title
+      string evidence "nullable"
+      bigint ownerId FK "nullable"
+      datetime dueAt "nullable"
+      bigint createdById FK "nullable, null = system-created"
+      int escalationLevel
+      bigint escalatedById FK "nullable"
+      bigint resolvedById FK "nullable, null = system-resolved"
+      string resolutionCode "nullable"
+      bigint showCreatorId FK "nullable, unique with (category, origin)"
+      bigint showPlatformViolationId FK "nullable, unique"
+      int version
+    }
+```
 
 Required constraints and indexes:
 
@@ -159,6 +202,31 @@ This is a synchronous method contract, not a published domain event and not a ge
 | Platform violation row is superseded | Resolve the linked issue with `SOURCE_CORRECTED`. |
 | Same signal is replayed | No duplicate row and no audit when semantic state is unchanged. |
 
+```mermaid
+flowchart TD
+    A{Signal kind} -->|attendance_missing| B{Existing automated<br/>CREATOR_ATTENDANCE issue?}
+    B -->|none| B1[Create OPEN issue<br/>severity HIGH]
+    B -->|RESOLVED, SOURCE_CORRECTED| B2[Reopen + refresh evidence]
+    B -->|RESOLVED, other code| B3[No-op — manual closure is sticky]
+    B -->|OPEN / IN_PROGRESS| B4[Refresh evidence if changed,<br/>else no-op]
+
+    A -->|attendance_present| C{Existing automated issue?}
+    C -->|none| C1[No-op]
+    C -->|already SOURCE_CORRECTED| C2[No-op — replay idempotent]
+    C -->|OPEN / IN_PROGRESS| C3[Resolve: SOURCE_CORRECTED]
+
+    A -->|platform_violation_opened| D{Existing automated<br/>PLATFORM_VIOLATION issue<br/>for this violation id?}
+    D -->|none| D1[Create OPEN issue<br/>severity = normalizeViolationSeverity]
+    D -->|exists| D2[Refresh evidence if changed,<br/>else no-op]
+
+    A -->|platform_violation_superseded| E{Existing automated issue?}
+    E -->|none| E1[No-op]
+    E -->|already SOURCE_CORRECTED| E2[No-op — replay idempotent]
+    E -->|OPEN / IN_PROGRESS| E3[Resolve: SOURCE_CORRECTED]
+
+    F[MANUAL issue occupying the identity] -.->|any signal, all branches| G[Never touched]
+```
+
 Manual issues are never automatically resolved or overwritten.
 
 Platform violation severity is currently an uppercase free-form string with `WARNING` as the default. Normalize it deterministically:
@@ -175,6 +243,51 @@ Platform violation severity is currently an uppercase free-form string with `WAR
 `FactExtractionProcessor` applies the fact, writes its extraction audit, and invokes `ShowIssueReconciliationService.applySignals(...)` inside the same CLS transaction. The relevant extractors return the typed signals with the source UIDs they created, superseded, or updated.
 
 If issue reconciliation fails, the fact write and extraction audit roll back together and the extraction result reports an error through the existing task-submission behavior. A fact must not commit while its required automated issue is missing. Manager edits to an already-completed task already re-run extraction and provide the immediate correction path; a general extraction retry queue remains outside item 9.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant OP as Operator
+    participant ORC as TaskOrchestrationService
+    participant SVC as FactExtractionService
+    participant PROC as FactExtractionProcessor
+    participant EXT as Attendance / Violation Extractor
+    participant MODEL as ShowCreatorService /<br/>ShowPlatformViolationService
+    participant REC as ShowIssueReconciliationService
+    participant ISSUE as ShowIssueService
+    participant AUD as AuditService
+
+    OP->>ORC: submit task content (-> COMPLETED)
+    ORC->>SVC: extractFromTask(taskUid)
+    SVC->>PROC: applyAndAudit(extractor, fact, ctx)
+    activate PROC
+    Note over PROC: single @Transactional() scope
+    PROC->>EXT: apply(fact, ctx)
+    EXT->>MODEL: updateActuals / replaceForTaskField
+    MODEL-->>EXT: written
+    EXT-->>PROC: { kind: 'write', signals: [...] }
+    PROC->>AUD: create(extraction audit)
+    AUD-->>PROC: auditUid
+    PROC->>REC: applySignals(signals, showId)
+
+    alt signals.length > 25 (cap)
+        REC-->>PROC: throw
+        Note over PROC,MODEL: whole transaction rolls back —<br/>fact write, extraction audit, and any<br/>partial issue writes all undone
+        PROC-->>SVC: error (classified extractor_error)
+    else within cap
+        loop each signal
+            REC->>ISSUE: findActiveAutomatedIssueBy...
+            ISSUE-->>REC: existing issue or null
+            REC->>ISSUE: createShowIssue / resolveShowIssue /<br/>reopenShowIssue / updateShowIssueFields
+            ISSUE-->>REC: updated ShowIssue
+            REC->>AUD: create(SHOW_ISSUE audit)
+        end
+        REC-->>PROC: void
+        deactivate PROC
+        PROC-->>SVC: { decision, auditUid }
+        SVC-->>ORC: outcome written
+    end
+```
 
 ## Module Boundary
 
