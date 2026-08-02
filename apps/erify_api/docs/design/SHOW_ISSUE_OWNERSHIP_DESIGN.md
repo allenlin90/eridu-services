@@ -118,6 +118,8 @@ erDiagram
     }
 ```
 
+**Why the ERD looks unchanged since [#356](https://github.com/allenlin90/eridu-services/pull/356):** it is. `ShowIssue`, `origin`, `showCreatorId`, and `showPlatformViolationId` were all added by step 1 (#356) with zero writers for `origin: 'FACT_EXTRACTION'` — steps 2–3 (#356, #358) only ever wrote `origin: 'MANUAL'` through the human workflow. This PR (step 4, [#361](https://github.com/allenlin90/eridu-services/pull/361)) adds no schema — it is the first code path that actually sets `origin: 'FACT_EXTRACTION'` and populates those two FKs. See "What step 4 changes" under [Automated Reconciliation](#automated-reconciliation) for the behavioral diff.
+
 Required constraints and indexes:
 
 - unique `uid`;
@@ -178,6 +180,19 @@ The list endpoint uses offset pagination and supports `show_id`, `owner_id`, `st
 All request/response schemas live in `@eridu/api-types`, use snake_case externally, and map to camelCase service payloads.
 
 ## Automated Reconciliation
+
+### What step 4 changes
+
+Everything in this section shipped in step 4 ([#361](https://github.com/allenlin90/eridu-services/pull/361), the fourth breakdown PR under the [#357](https://github.com/allenlin90/eridu-services/pull/357) integration program). Nothing here was buildable from steps 1–3 alone:
+
+| | Steps 1–3 (#356, #358) | Step 4 (#361) |
+| --- | --- | --- |
+| `ShowIssue` schema, `origin`/typed-source columns | Added, but `origin: 'FACT_EXTRACTION'` had no writer | Unchanged (no migration in #361) |
+| Who can create/resolve an issue | A human, through `StudioShowIssueController` → `ShowIssueWorkflowService` | Adds a second, system-authored path: `FactExtractionProcessor` → `ShowIssueReconciliationService` |
+| `CreatorAttendanceMissingExtractor` / `ShowPlatformViolationExtractor` | Wrote `ShowCreator.attendanceMissing` / `ShowPlatformViolation` rows only — no `ShowIssue` was ever touched by a task submission | `ExtractionDecision`'s `write` variant now also carries `signals[]`, consumed by the new reconciliation service in the same transaction |
+| Show-detail Issues tab (#358) | Rendered whatever issues existed — always `MANUAL` in practice, since nothing produced `FACT_EXTRACTION` rows yet | First tab load that can show a `FACT_EXTRACTION` issue an operator didn't create by hand |
+
+In short: steps 1–3 built the container and the human-facing half of the workflow; step 4 is what makes `origin: 'FACT_EXTRACTION'` a real, populated state instead of a schema value nothing ever set. The "Module Boundary: before → after step 4" diagram below shows the same delta at the module-dependency level.
 
 ### Signals
 
@@ -303,6 +318,28 @@ FactExtractionProcessor
        -> ShowIssueService
        -> ShowCreatorService / ShowPlatformViolationService
        -> AuditService
+```
+
+**Before → after step 4** — the manual side (left) shipped in #356/#358 and is unchanged; `FactExtractionModule`'s dependency on the show-issue modules (right, dashed) did not exist until this PR:
+
+```mermaid
+flowchart LR
+    subgraph before["Before step 4 (#356, #358)"]
+        direction TB
+        C1[StudioShowIssueController] --> W1[ShowIssueWorkflowService]
+        W1 --> S1[ShowIssueService]
+        FE1[FactExtractionProcessor] -.->|no dependency| S1
+    end
+
+    subgraph after["After step 4 (#361, this PR)"]
+        direction TB
+        C2[StudioShowIssueController] --> W2[ShowIssueWorkflowService]
+        W2 --> S2[ShowIssueService]
+        FE2[FactExtractionProcessor] ==>|new| R2[ShowIssueReconciliationService]
+        R2 ==>|new| S2
+    end
+
+    before ~~~ after
 ```
 
 - `ShowIssueModule` owns repository and single-model service behavior and exports only `ShowIssueService`.
