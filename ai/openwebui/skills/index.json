@@ -60,6 +60,10 @@
     "name": "EU Essentials",
     "description": ">"
   },
+  "example-review-helper": {
+    "name": "Example Review Helper",
+    "description": "Use when reviewing an example document. Verification-only skill for the Git-first Open WebUI upload flow (PR #353); not for production use."
+  },
   "finance-ops": {
     "name": "Finance Operations",
     "description": "Overdue invoice collection pipelines, payout schedule controls, and tax withholding rules."
