@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { showIssueSeveritySchema } from '@eridu/api-types/show-issues';
+
 export const showRunReviewSearchSchema = z.object({
   date_from: z.string().optional().catch(undefined),
   date_to: z.string().optional().catch(undefined),
@@ -17,7 +19,11 @@ export const showRunReviewSearchSchema = z.object({
   shows_completeness: z.string().optional().catch(undefined),
   shows_page: z.coerce.number().int().min(1).optional().catch(1),
   issues_search: z.string().optional().catch(undefined),
-  issues_severity: z.string().optional().catch(undefined),
+  // Unlike violations_severity (a free-form platform-reported string, no
+  // fixed backend enum), issue severity IS a closed ShowIssueSeverity enum
+  // — validate against it so a hand-edited/shared URL with an invalid value
+  // can't reach the API and be rejected there instead.
+  issues_severity: showIssueSeveritySchema.optional().catch(undefined),
   issues_page: z.coerce.number().int().min(1).optional().catch(1),
 });
 

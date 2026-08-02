@@ -9,16 +9,13 @@ import {
   CardTitle,
 } from '@eridu/ui';
 
-import {
-  creatorColumns,
-  issueColumns,
-  showColumns,
-  taskColumns,
-  violationColumns,
-} from './show-run-summary/columns';
 import { ShowRunMetricCards } from './show-run-summary/show-run-metric-cards';
-import { ShowRunReviewTabPanel } from './show-run-summary/show-run-review-tab-panel';
 import { ShowRunTabNav } from './show-run-summary/show-run-tab-nav';
+import { CreatorsTabPanel } from './show-run-summary/tabs/creators-tab-panel';
+import { IssuesTabPanel } from './show-run-summary/tabs/issues-tab-panel';
+import { ShowsTabPanel } from './show-run-summary/tabs/shows-tab-panel';
+import { TasksTabPanel } from './show-run-summary/tabs/tasks-tab-panel';
+import { ViolationsTabPanel } from './show-run-summary/tabs/violations-tab-panel';
 import { useShowRunSummary } from './show-run-summary/use-show-run-summary';
 
 import type { ShowRunReviewSearch } from '@/features/show-run-review/config/show-run-review-search-schema';
@@ -31,6 +28,13 @@ type ShowRunSummaryProps = {
   studioId: string;
 };
 
+/**
+ * Top-level Show Run Review surface: metric cards, tab navigation, and the
+ * active tab's panel. Each tab's own search/filter/column/copy differs, so
+ * rendering lives in a dedicated component per tab under `show-run-summary/
+ * tabs/` — all five consume the same `useShowRunSummary` view model and the
+ * same shared `ShowRunReviewTabPanel` shell.
+ */
 export function ShowRunSummary({ data, isFetching = false, search, onSearchChange, studioId }: ShowRunSummaryProps) {
   const vm = useShowRunSummary({ data, search, onSearchChange, studioId });
 
@@ -60,146 +64,11 @@ export function ShowRunSummary({ data, isFetching = false, search, onSearchChang
         <CardContent className="pt-6 min-w-0 w-full overflow-hidden space-y-6">
           <ShowRunTabNav activeTab={vm.activeTab} onTabChange={vm.setActiveTab} data={data} />
 
-          {vm.activeTab === 'creators' && (
-            <ShowRunReviewTabPanel
-              searchPlaceholder="Search creators, shows, or reasons..."
-              searchValue={vm.creators.searchValue}
-              onSearchChange={vm.creators.onSearchChange}
-              filterPlaceholder="All Exceptions"
-              filterValue={vm.creators.filterValue}
-              onFilterChange={vm.creators.onFilterChange}
-              filterOptions={[
-                { value: 'ALL', label: 'All Exceptions' },
-                { value: 'LATE', label: 'Late Arrival' },
-                { value: 'MISSING', label: 'Missing Attendance' },
-              ]}
-              columns={creatorColumns}
-              rows={vm.creators.query.data?.data ?? []}
-              isLoading={vm.creators.query.isLoading}
-              isFetching={vm.creators.query.isFetching}
-              emptyMessage="No creator lateness exceptions or missing attendance flags recorded for this day range."
-              page={vm.creators.page}
-              total={vm.creators.query.data?.meta.total ?? 0}
-              pageCount={vm.creators.query.data?.meta.totalPages ?? 0}
-              onPaginationChange={vm.creators.onPaginationChange}
-              isExporting={vm.exportingTab === 'creators'}
-              onExport={vm.creators.onExport}
-            />
-          )}
-
-          {vm.activeTab === 'violations' && (
-            <ShowRunReviewTabPanel
-              searchPlaceholder="Search platforms, shows, or details..."
-              searchValue={vm.violations.searchValue}
-              onSearchChange={vm.violations.onSearchChange}
-              filterPlaceholder="All Severities"
-              filterValue={vm.violations.filterValue}
-              onFilterChange={vm.violations.onFilterChange}
-              filterOptions={[
-                { value: 'ALL', label: 'All Severities' },
-                { value: 'CRITICAL', label: 'CRITICAL' },
-                { value: 'HIGH', label: 'HIGH' },
-                { value: 'MEDIUM', label: 'MEDIUM' },
-                { value: 'LOW', label: 'LOW' },
-                { value: 'WARNING', label: 'WARNING' },
-              ]}
-              columns={violationColumns}
-              rows={vm.violations.query.data?.data ?? []}
-              isLoading={vm.violations.query.isLoading}
-              isFetching={vm.violations.query.isFetching}
-              emptyMessage="No active platform stream lag, offline, or configuration violations reported."
-              page={vm.violations.page}
-              total={vm.violations.query.data?.meta.total ?? 0}
-              pageCount={vm.violations.query.data?.meta.totalPages ?? 0}
-              onPaginationChange={vm.violations.onPaginationChange}
-              isExporting={vm.exportingTab === 'violations'}
-              onExport={vm.violations.onExport}
-            />
-          )}
-
-          {vm.activeTab === 'tasks' && (
-            <ShowRunReviewTabPanel
-              searchPlaceholder="Search tasks or associated shows..."
-              searchValue={vm.tasks.searchValue}
-              onSearchChange={vm.tasks.onSearchChange}
-              filterPlaceholder="All Statuses"
-              filterValue={vm.tasks.filterValue}
-              onFilterChange={vm.tasks.onFilterChange}
-              filterOptions={[
-                { value: 'ALL', label: 'All Statuses' },
-                { value: 'IN_PROGRESS', label: 'IN_PROGRESS' },
-                { value: 'TODO', label: 'TODO' },
-                { value: 'FAILED', label: 'FAILED' },
-              ]}
-              columns={taskColumns}
-              rows={vm.tasks.query.data?.data ?? []}
-              isLoading={vm.tasks.query.isLoading}
-              isFetching={vm.tasks.query.isFetching}
-              emptyMessage="Every task, pre-production check, on-air, and post-production template task has been completed!"
-              page={vm.tasks.page}
-              total={vm.tasks.query.data?.meta.total ?? 0}
-              pageCount={vm.tasks.query.data?.meta.totalPages ?? 0}
-              onPaginationChange={vm.tasks.onPaginationChange}
-              isExporting={vm.exportingTab === 'tasks'}
-              onExport={vm.tasks.onExport}
-            />
-          )}
-
-          {vm.activeTab === 'shows' && (
-            <ShowRunReviewTabPanel
-              searchPlaceholder="Search shows or completeness..."
-              searchValue={vm.shows.searchValue}
-              onSearchChange={vm.shows.onSearchChange}
-              filterPlaceholder="All States"
-              filterValue={vm.shows.filterValue}
-              onFilterChange={vm.shows.onFilterChange}
-              filterOptions={[
-                { value: 'ALL', label: 'All States' },
-                { value: 'ALL STARTED', label: 'ALL STARTED' },
-                { value: 'MISSING STARTS', label: 'MISSING STARTS' },
-              ]}
-              columns={showColumns}
-              rows={vm.shows.query.data?.data ?? []}
-              isLoading={vm.shows.query.isLoading}
-              isFetching={vm.shows.query.isFetching}
-              emptyMessage="No shows scheduled in the selected date range."
-              page={vm.shows.page}
-              total={vm.shows.query.data?.meta.total ?? 0}
-              pageCount={vm.shows.query.data?.meta.totalPages ?? 0}
-              onPaginationChange={vm.shows.onPaginationChange}
-              isExporting={vm.exportingTab === 'shows'}
-              onExport={vm.shows.onExport}
-            />
-          )}
-
-          {vm.activeTab === 'issues' && (
-            <ShowRunReviewTabPanel
-              searchPlaceholder="Search issue titles..."
-              searchValue={vm.issues.searchValue}
-              onSearchChange={vm.issues.onSearchChange}
-              filterPlaceholder="All Severities"
-              filterValue={vm.issues.filterValue}
-              onFilterChange={vm.issues.onFilterChange}
-              filterOptions={[
-                { value: 'ALL', label: 'All Severities' },
-                { value: 'CRITICAL', label: 'CRITICAL' },
-                { value: 'HIGH', label: 'HIGH' },
-                { value: 'MEDIUM', label: 'MEDIUM' },
-                { value: 'LOW', label: 'LOW' },
-              ]}
-              columns={issueColumns}
-              rows={vm.issues.query.data?.data ?? []}
-              isLoading={vm.issues.query.isLoading}
-              isFetching={vm.issues.query.isFetching}
-              emptyMessage="No unresolved show issues recorded for this day range."
-              page={vm.issues.page}
-              total={vm.issues.query.data?.meta.total ?? 0}
-              pageCount={vm.issues.query.data?.meta.totalPages ?? 0}
-              onPaginationChange={vm.issues.onPaginationChange}
-              isExporting={vm.exportingTab === 'issues'}
-              onExport={vm.issues.onExport}
-            />
-          )}
+          {vm.activeTab === 'creators' && <CreatorsTabPanel vm={vm} />}
+          {vm.activeTab === 'violations' && <ViolationsTabPanel vm={vm} />}
+          {vm.activeTab === 'tasks' && <TasksTabPanel vm={vm} />}
+          {vm.activeTab === 'shows' && <ShowsTabPanel vm={vm} />}
+          {vm.activeTab === 'issues' && <IssuesTabPanel vm={vm} />}
         </CardContent>
       </Card>
     </div>

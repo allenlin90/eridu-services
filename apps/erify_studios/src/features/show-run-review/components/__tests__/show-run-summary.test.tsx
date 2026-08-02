@@ -259,6 +259,37 @@ describe('showRunSummary', () => {
     expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
   });
 
+  it('renders an explicit failure state (not the empty-result message) when the issues query errors, and retry re-fetches', async () => {
+    const user = userEvent.setup();
+    const refetch = vi.fn();
+    mocks.useShowRunReviewIssuesQuery.mockReturnValueOnce({
+      data: undefined,
+      isFetching: false,
+      isLoading: false,
+      isError: true,
+      error: new Error('network down'),
+      refetch,
+    });
+
+    render(
+      <ShowRunSummary
+        data={summary}
+        search={{ tab: 'issues' }}
+        onSearchChange={vi.fn()}
+        studioId="std_123"
+      />,
+    );
+
+    // On error, `data` is undefined just like a genuinely empty result — the
+    // regression is treating the two identically. The DataTable (and its
+    // empty-message copy) must not render at all in the error branch.
+    expect(screen.queryByTestId('data-table')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
   it('enables export and fetches the full filtered set when the issues query returns rows', async () => {
     const user = userEvent.setup();
     mocks.useShowRunReviewIssuesQuery.mockReturnValueOnce({
@@ -271,7 +302,7 @@ describe('showRunSummary', () => {
     });
     mocks.getShowRunReviewIssues.mockResolvedValue({
       data: [{ id: 'issue_1', title: 'Broken mic' }],
-      meta: { page: 1, limit: 3, total: 3, totalPages: 1 },
+      meta: { page: 1, limit: 100, total: 3, totalPages: 1 },
     });
 
     render(
@@ -288,19 +319,65 @@ describe('showRunSummary', () => {
 
     await user.click(exportButton);
 
+    // Unlike the other four tabs, the issues export fetches through the
+    // 100-row server cap, not `limit: total` — a single page is enough
+    // here since total (3) fits in one page.
     await waitFor(() => {
       expect(mocks.getShowRunReviewIssues).toHaveBeenCalledWith('std_123', {
         date_from: summary.date_from,
         date_to: summary.date_to,
         page: 1,
-        limit: 3,
+        limit: 100,
         search: undefined,
         severity: undefined,
       });
     });
+    expect(mocks.getShowRunReviewIssues).toHaveBeenCalledTimes(1);
     expect(mocks.exportShowRunReviewIssues).toHaveBeenCalledWith(
       [{ id: 'issue_1', title: 'Broken mic' }],
       { dateFrom: summary.date_from, dateTo: summary.date_to },
     );
+  });
+
+  it('pages the issues export in 100-row batches and concatenates when total exceeds the server cap', async () => {
+    const user = userEvent.setup();
+    // This file has no shared beforeEach mock reset; clear call history from
+    // earlier tests sharing this hoisted mock so the count assertions below
+    // reflect only this test's export.
+    mocks.getShowRunReviewIssues.mockClear();
+    const page1 = Array.from({ length: 100 }, (_, i) => ({ id: `issue_${i}`, title: `Issue ${i}` }));
+    const page2 = [{ id: 'issue_150', title: 'Issue 150' }];
+    mocks.useShowRunReviewIssuesQuery.mockReturnValueOnce({
+      data: {
+        data: page1.slice(0, 10),
+        meta: { page: 1, limit: 10, total: 101, totalPages: 11 },
+      },
+      isFetching: false,
+      isLoading: false,
+    });
+    mocks.getShowRunReviewIssues
+      .mockResolvedValueOnce({ data: page1, meta: { page: 1, limit: 100, total: 101, totalPages: 2 } })
+      .mockResolvedValueOnce({ data: page2, meta: { page: 2, limit: 100, total: 101, totalPages: 2 } });
+
+    render(
+      <ShowRunSummary
+        data={summary}
+        search={{ tab: 'issues' }}
+        onSearchChange={vi.fn()}
+        studioId="std_123"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Export CSV' }));
+
+    await waitFor(() => {
+      expect(mocks.exportShowRunReviewIssues).toHaveBeenCalledWith(
+        [...page1, ...page2],
+        { dateFrom: summary.date_from, dateTo: summary.date_to },
+      );
+    });
+    expect(mocks.getShowRunReviewIssues).toHaveBeenCalledTimes(2);
+    expect(mocks.getShowRunReviewIssues).toHaveBeenNthCalledWith(1, 'std_123', expect.objectContaining({ page: 1, limit: 100 }));
+    expect(mocks.getShowRunReviewIssues).toHaveBeenNthCalledWith(2, 'std_123', expect.objectContaining({ page: 2, limit: 100 }));
   });
 });

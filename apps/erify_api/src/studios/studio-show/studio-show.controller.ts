@@ -203,13 +203,20 @@ const paginatedShowRunReviewQuerySchema = showRunReviewQuerySchema.extend({
 
 export class PaginatedShowRunReviewQueryDto extends createZodDto(paginatedShowRunReviewQuerySchema) {}
 
+// Unlike the other four run-review sub-resources (in-memory slice of an
+// already-bounded 31-day show graph), this endpoint's `limit` flows directly
+// into a Prisma `take` — an uncapped value would let a caller pull an
+// arbitrarily large result straight from PostgreSQL. Cap it at the same 100
+// the canonical `/studios/:studioId/show-issues` list uses.
+const SHOW_RUN_REVIEW_ISSUES_MAX_PAGE_SIZE = 100;
+
 // Deliberately NOT `paginatedShowRunReviewQuerySchema` — that schema's
 // `status`/`severity` fields are typed for the OTHER run-review sub-resources'
 // unrelated enums (`'LATE'|'MISSING'`, free string). The issues sub-resource
 // reuses the canonical ShowIssue status/severity enums instead.
-const paginatedShowRunReviewIssuesQuerySchema = showRunReviewQuerySchema.extend({
+export const paginatedShowRunReviewIssuesQuerySchema = showRunReviewQuerySchema.extend({
   page: z.coerce.number().int().min(1).optional().default(1),
-  limit: z.coerce.number().int().min(1).optional().default(10),
+  limit: z.coerce.number().int().min(1).max(SHOW_RUN_REVIEW_ISSUES_MAX_PAGE_SIZE).optional().default(10),
   search: z.string().optional(),
   status: showIssueStatusSchema.optional(),
   severity: showIssueSeveritySchema.optional(),

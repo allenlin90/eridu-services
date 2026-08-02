@@ -45,7 +45,7 @@ export function ShowRunMetricCards({ data }: ShowRunMetricCardsProps) {
     : 0;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {/* Shows Actuals Completeness Card */}
       <Card className="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm transition-all hover:shadow-md">
         <CardHeader className="pb-2">

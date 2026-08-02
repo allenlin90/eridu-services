@@ -5,7 +5,7 @@ import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import { showCreatorCompensationSummarySchema } from '@eridu/api-types/studio-creators';
 
 import type { BulkAssignStudioShowCreatorsDto } from './schemas/studio-show-creator-assignment.schema';
-import { StudioShowController } from './studio-show.controller';
+import { paginatedShowRunReviewIssuesQuerySchema, StudioShowController } from './studio-show.controller';
 import { StudioShowManagementService } from './studio-show-management.service';
 
 import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
@@ -373,6 +373,30 @@ describe('studioShowController', () => {
         STUDIO_ROLE.ADMIN,
         STUDIO_ROLE.MANAGER,
       ]);
+    });
+
+    // `limit` flows directly into a Prisma `take` here (unlike the other
+    // four run-review sub-resources, which slice an already-bounded 31-day
+    // show graph in memory) — an uncapped value would let a caller pull an
+    // arbitrarily large result straight from PostgreSQL.
+    describe('limit bound', () => {
+      const baseQuery = { date_from: '2026-05-12T06:00:00.000Z', date_to: '2026-05-13T05:59:59.999Z' };
+
+      it('accepts a limit at the 100 cap', () => {
+        const result = paginatedShowRunReviewIssuesQuerySchema.safeParse({ ...baseQuery, limit: 100 });
+        expect(result.success).toBe(true);
+      });
+
+      it('rejects a limit above the 100 cap', () => {
+        const result = paginatedShowRunReviewIssuesQuerySchema.safeParse({ ...baseQuery, limit: 101 });
+        expect(result.success).toBe(false);
+      });
+
+      it('defaults to 10 when omitted', () => {
+        const result = paginatedShowRunReviewIssuesQuerySchema.safeParse(baseQuery);
+        expect(result.success).toBe(true);
+        expect(result.success && result.data.limit).toBe(10);
+      });
     });
   });
 
