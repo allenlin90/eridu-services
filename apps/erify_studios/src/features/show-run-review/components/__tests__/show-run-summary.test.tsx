@@ -7,6 +7,18 @@ import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 
 import { ShowRunSummary } from '../show-run-summary';
 
+// `data` is `undefined` on a failed query, same as a genuinely empty result
+// with no successful response yet — the error-state test below relies on
+// that being a valid shape for this mock, not just the populated one.
+type IssuesQueryMockResult = {
+  data: { data: Array<{ id: string; title: string }>; meta: { page: number; limit: number; total: number; totalPages: number } } | undefined;
+  isFetching: boolean;
+  isLoading: boolean;
+  isError?: boolean;
+  error?: unknown;
+  refetch?: () => void;
+};
+
 const mocks = vi.hoisted(() => ({
   getShowRunReviewCreators: vi.fn(),
   getShowRunReviewShows: vi.fn(),
@@ -18,9 +30,12 @@ const mocks = vi.hoisted(() => ({
   exportShowRunReviewTasks: vi.fn(),
   exportShowRunReviewViolations: vi.fn(),
   exportShowRunReviewIssues: vi.fn(),
-  useShowRunReviewIssuesQuery: vi.fn(() => ({
+  // Explicit generic (not inferred) so `data: undefined` — the shape a
+  // failed query resolves to — type-checks on later `mockReturnValueOnce`
+  // calls, not just the populated shape this default returns.
+  useShowRunReviewIssuesQuery: vi.fn<() => IssuesQueryMockResult>(() => ({
     data: {
-      data: [] as Array<{ id: string; title: string }>,
+      data: [],
       meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
     },
     isFetching: false,
