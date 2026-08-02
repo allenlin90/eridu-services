@@ -3,6 +3,7 @@ import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 
 import { ShowDetailHeader } from '@/features/studio-shows/components/show-detail-header';
+import { SHOW_ISSUES_DEFAULT_PAGE_SIZE } from '@/features/studio-shows/config/show-issue-search-schema';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
 import { useStudioAccess } from '@/lib/hooks/use-studio-access';
 
@@ -115,7 +116,7 @@ function StudioShowDetailLayout() {
             <Link
               to="/studios/$studioId/shows/$showId/issues"
               params={{ studioId, showId }}
-              search={{ page: 1, limit: 20 }}
+              search={{ page: 1, limit: SHOW_ISSUES_DEFAULT_PAGE_SIZE }}
               className={TAB_LINK_CLASS}
               activeProps={{ className: `${TAB_LINK_CLASS} ${TAB_LINK_ACTIVE_CLASS}` }}
             >
