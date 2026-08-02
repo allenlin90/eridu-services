@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { MAX_PLATFORM_VIOLATIONS_PER_FIELD } from '@eridu/api-types/task-management';
+
 import type { ShowIssueReconciliationSignal } from './show-issue-reconciliation.types';
 import { normalizeViolationSeverity } from './show-issue-severity-normalization';
 
@@ -14,18 +16,23 @@ const SOURCE_CORRECTED_RESOLUTION_NOTE = 'Automatically resolved: underlying sou
 
 /**
  * `applySignals` processes each signal with a sequential lookup + mutation +
- * audit write, inside the fact-extraction transaction. A `show_platform_violation`
- * multiselect submission emits one `platform_violation_superseded` signal per
- * previously-active row plus one `platform_violation_opened` signal per newly
- * selected row, and the multiselect option count is template-configured, not
- * backend-bounded. This cap turns an oversized submission into a fast, clear
- * `extractor_error` (the whole fact write, extraction audit, and any partial
- * issue writes roll back together — see `FactExtractionProcessor.applyAndAudit`)
- * instead of letting one task submission run an unbounded number of sequential
- * statements inside an open transaction. Real violation catalogs are single-
- * digit to low-tens of types; this is generous headroom, not a realistic ceiling.
+ * audit write, inside the fact-extraction transaction. `TaskValidationService`
+ * already rejects a `show_platform_violation` submission selecting more than
+ * `MAX_PLATFORM_VIOLATIONS_PER_FIELD` entries BEFORE the task can transition
+ * to COMPLETED (`task-content-validator.ts`), so extraction never legitimately
+ * sees more violations than that. A full N-to-N replacement of the selected
+ * set still emits N `platform_violation_superseded` + N `platform_violation_opened`
+ * signals in one call, so this defensive cap is set to twice the content-
+ * validation limit — comfortably above any submission the content gate
+ * already accepted, while still refusing to run an unbounded number of
+ * sequential statements inside an open transaction if the two gates ever
+ * drift out of sync (e.g. a future content-validation bypass or a bug in the
+ * gate itself). On trip, this throws before any DB work; the pipeline
+ * classifies it as `extractor_error` and the whole transaction rolls back
+ * (fact write, extraction audit, and any partial issue writes together —
+ * see `FactExtractionProcessor.applyAndAudit`).
  */
-const MAX_SIGNALS_PER_CALL = 25;
+const MAX_SIGNALS_PER_CALL = MAX_PLATFORM_VIOLATIONS_PER_FIELD * 2;
 
 /**
  * Automated attendance / platform-violation issue reconciliation. Called

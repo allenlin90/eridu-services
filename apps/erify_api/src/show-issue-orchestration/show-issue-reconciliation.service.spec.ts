@@ -1,3 +1,5 @@
+import { MAX_PLATFORM_VIOLATIONS_PER_FIELD } from '@eridu/api-types/task-management';
+
 import { ShowIssueReconciliationService } from './show-issue-reconciliation.service';
 import { normalizeViolationSeverity } from './show-issue-severity-normalization';
 
@@ -496,34 +498,43 @@ describe('showIssueReconciliationService', () => {
   });
 
   describe('applySignals cap', () => {
-    it('rejects a call with more signals than the cap before touching the DB', async () => {
+    // MAX_PLATFORM_VIOLATIONS_PER_FIELD (N) is the content-validation limit
+    // enforced before a task can complete (task-content-validator.ts). The
+    // defensive cap here is 2N so a full N-to-N violation-set replacement —
+    // N superseded + N created signals in one call, the worst case a
+    // content-valid submission can produce — always fits with room to spare.
+    const n = MAX_PLATFORM_VIOLATIONS_PER_FIELD;
+
+    it(`rejects a call with more than ${2 * n} signals before touching the DB`, async () => {
       const showIssueService = buildShowIssueService();
       const auditService = buildAuditService();
       const service = new ShowIssueReconciliationService(
         showIssueService as unknown as ShowIssueService,
         auditService as unknown as AuditService,
       );
-      const signals = Array.from({ length: 26 }, (_, i) => ({
+      const signals = Array.from({ length: 2 * n + 1 }, (_, i) => ({
         kind: 'platform_violation_superseded' as const,
         showPlatformViolationId: BigInt(i),
         violationUid: `spv_${i}`,
       }));
 
-      await expect(service.applySignals(signals, showId)).rejects.toThrow(/26 signals/);
+      await expect(service.applySignals(signals, showId)).rejects.toThrow(
+        new RegExp(`${2 * n + 1} signals`),
+      );
 
       expect(showIssueService.findActiveAutomatedIssueByShowPlatformViolation).not.toHaveBeenCalled();
       expect(showIssueService.resolveShowIssue).not.toHaveBeenCalled();
       expect(auditService.create).not.toHaveBeenCalled();
     });
 
-    it('allows a call exactly at the cap', async () => {
+    it(`allows a call exactly at the cap (${2 * n} signals)`, async () => {
       const showIssueService = buildShowIssueService();
       const auditService = buildAuditService();
       const service = new ShowIssueReconciliationService(
         showIssueService as unknown as ShowIssueService,
         auditService as unknown as AuditService,
       );
-      const signals = Array.from({ length: 25 }, (_, i) => ({
+      const signals = Array.from({ length: 2 * n }, (_, i) => ({
         kind: 'platform_violation_superseded' as const,
         showPlatformViolationId: BigInt(i),
         violationUid: `spv_${i}`,
@@ -531,7 +542,54 @@ describe('showIssueReconciliationService', () => {
 
       await expect(service.applySignals(signals, showId)).resolves.toBeUndefined();
 
-      expect(showIssueService.findActiveAutomatedIssueByShowPlatformViolation).toHaveBeenCalledTimes(25);
+      expect(showIssueService.findActiveAutomatedIssueByShowPlatformViolation).toHaveBeenCalledTimes(2 * n);
+    });
+
+    it(`processes a full N-to-N (${n}-to-${n}) violation replacement atomically in one call`, async () => {
+      const showIssueService = buildShowIssueService();
+      const auditService = buildAuditService();
+      // Every "opened" signal targets a fresh violation id (no existing
+      // issue); every "superseded" signal targets a previously-active one
+      // (an existing OPEN issue) — the worst-case shape a single N-to-N
+      // multiselect replacement produces per the design doc's reconciliation
+      // rules.
+      showIssueService.findActiveAutomatedIssueByShowPlatformViolation.mockImplementation(
+        async (violationId: bigint) => (violationId < BigInt(n)
+          ? buildIssue({
+              category: 'PLATFORM_VIOLATION',
+              showCreatorId: null,
+              showPlatformViolationId: violationId,
+              status: 'OPEN',
+              version: 1,
+            })
+          : null),
+      );
+      showIssueService.resolveShowIssue.mockResolvedValue(
+        buildIssue({ status: 'RESOLVED', resolutionCode: 'SOURCE_CORRECTED' }),
+      );
+      showIssueService.createShowIssue.mockResolvedValue(buildIssue({ status: 'OPEN' }));
+      const service = new ShowIssueReconciliationService(
+        showIssueService as unknown as ShowIssueService,
+        auditService as unknown as AuditService,
+      );
+      const superseded = Array.from({ length: n }, (_, i) => ({
+        kind: 'platform_violation_superseded' as const,
+        showPlatformViolationId: BigInt(i),
+        violationUid: `spv_old_${i}`,
+      }));
+      const opened = Array.from({ length: n }, (_, i) => ({
+        kind: 'platform_violation_opened' as const,
+        showPlatformViolationId: BigInt(n + i),
+        violationUid: `spv_new_${i}`,
+        showPlatformId: 1n,
+        severity: 'WARNING',
+        reason: 'Replacement violation.',
+      }));
+
+      await expect(service.applySignals([...superseded, ...opened], showId)).resolves.toBeUndefined();
+
+      expect(showIssueService.resolveShowIssue).toHaveBeenCalledTimes(n);
+      expect(showIssueService.createShowIssue).toHaveBeenCalledTimes(n);
     });
   });
 

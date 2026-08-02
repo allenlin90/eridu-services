@@ -259,10 +259,13 @@ Platform violation severity is currently an uppercase free-form string with `WAR
 
 If issue reconciliation fails, the fact write and extraction audit roll back together and the extraction result reports an error through the existing task-submission behavior. A fact must not commit while its required automated issue is missing. Manager edits to an already-completed task already re-run extraction and provide the immediate correction path; a general extraction retry queue remains outside item 9.
 
+**Bounding `show_platform_violation` cardinality — two gates, not one.** A `show_platform_violation` multiselect submission can replace an existing selection wholesale, emitting one `platform_violation_superseded` signal per previously-active row plus one `platform_violation_opened` signal per newly selected row. The primary gate is at content-validation time, before the task can transition to `COMPLETED`: `task-content-validator.ts` rejects a `show_platform_violation` field selecting more than `MAX_PLATFORM_VIOLATIONS_PER_FIELD` (`N = 20`, a documented domain estimate — see the constant's doc comment) entries, in `TaskService.updateTaskContentAndStatusCore` / `TaskValidationService.validateContent`, so an oversized selection never reaches extraction and never leaves a task stuck `COMPLETED` with a failed reconciliation. `ShowIssueReconciliationService`'s own `MAX_SIGNALS_PER_CALL` (`2N = 40`) is a second, defensive backstop sized to comfortably fit the worst case a content-valid submission can produce — a full N-to-N replacement (N superseded + N created) — so it only ever trips if the two gates drift out of sync, not on any submission the content gate already accepted.
+
 ```mermaid
 sequenceDiagram
     autonumber
     participant OP as Operator
+    participant VAL as TaskValidationService
     participant ORC as TaskOrchestrationService
     participant SVC as FactExtractionService
     participant PROC as FactExtractionProcessor
@@ -272,35 +275,40 @@ sequenceDiagram
     participant ISSUE as ShowIssueService
     participant AUD as AuditService
 
-    OP->>ORC: submit task content (-> COMPLETED)
-    ORC->>SVC: extractFromTask(taskUid)
-    SVC->>PROC: applyAndAudit(extractor, fact, ctx)
-    activate PROC
-    Note over PROC: single @Transactional() scope
-    PROC->>EXT: apply(fact, ctx)
-    EXT->>MODEL: updateActuals / replaceForTaskField
-    MODEL-->>EXT: written
-    EXT-->>PROC: { kind: 'write', signals: [...] }
-    PROC->>AUD: create(extraction audit)
-    AUD-->>PROC: auditUid
-    PROC->>REC: applySignals(signals, showId)
+    OP->>VAL: submit task content (-> COMPLETED)
+    alt show_platform_violation selects > N (=20) entries
+        VAL-->>OP: reject — TaskValidationError<br/>(task stays out of COMPLETED)
+    else content valid
+        VAL-->>ORC: content accepted
+        ORC->>SVC: extractFromTask(taskUid)
+        SVC->>PROC: applyAndAudit(extractor, fact, ctx)
+        activate PROC
+        Note over PROC: single @Transactional() scope
+        PROC->>EXT: apply(fact, ctx)
+        EXT->>MODEL: updateActuals / replaceForTaskField
+        MODEL-->>EXT: written
+        EXT-->>PROC: { kind: 'write', signals: [...] }
+        PROC->>AUD: create(extraction audit)
+        AUD-->>PROC: auditUid
+        PROC->>REC: applySignals(signals, showId)
 
-    alt signals.length > 25 (cap)
-        REC-->>PROC: throw
-        Note over PROC,MODEL: whole transaction rolls back —<br/>fact write, extraction audit, and any<br/>partial issue writes all undone
-        PROC-->>SVC: error (classified extractor_error)
-    else within cap
-        loop each signal
-            REC->>ISSUE: findActiveAutomatedIssueBy...
-            ISSUE-->>REC: existing issue or null
-            REC->>ISSUE: createShowIssue / resolveShowIssue /<br/>reopenShowIssue / updateShowIssueFields
-            ISSUE-->>REC: updated ShowIssue
-            REC->>AUD: create(SHOW_ISSUE audit)
+        alt signals.length > 2N (=40) — defensive backstop only
+            REC-->>PROC: throw
+            Note over PROC,MODEL: whole transaction rolls back —<br/>fact write, extraction audit, and any<br/>partial issue writes all undone
+            PROC-->>SVC: error (classified extractor_error)
+        else within cap (the only reachable path for content-valid input)
+            loop each signal
+                REC->>ISSUE: findActiveAutomatedIssueBy...
+                ISSUE-->>REC: existing issue or null
+                REC->>ISSUE: createShowIssue / resolveShowIssue /<br/>reopenShowIssue / updateShowIssueFields
+                ISSUE-->>REC: updated ShowIssue
+                REC->>AUD: create(SHOW_ISSUE audit)
+            end
+            REC-->>PROC: void
+            deactivate PROC
+            PROC-->>SVC: { decision, auditUid }
+            SVC-->>ORC: outcome written
         end
-        REC-->>PROC: void
-        deactivate PROC
-        PROC-->>SVC: { decision, auditUid }
-        SVC-->>ORC: outcome written
     end
 ```
 
