@@ -93,9 +93,9 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Manager performance correction** (Phase 5): `POST /studios/:studioId/shows/:id/platforms/:showPlatformUid/correct-performance` (ADMIN/MANAGER). Sets `actuals_source` to MANAGER for each corrected metric — the highest extraction priority — and creates an `OVERRIDE` audit record with a required business reason. The extraction pipeline enforces MANAGER priority at both read time and write time (WHERE predicate), so a correction is not overwritten by a subsequent extraction run. See [show-performance-analytics.md](../../../docs/features/show-performance-analytics.md#performance-correction-phase-5).
 
-**Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`.
+**Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`, `/studios/:studioId/shows/:showId/issues` (manual issue tracking — item 9 step 3).
 
-**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 9 and 20.
+**Gap (Phase 5)**: No live control dashboard. The manual show-issue workflow and its Issues tab ship in item 9 steps 1–3, but automated reconciliation (item 9 step 4) is not built yet: fact extraction still writes platform violations and attendance-missing flags as silent data with no issue record — a manager can now track a blocker manually once they notice it, but nothing yet opens the issue for them automatically. See `PHASE_5.md` items 9 and 20.
 
 ### Show issue ownership contract (Phase 5 item 9)
 
@@ -223,7 +223,8 @@ Do not duplicate guidance from these skills. Reference them for their owned doma
 | Surface | Key files |
 |---|---|
 | Show list + CRUD | `apps/erify_studios/src/routes/studios/$studioId/shows/`, `features/studio-shows/` |
-| Show detail tabs | `apps/erify_studios/src/routes/studios/$studioId/shows/$showId/` (details, actuals, performance, compensation, tasks) |
+| Show detail tabs | `apps/erify_studios/src/routes/studios/$studioId/shows/$showId/` (details, actuals, performance, compensation, tasks, issues) |
+| Show issues | `apps/erify_studios/src/routes/studios/$studioId/shows/$showId/issues.tsx`, `features/studio-shows/{api,components,config}/show-issue*` |
 | Task setup | `apps/erify_studios/src/routes/studios/$studioId/task-setup/`, `features/studio-shows/hooks/use-task-setup-page-controller.ts` |
 | Task review | `apps/erify_studios/src/routes/studios/$studioId/task-review/` |
 | Show run review | `apps/erify_studios/src/routes/studios/$studioId/show-run-review.tsx`, `features/show-run-review/` |

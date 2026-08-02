@@ -7,7 +7,7 @@ import {
 
 import { Button } from '@eridu/ui';
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50, 100];
+export const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50, 100];
 
 type DataTablePaginationProps = {
   pagination: {

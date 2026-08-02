@@ -6,5 +6,5 @@ export {
   resolveUpdater,
 } from './data-table-adapters';
 export { DataTable, DataTableCore } from './data-table-core';
-export { DataTablePagination } from './data-table-pagination';
+export { DataTablePagination, DEFAULT_PAGE_SIZE_OPTIONS } from './data-table-pagination';
 export { DataTableToolbar, type SearchableColumn } from './data-table-toolbar';
