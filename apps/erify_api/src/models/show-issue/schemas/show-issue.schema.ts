@@ -29,7 +29,7 @@ export type ShowIssueRecord = ShowIssue;
  * fixed — a dedicated `include` parameter is not exposed to callers.
  */
 export const showIssueDetailInclude = {
-  show: { select: { uid: true } },
+  show: { select: { uid: true, name: true } },
   owner: { select: { uid: true, name: true } },
   createdBy: { select: { uid: true, name: true } },
   escalatedBy: { select: { uid: true, name: true } },
@@ -89,6 +89,10 @@ export type ListShowIssuesFilters = {
   showUid?: string;
   ownerUid?: string;
   status?: string;
+  // Additive multi-value status filter, used by Show Run Review to default to
+  // "unresolved" (OPEN + IN_PROGRESS) without changing `status`'s existing
+  // exact-match behavior — see ShowIssueRepository.buildWhere.
+  statusIn?: string[];
   severity?: string;
   category?: string;
   origin?: string;
@@ -210,6 +214,7 @@ export function toShowIssueApiResponse(issue: ShowIssueWithRelations) {
   return showIssueApiResponseSchema.parse({
     id: issue.uid,
     show_id: issue.show.uid,
+    show_name: issue.show.name,
     category: issue.category,
     origin: issue.origin,
     severity: issue.severity,

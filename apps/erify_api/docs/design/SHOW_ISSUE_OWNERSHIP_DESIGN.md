@@ -1,6 +1,6 @@
 # Show-Level Issue Ownership Design
 
-> **Status**: Design locked; Delivery Sequence steps 1–4 shipped (backend manual workflow, show-detail Issues tab, automated attendance/platform-violation reconciliation); step 5 (Show Run Review) not started
+> **Status**: Design locked; Delivery Sequence steps 1–5 shipped (backend manual workflow, show-detail Issues tab, automated attendance/platform-violation reconciliation, Show Run Review summary counts and paginated Issues sub-resource). Feature complete.
 > **Roadmap**: [Phase 5 item 9](../../../../docs/roadmap/PHASE_5.md#9-show-level-issue-ownership)
 
 ## Purpose

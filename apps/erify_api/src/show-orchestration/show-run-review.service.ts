@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
+import type { ShowIssueApiResponse } from '@eridu/api-types/show-issues';
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 
 import { ShowService } from '@/models/show/show.service';
+import { toShowIssueApiResponse } from '@/models/show-issue/schemas/show-issue.schema';
+import { ShowIssueService } from '@/models/show-issue/show-issue.service';
 import { StudioService } from '@/models/studio/studio.service';
 
 type ReviewShow = Awaited<ReturnType<ShowService['getShowsForReview']>>[number];
@@ -18,6 +21,7 @@ export class ShowRunReviewService {
   constructor(
     private readonly showService: ShowService,
     private readonly studioService: StudioService,
+    private readonly showIssueService: ShowIssueService,
   ) {}
 
   /**
@@ -45,6 +49,20 @@ export class ShowRunReviewService {
     const lateCreatorsCount = creatorExceptions.filter((exception) => exception.status === 'LATE').length;
     const missingCreatorsCount = creatorExceptions.filter((exception) => exception.status === 'MISSING').length;
 
+    // Unresolved issue counts run through the same repository `where` builder
+    // as `getShowRunReviewIssues` (via `ShowIssueService`/`ShowIssueRepository`),
+    // so this badge and the paginated sub-resource's default-filtered total
+    // cannot drift — see docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md.
+    const unresolvedBySeverity = await this.showIssueService.getUnresolvedIssueSeverityCounts({
+      studioUid,
+      dateFrom: start,
+      dateTo: end,
+    });
+    const unresolvedIssueCount = unresolvedBySeverity.LOW
+      + unresolvedBySeverity.MEDIUM
+      + unresolvedBySeverity.HIGH
+      + unresolvedBySeverity.CRITICAL;
+
     return {
       date_from: query.date_from,
       date_to: query.date_to,
@@ -70,7 +88,58 @@ export class ShowRunReviewService {
         incomplete_phase_checks_count: incompleteTasksList.length,
         incomplete_tasks: [],
       },
+      issues: {
+        unresolved_count: unresolvedIssueCount,
+        unresolved_by_severity: {
+          low: unresolvedBySeverity.LOW,
+          medium: unresolvedBySeverity.MEDIUM,
+          high: unresolvedBySeverity.HIGH,
+          critical: unresolvedBySeverity.CRITICAL,
+        },
+      },
     };
+  }
+
+  /**
+   * Lazy paginated issues sub-resource. Unlike the four sibling
+   * `getShowRunReviewX` methods, this does NOT call `loadReviewShows` — the
+   * design doc requires issue pagination/filtering/counting to execute in
+   * PostgreSQL (`take`/`skip`/`count`) via the canonical
+   * `ShowIssueRepository.buildWhere` + `findPaginated`, not an in-memory
+   * show-graph slice. Defaults to unresolved (OPEN + IN_PROGRESS) when the
+   * caller passes no explicit `status`, which is what makes the summary's
+   * `issues.unresolved_count` and this method's default-filtered `total`
+   * match under the same filters (Acceptance Scenarios).
+   */
+  async getShowRunReviewIssues(
+    studioUid: string,
+    query: {
+      date_from: string;
+      date_to: string;
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      severity?: string;
+    },
+  ): Promise<{ items: ShowIssueApiResponse[]; total: number }> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+
+    const { data, total } = await this.showIssueService.listShowIssues(
+      {
+        studioUid,
+        dateFrom: new Date(query.date_from),
+        dateTo: new Date(query.date_to),
+        search: query.search,
+        severity: query.severity,
+        status: query.status,
+        statusIn: query.status ? undefined : ['OPEN', 'IN_PROGRESS'],
+      },
+      { skip: (page - 1) * limit, take: limit },
+    );
+
+    return { items: data.map(toShowIssueApiResponse), total };
   }
 
   async getShowRunReviewCreators(

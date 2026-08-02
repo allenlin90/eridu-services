@@ -15,6 +15,7 @@ function createShowIssueDelegateMock() {
     findMany: jest.fn(),
     count: jest.fn(),
     update: jest.fn(),
+    groupBy: jest.fn(),
   };
 }
 
@@ -135,6 +136,46 @@ describe('showIssueRepository', () => {
         deletedAt: null,
         show: { studio: { uid: 'std_1' }, deletedAt: null },
       });
+    });
+
+    it('applies statusIn as an "in" filter when status is not also provided', () => {
+      const where = repository.buildWhere({ studioUid: 'std_1', statusIn: ['OPEN', 'IN_PROGRESS'] });
+      expect(where.status).toEqual({ in: ['OPEN', 'IN_PROGRESS'] });
+    });
+
+    it('lets the exact-match status win when both status and statusIn are provided', () => {
+      const where = repository.buildWhere({ studioUid: 'std_1', statusIn: ['OPEN', 'IN_PROGRESS'], status: 'RESOLVED' });
+      expect(where.status).toBe('RESOLVED');
+    });
+  });
+
+  describe('countUnresolvedBySeverity', () => {
+    it('backfills every severity to 0 and merges groupBy results, scoped to OPEN/IN_PROGRESS', async () => {
+      delegate.groupBy.mockResolvedValue([
+        { severity: 'HIGH', _count: 3 },
+        { severity: 'CRITICAL', _count: 1 },
+      ]);
+
+      const counts = await repository.countUnresolvedBySeverity({ studioUid: 'std_1' });
+
+      expect(counts).toEqual({ LOW: 0, MEDIUM: 0, HIGH: 3, CRITICAL: 1 });
+      expect(delegate.groupBy).toHaveBeenCalledWith({
+        by: ['severity'],
+        where: {
+          deletedAt: null,
+          show: { studio: { uid: 'std_1' }, deletedAt: null },
+          status: { in: ['OPEN', 'IN_PROGRESS'] },
+        },
+        _count: true,
+      });
+    });
+
+    it('returns all-zero counts when nothing matches', async () => {
+      delegate.groupBy.mockResolvedValue([]);
+
+      const counts = await repository.countUnresolvedBySeverity({ studioUid: 'std_1' });
+
+      expect(counts).toEqual({ LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 });
     });
   });
 

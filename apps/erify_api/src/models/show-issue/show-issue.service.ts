@@ -105,6 +105,17 @@ export class ShowIssueService extends BaseModelService {
   }
 
   /**
+   * Unresolved (OPEN + IN_PROGRESS) issue counts by severity, for the Show
+   * Run Review summary badge. Thin wrapper — see
+   * `ShowIssueRepository.countUnresolvedBySeverity` for the aggregation.
+   */
+  async getUnresolvedIssueSeverityCounts(
+    filters: ListShowIssuesFilters,
+  ): ReturnType<ShowIssueRepository['countUnresolvedBySeverity']> {
+    return this.showIssueRepository.countUnresolvedBySeverity(filters);
+  }
+
+  /**
    * Generic field edit. `payload.status` is accepted only as the "start"
    * transition (`IN_PROGRESS`) — see `updateShowIssueInputSchema`'s comment
    * for why resolve/reopen are separate commands.

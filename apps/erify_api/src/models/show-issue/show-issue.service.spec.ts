@@ -50,7 +50,7 @@ function createShowIssue(overrides: Partial<ShowIssueWithRelations> = {}): ShowI
 describe('showIssueService', () => {
   let service: ShowIssueService;
   let repository: jest.Mocked<
-    Pick<ShowIssueRepository, 'create' | 'findByUid' | 'findByUidAndStudio' | 'findPaginated' | 'updateWithVersionCheck'>
+    Pick<ShowIssueRepository, 'create' | 'findByUid' | 'findByUidAndStudio' | 'findPaginated' | 'updateWithVersionCheck' | 'countUnresolvedBySeverity'>
   >;
   let uidGenerator: jest.Mocked<Pick<UidGeneratorService, 'generateBrandedId'>>;
 
@@ -61,6 +61,7 @@ describe('showIssueService', () => {
       findByUidAndStudio: jest.fn(),
       findPaginated: jest.fn(),
       updateWithVersionCheck: jest.fn(),
+      countUnresolvedBySeverity: jest.fn(),
     };
     uidGenerator = { generateBrandedId: jest.fn().mockReturnValue('issue_test123') };
 
@@ -303,6 +304,18 @@ describe('showIssueService', () => {
       await expect(service.reopenShowIssue(current, current.version)).rejects.toThrow(
         'Only a resolved issue can be reopened.',
       );
+    });
+  });
+
+  describe('getUnresolvedIssueSeverityCounts', () => {
+    it('delegates to the repository aggregation', async () => {
+      const counts = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 0 };
+      repository.countUnresolvedBySeverity.mockResolvedValue(counts);
+
+      await expect(
+        service.getUnresolvedIssueSeverityCounts({ studioUid: 'std_1' }),
+      ).resolves.toBe(counts);
+      expect(repository.countUnresolvedBySeverity).toHaveBeenCalledWith({ studioUid: 'std_1' });
     });
   });
 

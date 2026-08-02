@@ -1,3 +1,4 @@
+import { showIssueApiResponseSchema } from '@eridu/api-types/show-issues';
 import {
   showRunReviewCreatorExceptionSchema,
   showRunReviewIncompleteTaskSchema,
@@ -10,12 +11,13 @@ import { createPaginatedResponseSchema } from '@/lib/pagination/pagination.schem
 /**
  * Contract characterization for the paginated run-review sub-resources.
  *
- * The four `run-review/*` endpoints declare `@ZodPaginatedResponse(rowSchema)`,
- * which applies `ZodSerializerDto` and therefore validates + strips the response
- * at runtime. These tests pin that each row schema accepts the exact shape its
- * orchestration derive-method emits — so the serializer drops nothing the
- * frontend relies on. Representative rows mirror `deriveCreatorExceptions`,
- * `deriveViolations`, `deriveIncompleteTasks`, and `buildShowsRangeRows`.
+ * These endpoints declare `@ZodPaginatedResponse(rowSchema)`, which applies
+ * `ZodSerializerDto` and therefore validates + strips the response at
+ * runtime. These tests pin that each row schema accepts the exact shape its
+ * orchestration method emits — so the serializer drops nothing the frontend
+ * relies on. Representative rows mirror `deriveCreatorExceptions`,
+ * `deriveViolations`, `deriveIncompleteTasks`, `buildShowsRangeRows`, and
+ * (for issues) `toShowIssueApiResponse`.
  */
 
 const meta = {
@@ -86,6 +88,36 @@ describe('run-review paginated response contracts', () => {
       shows_range: 'Shows scheduled within range: 3 scheduled',
       actuals_completeness: '2 started, 1 not started · 1 late (30m lost)',
       status: 'MISSING STARTS',
+    });
+  });
+
+  it('issues: keeps every show-issue field (the canonical response shape, reused verbatim)', () => {
+    expectRoundTrip(showIssueApiResponseSchema, {
+      id: 'issue_abc',
+      show_id: 'show_abc',
+      show_name: 'Morning Show',
+      category: 'EQUIPMENT',
+      origin: 'MANUAL',
+      severity: 'HIGH',
+      status: 'OPEN',
+      title: 'Broken mic',
+      evidence: null,
+      owner: null,
+      due_at: null,
+      created_by: { uid: 'user_abc', name: 'Manager' },
+      escalation_level: 0,
+      escalated_at: null,
+      escalated_by: null,
+      escalation_note: null,
+      resolved_at: null,
+      resolved_by: null,
+      resolution_code: null,
+      resolution_note: null,
+      show_creator_id: null,
+      show_platform_violation_id: null,
+      version: 1,
+      created_at: '2026-06-01T09:00:00.000Z',
+      updated_at: '2026-06-01T09:00:00.000Z',
     });
   });
 });
