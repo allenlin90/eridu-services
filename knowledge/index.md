@@ -7,6 +7,28 @@ okf_version: "0.2"
 This directory contains canonical Open Knowledge Format (OKF v0.2) bundles for `eridu-services`.
 Factual domain concepts, architecture rules, technology standards, and system lifecycle references live here.
 
+## Knowledge Architecture
+
+```mermaid
+graph TD
+    Root["knowledge/ (OKF v0.2 Base)"]
+
+    Root --> Eng["engineering/ (Technology Standards)"]
+    Root --> Arch["architecture/ (Design & Layer Doctrine)"]
+    Root --> Dom["domain/ (Business Domain Models)"]
+
+    Eng --> FE["frontend-tech-stack.md"]
+    Eng --> PWA["pwa-best-practices.md"]
+    Eng --> Table["table-view-pattern.md"]
+
+    Arch --> Pattern["design-patterns.md"]
+    Arch --> Service["service-pattern-nestjs.md"]
+    Arch --> Controller["backend-controller-pattern-nestjs.md"]
+    Arch --> DB["database-patterns.md"]
+
+    Dom --> Show["show-production-lifecycle.md"]
+```
+
 ## Knowledge Tree
 
 - [`engineering/frontend-tech-stack`](engineering/frontend-tech-stack.md) — Technical stack, Vite configuration, React 19, and Tailwind v4 standards.

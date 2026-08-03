@@ -18,7 +18,69 @@ This document serves as the repository PRD and delivery roadmap for consolidatin
 
 ---
 
-## 2. Compatibility Invariants
+## 2. Architecture & Knowledge Flow Diagrams
+
+### System Architecture & Thin Skill Routing
+
+```mermaid
+flowchart TD
+    subgraph ClientLayer ["Client Agents & Entrypoints"]
+        Claude["Claude Code (.claude/CLAUDE.md)"]
+        Codex["OpenAI Codex (.agents/skills/)"]
+        OpenCode["OpenCode (opencode.json)"]
+    end
+
+    subgraph RegistryLayer ["Registry & Governance"]
+        Taxonomy[".agents/README.md"]
+        Registry[".agents/agent-skill-registry.yaml"]
+        Validator["scripts/validate-agent-skills.mjs"]
+    end
+
+    subgraph SkillLayer ["Thin Skill Procedures (.agents/skills/)"]
+        ThinSkill1["frontend-tech-stack/SKILL.md"]
+        ThinSkill2["design-patterns/SKILL.md"]
+        ThinSkill3["show-production-lifecycle/SKILL.md"]
+    end
+
+    subgraph KnowledgeLayer ["Canonical OKF v0.2 Knowledge (knowledge/)"]
+        EngBundle["knowledge/engineering/*.md"]
+        ArchBundle["knowledge/architecture/*.md"]
+        DomainBundle["knowledge/domain/*.md"]
+    end
+
+    ClientLayer --> RegistryLayer
+    RegistryLayer --> SkillLayer
+    ThinSkill1 -->|dynamic OKF reference| EngBundle
+    ThinSkill2 -->|dynamic OKF reference| ArchBundle
+    ThinSkill3 -->|dynamic OKF reference| DomainBundle
+```
+
+### Catalog Token Optimization & Policy Gate
+
+```mermaid
+flowchart LR
+    subgraph RawCatalog ["Original Catalog (94+ Skills)"]
+        RawPrompt["Global Implicit Prompt (>9.0KB)"]
+    end
+
+    subgraph PolicyGate ["OpenAI Policy Gate (agents/openai.yaml)"]
+        CheckImplicit{"allow_implicit_invocation?"}
+    end
+
+    subgraph FilteredCatalog ["Optimized Routing Catalog"]
+        ImplicitSkills["Core Capability Skills (<50 skills)"]
+        ExplicitSkills["Explicit-Only Skills ($skill / /command)"]
+    end
+
+    RawPrompt --> PolicyGate
+    CheckImplicit -->|true| ImplicitSkills
+    CheckImplicit -->|false| ExplicitSkills
+    ImplicitSkills --> BudgetCheck["Catalog Budget (<8.0KB Verified)"]
+```
+
+---
+
+## 3. Compatibility Invariants
 
 - **Public Skill Entrypoints Preserved**: Public skill IDs (`pr-ready`, `knowledge-sync`, `repository-health`, `upload-openwebui-skill`, `graphify`, `caveman`, `mattpocock`, `karpathy`, etc.) must remain discoverable and invocable across Claude Code, Codex, and OpenCode.
 - **Thin Bridge Pattern**: When static reference material is moved to `knowledge/`, thin procedural bridges remain in `.agents/skills/<name>/SKILL.md`.
@@ -26,7 +88,7 @@ This document serves as the repository PRD and delivery roadmap for consolidatin
 
 ---
 
-## 3. Scope & Delivery Roadmap Checklist
+## 4. Scope & Delivery Roadmap Checklist
 
 ### Scope 1: Machine-Readable Skill Registry & Validation Tooling
 - [x] **1.1 Skill Registry**: Add `.agents/agent-skill-registry.yaml` mapping all active skills to classification, lifecycle stage, and knowledge sources.
@@ -72,7 +134,7 @@ This document serves as the repository PRD and delivery roadmap for consolidatin
 
 ---
 
-## 4. Verification & Success Criteria
+## 5. Verification & Success Criteria
 
 Every slice and PR must pass:
 1. `pnpm agents:validate` — 100% clean, implicit skills cap < 50.
