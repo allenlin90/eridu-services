@@ -1,19 +1,29 @@
-# PRD: Agentic Tool Enhancement & OKF Consolidation Program
+# Agentic Tool Enhancement & OKF Consolidation Program
 
-**Status**: Active / In-Progress
-**Type**: Product Requirements Document & Delivery Roadmap
+**Status**: Active — 1 of 4 PRs merged
+**Type**: Multi-PR execution tracker for repository tooling
 **Owner**: AI Platform & Agent Systems Engineering
+
+> **Doc-type note.** This is an execution tracker, not a PRD as [`docs/prd/README.md`](./README.md) defines one — it has no user stories, acceptance criteria, or product rules, and it covers repository tooling rather than a user-facing feature. It currently lives in `docs/prd/` for historical reasons. Relocating it to a roadmap tracker is tracked as row 4 below; until then, treat § 4 (PR Roadmap) as the authoritative progress record.
 
 ---
 
-## 1. Overview & Objectives
+## 1. Background & Why
 
-This document serves as the repository PRD and delivery roadmap for consolidating agent skills, migrating static guides into Open Knowledge Format (OKF v0.2) bundles, establishing dynamic skill routing, and standardizing developer/agent tooling across `eridu-services`.
+**Background.** `.agents/skills/` grew to 102 skills that mixed two different kinds of content: *procedures* (what an agent should do) and *knowledge* (what is true about this repo's architecture, domain, and stack). [`.agents/README.md`](../../.agents/README.md) classifies these as separate content classes with separate homes, but the tree predates that taxonomy. Two costs followed:
+
+1. **Routing cost.** Every implicitly invocable skill contributes its `description` to the catalog Codex injects into each session. That catalog was 8,991 characters against a ~8,000-character fallback budget, so Codex could silently shorten or drop entries — degrading routing for skills that were never the problem.
+2. **Retrieval cost.** Durable facts were only reachable by loading a whole procedural skill, and had no lifecycle metadata (`status`, `stale_after`, `sources`), so no agent could tell current doctrine from stale doctrine.
+
+**Why now.** [`docs/engineering/OKF_AGENT_CONTRACT.md`](../engineering/OKF_AGENT_CONTRACT.md) already specifies the strict OKF v0.2 profile this repo targets, and [`AGENT_CONTENT_REORGANIZATION.md`](../engineering/AGENT_CONTENT_REORGANIZATION.md) already names the extraction candidates. The contract existed with nothing conforming to it. This program makes `knowledge/` real and puts the catalog under enforced limits so neither can regress silently.
+
+**Why not just delete skills.** Skill count and catalog characters are different constraints (see § 4.1). Cutting content out of `SKILL.md` bodies saves nothing against the catalog budget — only `allow_implicit_invocation: false` does. Deleting bodies to "save tokens" trades real doctrine for zero benefit.
 
 ### Key Objectives
+
 1. **Reduce Prompt Overhead & Token Waste**: Extract static reference material from `.agents/skills/` into canonical OKF v0.2 knowledge bundles (`knowledge/`), converting skills into thin procedural bridges.
 2. **Cap Implicit Skill Routing (<50)**: Trim the active implicit skill catalog down to `<50` skills (target post-consolidation `<35`), setting `allow_implicit_invocation: false` for explicit-only workflows.
-3. **Enhance Agentic Toolsuite**: Ensure developer & agent tools (`rtk`, `caveman`, `graphify`, `mattpocock`, `karpathy`) are intuitive, sharable, and documented across all supported clients.
+3. **Enhance Agentic Toolsuite**: Ensure developer & agent tools (`rtk`, `caveman`, `graphify`, `mattpocock`) are intuitive, sharable, and documented across all supported clients.
 4. **100% Cross-Client Compatibility**: Maintain full functionality across **Claude Code**, **Codex**, and **OpenCode with VSCode** without breaking public entrypoints.
 
 ---
@@ -94,7 +104,34 @@ The character budget and the skill-count cap are **two different constraints**. 
 
 ---
 
-## 4. Scope & Delivery Roadmap Checklist
+## 4. PR Roadmap
+
+Progress record for this program. **Every PR in this program states its row number and the remaining count in its description** (see [`pr-review.md`](../../.agents/workflows/pr-review.md) § PR description check).
+
+| # | PR | Scopes | Depends on | Status |
+| --- | --- | --- | --- | --- |
+| 1 | Skill registry, validator enforcement, OKF bundle + doctrine extraction, toolsuite docs | 1, 2.1–2.3, 3, 4.1 | — | ✅ Done ([#367](https://github.com/allenlin90/eridu-services/pull/367)) |
+| 2 | Implicit-catalog triage — decide which of the 69 implicit skills become explicit-only, apply, lower the ceiling | 2.4 (part) | 1 | ⬜ Not started — **needs a decision pass first** |
+| 3 | Skill consolidation — merge `admin-list-pattern`/`studio-list-pattern`, fold `solid-principles` into `code-quality`, lower the ceiling again | 2.4 (rest) | 2 | ⬜ Not started |
+| 4 | Final reconciliation — inventory counts, relocate this tracker out of `docs/prd/`, cross-client verification on Claude Code / Codex / OpenCode | 4.2 | 2, 3 | ⬜ Not started |
+
+**Remaining: 3 of 4 PRs.**
+
+Row 2 is deliberately not scoped yet. Reaching `<50` implicit skills means moving ~19 more skills to explicit-only, and *which* 19 is a judgment call about routing behavior — not a mechanical edit. That decision belongs in its own pass before any PR opens, and must not be folded into a delivery PR.
+
+### 4.1 Two constraints, tracked separately
+
+| Constraint | Limit | Current | State |
+| --- | --- | --- | --- |
+| Implicit description characters (Codex catalog budget) | 8,000 | **7,526** | ✅ Met (PR 1) |
+| Implicitly invocable skill count | 50 (then 35) | **69** | ❌ Not met — PRs 2–3 |
+| Regression ratchet (`implicit_catalog_ceiling`) | 69 | 69 | 🔒 Enforced — validation fails if exceeded |
+
+These are independent. PR 1 met the character budget and did not move the count. Do not report one as satisfying the other.
+
+---
+
+## 5. Scope & Delivery Roadmap Checklist
 
 ### Scope 1: Machine-Readable Skill Registry & Validation Tooling
 - [x] **1.1 Skill Registry**: Add `.agents/agent-skill-registry.yaml` mapping all active skills to classification, lifecycle stage, and knowledge sources.
@@ -145,9 +182,23 @@ The character budget and the skill-count cap are **two different constraints**. 
 
 ---
 
-## 5. Verification & Success Criteria
+## 6. Value Delivered To `master`
 
-Every slice and PR must pass:
+What each merged PR actually changed for someone working in this repo. Filled in at merge, not at open.
+
+### PR 1 — merged
+
+- **Agents get correct doctrine.** 8 concepts now carry the full rule set with lifecycle metadata, so a skill can no longer hand an agent a four-bullet summary in place of the rule that mattered. Restored content includes the `txHost` lazy-delegate rule, the `createdAt`-ordering trap, the optimistic-lock bump rule, the metadata-vs-audit gate, migration naming policy, and the CDN cache-poisoning section.
+- **Three classes of wrong fact removed** from canonical docs: a show lifecycle with two states that do not exist, a guard API (`RolesGuard`, `@RequirePermission`) that does not exist, and two table components that do not exist. Each replaced with the verified value from source.
+- **Codex catalog fits its budget**: 8,991 → 7,526 characters, 33 skills explicit-only. Codex no longer silently truncates skill entries.
+- **`knowledge/` is machine-checkable.** `pnpm agents:validate` now fails on malformed OKF frontmatter, a missing `type`, an unindexed concept, registry/`openai.yaml` drift, or implicit-catalog growth. Before this, none of those were detectable.
+- **Nothing is orphaned or dangling**: all 12 `references/` files reachable, all cited section numbers resolve, Codex `interface:` metadata intact.
+
+---
+
+## 7. Verification & Success Criteria
+
+Every PR in this program must pass:
 
 1. `pnpm agents:validate` — zero errors. This enforces registry coverage, registry/`openai.yaml` implicit agreement, the `implicit_catalog_ceiling` ratchet, OKF bundle structure, and local link resolution. The `<50` implicit-count target is reported as a warning until Scope 2.4 closes.
 2. `pnpm agents:index` — regenerated; `agents:validate` fails on a stale index.

@@ -42,6 +42,16 @@ If a follow-up touches high-traffic lifecycle code, transactional publish loops,
 
 Speculative seams with no functional consumer belong in ideation unless they remove an immediate, demonstrated coupling.
 
+### 7. Multi-PR Work Has a PR Roadmap
+
+Any goal that will take more than one PR needs a PR roadmap in its owning tracker — a numbered table of PRs with scope, dependencies, and status — before the **second** PR opens. Without it, "how much is left?" has no answer and each PR reads as if it were the whole effort.
+
+The roadmap is what lets every PR description state `PR n of N — k remaining` (see [`pr-review.md`](../../workflows/pr-review.md) § PR description check).
+
+Check the doc type while you are there. A tracker is not a PRD: [`docs/prd/README.md`](../../../docs/prd/README.md) reserves `docs/prd/` for user-facing features with user stories and acceptance criteria, and puts multi-PR execution tracking in `docs/roadmap/PHASE_<n>.md` § PR Roadmap. Repository-tooling or infrastructure work filed as a PRD is the usual reason a PR roadmap is missing — PRDs have no slot for one.
+
+Rows whose scope is a genuine judgment call (which items to cut, which default to flip) stay explicitly unscoped with a note that a decision pass comes first. Do not fold that decision into a delivery PR.
+
 ## How to Run
 
 1. Read the owning PRD or PRDs plus the plan side-by-side; build actor-coverage matrix

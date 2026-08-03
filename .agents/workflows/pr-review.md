@@ -307,8 +307,13 @@ Only once §1–§3 are done is the verdict **ready to merge**.
 
 ## PR description check
 
-- [ ] Title is concise (under 70 characters) and describes the change, not the implementation.
+- [ ] Title is concise (under 70 characters) and describes the change, not the implementation. A title that joins two or more deliverables with commas or `&` is a signal the PR should be split — justify the bundle or split it.
 - [ ] Summary matches what was actually delivered — no references to deleted files or stale paths.
+- [ ] **Background** — what existed before and what problem it caused. A reviewer who has never seen the surface should be able to tell why this work is on someone's plate without opening another document.
+- [ ] **Why now** — the trigger. A shipped feature depends on it, a contract exists with nothing conforming to it, a gate keeps failing, a phase item came due. "It seemed better" is not a reason; if there is no trigger, the PR may not be ready to open.
+- [ ] **Value delivered to `master`** — what is actually true after merge that was not true before, in terms of what someone working in this repo can now do, rely on, or no longer get wrong. Not a file list, not a restatement of the diff. If the honest answer is "nothing yet, this is groundwork," say that — a truthful "no user-visible change, enables PR N+1" is more useful than an inflated claim.
+- [ ] **Scope boundary** — what this PR deliberately does *not* do, and where that work is tracked. Claims of the form "target met" must name which target: state the metric, the limit, and the current value, and never let one satisfied constraint stand in for a different unsatisfied one.
+- [ ] **Progress** — for any PR that is part of a multi-PR effort: its row in the owning tracker (`docs/roadmap/PHASE_<n>.md` § PR Roadmap, or the program tracker), and how many PRs remain. Format: `PR 2 of 4 — 2 remaining`. If the effort has no tracker with a PR roadmap, create one before opening the second PR; two or more PRs against one goal with no roadmap is untraceable by design.
 - [ ] Docs section lists canonical paths (not `design/` paths for promoted docs).
 - [ ] Validation section reflects current pass/fail state for all affected workspaces.
 - [ ] **If the PR touches UI** (Frontend gate or eridu_auth frontend): the PR description embeds in-browser screenshots of the shipped UI states (empty/populated/error/each dialog as relevant) per `.agents/skills/pr-ui-screenshot-review/SKILL.md`. This is required, not optional, for any PR that adds or materially changes rendered UI — evidence only, never committed to the repo. A PR that only tweaks copy, a single style value, or non-visual logic in a UI file may skip this; note the skip reason in the description rather than silently omitting it.
