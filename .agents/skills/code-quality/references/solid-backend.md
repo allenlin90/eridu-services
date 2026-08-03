@@ -242,4 +242,3 @@ Every arrow points toward an **abstraction**, not a **concrete class**.
 - **[Service Patterns](../../service-pattern-nestjs/SKILL.md)**: NestJS service implementation.
 - **[Repository Patterns](../../repository-pattern-nestjs/SKILL.md)**: Data access patterns.
 - **[Backend Controller Patterns](../../backend-controller-pattern-nestjs/SKILL.md)**: Controller conventions.
-- **[Code Quality](../../code-quality/SKILL.md)**: Linting, testing, type safety.

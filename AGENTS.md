@@ -297,8 +297,8 @@ Skills cover these categories:
 - **Backend API** — service, repository, controller, orchestration, authorization, database, testing, performance, logging, security patterns
 - **Frontend** — tech stack, UI components, API layer, state management, testing, error handling, performance, i18n, code quality, table views, PWA, pre-implementation UX mockup validation
 - **Docs platform** — SSR auth, Astro/Starlight, doc layering, information architecture, user-facing docs
-- **Architecture** — shared API types, design patterns, SOLID, domain refactoring, data compatibility, environment config, package extraction
-- **Feature-specific** — admin/studio list patterns, task templates, schedule continuity, shift schedules, show production lifecycle, file uploads, spreadsheets, and more
+- **Architecture** — shared API types, design patterns, domain refactoring, data compatibility, environment config, package extraction
+- **Feature-specific** — list and table surfaces, task templates, schedule continuity, shift schedules, show production lifecycle, file uploads, spreadsheets, and more
 - **Meta and tooling** — agent instruction maintenance, workflow bridges, code quality, doc hygiene, engineering best practices, database CLI, Playwright, knowledge-graph build and query (`graphify`), security, skill creation
 - **AI workspace / platform ops** — Open WebUI + LiteLLM + Better Auth SSO governance, MCP exposure and tool access policy, files under `ai/` and `scripts/ai/`
 

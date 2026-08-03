@@ -4,7 +4,7 @@
 
 This is the migration inventory and execution plan for the entries indexed under `.agents/skills/`. It establishes review and bookkeeping scope; provisional classifications still require focused content review.
 
-**Current count: 102 skills.** The original audit recorded 94; the catalog grew to 102 before the OKF migration began. Dispositions below are now derived from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml), which `pnpm agents:validate` keeps in sync with the skill directories — so this table can no longer silently drift from the tree. Final post-consolidation totals land after the consolidation PRs; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4 PR Roadmap.
+**Current count: 99 skills.** The original audit recorded 94; the catalog grew to 102 before the OKF migration began, and PR 3 consolidated three entries back down to 99. Dispositions below are now derived from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml), which `pnpm agents:validate` keeps in sync with the skill directories — so this table can no longer silently drift from the tree. Final post-consolidation totals land after the consolidation PRs; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4 PR Roadmap.
 
 A content move is complete only when routing, links, validation, and behavior have been verified with Claude Code, Codex, and OpenCode.
 
@@ -93,13 +93,13 @@ rg -o '^    kind: (.+)$' -r '$1' .agents/agent-skill-registry.yaml | sort | uniq
 
 | Disposition | Registry `kind` | Count | Meaning |
 | --- | --- | ---: | --- |
-| Keep as procedural skill | `capability-skill` | 81 | Task-triggered and procedural; still subject to quality review |
+| Keep as procedural skill | `capability-skill` | 78 | Task-triggered and procedural; still subject to quality review |
 | Thin skill plus extracted knowledge | `thin-wrapper` | 8 | Predominantly factual; doctrine moved to `knowledge/`, routing/procedure retained |
 | Workflow wrapper | `workflow-bridge` | 6 | Authoritative orchestration belongs under `.agents/workflows/` |
 | Presentation mode | `presentation-mode` | 7 | Output style only, explicit user trigger — all 7 are `implicit: false` |
-| **Total** | | **102** | Matches the generated index and the skill directories |
+| **Total** | | **99** | Matches the generated index and the skill directories |
 
-Routing split: **66 implicitly invocable**, **36 explicit-only**, ratcheted by `implicit_catalog_ceiling`. Both the "no more than 50" milestone and the "35 or fewer" post-consolidation target are unmet.
+Routing split: **63 implicitly invocable**, **36 explicit-only**, ratcheted by `implicit_catalog_ceiling`. Both the "no more than 50" milestone and the "35 or fewer" post-consolidation target are unmet.
 
 ### How the implicit catalog gets reduced
 
@@ -107,13 +107,41 @@ By **knowledge extraction and consolidation** — not by marking retained capabi
 
 **Extraction relocates facts; it does not by itself remove a catalog entry.** All eight skills whose doctrine moved to [`knowledge/`](../../knowledge/index.md) in PR #367 are still `implicit: true` — the skill remains as a thin procedure. The implicit count decrements only when an entry is **deleted** (extraction leaves no genuine procedure) or **merged** into another.
 
-The following **25 entries are extraction candidates, not removals** — the standalone pattern or technology guides § Target portfolio budgets at 0:
+### Candidate disposition table (PR 3)
 
-`admin-list-pattern`, `api-performance-optimization`, `backend-controller-pattern-nestjs`, `backend-testing-patterns`, `code-quality`, `data-validation`, `database-patterns`, `design-patterns`, `engineering-best-practices-enforcer`, `frontend-api-layer`, `frontend-code-quality`, `frontend-error-handling`, `frontend-i18n`, `frontend-performance`, `frontend-state-management`, `frontend-tech-stack`, `frontend-testing-patterns`, `frontend-ui-components`, `observability-logging`, `pwa-best-practices`, `secure-coding-practices`, `shift-schedule-pattern`, `solid-principles`, `studio-list-pattern`, `table-view-pattern`
+The 25 entries the § Target portfolio budgets at 0 as standalone pattern or technology guides were reviewed one by one against the routing test in [`.agents/README.md`](../../.agents/README.md). Each carries a disposition, and the resulting count is derived from those decisions rather than from the size of the list.
 
-Each still needs the routing test in [`.agents/README.md`](../../.agents/README.md) to separate durable facts (which move to `knowledge/`) from any genuine procedure (which stays as a thin skill and **keeps its catalog entry**). PR #367 kept all eight of its candidates, so a meaningful fraction of this batch will likely stay too.
+| # | Skill | Disposition | Basis |
+| ---: | --- | --- | --- |
+| 1 | `admin-list-pattern` | **consolidate into `table-view-pattern`** | Same trigger ("build a list route") and same shared primitives (`useTableUrlState`, `DataTable`); it differed only by pagination stack |
+| 2 | `studio-list-pattern` | **consolidate into `table-view-pattern`** | As above — card grid is a third surface of one list capability, not a distinct trigger |
+| 3 | `solid-principles` | **consolidate into `code-quality`** | A design lens applied during the same review pass; its two references moved intact as `references/solid-{backend,frontend}.md` |
+| 4 | `table-view-pattern` | keep as thin skill | Extraction complete (#367); now owns all three list surface stacks |
+| 5 | `backend-controller-pattern-nestjs` | keep as thin skill | Extraction complete (#367); body is an ordered controller procedure |
+| 6 | `database-patterns` | keep as thin skill | Extraction complete (#367); body is rule selection + migration procedure |
+| 7 | `design-patterns` | keep as thin skill | Extraction complete (#367); body is a decision procedure |
+| 8 | `frontend-tech-stack` | keep as thin skill | Extraction complete (#367); body is a workspace setup/upgrade procedure |
+| 9 | `pwa-best-practices` | keep as thin skill | Extraction complete (#367); body is a migration procedure with a production HTTP verification step |
+| 10 | `code-quality` | keep as thin skill | Owns the pre-submission gate and now the SOLID lens; generic lint/type doctrine remains an extraction candidate |
+| 11 | `engineering-best-practices-enforcer` | keep as thin skill | Declared review lens with a scanner script and an output contract — a retained class, no factual body to extract |
+| 12 | `frontend-i18n` | keep as thin skill | Ordered how-to (add key → regenerate → consume); no durable doctrine large enough to earn a concept |
+| 13 | `api-performance-optimization` | keep as thin skill, extraction pending | Audit workflow is procedural; the lean-select, aggregation, and bulk-guard rules are durable facts |
+| 14 | `backend-testing-patterns` | keep as thin skill, extraction pending | Real-database completion gate is procedural; the per-layer test doctrine is factual |
+| 15 | `data-validation` | keep as thin skill, extraction pending | Registry already marks it `thin-wrapper`; three-layer contract and UID rules are durable |
+| 16 | `frontend-api-layer` | keep as thin skill, extraction pending | Query-key factory, mutation, and freshness-tier rules are durable |
+| 17 | `frontend-code-quality` | keep as thin skill, extraction pending | Decomposition procedure is real; naming, route-access, and layout doctrine is factual |
+| 18 | `frontend-error-handling` | keep as thin skill, extraction pending | Layered error architecture is factual |
+| 19 | `frontend-performance` | keep as thin skill, extraction pending | Optimization rules are factual; measurement is the procedure |
+| 20 | `frontend-state-management` | keep as thin skill, extraction pending | Registry already marks it `thin-wrapper`; the decision tree and cache rules are durable |
+| 21 | `frontend-testing-patterns` | keep as thin skill, extraction pending | Environment gotchas (happy-dom, `lazyRouteComponent`) are durable facts |
+| 22 | `frontend-ui-components` | keep as thin skill, extraction pending | Largest candidate (176 lines); decision priority, responsive dialog, and three-perspective patterns are all doctrine |
+| 23 | `observability-logging` | keep as thin skill, extraction pending | Levels and never-log tables are durable facts |
+| 24 | `secure-coding-practices` | keep as thin skill, extraction pending | Per-feature checklist is a review lens; the nine rules are durable |
+| 25 | `shift-schedule-pattern` | keep as thin skill, extraction pending | Already listed under § Pending extraction; business rules belong in `knowledge/domain/` |
 
-**No catalog reduction should be claimed from this list until each entry has a reviewed disposition** — `retire`, `consolidate into <id>`, or `keep as thin skill` — with the resulting count derived from those decisions. That disposition table is the first deliverable of PR 3.
+**Derived count: 66 → 63 implicit.** Three consolidations, zero retirements. The other 22 keep their catalog entry, which matches the PR #367 prior — extraction relocates facts and leaves a thin procedure behind.
+
+**The 25-candidate list does not reach either target.** After this PR the gap is **13 entries to "no more than 50"** and **28 to "35 or fewer"**, and no remaining entry on this list decrements the count. Closing that gap needs consolidation decisions over the *whole* implicit catalog, not further work on this list, and per [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2 that is an explicit decision in its own PR — not an assumption folded into a delivery PR.
 
 An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was withdrawn on review; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2.
 
@@ -123,7 +151,6 @@ All 8 `thin-wrapper` entries completed their extraction in PR #367 — their doc
 
 ### Keep as procedural skill — provisional
 
-- `admin-list-pattern`
 - `agent-instruction-maintenance`
 - `ai-platform-capability-verification`
 - `ai-platform-release-management`
@@ -186,7 +213,6 @@ All 8 `thin-wrapper` entries completed their extraction in PR #367 — their doc
 - `soft-delete-restore`
 - `spreadsheet`
 - `ssr-auth-integration`
-- `studio-list-pattern`
 - `table-view-pattern`
 - `template-system-fact-migration`
 - `ui-mockup-discussion`
@@ -210,9 +236,11 @@ This category means “not yet an obvious move candidate,” not “already idea
 | `show-production-lifecycle` | [`domain/show-production-lifecycle`](../../knowledge/domain/show-production-lifecycle.md) |
 | `table-view-pattern` | [`engineering/table-view-pattern`](../../knowledge/engineering/table-view-pattern.md) |
 
-**Pending extraction:**
+**Pending extraction** — entries the registry already classifies as `thin-wrapper` with no `knowledge_sources` yet, plus the extraction-pending rows of § Candidate disposition table:
 
 - `ai-workspace-control-plane`
+- `data-validation`
+- `frontend-state-management`
 - `operations-review-surface`
 - `shift-schedule-pattern`
 - `task-template-builder`
@@ -341,7 +369,6 @@ The current cluster is:
 - `code-quality`
 - `engineering-best-practices-enforcer`
 - `improve-codebase-architecture`
-- `solid-principles`
 
 Target responsibilities:
 
@@ -352,7 +379,7 @@ Target responsibilities:
 | Code-quality verification | Run and interpret lint, typecheck, test, build, and static quality signals |
 | Pattern knowledge | SOLID, deep modules, clean-code heuristics, and architectural vocabulary |
 
-`solid-principles` should become pattern knowledge or a reference lens, not an always-on global implementation skill. `improve-codebase-architecture` should retain a procedural architecture-discovery/review capability but load terminology and principles as knowledge. `engineering-best-practices-enforcer` should become the repository-convention review. `code-quality` should focus on deterministic quality tooling and verification.
+`solid-principles` became a reference lens inside [`code-quality`](../../.agents/skills/code-quality/SKILL.md) rather than an always-on global implementation skill (PR 3). `improve-codebase-architecture` should retain a procedural architecture-discovery/review capability but load terminology and principles as knowledge. `engineering-best-practices-enforcer` should become the repository-convention review. `code-quality` owns deterministic quality tooling, verification, and the SOLID design lens.
 
 ## Skill-Authoring Target
 
@@ -370,7 +397,7 @@ Target:
 
 ## Additional Clusters to Inspect
 
-- `admin-list-pattern`, `studio-list-pattern`, and `table-view-pattern`;
+- ~~`admin-list-pattern`, `studio-list-pattern`, and `table-view-pattern`~~ — consolidated into `table-view-pattern` (PR 3);
 - `doc-hygiene`, `doc-lifecycle`, `knowledge-sync`, `monorepo-doc-layering`, and `user-facing-docs`;
 - `frontend-code-quality`, `code-quality`, and repository-convention review;
 - `ai-workspace-control-plane`, Open WebUI skills, LiteLLM skills, and future `infra/` knowledge;
@@ -416,7 +443,7 @@ Until that validator exists, this document is the reviewed inventory and must be
 
 - Define content classes and admission rules.
 - Define the target reasoning lifecycle and catalog targets.
-- Record all current entries (94 at audit time; 102 today — see § Status).
+- Record all current entries (94 at audit time; 99 today — see § Status).
 - Update skill-authoring guidance to reject knowledge-shaped additions.
 - Do not move live content.
 

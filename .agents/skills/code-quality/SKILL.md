@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: Configure linting, testing, and type safety. Use other skills for repo or design audits.
+description: Apply linting, testing, type-safety, and SOLID design review to generated or changed code. Use the enforcer skill for repo-wide audits.
 ---
 
 # Code Quality Skill
@@ -77,6 +77,29 @@ describe('UserService', () => {
 - ✅ **Use DTOs and Interfaces**: Always define shapes for inputs and outputs.
 - ✅ **Trust the Compiler**: If it compiles, it should likely run (if types are accurate).
 
+## SOLID Design Lens
+
+Apply when **generating** new code (services, components, hooks, controllers, repositories), when **reviewing** or **refactoring** existing code, or when a code smell suggests a design concern. SOLID is an additional lens on top of the checks above, not a replacement for them.
+
+| Principle | Question to Ask |
+|:---|:---|
+| **SRP** | Does this class/function/component have more than one reason to change? |
+| **OCP** | Will adding a new variant require editing existing code, or just adding new code? |
+| **LSP** | Can this subtype/component replace its parent everywhere without surprises? |
+| **ISP** | Is any consumer forced to depend on methods/props it does not use? |
+| **DIP** | Does this high-level module import a concrete low-level module directly? |
+
+If the answer reveals a violation, refactor before proceeding.
+
+SOLID applies differently to OOP-based backends and functional/component-based frontends. Load the reference for the code being written:
+
+- **Backend (NestJS)**: [references/solid-backend.md](references/solid-backend.md) — constructor injection, strategy pattern, interface contracts, lean DTOs.
+- **Frontend (React)**: [references/solid-frontend.md](references/solid-frontend.md) — composition, slot props, hook abstractions, context-based DI.
+
+For **shared packages** (e.g. `@eridu/api-types`), apply both references as relevant.
+
+> For `erify_api` module placement and persistence selection, [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is authoritative and overrides the generic SRP reading of "one service per entity".
+
 ## Common Anti-Patterns (General)
 
 1.  **Ignoring Lint Errors**: Address them immediately.
@@ -92,3 +115,5 @@ describe('UserService', () => {
 - **[Repository Pattern NestJS](../repository-pattern-nestjs/SKILL.md)**: Data access rules.
 - **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)**: NestJS-specific controller rules.
 - **[Frontend Code Quality](../frontend-code-quality/SKILL.md)**: React/Frontend specific patterns.
+- **[Design Patterns](../design-patterns/SKILL.md)**: High-level architecture and layer boundaries.
+- **[Engineering Best Practices Enforcer](../engineering-best-practices-enforcer/SKILL.md)**: Staged repo-wide quality audits.

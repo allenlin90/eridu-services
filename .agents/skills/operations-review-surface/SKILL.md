@@ -25,7 +25,7 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 
 **Use**: a studio review screen scoped to an operational day/range that summarizes already-extracted operational facts and drills into them across tabs; adding a tab or filter to an existing Operations surface; a new downstream read surface over the same indexed columns (costs, analytics).
 
-**Don't use**: single-table list routes → [`table-view-pattern`](../table-view-pattern/SKILL.md). Card-based lists → [`studio-list-pattern`](../studio-list-pattern/SKILL.md). The **write** path (extraction) → [`fact-extraction-pipeline`](../fact-extraction-pipeline/SKILL.md). These surfaces are **read-only over extracted facts**; never write actuals from a review screen (see PR 12 §G — Operations review is upstream of economics).
+**Don't use**: single-table list routes and card-based lists → [`table-view-pattern`](../table-view-pattern/SKILL.md). The **write** path (extraction) → [`fact-extraction-pipeline`](../fact-extraction-pipeline/SKILL.md). These surfaces are **read-only over extracted facts**; never write actuals from a review screen (see PR 12 §G — Operations review is upstream of economics).
 
 One narrow exception exists: a review capability may persist **its own** normalized decisions — Scene QC writes `SceneQcReview`, `SceneQcDailyConfirmation`, and their pinned children, and nothing else. It still never writes `Task`, `Show`, `ShowCreator`, `ShowPlatform`, actuals, or any lifecycle state. If a new surface needs to write outside its own tables, it is not a review surface.
 

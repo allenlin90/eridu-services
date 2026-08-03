@@ -165,8 +165,6 @@ const SKILL_BATCHES = [
       '.agents/skills/frontend-i18n/SKILL.md',
       '.agents/skills/pwa-best-practices/SKILL.md',
       '.agents/skills/table-view-pattern/SKILL.md',
-      '.agents/skills/admin-list-pattern/SKILL.md',
-      '.agents/skills/studio-list-pattern/SKILL.md',
     ],
     codeHints: 'packages/ui/src/, packages/i18n/, apps/erify_studios/src/features/ list/table view components, PWA manifest/service-worker config in apps/erify_studios and apps/erify_creators.',
   },
@@ -186,7 +184,6 @@ const SKILL_BATCHES = [
     files: [
       '.agents/skills/shared-api-types/SKILL.md',
       '.agents/skills/design-patterns/SKILL.md',
-      '.agents/skills/solid-principles/SKILL.md',
       '.agents/skills/domain-refactor-cutover-strategy/SKILL.md',
       '.agents/skills/package-extraction-strategy/SKILL.md',
       '.agents/skills/improve-codebase-architecture/SKILL.md',

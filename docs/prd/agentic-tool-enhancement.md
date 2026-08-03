@@ -112,22 +112,24 @@ Progress record for this program. **Every PR in this program states its row numb
 | --- | --- | --- | --- | --- |
 | 1 | Skill registry, validator enforcement, OKF bundle + doctrine extraction, toolsuite docs | 1, 2.1–2.3, 3, 4.1 | — | ✅ Done ([#367](https://github.com/allenlin90/eridu-services/pull/367)) |
 | 2 | ~~Implicit-catalog triage — mark human-decision-triggered skills explicit-only~~ | — | 1 | ❌ **Withdrawn** — conflicts with canonical routing doctrine; see § 4.2 |
-| 3 | Candidate disposition review — decide `retire` / `consolidate` / `keep as thin skill` for each of the 25 extraction candidates, then apply | 2.4 | 1 | ⬜ Not started — **target reachability unproven until the disposition table exists** |
+| 3 | Candidate disposition review — decide `retire` / `consolidate` / `keep as thin skill` for each of the 25 extraction candidates, then apply | 2.4 | 1 | ✅ Done — 3 consolidations applied, 66 → 63; **neither target reached from this list** |
 | 4 | Final reconciliation — inventory counts, relocate this tracker out of `docs/prd/`, cross-client routing verification | 4.2 | 3 | ⬜ Not started |
 
-**Remaining: 2 of 4 PRs** (row 2 withdrawn, not replaced).
+**Remaining: 1 of 4 PRs** (row 2 withdrawn, not replaced).
 
 Row 2 was attempted in [#368](https://github.com/allenlin90/eridu-services/pull/368) and withdrawn on review. The reason is recorded in § 4.2 because it constrains how rows 3 and 4 may reduce the catalog.
 
-**No row currently demonstrates a path to "35 or fewer".** Row 3 must produce the reviewed disposition table first; the reachable count follows from those decisions. If it falls short, closing the gap is an explicit decision in its own PR — a deliberate doctrine amendment or a target revision — not an assumption folded into a delivery PR.
+**Row 3 produced the disposition table and it does not reach either target.** All 25 candidates were reviewed; 3 consolidated (`admin-list-pattern` and `studio-list-pattern` into `table-view-pattern`, `solid-principles` into `code-quality`), 0 retired, 22 kept as thin skills. That is 66 → 63 — a gap of 13 to "no more than 50" and 28 to "35 or fewer", with no remaining candidate on that list able to decrement the count. The full table with per-entry basis is in [`AGENT_CONTENT_REORGANIZATION.md`](../engineering/AGENT_CONTENT_REORGANIZATION.md) § Candidate disposition table.
+
+**Closing the remaining gap is now a decision, not a delivery step.** It needs consolidation review over the whole implicit catalog (overlap clusters outside the 25), a deliberate doctrine amendment, or a target revision — argued in its own PR per § 4.2. Row 4 does not close it.
 
 ### 4.1 Two constraints, tracked separately
 
 | Constraint | Limit | Current | State |
 | --- | --- | --- | --- |
-| Implicit description characters (Codex catalog budget) | 8,000 | **7,074** | ✅ Met (PR 1) |
-| Implicitly invocable skill count | ≤50, then ≤35 | **66** | ❌ Not met — PR 3 |
-| Regression ratchet (`implicit_catalog_ceiling`) | 66 | 66 | 🔒 Enforced — validation fails if exceeded |
+| Implicit description characters (Codex catalog budget) | 8,000 | **6,841** | ✅ Met (PR 1, further reduced by PR 3) |
+| Implicitly invocable skill count | ≤50, then ≤35 | **63** | ❌ Not met — 13 short of the first milestone after PR 3 |
+| Regression ratchet (`implicit_catalog_ceiling`) | 63 | 63 | 🔒 Enforced — validation fails if exceeded |
 
 These are independent. PR 1 met the character budget and did not move the count. Do not report one as satisfying the other.
 
@@ -180,11 +182,13 @@ If a narrow explicit-only class is still wanted later — for example "operates 
   - [x] Configure explicit policy (`allow_implicit_invocation: false`) for presentation modes and manual workflows (`caveman`, `cavecrew`, `graphify`, `setup-matt-pocock-skills`, etc.) — 36 skills explicit-only at merge, including three presentation modes added in review.
   - [x] Reduce implicit description character budget from 8,991 to 7,074 characters (below the 8,000 budget).
 - [ ] **2.4 Implicit Skill *Count* Cap — NOT MET**:
-  - Current: **66** implicitly invocable skills. Milestone: **no more than 50**; post-consolidation: **35 or fewer**.
-  - The character budget above is met; the count cap is a separate, unfinished constraint. `implicit_catalog_ceiling: 66` prevents regression while this stays open.
-  - [ ] Consolidate overlapping list pattern skills (`admin-list-pattern`, `studio-list-pattern`).
-  - [ ] Consolidate quality and architecture skills (`solid-principles` into `code-quality`).
-  - [ ] Lower `implicit_catalog_ceiling` in `.agents/agent-skill-registry.yaml` with each reduction.
+  - Current: **63** implicitly invocable skills. Milestone: **no more than 50**; post-consolidation: **35 or fewer**.
+  - The character budget above is met; the count cap is a separate, unfinished constraint. `implicit_catalog_ceiling: 63` prevents regression while this stays open.
+  - [x] Review all 25 extraction candidates and record a disposition for each — see [`AGENT_CONTENT_REORGANIZATION.md`](../engineering/AGENT_CONTENT_REORGANIZATION.md) § Candidate disposition table.
+  - [x] Consolidate overlapping list pattern skills (`admin-list-pattern`, `studio-list-pattern` into `table-view-pattern`).
+  - [x] Consolidate quality and architecture skills (`solid-principles` into `code-quality`).
+  - [x] Lower `implicit_catalog_ceiling` in `.agents/agent-skill-registry.yaml` with each reduction (66 → 63).
+  - [ ] **Blocked on a decision, not on work.** The 25-candidate list is exhausted at 63. Reaching 50 requires a separate consolidation review of overlap clusters across the whole implicit catalog, a doctrine amendment, or a target revision — argued in its own PR (§ 4.2).
 
 ---
 

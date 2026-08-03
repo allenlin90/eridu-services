@@ -14,18 +14,11 @@ version: 1
 #
 # Character budget is tracked separately: Codex's fallback catalog holds ~8,000
 # characters of implicit descriptions, which is a different constraint from skill count.
-implicit_catalog_ceiling: 66
+implicit_catalog_ceiling: 63
 implicit_catalog_limit: 50
 post_consolidation_limit: 35
 
 skills:
-  admin-list-pattern:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ implement ]
-    knowledge_sources: []
-    migration_status: canonical
 
   agent-instruction-maintenance:
     kind: capability-skill
@@ -707,13 +700,6 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  solid-principles:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ review ]
-    knowledge_sources: []
-    migration_status: canonical
 
   spreadsheet:
     kind: capability-skill
@@ -731,13 +717,6 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  studio-list-pattern:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ implement ]
-    knowledge_sources: []
-    migration_status: canonical
 
   table-view-pattern:
     kind: capability-skill
