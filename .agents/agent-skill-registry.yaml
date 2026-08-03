@@ -14,7 +14,7 @@ version: 1
 #
 # Character budget is tracked separately: Codex's fallback catalog holds ~8,000
 # characters of implicit descriptions, which is a different constraint from skill count.
-implicit_catalog_ceiling: 69
+implicit_catalog_ceiling: 66
 implicit_catalog_limit: 50
 post_consolidation_limit: 35
 
@@ -146,7 +146,7 @@ skills:
   caveman-help:
     kind: presentation-mode
     authority: presentation
-    implicit: true
+    implicit: false
     lifecycle_stage: [ present ]
     knowledge_sources: []
     migration_status: canonical
@@ -154,7 +154,7 @@ skills:
   caveman-review:
     kind: presentation-mode
     authority: presentation
-    implicit: true
+    implicit: false
     lifecycle_stage: [ present ]
     knowledge_sources: []
     migration_status: canonical
@@ -162,7 +162,7 @@ skills:
   caveman-stats:
     kind: presentation-mode
     authority: presentation
-    implicit: true
+    implicit: false
     lifecycle_stage: [ present ]
     knowledge_sources: []
     migration_status: canonical

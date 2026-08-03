@@ -145,10 +145,23 @@ one canonical transition service.
 
 Invariants that must hold when touching status writes:
 
-- Only the cancellation gate may move a show into or out of `CANCELLED` /
-  `CANCELLED_PENDING_RESOLUTION`; generic admin and studio edit paths share the
-  same server-side guard, and both status lookup lists exclude gate-owned
-  destinations.
+- **Gate-owned, for user-initiated edits:** generic admin and studio edit paths
+  may not move a show into or out of `CANCELLED` /
+  `CANCELLED_PENDING_RESOLUTION`. They share the same server-side guard, and both
+  status lookup lists exclude gate-owned destinations. `ShowCancellationGateService`
+  owns every interactive transition into those states, with reason capture,
+  actor-tier checks, active-task guards, and `Audit` history.
+- **Schedule publishing is an explicit owned exception, not a violation.**
+  `publishing.service.ts` writes both gate-owned statuses directly via
+  `tx.show.update` when reconciling shows removed from a republished schedule —
+  `cancelledPendingResolution` for a confirmed future show, and
+  `activeTaskCount > 0 ? cancelledPendingResolution : cancelled` otherwise. It
+  does not call `openPending` and writes no `Audit` row;
+  `ShowCancellationGateService` documents this pre-gate path in its own source
+  comments. Treat it as a legitimate bulk-reconciliation write path. The missing
+  audit row is tracked tech debt, and Phase 5 item 18 converges all four write
+  paths into one canonical transition service. Do **not** "fix" a schedule-publish
+  status write by routing it through the gate without that consolidation.
 - Gate history lives in `Audit` rows (`metadata.field = show_status`, `metadata.event = opened | resolved`); do not store gate state in JSONB metadata or a parallel table.
 - `CANCELLED` outcomes require zero active tasks (shared active-task definition); `COMPLETED` outcomes do not use that guard.
 - Concurrent resolution relies on conditional status updates; validate the transition before the conditional write, not inside it.

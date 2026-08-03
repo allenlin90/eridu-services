@@ -1,6 +1,7 @@
 import { access, readFile, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { pathToFileURL } from 'node:url'
 import { parseDocument } from 'yaml'
 
 const SKILLS_DIRECTORY = '.agents/skills'
@@ -183,6 +184,64 @@ async function validateClaudeCommandNames(repositoryRoot, names) {
   }
 }
 
+const REGISTRY_SKILL_FIELDS = {
+  kind: 'string',
+  authority: 'string',
+  implicit: 'boolean',
+  lifecycle_stage: 'array',
+  knowledge_sources: 'array',
+  migration_status: 'string',
+}
+
+const REGISTRY_REQUIRED_NUMBERS = ['implicit_catalog_ceiling']
+const REGISTRY_OPTIONAL_NUMBERS = ['implicit_catalog_limit', 'post_consolidation_limit']
+
+function typeOf(value) {
+  return Array.isArray(value) ? 'array' : typeof value
+}
+
+/**
+ * Require the registry's shape before any consistency check runs. Without this,
+ * a missing or mistyped field silently disables the check that depends on it —
+ * a registry that lies passes validation.
+ */
+export function validateRegistryShape(registry, registryPath, sink = errors) {
+  for (const field of REGISTRY_REQUIRED_NUMBERS) {
+    if (typeof registry[field] !== 'number') {
+      sink.push(
+        `${registryPath}: ${field} must be a number (found ${typeOf(registry[field])}); ` +
+          `without it the implicit-catalog ratchet is disabled`,
+      )
+    }
+  }
+
+  for (const field of REGISTRY_OPTIONAL_NUMBERS) {
+    if (field in registry && typeof registry[field] !== 'number') {
+      sink.push(`${registryPath}: ${field} must be a number when present (found ${typeOf(registry[field])})`)
+    }
+  }
+
+  for (const [skillName, config] of Object.entries(registry.skills)) {
+    if (!config || typeof config !== 'object' || Array.isArray(config)) {
+      sink.push(`${registryPath}: skill "${skillName}" must be a mapping`)
+      continue
+    }
+
+    for (const [field, expected] of Object.entries(REGISTRY_SKILL_FIELDS)) {
+      if (!(field in config)) {
+        sink.push(`${registryPath}: skill "${skillName}" is missing required field "${field}"`)
+      } else if (typeOf(config[field]) !== expected) {
+        sink.push(
+          `${registryPath}: skill "${skillName}" field "${field}" must be ${expected} ` +
+            `(found ${typeOf(config[field])})`,
+        )
+      }
+    }
+  }
+
+  return sink
+}
+
 async function validateRegistry(repositoryRoot, skillEntries, implicitByName) {
   const registryPath = path.join(repositoryRoot, '.agents/agent-skill-registry.yaml')
   let source
@@ -194,10 +253,15 @@ async function validateRegistry(repositoryRoot, skillEntries, implicitByName) {
   }
 
   const registry = parseYaml(source, registryPath)
-  if (!registry || typeof registry !== 'object' || !registry.skills) {
+  if (!registry || typeof registry !== 'object' || !registry.skills
+    || typeof registry.skills !== 'object' || Array.isArray(registry.skills)) {
     errors.push(`${registryPath}: invalid or empty registry file structure`)
     return
   }
+
+  const shapeErrors = validateRegistryShape(registry, registryPath, [])
+  errors.push(...shapeErrors)
+  if (shapeErrors.length > 0) return
 
   const registrySkills = Object.keys(registry.skills)
   const actualSkills = skillEntries.map((e) => e.name)
@@ -214,25 +278,24 @@ async function validateRegistry(repositoryRoot, skillEntries, implicitByName) {
     }
   }
 
+  // Shape is guaranteed above, so these checks can no longer be skipped by a
+  // missing or mistyped field.
   for (const [skillName, config] of Object.entries(registry.skills)) {
-    if (Array.isArray(config.knowledge_sources)) {
-      for (const sourcePath of config.knowledge_sources) {
-        const resolvedPath = path.resolve(repositoryRoot, sourcePath)
-        try {
-          await access(resolvedPath)
-        } catch {
-          errors.push(
-            `${registryPath}: skill "${skillName}" references non-existent knowledge source: ${sourcePath}`,
-          )
-        }
+    for (const sourcePath of config.knowledge_sources) {
+      const resolvedPath = path.resolve(repositoryRoot, sourcePath)
+      try {
+        await access(resolvedPath)
+      } catch {
+        errors.push(
+          `${registryPath}: skill "${skillName}" references non-existent knowledge source: ${sourcePath}`,
+        )
       }
     }
 
     // `implicit` is the registry's declared routing intent; `agents/openai.yaml`
     // is what Codex actually enforces. Drift between them makes the registry lie.
     const actualImplicit = implicitByName.get(skillName)
-    if (actualImplicit !== undefined && typeof config.implicit === 'boolean'
-      && config.implicit !== actualImplicit) {
+    if (actualImplicit !== undefined && config.implicit !== actualImplicit) {
       errors.push(
         `${registryPath}: skill "${skillName}" declares implicit: ${config.implicit} but ` +
           `agents/openai.yaml resolves allow_implicit_invocation: ${actualImplicit}`,
@@ -246,13 +309,13 @@ async function validateRegistry(repositoryRoot, skillEntries, implicitByName) {
   const implicitCount = [...implicitByName.values()].filter(Boolean).length
   const ceiling = registry.implicit_catalog_ceiling
 
-  if (typeof ceiling === 'number' && implicitCount > ceiling) {
+  if (implicitCount > ceiling) {
     errors.push(
       `${registryPath}: ${implicitCount} implicitly invocable skills exceed the ` +
         `implicit_catalog_ceiling of ${ceiling}. Set allow_implicit_invocation: false on the ` +
         `new skill, or lower the ceiling deliberately if this growth is intended.`,
     )
-  } else if (typeof ceiling === 'number' && implicitCount < ceiling) {
+  } else if (implicitCount < ceiling) {
     warnings.push(
       `implicit catalog is down to ${implicitCount} skills; lower implicit_catalog_ceiling ` +
         `from ${ceiling} to ${implicitCount} to lock in the reduction`,
@@ -291,6 +354,30 @@ async function collectKnowledgeConcepts(directory, bundleRoot, found = []) {
 }
 
 /**
+ * Build the exact set of concept IDs the index links to.
+ *
+ * Substring matching is not sufficient: `architecture/database` is a substring of
+ * `architecture/database-patterns`, so an unindexed `architecture/database.md`
+ * would certify itself against a sibling's index entry. Parse link destinations
+ * and require exact membership instead.
+ */
+export function parseIndexConceptIds(indexContent) {
+  const ids = new Set()
+
+  for (const match of indexContent.matchAll(LOCAL_LINK_PATTERN)) {
+    const destination = match[1].trim().split(/\s+/)[0]
+    if (!destination || /^(https?:|mailto:|#)/.test(destination)) continue
+
+    const withoutAnchor = destination.split('#')[0]
+    if (!withoutAnchor.endsWith('.md')) continue
+
+    ids.add(withoutAnchor.replace(/\.md$/, '').replace(/^\.\//, ''))
+  }
+
+  return ids
+}
+
+/**
  * Enforce the strict OKF v0.2 profile from docs/engineering/OKF_AGENT_CONTRACT.md:
  * fenced YAML frontmatter (not body prose), okf_version only at the bundle root,
  * a non-empty `type` and `description` on every concept, and index coverage.
@@ -315,6 +402,7 @@ async function validateKnowledgeBundle(repositoryRoot) {
     )
   }
 
+  const indexedConceptIds = parseIndexConceptIds(indexContent)
   const concepts = await collectKnowledgeConcepts(bundleRoot, bundleRoot)
 
   for (const relativePath of concepts.sort()) {
@@ -338,9 +426,9 @@ async function validateKnowledgeBundle(repositoryRoot) {
       )
     }
 
-    const conceptId = relativePath.replace(/\.md$/, '')
-    if (!indexContent.includes(relativePath) && !indexContent.includes(conceptId)) {
-      errors.push(`${indexPath}: concept "${conceptId}" is not listed in the bundle index`)
+    const conceptId = relativePath.split(path.sep).join('/').replace(/\.md$/, '')
+    if (!indexedConceptIds.has(conceptId)) {
+      errors.push(`${indexPath}: concept "${conceptId}" is not linked from the bundle index`)
     }
   }
 }
@@ -427,5 +515,9 @@ async function main() {
   )
 }
 
-await main()
+// Only run the full repository validation when executed directly, so tests can
+// import the pure helpers above without triggering a whole-repo pass.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main()
+}
 
