@@ -4,9 +4,11 @@
 
 This is the migration inventory and execution plan for the entries indexed under `.agents/skills/`. It establishes review and bookkeeping scope; provisional classifications still require focused content review.
 
-**Current count: 99 skills.** The original audit recorded 94; the catalog grew to 102 before the OKF migration began, and PR 3 consolidated three entries back down to 99. Dispositions below are now derived from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml), which `pnpm agents:validate` keeps in sync with the skill directories — so this table can no longer silently drift from the tree. Final post-consolidation totals land after the consolidation PRs; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4 PR Roadmap.
+**Current count: 99 skills — 63 implicitly invocable, 36 explicit-only, 6,841 implicit description characters.** The original audit recorded 94; the catalog grew to 102 before the OKF migration began, and the consolidation PR brought three entries back down to 99. Dispositions below are derived from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml), which `pnpm agents:validate` keeps in sync with the skill directories — so this table can no longer silently drift from the tree.
 
-A content move is complete only when routing, links, validation, and behavior have been verified with Claude Code, Codex, and OpenCode.
+The Agentic Tool Enhancement & OKF Consolidation program that produced these counts has closed; its record is in § Program Record below. One constraint it set is still unmet: the implicit catalog is at 63 against a 50/35 target, and closing that gap is now an open decision tracked in [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md), not a scheduled delivery step.
+
+A content move is complete only when routing, links, validation, and behavior have been verified with Claude Code, Codex, and OpenCode. The most recent verification is recorded in § Cross-Client Routing Verification.
 
 Canonical references:
 
@@ -61,6 +63,18 @@ The reorganization is not complete when files have merely moved. The target is a
 
 The ranges are not quotas. A skill survives only when its trigger, procedure, and output remain materially distinct.
 
+### Two constraints, tracked separately
+
+| Constraint | Limit | Current | State |
+| --- | --- | --- | --- |
+| Implicit description characters (Codex catalog budget) | 8,000 | **6,841** | ✅ Met |
+| Implicitly invocable skill count | ≤50, then ≤35 | **63** | ❌ Not met — 13 short of the first milestone |
+| Regression ratchet (`implicit_catalog_ceiling`) | 63 | 63 | 🔒 Enforced — validation fails if exceeded |
+
+These are independent. Meeting the character budget did not move the count. **Do not report one as satisfying the other.**
+
+`pnpm agents:validate` counts only frontmatter `description` characters toward the Codex catalog budget. Thinning a `SKILL.md` **body** saves nothing against that budget — the entire reduction comes from `allow_implicit_invocation: false`. Do not delete body content in the name of catalog savings.
+
 ## Canonical Development Flow
 
 The target flow is:
@@ -103,9 +117,23 @@ Routing split: **63 implicitly invocable**, **36 explicit-only**, ratcheted by `
 
 ### How the implicit catalog gets reduced
 
-By **knowledge extraction and consolidation** — not by marking retained capability classes explicit-only. § Target Catalog above keeps lifecycle/reasoning capabilities, concrete implementation and operational capabilities, and declared review lenses in the implicit catalog; [`AGENT_OPERATING_MODEL.md`](./AGENT_OPERATING_MODEL.md) reserves explicit-only marking for **manual workflows and presentation modes**, and routes the `<35` target through "overlap consolidation and knowledge extraction".
+By **knowledge extraction and consolidation** — not by marking retained capability classes explicit-only. This is canon, not preference:
 
-**Extraction relocates facts; it does not by itself remove a catalog entry.** All eight skills whose doctrine moved to [`knowledge/`](../../knowledge/index.md) in PR #367 are still `implicit: true` — the skill remains as a thin procedure. The implicit count decrements only when an entry is **deleted** (extraction leaves no genuine procedure) or **merged** into another.
+- [`.agents/README.md`](../../.agents/README.md) § Target Catalog: the implicit catalog **should contain** lifecycle and reasoning capabilities, concrete implementation and **operational** capabilities, and declared **review lenses**. It should **not** contain standalone pattern or technology guides, domain and architecture reference documents, duplicated workflow bodies, or unrequested presentation modes.
+- [`AGENT_OPERATING_MODEL.md`](./AGENT_OPERATING_MODEL.md) § Catalog targets: reach "**no more than 50**" in the first reorganization milestone, reach "**35 or fewer**" after "**overlap consolidation and knowledge extraction**", and mark **manual workflows and presentation modes** explicit-only.
+
+An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was rejected on review ([#368](https://github.com/allenlin90/eridu-services/pull/368)). That attempt used a different axis — "human decision vs. an agent touched this code" — which is defensible on its own terms, but it flipped members of the classes canon retains in the implicit catalog (7 deployed-platform operations, `pr-ui-screenshot-review`, `plan-workflow-completeness`), and it substituted a lever canon does not sanction for the two it does. The routing change was removed rather than merged with the canonical documents left asserting the superseded rule, which the [pattern/direction-change gate](../../.agents/skills/agent-instruction-maintenance/SKILL.md) treats as blocking.
+
+**Extraction relocates facts; it does not by itself remove a catalog entry.** An earlier revision of the program plan claimed 66 − 25 = 41 from extraction. That is wrong, and the counter-evidence is already in the repo: all eight skills whose doctrine moved to [`knowledge/`](../../knowledge/index.md) in PR #367 — `database-patterns`, `design-patterns`, `frontend-tech-stack`, `show-production-lifecycle`, and the rest — are still `implicit: true`. The skill remains as a thin procedure.
+
+The implicit count decrements only when an entry is:
+
+1. **deleted** — extraction leaves no genuine procedure behind, so the skill itself retires; or
+2. **merged** — two overlapping skills consolidate into one.
+
+PR #367 judged all eight of its candidates to have a genuine procedure worth keeping. That is a real prior: some fraction of any extraction batch will stay in the catalog, not retire from it.
+
+If a narrow explicit-only class is still wanted later — for example "operates an external deployed system" — it must be proposed as a deliberate amendment to `.agents/README.md` and `AGENT_OPERATING_MODEL.md`, with cross-client routing parity evidence, **in its own PR**. It must not ride along in a delivery PR.
 
 ### Candidate disposition table (PR 3)
 
@@ -141,9 +169,9 @@ The 25 entries the § Target portfolio budgets at 0 as standalone pattern or tec
 
 **Derived count: 66 → 63 implicit.** Three consolidations, zero retirements. The other 22 keep their catalog entry, which matches the PR #367 prior — extraction relocates facts and leaves a thin procedure behind.
 
-**The 25-candidate list does not reach either target.** After this PR the gap is **13 entries to "no more than 50"** and **28 to "35 or fewer"**, and no remaining entry on this list decrements the count. Closing that gap needs consolidation decisions over the *whole* implicit catalog, not further work on this list, and per [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2 that is an explicit decision in its own PR — not an assumption folded into a delivery PR.
+**The 25-candidate list does not reach either target.** The gap is **13 entries to "no more than 50"** and **28 to "35 or fewer"**, and no remaining entry on this list decrements the count. Closing that gap needs consolidation decisions over the *whole* implicit catalog, not further work on this list, and per § How the implicit catalog gets reduced that is an explicit decision in its own PR — not an assumption folded into a delivery PR. The options and their decision gates are in [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md).
 
-An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was rejected on review and replaced by the two levers canon sanctions — consolidation and knowledge extraction. The goal was never dropped; the plan changed. See [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2.
+An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was rejected on review and replaced by the two levers canon sanctions — consolidation and knowledge extraction. The goal was never dropped; the plan changed. See § How the implicit catalog gets reduced.
 
 Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
 
@@ -407,37 +435,41 @@ Target:
 
 ## Machine-Readable Registry Target
 
-Do not add repository-specific classification fields to every `SKILL.md` until Claude Code, Codex, and OpenCode tolerance has been tested. Use an external registry:
+**Shipped.** The registry is [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml) and the validator is `scripts/validate-agent-skills.mjs` (`pnpm agents:validate`). Repository-specific classification fields stayed out of every `SKILL.md`, so no client had to tolerate unknown frontmatter. The shipped entry shape:
 
 ```yaml
 version: 1
-entries:
+implicit_catalog_ceiling: 63
+skills:
   show-production-lifecycle:
-    kind: capability-skill
-    disposition: thin-wrapper
+    kind: thin-wrapper
     authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement, review ]
     knowledge_sources:
       - knowledge/domain/show-production-lifecycle.md
-    lifecycle_stage:
-      - orient
-      - implement
-      - review
-    implicit: true
-    migration_status: planned
+    migration_status: canonical
 ```
 
-The validator should enforce:
+What the validator enforces today:
 
-- every skill directory has one registry entry;
-- no registry entry points to a missing source;
-- workflow wrappers point to existing workflows;
-- presentation modes are explicit-only;
-- reasoning interventions declare lifecycle timing;
-- extracted knowledge paths exist;
-- capability and review skills declare or select knowledge sources;
-- no two sources claim canonical authority for the same facts.
+- every skill directory has exactly one registry entry, and every registry entry has a directory;
+- every registry entry carries all six fields with the right type — a missing or mistyped field would silently disable the check that depends on it;
+- `implicit` agrees with the skill's `agents/openai.yaml` `policy.allow_implicit_invocation`, so registry intent and Codex routing cannot drift;
+- `implicit_catalog_ceiling` ratchets the implicit count — validation fails on growth and warns when the count drops below the ceiling without the ceiling being lowered;
+- `implicit_catalog_limit` and `post_consolidation_limit` warn until met;
+- every `SKILL.md` has frontmatter whose `name` matches its directory and whose `description` is non-empty;
+- every relative link in a skill or knowledge document resolves;
+- `knowledge/` is structurally valid OKF v0.2 — bundle-root `okf_version`, non-empty `type` and `description` per concept, and index coverage;
+- the generated `INDEX.md` is not stale.
 
-Until that validator exists, this document is the reviewed inventory and must be updated when classifications change.
+What no script checks — these remain reviewer responsibilities:
+
+- whether a documented state value, guard, component, or script name actually exists;
+- whether presentation modes and reasoning interventions are classified at the right lifecycle gate;
+- whether two sources claim canonical authority for the same facts.
+
+**Structural validation is necessary but not sufficient.** This document remains the reviewed inventory and must be updated when classifications change.
 
 ## Migration Waves
 
@@ -492,9 +524,9 @@ Land each extraction with the skill or reasoning consumer that retrieves and app
 
 ### Wave 7 — catalog consolidation
 
-- Reach the first <=50 implicit milestone.
-- Remove obsolete wrappers and overlapping triggers.
-- Target <=35 implicit entries after evidence shows routing remains reliable.
+- Reach the first <=50 implicit milestone. **Open** — the catalog is at 63 and the reviewed candidate list is exhausted; see [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md).
+- Remove obsolete wrappers and overlapping triggers. **Partially done** — three consolidations landed; overlap clusters outside the 25 candidates are unreviewed.
+- Target <=35 implicit entries after evidence shows routing remains reliable. **Open**, gated on the same decision.
 
 ## Acceptance Criteria for Each Migration
 
@@ -510,3 +542,104 @@ A migrated entry is complete only when:
 - presentation modes do not alter reasoning, warning, or verification behavior;
 - `pnpm agents:validate`, classification validation, and Markdown-link validation pass;
 - the registry or this inventory records the final disposition.
+
+## Compatibility Invariants
+
+These bound every agent-content move, not just the ones already made.
+
+- **Public skill entrypoints preserved.** Public skill IDs (`pr-ready`, `knowledge-sync`, `repository-health`, `upload-openwebui-skill`, `graphify`, `caveman`, `setup-matt-pocock-skills`, and the rest) must remain discoverable and invocable across Claude Code, Codex, and OpenCode. Codex `interface:` metadata (display name, short description, icons, default prompt) is part of the entrypoint and must survive any `agents/openai.yaml` edit.
+- **Thin bridge pattern.** When static reference material moves to `knowledge/`, a thin procedural bridge remains at `.agents/skills/<name>/SKILL.md`, and every `references/` file stays reachable from either the bridge or the knowledge concept.
+- **Zero loss of doctrine.** Content moves to `knowledge/` **verbatim**. Resummarizing doctrine into bullets is not migration — it deletes rules. Section numbering that other documents cite (for example `database-patterns` §6 and §12) is preserved, and every citing document is repointed in the same PR.
+- **No invented facts.** Every code-level claim written into `knowledge/` — state values, guard names, component names, script names — is verified against source first. `pnpm agents:validate` checks bundle structure, not truth.
+- **Zero loss of functionality.** Changes must be net-positive for prompt context size and execution speed without breaking existing slash commands or `$skill` / `/skill` triggers.
+
+## Cross-Client Routing Verification
+
+Last verified at the close of the consolidation program, against the three clients in the supported matrix.
+
+| Surface | Client | Result |
+| --- | --- | --- |
+| `.agents/skills/` — 99 directories, each with a `SKILL.md` | all | ✅ 99 directories, 99 registry entries, zero orphans in either direction |
+| `agents/openai.yaml` invocation policy vs registry `implicit` | Codex | ✅ 36 explicit-only, 63 implicit, **0 mismatches** |
+| Public entrypoint discoverability and `interface:` metadata | Codex | ✅ all 7 public IDs present; `display_name` / `short_description` / `default_prompt` intact where declared |
+| `.claude/skills` → `../.agents/skills` symlink | Claude Code | ✅ resolves |
+| `.claude/CLAUDE.md` thin-adapter rule (≤30 lines, imports `AGENTS.md`) | Claude Code | ✅ 27 lines |
+| `.opencode/skills` → `../.agents/skills` symlink | OpenCode | ✅ resolves |
+| `opencode.json` instruction loading | OpenCode | ✅ loads `AGENTS.md` and `.agents/rules/*.mdc` |
+| Skill paths cited in `AGENTS.md`, `README.md`, `.agents/README.md`, `.cursor/rules/*.mdc`, `opencode.json` | all | ✅ zero dangling paths |
+| Generated `.agents/skills/INDEX.md` | all | ✅ 99 entries, not stale |
+
+Re-run this check whenever a skill is added, removed, consolidated, or reclassified — the registry/`openai.yaml` parity and ratchet lines are covered by `pnpm agents:validate`; the symlink, adapter-length, and dangling-path lines are not.
+
+## Program Record
+
+The Agentic Tool Enhancement & OKF Consolidation program ran as four rows and closed with one constraint unmet. Its execution tracker previously lived at `docs/prd/agentic-tool-enhancement.md` and was retired here — it was never a PRD (no user stories, no acceptance criteria, no user-facing feature), and its durable content is now split between this document and [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md).
+
+| Row | Delivered | PR |
+| ---: | --- | --- |
+| 1 | Skill registry, validator enforcement, OKF v0.2 bundle with eight extracted concepts, toolsuite docs; catalog characters 8,991 → 7,074 | [#367](https://github.com/allenlin90/eridu-services/pull/367) |
+| 2 | Superseded — its explicit-only lever conflicts with canonical routing doctrine; merged docs-only to record the plan change | [#368](https://github.com/allenlin90/eridu-services/pull/368) |
+| 3 | Reviewed disposition for all 25 extraction candidates; three consolidations applied; implicit 66 → 63 | [#369](https://github.com/allenlin90/eridu-services/pull/369) |
+| 4 | Final inventory reconciliation, cross-client routing verification, tracker retirement | this change |
+
+**Why the program existed.** `.agents/skills/` had grown to 102 entries mixing *procedures* (what an agent should do) with *knowledge* (what is true about this repo's architecture, domain, and stack). Two costs followed: every implicitly invocable skill contributed its `description` to the catalog Codex injects per session — 8,991 characters against a ~8,000-character fallback budget, so Codex could silently shorten or drop entries — and durable facts were reachable only by loading a whole procedural skill, with no lifecycle metadata to distinguish current doctrine from stale.
+
+**What is true after it.** [`knowledge/`](../../knowledge/index.md) is a real, machine-checkable OKF v0.2 bundle rather than a contract with nothing conforming to it; the Codex catalog fits its character budget with a ratchet preventing regression; and the skill tree, the registry, and every client adapter agree with each other under `pnpm agents:validate`.
+
+### Client routing and knowledge flow
+
+```mermaid
+flowchart TD
+    subgraph ClientLayer ["Client Agents & Entrypoints"]
+        Claude["Claude Code (.claude/CLAUDE.md)"]
+        Codex["OpenAI Codex (.agents/skills/)"]
+        OpenCode["OpenCode (opencode.json)"]
+    end
+
+    subgraph RegistryLayer ["Registry & Governance"]
+        Taxonomy[".agents/README.md"]
+        Registry[".agents/agent-skill-registry.yaml"]
+        Validator["scripts/validate-agent-skills.mjs"]
+    end
+
+    subgraph SkillLayer ["Thin Skill Procedures (.agents/skills/)"]
+        ThinSkill1["frontend-tech-stack/SKILL.md"]
+        ThinSkill2["design-patterns/SKILL.md"]
+        ThinSkill3["show-production-lifecycle/SKILL.md"]
+    end
+
+    subgraph KnowledgeLayer ["Canonical OKF v0.2 Knowledge (knowledge/)"]
+        EngBundle["knowledge/engineering/*.md"]
+        ArchBundle["knowledge/architecture/*.md"]
+        DomainBundle["knowledge/domain/*.md"]
+    end
+
+    ClientLayer --> RegistryLayer
+    RegistryLayer --> SkillLayer
+    ThinSkill1 -->|dynamic OKF reference| EngBundle
+    ThinSkill2 -->|dynamic OKF reference| ArchBundle
+    ThinSkill3 -->|dynamic OKF reference| DomainBundle
+```
+
+### Catalog policy gate
+
+```mermaid
+flowchart LR
+    subgraph RawCatalog ["Original Catalog (102 skills, all implicit)"]
+        RawPrompt["Global Implicit Prompt (8,991 chars)"]
+    end
+
+    subgraph PolicyGate ["OpenAI Policy Gate (agents/openai.yaml)"]
+        CheckImplicit{"allow_implicit_invocation?"}
+    end
+
+    subgraph FilteredCatalog ["Current Routing Catalog (99 skills)"]
+        ImplicitSkills["Implicit Capability Skills (63) — target &lt;=50, then &lt;=35"]
+        ExplicitSkills["Explicit-Only Skills (36) ($skill / /command)"]
+    end
+
+    RawPrompt --> PolicyGate
+    CheckImplicit -->|true| ImplicitSkills
+    CheckImplicit -->|false| ExplicitSkills
+    ImplicitSkills --> BudgetCheck["Character Budget 6,841 / 8,000 (met)"]
+```
