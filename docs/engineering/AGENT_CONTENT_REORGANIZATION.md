@@ -94,7 +94,7 @@ rg -o '^    kind: (.+)$' -r '$1' .agents/agent-skill-registry.yaml | sort | uniq
 | Disposition | Registry `kind` | Count | Meaning |
 | --- | --- | ---: | --- |
 | Keep as procedural skill | `capability-skill` | 78 | Task-triggered and procedural; still subject to quality review |
-| Thin skill plus extracted knowledge | `thin-wrapper` | 8 | Predominantly factual; doctrine moved to `knowledge/`, routing/procedure retained |
+| Thin skill plus extracted knowledge | `thin-wrapper` | 8 | Predominantly factual; doctrine belongs in `knowledge/` with routing/procedure retained — 4 of the 8 have landed it, 4 are still pending |
 | Workflow wrapper | `workflow-bridge` | 6 | Authoritative orchestration belongs under `.agents/workflows/` |
 | Presentation mode | `presentation-mode` | 7 | Output style only, explicit user trigger — all 7 are `implicit: false` |
 | **Total** | | **99** | Matches the generated index and the skill directories |
@@ -122,17 +122,17 @@ The 25 entries the § Target portfolio budgets at 0 as standalone pattern or tec
 | 7 | `design-patterns` | keep as thin skill | Extraction complete (#367); body is a decision procedure |
 | 8 | `frontend-tech-stack` | keep as thin skill | Extraction complete (#367); body is a workspace setup/upgrade procedure |
 | 9 | `pwa-best-practices` | keep as thin skill | Extraction complete (#367); body is a migration procedure with a production HTTP verification step |
-| 10 | `code-quality` | keep as thin skill | Owns the pre-submission gate and now the SOLID lens; generic lint/type doctrine remains an extraction candidate |
+| 10 | `code-quality` | keep as thin skill, extraction pending | Owns the pre-submission gate and now the SOLID lens; the generic lint/type/testing doctrine is durable and still unextracted |
 | 11 | `engineering-best-practices-enforcer` | keep as thin skill | Declared review lens with a scanner script and an output contract — a retained class, no factual body to extract |
 | 12 | `frontend-i18n` | keep as thin skill | Ordered how-to (add key → regenerate → consume); no durable doctrine large enough to earn a concept |
 | 13 | `api-performance-optimization` | keep as thin skill, extraction pending | Audit workflow is procedural; the lean-select, aggregation, and bulk-guard rules are durable facts |
 | 14 | `backend-testing-patterns` | keep as thin skill, extraction pending | Real-database completion gate is procedural; the per-layer test doctrine is factual |
-| 15 | `data-validation` | keep as thin skill, extraction pending | Registry already marks it `thin-wrapper`; three-layer contract and UID rules are durable |
+| 15 | `data-validation` | keep as thin skill, extraction pending | Registered `capability-skill` with empty `knowledge_sources`; three-layer contract and UID rules are durable |
 | 16 | `frontend-api-layer` | keep as thin skill, extraction pending | Query-key factory, mutation, and freshness-tier rules are durable |
 | 17 | `frontend-code-quality` | keep as thin skill, extraction pending | Decomposition procedure is real; naming, route-access, and layout doctrine is factual |
 | 18 | `frontend-error-handling` | keep as thin skill, extraction pending | Layered error architecture is factual |
 | 19 | `frontend-performance` | keep as thin skill, extraction pending | Optimization rules are factual; measurement is the procedure |
-| 20 | `frontend-state-management` | keep as thin skill, extraction pending | Registry already marks it `thin-wrapper`; the decision tree and cache rules are durable |
+| 20 | `frontend-state-management` | keep as thin skill, extraction pending | Registered `capability-skill` with empty `knowledge_sources`; the decision tree and cache rules are durable |
 | 21 | `frontend-testing-patterns` | keep as thin skill, extraction pending | Environment gotchas (happy-dom, `lazyRouteComponent`) are durable facts |
 | 22 | `frontend-ui-components` | keep as thin skill, extraction pending | Largest candidate (176 lines); decision priority, responsive dialog, and three-perspective patterns are all doctrine |
 | 23 | `observability-logging` | keep as thin skill, extraction pending | Levels and never-log tables are durable facts |
@@ -147,7 +147,7 @@ An attempt to reach the milestone by marking 18 human-decision-triggered skills 
 
 Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
 
-All 8 `thin-wrapper` entries completed their extraction in PR #367 — their doctrine now lives in [`knowledge/`](../../knowledge/index.md).
+All 8 skills PR #367 targeted completed their extraction — their doctrine now lives in [`knowledge/`](../../knowledge/index.md) and each carries a `knowledge_sources` entry. That set is **not** the same as the 8 registry `thin-wrapper` entries: only 4 of the `thin-wrapper` entries (`database-patterns`, `design-patterns`, `frontend-tech-stack`, `show-production-lifecycle`) overlap it. The other 4 — `ai-workspace-control-plane`, `operations-review-surface`, `shift-schedule-pattern`, `task-template-builder` — carry the classification with no extraction behind it yet and are listed under § Pending extraction.
 
 ### Keep as procedural skill — provisional
 
@@ -236,14 +236,16 @@ This category means “not yet an obvious move candidate,” not “already idea
 | `show-production-lifecycle` | [`domain/show-production-lifecycle`](../../knowledge/domain/show-production-lifecycle.md) |
 | `table-view-pattern` | [`engineering/table-view-pattern`](../../knowledge/engineering/table-view-pattern.md) |
 
-**Pending extraction** — entries the registry already classifies as `thin-wrapper` with no `knowledge_sources` yet, plus the extraction-pending rows of § Candidate disposition table:
+**Pending extraction** — registry entries with an empty `knowledge_sources`. Two groups, and they overlap:
 
-- `ai-workspace-control-plane`
-- `data-validation`
-- `frontend-state-management`
-- `operations-review-surface`
-- `shift-schedule-pattern`
-- `task-template-builder`
+1. **`thin-wrapper` entries whose classification anticipates an extraction that has not happened.** The `kind` claims the doctrine already moved; it has not.
+
+   - `ai-workspace-control-plane`
+   - `operations-review-surface`
+   - `shift-schedule-pattern`
+   - `task-template-builder`
+
+2. **The 14 rows marked *extraction pending* in § Candidate disposition table.** These are registered `capability-skill` — the classification makes no completeness claim — but they still carry durable doctrine inline. The list is maintained in that table and is not duplicated here.
 
 Expected pattern:
 
