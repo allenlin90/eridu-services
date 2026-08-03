@@ -45,4 +45,11 @@ export default createConfig(
       'eslint-comments/disable-enable-pair': 'off',
     },
   },
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+      'node/no-process-env': 'off',
+    },
+  },
 );

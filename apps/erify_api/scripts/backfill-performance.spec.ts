@@ -1,5 +1,6 @@
-import { runBackfill, POST_PRODUCTION_TEMPLATE_UID } from './backfill-performance';
 import { Prisma } from '@prisma/client';
+
+import { POST_PRODUCTION_TEMPLATE_UID, runBackfill } from './backfill-performance';
 
 describe('backfill-performance script', () => {
   let mockPrisma: any;
