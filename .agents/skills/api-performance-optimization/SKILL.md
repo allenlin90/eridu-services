@@ -72,4 +72,4 @@ Guard rails when applying this:
 
 - [Database Patterns](../database-patterns/SKILL.md) — Foundational query rules
 - [Repository Pattern](../nestjs-architecture/references/repository-pattern.md) — Lean selects and aggregations
-- [Table View Pattern](../frontend-ui-components/references/table-view-pattern.md) — Offset-based infinite scroll and list surfaces
+- [frontend-ui-components § table view](../frontend-ui-components/references/table-view-pattern.md) — Offset-based infinite scroll and list surfaces

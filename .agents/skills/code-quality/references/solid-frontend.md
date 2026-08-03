@@ -324,7 +324,7 @@ This violated SRP (two domain operations, two reasons to change) and OCP (adding
 
 ## Related Skills
 
-- **[Frontend Code Quality](../../code-quality/references/frontend-code-quality.md)**: Linting and code standards.
+- **[code-quality § frontend quality](frontend-code-quality.md)**: Linting and code standards.
 - **[Frontend API Layer](../../frontend-api-layer/SKILL.md)**: API abstraction patterns.
 - **[Frontend State Management](../../frontend-state-management/SKILL.md)**: State patterns.
 - **[Frontend UI Components](../../frontend-ui-components/SKILL.md)**: Shared component guidelines.

@@ -174,5 +174,5 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 
 ## Related Skills
 
-- [frontend-code-quality](../code-quality/references/frontend-code-quality.md) — Quality standards
+- [code-quality § frontend quality](../code-quality/references/frontend-code-quality.md) — Quality standards
 - [frontend-tech-stack](../frontend-tech-stack/SKILL.md) — Tech stack

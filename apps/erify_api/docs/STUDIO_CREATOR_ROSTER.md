@@ -80,7 +80,7 @@ The list response stays based on the existing studio-creator roster item and may
 - `GET /creators` returns paginated roster results using the existing list query DTO (`search`, `is_active`, `default_rate_type`, pagination).
 - `POST /creators` accepts the shared add payload, then returns the roster item DTO for the created or reactivated row.
 - `PATCH /creators/:creatorId` accepts the shared update payload and returns the updated roster item DTO.
-- `GET /creators/:creatorId/compensations` accepts `date_from` / `date_to`, verifies the creator belongs to the studio roster, and returns show assignment rows with base, adjustment, total, and unresolved reason fields. Mirrors the noun sub-resource shape used by `GET /members/:memberId/compensations` (see `backend-controller-pattern-nestjs`).
+- `GET /creators/:creatorId/compensations` accepts `date_from` / `date_to`, verifies the creator belongs to the studio roster, and returns show assignment rows with base, adjustment, total, and unresolved reason fields. Mirrors the noun sub-resource shape used by `GET /members/:memberId/compensations` (see the `nestjs-architecture` skill's controller reference).
 - `PATCH /shows/:showId/creators/:showCreatorId` validates studio/show scope before updating `ShowCreator.note`, `agreedRate`, `compensationType`, `commissionRate`, and override audit entries.
 
 ## Service

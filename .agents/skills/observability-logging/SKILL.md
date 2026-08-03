@@ -52,6 +52,6 @@ Use global mutation error handler and `ErrorBoundary`. Never include auth tokens
 
 ## Related Skills
 
-- [backend-controller-pattern-nestjs](../nestjs-architecture/references/controller-pattern.md) — Global exception filter
+- [nestjs-architecture § controller](../nestjs-architecture/references/controller-pattern.md) — Global exception filter
 - [frontend-error-handling](../frontend-error-handling/SKILL.md) — User-facing errors
-- [secure-coding-practices](../code-quality/references/secure-coding-practices.md) — What must never be logged
+- [code-quality § secure coding](../code-quality/references/secure-coding-practices.md) — What must never be logged

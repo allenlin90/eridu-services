@@ -178,5 +178,5 @@ new snapshot carry the binding. This is by design (immutable task templates rule
   outcome routing, and adding new `IngestionExtractor` implementations.
 - [task-template-builder](../task-template-builder/SKILL.md) — UI-side builder that
   manages `system_fact_key` bindings interactively.
-- [local-database-cli](../database-patterns/references/08-local-database-cli.md) — psql patterns and the
+- [database-patterns § local database CLI](../database-patterns/references/08-local-database-cli.md) — psql patterns and the
   `"current_schema"` quoting rule.

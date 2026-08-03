@@ -15,7 +15,7 @@ sources:
 
 # NestJS Service Pattern
 
-Service-layer correctness rules for Eridu. Selected by the [`service-pattern-nestjs`](../../.agents/skills/nestjs-architecture/references/service-pattern.md) skill.
+Service-layer correctness rules for Eridu. Selected by the [`nestjs-architecture § service`](../../.agents/skills/nestjs-architecture/references/service-pattern.md) skill.
 
 > **Capability placement and persistence selection.**
 > [`erify-api-capability-refactoring`](../../.agents/skills/erify-api-capability-refactoring/SKILL.md)
@@ -114,5 +114,5 @@ A model service exists to generate UIDs, enforce invariants, translate payloads,
 
 - [`architecture/backend-controller-pattern-nestjs`](backend-controller-pattern-nestjs.md) — Controller patterns
 - [`architecture/database-patterns`](database-patterns.md) — Transactions, soft delete, locking
-- [`repository-pattern-nestjs`](../../.agents/skills/nestjs-architecture/references/repository-pattern.md) — Complex private persistence providers
+- [`nestjs-architecture § repository`](../../.agents/skills/nestjs-architecture/references/repository-pattern.md) — Complex private persistence providers
 - [`data-validation`](../../.agents/skills/data-validation/SKILL.md) — Input validation patterns

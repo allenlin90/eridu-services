@@ -15,7 +15,7 @@ sources:
 
 # Table View Pattern
 
-Standard patterns for list surfaces in `erify_studios`, `erify_creators`, and `@eridu/ui`. Selected by the [`table-view-pattern`](../../.agents/skills/frontend-ui-components/references/table-view-pattern.md) skill.
+Standard patterns for list surfaces in `erify_studios`, `erify_creators`, and `@eridu/ui`. Selected by the [`frontend-ui-components § table view`](../../.agents/skills/frontend-ui-components/references/table-view-pattern.md) skill.
 
 > See [references/table-view-details.md](../../.agents/skills/frontend-ui-components/references/table-view-details.md) for extended guidance, code examples, virtualization patterns, CRUD consistency rules, current-view export details, and anti-patterns.
 

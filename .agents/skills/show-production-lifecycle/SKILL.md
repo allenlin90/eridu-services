@@ -30,7 +30,7 @@ Procedure for show-related changes in `erify_api` and `erify_studios`. The canon
 pnpm --filter erify_api lint && pnpm --filter erify_api typecheck && pnpm --filter erify_api test && pnpm --filter erify_api build
 ```
 
-Status-transition and soft-delete/restore changes also require the real-database gate in [`backend-testing-patterns`](../code-quality/references/backend-testing-patterns.md#5-real-database-integration-tests).
+Status-transition and soft-delete/restore changes also require the real-database gate in [`code-quality` § backend testing](../code-quality/references/backend-testing-patterns.md#5-real-database-integration-tests).
 
 ## Canonical Knowledge
 

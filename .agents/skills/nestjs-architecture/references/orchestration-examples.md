@@ -1,6 +1,6 @@
 # Orchestration Service Examples
 
-Detailed code examples for the orchestration-service-nestjs skill.
+Detailed code examples for the orchestration layer of the nestjs-architecture skill.
 
 ## Orchestration Service Structure
 

@@ -15,7 +15,7 @@ sources:
 
 # NestJS Controller Pattern
 
-Controller-layer patterns for `apps/erify_api`. Controllers validate/translate HTTP input, apply auth, call services, and serialize responses. Selected by the [`backend-controller-pattern-nestjs`](../../.agents/skills/nestjs-architecture/references/controller-pattern.md) skill.
+Controller-layer patterns for `apps/erify_api`. Controllers validate/translate HTTP input, apply auth, call services, and serialize responses. Selected by the [`nestjs-architecture § controller`](../../.agents/skills/nestjs-architecture/references/controller-pattern.md) skill.
 
 ## First Read
 

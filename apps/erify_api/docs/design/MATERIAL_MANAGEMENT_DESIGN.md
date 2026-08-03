@@ -11,7 +11,7 @@ This document should cover:
 3. **Platform Targeting**: Is `platformId` on `Material` a nullable FK (null = all platforms), or a separate `MaterialPlatform` join table for multi-platform targeting?
 4. **File Upload Integration**: How `resource_url` is populated via the presigned URL upload flow (see [File Upload](../FILE_UPLOAD.md))
 5. **Client Scoping**: Materials are client-scoped per [Business Domain](../../../../docs/domain/BUSINESS.md) — clarify data isolation rules
-6. **Service Architecture**: Following `service-pattern-nestjs` skill — payload types, repository pattern, controller endpoints
+6. **Service Architecture**: Following the `nestjs-architecture` skill's service reference — payload types, repository pattern, controller endpoints
 7. **API Contracts**: Zod schemas in `@eridu/api-types` for material CRUD
 
 ## Reference

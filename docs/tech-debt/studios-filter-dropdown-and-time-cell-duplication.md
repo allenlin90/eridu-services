@@ -65,4 +65,4 @@ some surfaces, so it is not done preemptively.
 
 ## Related Context
 
-PR #310 multi-agent review findings 8–9; [`frontend-code-quality` skill](../../.agents/skills/code-quality/references/frontend-code-quality.md) (duplication rules); [`table-view-pattern` skill](../../.agents/skills/frontend-ui-components/references/table-view-pattern.md).
+PR #310 multi-agent review findings 8–9; [`code-quality` § frontend quality](../../.agents/skills/code-quality/references/frontend-code-quality.md) (duplication rules); [`frontend-ui-components` § table view](../../.agents/skills/frontend-ui-components/references/table-view-pattern.md).

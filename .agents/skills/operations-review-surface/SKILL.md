@@ -7,7 +7,7 @@ description: Build erify_studios operational-day reviews with lean summaries, pa
 
 The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-setup`) share one composition pattern: an operational-day-scoped read model summarized into KPI cards plus URL-synced multi-tab DataTables, each tab lazily fetched and independently exportable. PR 19 (`/studios/:studioId/costs`) and PR 21 (`/studios/:studioId/performance`) reuse it. This skill captures that pattern so the next surface doesn't copy a monolith.
 
-> This is the **composition** layer on top of [`table-view-pattern`](../frontend-ui-components/references/table-view-pattern.md). That skill owns the table mechanics (DataTable, `useTableUrlState`, pagination, current-view export). This skill owns how a multi-tab operational-review screen is assembled from those primitives. Read both.
+> This is the **composition** layer on top of [`frontend-ui-components § table view`](../frontend-ui-components/references/table-view-pattern.md). That skill owns the table mechanics (DataTable, `useTableUrlState`, pagination, current-view export). This skill owns how a multi-tab operational-review screen is assembled from those primitives. Read both.
 
 ## Canonical files
 
@@ -25,7 +25,7 @@ The PR 12.4.x Operations surfaces (`/task-review`, `/show-run-review`, `/task-se
 
 **Use**: a studio review screen scoped to an operational day/range that summarizes already-extracted operational facts and drills into them across tabs; adding a tab or filter to an existing Operations surface; a new downstream read surface over the same indexed columns (costs, analytics).
 
-**Don't use**: single-table list routes and card-based lists → [`table-view-pattern`](../frontend-ui-components/references/table-view-pattern.md). The **write** path (extraction) → [`fact-extraction-pipeline`](../fact-extraction-pipeline/SKILL.md). These surfaces are **read-only over extracted facts**; never write actuals from a review screen (see PR 12 §G — Operations review is upstream of economics).
+**Don't use**: single-table list routes and card-based lists → [`frontend-ui-components § table view`](../frontend-ui-components/references/table-view-pattern.md). The **write** path (extraction) → [`fact-extraction-pipeline`](../fact-extraction-pipeline/SKILL.md). These surfaces are **read-only over extracted facts**; never write actuals from a review screen (see PR 12 §G — Operations review is upstream of economics).
 
 One narrow exception exists: a review capability may persist **its own** normalized decisions — Scene QC writes `SceneQcReview`, `SceneQcDailyConfirmation`, and their pinned children, and nothing else. It still never writes `Task`, `Show`, `ShowCreator`, `ShowPlatform`, actuals, or any lifecycle state. If a new surface needs to write outside its own tables, it is not a review surface.
 
@@ -154,9 +154,9 @@ Task Review exposes pre-confirmation task reads and actions only to `ADMIN`/`MAN
 
 ## Related skills
 
-- [table-view-pattern](../frontend-ui-components/references/table-view-pattern.md) — DataTable / URL state / pagination / current-view export mechanics (the layer below this one)
+- [frontend-ui-components § table view](../frontend-ui-components/references/table-view-pattern.md) — DataTable / URL state / pagination / current-view export mechanics (the layer below this one)
 - [fact-extraction-pipeline](../fact-extraction-pipeline/SKILL.md) — the upstream write path these surfaces read
 - [api-performance-optimization](../api-performance-optimization/SKILL.md) — §8 summary/sub-resource split + drift guard rails
-- [frontend-code-quality](../code-quality/references/frontend-code-quality.md) — Large Route Decomposition (container + hook + presentation)
+- [code-quality § frontend quality](../code-quality/references/frontend-code-quality.md) — Large Route Decomposition (container + hook + presentation)
 - [frontend-ui-components](../frontend-ui-components/SKILL.md) — three-perspective component reuse for entity-scoped widgets
 - [show-production-lifecycle](../show-production-lifecycle/SKILL.md) — owns the show lifecycle states and readiness conditions these surfaces report on; `/show-run-review` issue findings should feed the lifecycle's show-level issue ownership workstream

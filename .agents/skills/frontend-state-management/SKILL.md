@@ -79,4 +79,4 @@ Pure utility functions: `upsertItemInPages`, `removeItemFromPages`, `compactToFi
 ## Related Skills
 
 - [frontend-api-layer](../frontend-api-layer/SKILL.md) — API integration
-- [table-view-pattern](../frontend-ui-components/references/table-view-pattern.md) — List and table state management
+- [frontend-ui-components § table view](../frontend-ui-components/references/table-view-pattern.md) — List and table state management

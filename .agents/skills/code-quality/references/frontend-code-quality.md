@@ -81,4 +81,4 @@ Keep it about responsibilities and data flow, not a line-by-line restatement of 
 ## Related Skills
 
 - [frontend-tech-stack](../../frontend-tech-stack/SKILL.md) — Tech stack
-- [table-view-pattern](../../frontend-ui-components/references/table-view-pattern.md) — Table patterns
+- [frontend-ui-components § table view](../../frontend-ui-components/references/table-view-pattern.md) — Table patterns
