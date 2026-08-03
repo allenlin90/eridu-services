@@ -245,8 +245,8 @@ const repositoryChecks = [
   },
   {
     name: 'Agent taxonomy',
-    ok: existsSync('.agents/README.md'),
-    detail: '.agents/README.md owns content classification and bookkeeping',
+    ok: existsSync('.agents/README.md') && existsSync('.agents/agent-skill-registry.yaml'),
+    detail: '.agents/README.md & agent-skill-registry.yaml own content classification and registry',
   },
   {
     name: 'Agent routes',

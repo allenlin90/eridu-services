@@ -5,114 +5,28 @@ description: Make high-level architecture, layer-boundary, and package-organizat
 
 # Design Patterns
 
-High-level architecture, layer boundaries, and package organization.
+Procedure for architecture, layer-boundary, and package-organization decisions. Canonical doctrine lives in [`knowledge/architecture/design-patterns`](../../../knowledge/architecture/design-patterns.md).
 
-For `erify_api` module placement and persistence selection,
-[`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
-is authoritative.
+> For `erify_api` module placement and persistence selection, [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md) is authoritative and takes precedence over this skill.
 
-For implementation details: [controllers](../backend-controller-pattern-nestjs/SKILL.md) | [services](../service-pattern-nestjs/SKILL.md) | [repositories](../repository-pattern-nestjs/SKILL.md)
+## Procedure
 
-## Architectural Layers
+1. Name the decision: layer boundary, OLTP-vs-analytical, route shape, module export, join-table module, or package placement. Read that section of the knowledge doc.
+2. Place the use case with the business capability that owns the rule — not a table-first or audience-first slice.
+3. Check the module-export rules before exporting anything: capability services and intentional query APIs only; persistence providers stay private.
+4. For anything crossing a workspace boundary, check [`package-extraction-strategy`](../package-extraction-strategy/SKILL.md) before creating a package.
+5. Record the decision and its trigger in the plan and PR. Do not introduce a speculative layer to make a hypothetical future refactor easier.
 
+## Verification
+
+```bash
+pnpm architecture:signals
 ```
-HTTP API → Capability Service / Use Case → Persistence → Database
-                                      ├─ direct txHost for shallow CRUD
-                                      └─ private repository/queries for complexity
-```
 
-**Boundaries**:
-- Only Controllers speak HTTP — services never know about HTTP
-- Services implement all business logic — controllers never contain business logic
-- Capability APIs never expose ORM query types
-- Shallow services may use `TransactionHost.tx` directly; complex persistence stays private behind a named provider
-- Shared API types at external edges; domain/DB types internally
+Then the standard checklist for each workspace the decision touches (`lint`, `typecheck`, `test`, `build`).
 
-## OLTP Facts vs Analytical Read Models
+## Canonical Knowledge
 
-Keep OLTP tables focused on operational writes, exception review, and lifecycle decisions. Store facts on the narrowest entity: `Show` (event timing), `ShowCreator` (participation), `ShowPlatform` (platform stream facts), `ShowPlatformViolation` (platform exception events), `StudioShiftBlock` (labor).
-
-Only promote a metric to an operational column when it drives a current operational query, filter, export, override, or constraint. Late, missing, incomplete, stale, and violation states belong in the OLTP path. Cross-show trends, post-show performance analysis, revenue exploration, and derived aggregates belong in an explicit analytical read model or OLAP design.
-
-OLAP may share Postgres through projections/materialized views or use separate infrastructure. Do not assume the infrastructure before the product query shape, freshness, ownership, and backfill requirements are clear. Never persist calculated finance totals on operational tables.
-
-## Audit History
-
-Use the standard `Audit` / `AuditTarget` history for new override and extraction flows. Do not add new metadata audit arrays; existing metadata audit entries are legacy compatibility only.
-
-## REST Route Shape
-
-- One canonical collection per mutable resource under its authorization boundary
-- Keep nesting shallow: one scope segment + resource
-- Polymorphic resources: use `target_type`/`target_id` fields, not separate route families
-- Reserve `include`/`expand` for read-time embedding, not primary mutation contracts
-
-## Service Architecture
-
-| Type | Responsibility | Dependencies |
-|---|---|---|
-| **Capability Service** | Stable API, single-capability behavior | `TransactionHost` or private persistence provider |
-| **Orchestration** | Multi-capability coordination | Capability services and private workflow providers |
-
-Decision: one shallow capability → direct persistence is allowed; complex or
-reused persistence → private provider; multiple capabilities in one workflow →
-capability-owned orchestration/use case.
-
-## Module Exports
-
-Export capability services or intentional query APIs only. Persistence
-providers remain private. Do not add a thin service or module solely because a
-join table exists.
-
-For small reference-data capabilities, one provider module may own several
-focused services without merging the services themselves. Register transport
-adapters in a sibling transport module when the providers are shared with a
-runtime that must not expose those adapters. The show catalog is the reference:
-`ShowCatalogModule` exports only its four focused services, while
-`ShowCatalogHttpModule` registers the colocated admin controllers for the REST
-runtime. Importers use `PlatformService.findActiveByUids()` rather than
-importing `PlatformRepository`.
-
-### Consuming a Capability Module
-
-A capability exposes two doors. Import the one matching what you need:
-
-| Need | Import | Then |
-| --- | --- | --- |
-| The capability's data or behavior | the provider module (`ShowCatalogModule`) | inject an exported service in your constructor |
-| Its HTTP routes served by a runtime | the transport module (`ShowCatalogHttpModule`) | nothing else; the composition root only lists it |
-
-Rules:
-
-- Import a provider module only when a class in your module injects one of its
-  exported services. An import with no injection is dead wiring.
-- A transport module is imported by exactly one composition root — the runtime
-  that should serve those routes. Never import another capability's transport
-  module to reach its services; that is how a non-HTTP runtime inherits REST
-  routes.
-- Audience modules (`AdminModule` and siblings) compose only. They hold no
-  controllers or providers of their own.
-- New endpoints belong to the capability that owns the use case, registered in
-  that capability's transport module — not in a new audience-shaped module.
-- When the public API is too narrow, add a named service method rather than
-  exporting a repository. `PlatformService.findActiveByUids()` exists for
-  exactly this reason.
-
-## When to Separate Join Table Modules
-
-Separate when: own lifecycle (create/restore/cascade), extra payload fields, referenced by multiple domains.
-Fold into parent when: pure FK link, only created/deleted within parent transaction.
-
-## Monorepo Package Organization
-
-- `packages/api-types` — API contracts (FE+BE)
-- `packages/auth-sdk` — Auth utilities (JWT, JWKS)
-- `packages/ui` — Shared React components
-- Always `workspace:*` for internal deps; never import from app into package
-
-## Performance Strategy
-
-1. **DB**: indexes on FKs and frequent queries
-2. **Repository**: eager loading (`include`), bulk ops (`createMany`/`updateMany`)
-3. **Service**: `Promise.all()` for independent ops, short transactions
-4. **HTTP**: caching, pagination
+- [`knowledge/architecture/design-patterns`](../../../knowledge/architecture/design-patterns.md) — layers, OLTP/analytical split, route shape, module exports, package organization
+- [`apps/erify_api/docs/ARCHITECTURE.md`](../../../apps/erify_api/docs/ARCHITECTURE.md) — capability-first direction and persistence matrix
+- Implementation detail: [controllers](../backend-controller-pattern-nestjs/SKILL.md) | [services](../service-pattern-nestjs/SKILL.md) | [repositories](../repository-pattern-nestjs/SKILL.md)

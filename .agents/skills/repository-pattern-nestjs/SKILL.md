@@ -79,7 +79,7 @@ queries should use `this.model` when the base delegate surface is sufficient,
 or `this.txHost.tx.<model>` when they need Prisma-specific operations. Do not
 use the unbounded `PrismaService` for transaction-dependent work.
 For the Express/knex lifecycle analogy and why request scope is not a
-transaction substitute, see [`database-patterns` §3](../database-patterns/SKILL.md#3-transaction-pattern).
+transaction substitute, see [`database-patterns` §3](../../../knowledge/architecture/database-patterns.md#3-transaction-pattern).
 
 ## Key Patterns
 

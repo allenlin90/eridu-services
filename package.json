@@ -2,7 +2,8 @@
   "name": "monorepo",
   "private": true,
   "scripts": {
-    "agents:validate": "node scripts/validate-agent-skills.mjs && node scripts/build-skill-index.mjs --check",
+    "agents:validate": "pnpm agents:test && node scripts/validate-agent-skills.mjs && node scripts/build-skill-index.mjs --check",
+    "agents:test": "node --test \"scripts/**/*.test.mjs\"",
     "agents:index": "node scripts/build-skill-index.mjs",
     "agents:doctor": "node scripts/check-agent-tooling.mjs",
     "architecture:signals": "node scripts/measure-erify-api-architecture.mjs",

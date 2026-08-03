@@ -2,7 +2,9 @@
 
 ## Status
 
-This is the migration inventory and execution plan for the 94 entries currently indexed under `.agents/skills/`. It establishes review and bookkeeping scope; provisional classifications still require focused content review.
+This is the migration inventory and execution plan for the entries indexed under `.agents/skills/`. It establishes review and bookkeeping scope; provisional classifications still require focused content review.
+
+**Current count: 102 skills.** The original audit recorded 94; the catalog grew to 102 before the OKF migration began. Dispositions below are now derived from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml), which `pnpm agents:validate` keeps in sync with the skill directories — so this table can no longer silently drift from the tree. Final post-consolidation totals land after the consolidation PRs; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4 PR Roadmap.
 
 A content move is complete only when routing, links, validation, and behavior have been verified with Claude Code, Codex, and OpenCode.
 
@@ -83,15 +85,25 @@ Correct timing matters:
 
 ## Revised Provisional Inventory
 
-| Disposition | Count | Meaning |
-| --- | ---: | --- |
-| Keep as procedural skill | 67 | Appears task-triggered and procedural; still subject to quality review |
-| Thin skill plus extracted knowledge | 8 | Mixed or predominantly factual; retain routing/procedure only |
-| Workflow wrapper | 9 | Authoritative orchestration belongs under `.agents/workflows/` |
-| Presentation mode | 1 | Output style only, explicit user trigger |
-| Reasoning intervention rework | 3 | Must move into lifecycle timing rather than remain explicit modes |
-| Consolidation review | 6 | Overlapping capability boundaries require review |
-| **Total** | **94** | Matches the generated index at the time of this audit |
+Counts below come from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml). Regenerate with:
+
+```bash
+rg -o '^    kind: (.+)$' -r '$1' .agents/agent-skill-registry.yaml | sort | uniq -c | sort -rn
+```
+
+| Disposition | Registry `kind` | Count | Meaning |
+| --- | --- | ---: | --- |
+| Keep as procedural skill | `capability-skill` | 81 | Task-triggered and procedural; still subject to quality review |
+| Thin skill plus extracted knowledge | `thin-wrapper` | 8 | Predominantly factual; doctrine moved to `knowledge/`, routing/procedure retained |
+| Workflow wrapper | `workflow-bridge` | 6 | Authoritative orchestration belongs under `.agents/workflows/` |
+| Presentation mode | `presentation-mode` | 7 | Output style only, explicit user trigger — all 7 are `implicit: false` |
+| **Total** | | **102** | Matches the generated index and the skill directories |
+
+Routing split: **66 implicitly invocable**, **36 explicit-only**. The implicit count is ratcheted by `implicit_catalog_ceiling` and is above the `<50` milestone target — tracked in the PR roadmap, not here.
+
+Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
+
+All 8 `thin-wrapper` entries completed their extraction in this PR — their doctrine now lives in [`knowledge/`](../../knowledge/index.md).
 
 ### Keep as procedural skill — provisional
 
@@ -169,13 +181,24 @@ This category means “not yet an obvious move candidate,” not “already idea
 
 ### Thin skill plus extracted knowledge
 
+**Extracted (live in [`knowledge/`](../../knowledge/index.md) as strict OKF v0.2 concepts):**
+
+| Skill | Knowledge concept |
+| --- | --- |
+| `backend-controller-pattern-nestjs` | [`architecture/backend-controller-pattern-nestjs`](../../knowledge/architecture/backend-controller-pattern-nestjs.md) |
+| `database-patterns` | [`architecture/database-patterns`](../../knowledge/architecture/database-patterns.md) |
+| `design-patterns` | [`architecture/design-patterns`](../../knowledge/architecture/design-patterns.md) |
+| `frontend-tech-stack` | [`engineering/frontend-tech-stack`](../../knowledge/engineering/frontend-tech-stack.md) |
+| `pwa-best-practices` | [`engineering/pwa-best-practices`](../../knowledge/engineering/pwa-best-practices.md) |
+| `service-pattern-nestjs` | [`architecture/service-pattern-nestjs`](../../knowledge/architecture/service-pattern-nestjs.md) |
+| `show-production-lifecycle` | [`domain/show-production-lifecycle`](../../knowledge/domain/show-production-lifecycle.md) |
+| `table-view-pattern` | [`engineering/table-view-pattern`](../../knowledge/engineering/table-view-pattern.md) |
+
+**Pending extraction:**
+
 - `ai-workspace-control-plane`
-- `database-patterns`
-- `design-patterns`
-- `frontend-tech-stack`
 - `operations-review-surface`
 - `shift-schedule-pattern`
-- `show-production-lifecycle`
 - `task-template-builder`
 
 Expected pattern:
@@ -191,13 +214,17 @@ references/...
   implementation depth needed only after selecting the skill
 ```
 
-The first extraction pilot uses:
-
-1. `frontend-tech-stack` — engineering stack knowledge.
-2. `design-patterns` — architecture doctrine and pattern-selection knowledge.
-3. `show-production-lifecycle` — business-domain lifecycle knowledge.
+The first extraction pilot covered `frontend-tech-stack` (engineering stack knowledge), `design-patterns` (architecture doctrine), and `show-production-lifecycle` (business-domain lifecycle), then extended to the five other concepts in the table above.
 
 Each extraction must land with the skill or reasoning consumer that retrieves and applies the new canonical source.
+
+**Extraction rules learned from the pilot** — every one of these was violated on the first attempt and caught in review:
+
+- **Move content verbatim.** Resummarizing doctrine into a four-step procedure deletes rules; it does not extract them. If the concept is shorter than what it replaced, content was lost.
+- **Thinning a `SKILL.md` body saves no catalog tokens.** `pnpm agents:validate` counts frontmatter `description` characters only. Deleting body content buys nothing.
+- **Verify every code-level claim against source.** State values, guard names, and component names written from memory come out wrong; structural validation will not catch it.
+- **Preserve cited section numbering** and repoint every citing document in the same PR.
+- **Keep `references/` reachable** from either the thin skill or the knowledge concept.
 
 ### Workflow wrappers
 
@@ -373,7 +400,7 @@ Until that validator exists, this document is the reviewed inventory and must be
 
 - Define content classes and admission rules.
 - Define the target reasoning lifecycle and catalog targets.
-- Record all 94 current entries.
+- Record all current entries (94 at audit time; 102 today — see § Status).
 - Update skill-authoring guidance to reject knowledge-shaped additions.
 - Do not move live content.
 

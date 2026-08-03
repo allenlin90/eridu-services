@@ -120,7 +120,7 @@ Source of truth:
 
 ### service-pattern-nestjs (PRIMARY)
 
-**Key Rules** (from skill):
+**Key Rules** (canonical source: `knowledge/architecture/service-pattern-nestjs.md` § 2; the skill is the thin procedure that selects it):
 1. ✅ Schemas MAY import `Prisma` types to DEFINE payload types
 2. ✅ Services MUST import payload types, NOT Prisma types
 3. ✅ Public service APIs expose domain/schema types, never a Prisma query DSL

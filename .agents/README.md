@@ -20,7 +20,7 @@ See:
 | Workflow | Multi-step orchestration across skills or repository lifecycle stages | `.agents/workflows/` |
 | Rule | Compact constraint that should apply persistently without task-specific invocation | `.agents/rules/` |
 | Presentation mode | Explicitly requested output style that does not alter reasoning | Temporarily a manually invoked skill; dedicated registry under review |
-| Knowledge | Facts, domain concepts, architecture state, patterns, policies, and reviewed references | `knowledge/` as OKF bundles, or existing canonical `docs/` during migration |
+| Knowledge | Facts, domain concepts, architecture state, patterns, policies, and reviewed references | [`knowledge/`](../knowledge/index.md) — the live strict OKF v0.2 bundle; existing canonical `docs/` for material not yet migrated |
 | Skill reference | Deep implementation detail needed only after a capability is selected | `.agents/skills/<name>/references/` |
 | Memory/history | Point-in-time migration history, decisions, and temporary compatibility context | `.agents/memory/` only while agent-specific; otherwise `docs/` or OKF history |
 | Adapter | Client-specific loading, hooks, commands, or presentation metadata | `.claude/`, `.opencode/`, `.cursor/`, or skill-local `agents/` |

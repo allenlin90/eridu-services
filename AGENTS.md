@@ -91,6 +91,19 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Google Antigravity**: discovers `.agents/skills/` and `.agents/rules/` natively. It remains supported for shared portable content, but it is outside the primary Claude Code, Codex, and OpenCode compatibility matrix in this migration.
 - **OpenCode**: `opencode.json` loads this file. Skills are routed from `.agents/skills/` via `.opencode/skills` symlink.
 
+### Integrated Agentic Toolsuite
+
+Optional tools. Each is explicit-only — none changes reasoning or the verification checklist.
+
+| Tool | What it does | Where |
+| --- | --- | --- |
+| `rtk` | Filters repetitive build and shell output to cut token use | § RTK (Rust Token Killer) Rules below, including the availability check and fallback |
+| `caveman` | Presentation-only output compression, on explicit user trigger | [`.agents/skills/caveman/SKILL.md`](.agents/skills/caveman/SKILL.md) |
+| `graphify` | Code and doc knowledge-graph builder and query tool | [`.agents/skills/graphify/SKILL.md`](.agents/skills/graphify/SKILL.md) and § graphify below |
+| `mattpocock` | Issue-tracker, triage-label, and domain-doc setup for planning skills | [`.agents/skills/setup-matt-pocock-skills/SKILL.md`](.agents/skills/setup-matt-pocock-skills/SKILL.md) |
+
+The simplicity-first, surgical-changes, direct-execution principles sometimes labelled "karpathy" are not a tool — they are the § Shared Behavioral Guidelines above and apply unconditionally.
+
 ## Agent System References
 
 Use these documents when changing the agent system rather than application behavior:
@@ -104,7 +117,7 @@ When a skill is added, removed, split, consolidated, or reclassified, update the
 
 ## Knowledge and OKF Contract
 
-Claude Code, Codex, and OpenCode must follow the same Open Knowledge Format behavior. Read [`docs/engineering/OKF_AGENT_CONTRACT.md`](docs/engineering/OKF_AGENT_CONTRACT.md) before changing or materially relying on knowledge intended to become an OKF bundle.
+Claude Code, Codex, and OpenCode must follow the same Open Knowledge Format behavior. Read [`docs/engineering/OKF_AGENT_CONTRACT.md`](docs/engineering/OKF_AGENT_CONTRACT.md) before changing or materially relying on OKF bundle content — [`knowledge/`](knowledge/index.md) today, plus any tree being migrated into one.
 
 Mandatory behavior:
 
@@ -121,7 +134,17 @@ Mandatory behavior:
 - Do not invent missing company facts, source attribution, verifier identities, or freshness claims.
 - Preserve repository extensions such as stable upload IDs, ownership, audience, and sensitivity metadata during round trips.
 
-The current Open WebUI knowledge tree under `ai/openwebui/knowledge/` is transitional. The target canonical source is `knowledge/` or a private knowledge repository; deployment adapters and published state belong under `infra/` after a dedicated migration.
+[`knowledge/`](knowledge/index.md) is the live canonical strict OKF v0.2 bundle for this repository. It declares `okf_version: "0.2"` at its bundle-root `index.md` and owns durable architecture, engineering, and domain doctrine. Thin skills under `.agents/skills/` select its concepts rather than restating them — when a fact and a procedure disagree, the knowledge concept wins.
+
+Rules for `knowledge/`:
+
+- Add a concept only when it is a durable fact, pattern, architecture rule, or domain model — not a procedure. Apply the routing test in [`.agents/README.md`](.agents/README.md).
+- Every concept carries fenced YAML frontmatter with a non-empty `type`, a one-sentence `description`, and lifecycle fields. Only the bundle-root `index.md` carries `okf_version`.
+- Update the bundle-root `index.md` whenever a concept is added, removed, or renamed.
+- Move content into a concept **verbatim** when consolidating from another location. Do not resummarize doctrine into bullets — that silently drops hard-won rules and is how invented facts enter the bundle.
+- Verify every code-level claim (state values, guard names, component names, script names) against the source before writing it. `pnpm agents:validate` checks bundle structure, not truth.
+
+The current Open WebUI knowledge tree under `ai/openwebui/knowledge/` remains transitional and is governed by its own legacy compatibility profile; it has not merged into `knowledge/`. Deployment adapters and published state belong under `infra/` after a dedicated migration.
 
 ## Project-Specific Guidelines
 
@@ -190,11 +213,11 @@ The current Open WebUI knowledge tree under `ai/openwebui/knowledge/` is transit
 - Keep internal package dependency spec as `workspace:*`.
 - Store actual timestamps, operational indicators, performance facts, and revenue facts on the narrowest entity whose fact they describe. Keep OLTP tables focused on operational workflows and exception review; defer cross-entity analytics, trends, and derived aggregates to explicit OLAP/read-model designs. Do not persist derived finance totals on operational tables.
 - Use standard audit history for new override and extraction flows. Do not add new `metadata.audit.*` arrays; existing metadata audit payloads are legacy compatibility only.
-- Bump optimistic-lock `version` only on semantic user-visible mutations. Do NOT bump on pre-submission bookkeeping (upload reservations, presign caches, async denormalized state) — bumping causes spurious 409s on the user's next legitimate write. See `database-patterns` §6.
+- Bump optimistic-lock `version` only on semantic user-visible mutations. Do NOT bump on pre-submission bookkeeping (upload reservations, presign caches, async denormalized state) — bumping causes spurious 409s on the user's next legitimate write. See [`knowledge/architecture/database-patterns` §6](knowledge/architecture/database-patterns.md#6-optimistic-locking).
 - Before storing new keys in a JSONB `metadata` column, decide: if losing the key to a concurrent overwrite breaks a business workflow, use the Audit model (or a dedicated table) — do not retrofit raw-SQL JSONB merges or advisory locks around `metadata` to make non-critical bookkeeping race-safe.
 - For frontend money fields, normalize both the stored API decimal string and user input before comparison.
 - Migration files must be generated by official tooling (Prisma for `erify_api`, Drizzle for `eridu_auth`; `better-auth` schema flow first for auth-domain changes). Do not hand-write new migrations. Never rewrite/squash migrations that have already been deployed to shared environments.
-- Name migrations by **purpose only** (`client_mechanic_foundation`), in domain terms. Do not include PR numbers, roadmap rows, ticket IDs, phase labels, or plan/implementation specifics (`pr_20_1_*`, `phase4_*`) — the folder name is permanent and that noise is meaningless once merged. See `database-patterns` §12.
+- Name migrations by **purpose only** (`client_mechanic_foundation`), in domain terms. Do not include PR numbers, roadmap rows, ticket IDs, phase labels, or plan/implementation specifics (`pr_20_1_*`, `phase4_*`) — the folder name is permanent and that noise is meaningless once merged. See [`knowledge/architecture/database-patterns` §12](knowledge/architecture/database-patterns.md#12-migration-policy).
 - For oversized backend files (>600 LOC), see `backend-large-file-refactor` skill.
 - For large frontend route components (>200 LOC), see `frontend-code-quality` skill.
 - For frontend searchable controls, pagination, form contracts, refresh actions, and async lookup patterns, see the relevant frontend skills (`frontend-ui-components`, `frontend-code-quality`, `table-view-pattern`).

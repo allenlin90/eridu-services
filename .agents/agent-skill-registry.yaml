@@ -1,0 +1,844 @@
+# Agent Skill Classification Registry
+# Version: 1.0.0
+# Authoritative taxonomy mapping for .agents/skills/ in eridu-services monorepo
+
+version: 1
+
+# Enforced by scripts/validate-agent-skills.mjs.
+#
+# implicit_catalog_ceiling — current high-water mark. Exceeding it FAILS validation,
+#   so a new skill cannot silently grow the implicit catalog. Lower it whenever the
+#   count drops; the validator warns when the ceiling is above the actual count.
+# implicit_catalog_limit / post_consolidation_limit — milestone targets from
+#   .agents/README.md § Target Catalog. Not reached yet, so they warn rather than block.
+#
+# Character budget is tracked separately: Codex's fallback catalog holds ~8,000
+# characters of implicit descriptions, which is a different constraint from skill count.
+implicit_catalog_ceiling: 66
+implicit_catalog_limit: 50
+post_consolidation_limit: 35
+
+skills:
+  admin-list-pattern:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  agent-instruction-maintenance:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient, implement, review ]
+    knowledge_sources: [ .agents/README.md ]
+    migration_status: canonical
+
+  ai-platform-capability-verification:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  ai-platform-release-management:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement, review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  ai-workspace-control-plane:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: []
+    migration_status: planned
+
+  api-performance-optimization:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement, review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  astro-starlight-best-practices:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  authentication-authorization-nestjs:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  backend-controller-pattern-nestjs:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources:
+      [
+        knowledge/architecture/backend-controller-pattern-nestjs.md,
+        apps/erify_api/docs/ARCHITECTURE.md
+      ]
+    migration_status: canonical
+
+  backend-large-file-refactor:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  backend-testing-patterns:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  cavecrew:
+    kind: presentation-mode
+    authority: presentation
+    implicit: false
+    lifecycle_stage: [ present ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  caveman:
+    kind: presentation-mode
+    authority: presentation
+    implicit: false
+    lifecycle_stage: [ present ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  caveman-commit:
+    kind: presentation-mode
+    authority: presentation
+    implicit: false
+    lifecycle_stage: [ present ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  caveman-compress:
+    kind: presentation-mode
+    authority: presentation
+    implicit: false
+    lifecycle_stage: [ present ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  caveman-help:
+    kind: presentation-mode
+    authority: presentation
+    implicit: false
+    lifecycle_stage: [ present ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  caveman-review:
+    kind: presentation-mode
+    authority: presentation
+    implicit: false
+    lifecycle_stage: [ present ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  caveman-stats:
+    kind: presentation-mode
+    authority: presentation
+    implicit: false
+    lifecycle_stage: [ present ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  code-quality:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  codebase-hardening-program:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: false
+    lifecycle_stage: [ orient, implement, review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  data-compatibility-migration:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  data-validation:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  database-patterns:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: [ knowledge/architecture/database-patterns.md ]
+    migration_status: canonical
+
+  design-patterns:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: [ knowledge/architecture/design-patterns.md ]
+    migration_status: in_progress
+
+  diagnose:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  doc-hygiene:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  doc-lifecycle:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  domain-refactor-cutover-strategy:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  engineering-best-practices-enforcer:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  environment-configuration-zod:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  eridu-auth-oauth-provider:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  eridu-docs-information-architecture:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  eridu-playwright:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  eridu-security-threat-model:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient, review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  eridu-skill-creator:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: [ .agents/README.md ]
+    migration_status: canonical
+
+  erify-api-capability-refactoring:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources:
+      [
+        apps/erify_api/docs/ARCHITECTURE.md,
+        apps/erify_api/docs/REFACTORING_TARGETS.md
+      ]
+    migration_status: canonical
+
+  erify-authorization:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  excel-creator-mapping:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  fact-extraction-pipeline:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  file-upload-presign:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-api-layer:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-bundle-splitting:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-code-quality:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-error-handling:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-i18n:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-performance:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-state-management:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-tech-stack:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: [ knowledge/engineering/frontend-tech-stack.md ]
+    migration_status: in_progress
+
+  frontend-testing-patterns:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  frontend-ui-components:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  graphify:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  grill-me:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  grill-with-docs:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  improve-codebase-architecture:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  jsonb-analytics-snapshot:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  knowledge-sync:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  litellm-admin-api:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  local-database-cli:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  monorepo-doc-layering:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  observability-logging:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  openwebui-assistant-adapter:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  openwebui-extensibility-design:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  openwebui-groups-permissions:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  openwebui-mcp-tool-integration:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  openwebui-rest-api:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  operations-review-surface:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: planned
+
+  orchestration-service-nestjs:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  package-extraction-strategy:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  plan-workflow-completeness:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  pr-ready:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: false
+    lifecycle_stage: [ review ]
+    knowledge_sources: [ .agents/workflows/pr-review.md ]
+    migration_status: canonical
+
+  pr-ui-screenshot-review:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  prod-data-sync:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  prototype:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  pwa-best-practices:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: [ knowledge/engineering/pwa-best-practices.md ]
+    migration_status: canonical
+
+  railway-template-config:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  repository-health:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: false
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  repository-pattern-nestjs:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  schedule-continuity-workflow:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  secure-coding-practices:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  service-pattern-nestjs:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: [ knowledge/architecture/service-pattern-nestjs.md ]
+    migration_status: canonical
+
+  setup-matt-pocock-skills:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  shared-api-types:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  shift-schedule-pattern:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: planned
+
+  show-production-lifecycle:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient, implement ]
+    knowledge_sources: [ knowledge/domain/show-production-lifecycle.md ]
+    migration_status: in_progress
+
+  soft-delete-restore:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  solid-principles:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  spreadsheet:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  ssr-auth-integration:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  studio-list-pattern:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  table-view-pattern:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: [ knowledge/engineering/table-view-pattern.md ]
+    migration_status: canonical
+
+  task-template-builder:
+    kind: thin-wrapper
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: planned
+
+  tdd:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  template-system-fact-migration:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  to-issues:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  to-prd:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  triage:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  ui-mockup-discussion:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  upload-openwebui-skill:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: false
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  user-facing-docs:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  wiki-knowledge-maintainer:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement, review ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  write-a-skill:
+    kind: capability-skill
+    authority: procedural
+    implicit: true
+    lifecycle_stage: [ implement ]
+    knowledge_sources: [ .agents/README.md ]
+    migration_status: canonical
+
+  zoom-out:
+    kind: capability-skill
+    authority: procedural
+    implicit: false
+    lifecycle_stage: [ orient ]
+    knowledge_sources: []
+    migration_status: canonical

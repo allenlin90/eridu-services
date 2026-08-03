@@ -3,72 +3,30 @@ name: backend-controller-pattern-nestjs
 description: Build erify_api NestJS controllers with correct routes, guards, Zod responses, UID validation, and payload mapping.
 ---
 
-# NestJS Controller Patterns
+# Controller Pattern — NestJS
 
-Controller-layer patterns for `apps/erify_api`. Controllers validate/translate HTTP input, apply auth, call services, and serialize responses.
+Procedure for adding or changing an `erify_api` controller. Canonical controller-type table, key rules, per-audience checklists, and review list live in [`knowledge/architecture/backend-controller-pattern-nestjs`](../../../knowledge/architecture/backend-controller-pattern-nestjs.md).
 
-## First Read
+## Procedure
 
-- Canonical controllers: [admin-client](../../../apps/erify_api/src/admin/clients/admin-client.controller.ts), [admin show catalog](../../../apps/erify_api/src/capabilities/show-catalog/http/admin-show-status.controller.ts), [studio-task-template](../../../apps/erify_api/src/studios/studio-task-template/studio-task-template.controller.ts), [me-task](../../../apps/erify_api/src/me/me-task/me-task.controller.ts)
-- Base controllers: [base-admin](../../../apps/erify_api/src/admin/base-admin.controller.ts), [base-studio](../../../apps/erify_api/src/studios/base-studio.controller.ts), [base](../../../apps/erify_api/src/lib/controllers/base.controller.ts)
-- Detailed rules: [controller-rules.md](references/controller-rules.md) | Examples: [controller-examples.md](references/controller-examples.md)
+1. Pick the controller type (Admin / Studio / Me / Backdoor) from the knowledge doc's table and extend its base controller.
+2. Validate UID path params with `UidValidationPipe`.
+3. Use route context as the scope authority — never trust a body-supplied studio ID.
+4. Extract only the fields the service needs; translate DTO → service payload. No Prisma in the controller.
+5. Serialize with `@ZodResponse` / `@ZodPaginatedResponse` / `@AdminResponse`; return paginated lists through the shared helper.
+6. Apply the guard for the boundary — `@StudioProtected([STUDIO_ROLE.…])` for studio routes; `@Delete` needs its own explicit `[STUDIO_ROLE.ADMIN]` override, never an inherited class-level guard.
+7. Walk the knowledge doc's review checklist before opening the PR.
 
-## Choose The Controller Type
+For guard and role decisions, load [`erify-authorization`](../erify-authorization/SKILL.md).
 
-| Route type | Prefix | Base/auth | Use when |
-|---|---|---|---|
-| Admin | `admin/<resource>` | `BaseAdminController` | System admins manage global resources |
-| Studio | `studios/:studioId/<resource>` | `BaseStudioController` + `@StudioProtected` | Resource belongs to one studio |
-| Me | `me/<resource>` | `BaseController` + `@CurrentUser()` | User acts on own resources |
-| Backdoor | `backdoor/<resource>` | `BaseBackdoorController` | Service-to-service API-key calls |
+## Verification
 
-## Workflow
+```bash
+pnpm --filter erify_api lint && pnpm --filter erify_api typecheck && pnpm --filter erify_api test && pnpm --filter erify_api build
+```
 
-1. Pick controller type → 2. Validate UID params with `UidValidationPipe` → 3. Use route context as scope authority → 4. Extract only service-needed fields → 5. Call service (no Prisma) → 6. Serialize with Zod decorators → 7. Return paginated lists with shared helper
+## Canonical Knowledge
 
-## Key Rules
-
-- One canonical collection route per mutable resource under its auth boundary
-- `@ZodResponse`/`@ZodPaginatedResponse`/`@AdminResponse` for all responses
-- Semantic action endpoints (`POST .../resolve-cancellation`) over generic `PATCH`
-- Services must not accept HTTP DTOs, request/response objects, or Nest exceptions
-- Admin mutations use domain write paths, not nested Prisma creates
-- Colocate a controller with the capability that owns its use case when that
-  capability is actively consolidated. Preserve the existing `@Controller`
-  prefix, guards, response decorators, and UID pipes; audience composition
-  modules should import one capability-owned HTTP adapter module instead of
-  wrapping each controller in a table-specific module. When non-HTTP runtimes
-  reuse the capability providers, keep controllers out of the reusable provider
-  module so those runtimes cannot route-register REST endpoints.
-- `@Delete` routes default to `ADMIN`-only via an explicit per-route `@StudioProtected([STUDIO_ROLE.ADMIN])` override — never inherit a broader class-level guard meant for reads/writes (e.g. `StudioMembersController.removeMember`). A role broadly authorized to edit a resource (e.g. `ACCOUNT_MANAGER` on a catalog) isn't automatically authorized to hard-delete it; that needs its own explicit decision.
-- When checking whether a route exists, account for NestJS's prefix + method-path composition — `@Controller('studios/:studioId')` plus `@Get('clients')` on a method composes to `GET /studios/:studioId/clients`. Grepping for the full combined path as one literal `@Controller(...)` string misses this and produces a false "route doesn't exist" (caught a codex review false-positive this way on PR 20.4 — `StudioLookupController`'s `clients` lookup route was real, just not findable by that search).
-
-## Checklists
-
-**Admin**: extends `BaseAdminController`, `admin/<resource>` prefix, `@AdminResponse`, `UidValidationPipe`, `ensureResourceExists()`, reuses domain write path.
-
-**Studio**: extends `BaseStudioController`, validates `studioId` + resource UID, `@StudioProtected([roles])`, scopes by route `studioId` (rejects body-supplied studio IDs).
-
-**Me**: `me/` prefix, `@CurrentUser()` only, dedicated `Me{Domain}Service`, JWT `ext_id` resolved in me service, ownership in query predicate.
-
-**Backdoor**: extends `BaseBackdoorController`, no `@CurrentUser()`.
-
-## Review
-
-- [ ] Correct boundary, base class, and guard
-- [ ] No internal DB IDs exposed, all Zod serialization
-- [ ] UID params use `UidValidationPipe`
-- [ ] DTOs translated to service payloads
-- [ ] Studio/user ownership enforced at query level
-- [ ] Lists paginated and bounded
-- [ ] High-frequency reads use `@ReadBurstThrottle()`
-- [ ] No Prisma queries in controller
-- [ ] A provider module reused by MCP or a worker does not register REST controllers; the HTTP composition root imports a transport-specific adapter module
-- [ ] `@ZodResponse(...)` schema matches handler return shape — pass the transformer DTO when the handler returns the raw aggregate, or the public response schema (`@eridu/api-types`) when the handler already called `xxxDto.parse(...)`. Lock with a `Reflect.getMetadata('ZOD_SERIALIZER_DTO_OPTIONS', Controller.prototype.method)` assertion in the spec. See [controller-rules.md §`@ZodResponse(...)` must match the controller's return shape](references/controller-rules.md#zodresponse-must-match-the-controllers-return-shape).
-- [ ] A per-resource authorization gate documented as applying to "every route, including reads" (e.g. a manual studio↔client linkage check beyond the role guard) actually has the call in every handler on the controller — when a new read-only route (e.g. a coverage/detail endpoint) is added later, it's easy to copy the happy-path body from a sibling handler and forget the gate call, since the class-level doc comment doesn't enforce it at compile time. Grep the controller for the gate-check method name and diff it against the handler list. See `studio-client-mechanic.controller.ts`'s `getCoverage` (PR 20.6 review) for a caught instance.
-
-## Open References
-
-- [controller-rules.md](references/controller-rules.md) — route semantics, DTO mapping, throttle profiles
-- [controller-examples.md](references/controller-examples.md) — concrete code
-- [erify-authorization](../erify-authorization/SKILL.md) — guard/role decisions
+- [`knowledge/architecture/backend-controller-pattern-nestjs`](../../../knowledge/architecture/backend-controller-pattern-nestjs.md) — types, rules, checklists, review list
+- [`references/controller-rules.md`](references/controller-rules.md) — route semantics, DTO mapping, throttle profiles
+- [`references/controller-examples.md`](references/controller-examples.md) — concrete code
