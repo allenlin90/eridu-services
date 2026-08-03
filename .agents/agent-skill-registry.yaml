@@ -76,7 +76,7 @@ skills:
     authority: procedural
     implicit: true
     lifecycle_stage: [implement]
-    knowledge_sources: [apps/erify_api/docs/ARCHITECTURE.md]
+    knowledge_sources: [knowledge/architecture/backend-controller-pattern-nestjs.md, apps/erify_api/docs/ARCHITECTURE.md]
     migration_status: canonical
 
   backend-large-file-refactor:
@@ -188,8 +188,8 @@ skills:
     authority: procedural
     implicit: true
     lifecycle_stage: [implement]
-    knowledge_sources: []
-    migration_status: planned
+    knowledge_sources: [knowledge/architecture/database-patterns.md]
+    migration_status: canonical
 
   design-patterns:
     kind: thin-wrapper
@@ -596,7 +596,7 @@ skills:
     authority: procedural
     implicit: true
     lifecycle_stage: [implement]
-    knowledge_sources: []
+    knowledge_sources: [knowledge/engineering/pwa-best-practices.md]
     migration_status: canonical
 
   railway-template-config:
@@ -644,7 +644,7 @@ skills:
     authority: procedural
     implicit: true
     lifecycle_stage: [implement]
-    knowledge_sources: []
+    knowledge_sources: [knowledge/architecture/service-pattern-nestjs.md]
     migration_status: canonical
 
   setup-matt-pocock-skills:
@@ -724,7 +724,7 @@ skills:
     authority: procedural
     implicit: true
     lifecycle_stage: [implement]
-    knowledge_sources: []
+    knowledge_sources: [knowledge/engineering/table-view-pattern.md]
     migration_status: canonical
 
   task-template-builder:
