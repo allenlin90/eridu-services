@@ -1,6 +1,6 @@
 /* eslint-disable  */
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import type { Prisma, Schedule } from '@prisma/client';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { Prisma, type Schedule } from '@prisma/client';
 
 import {
   type BulkCreateScheduleDto,
@@ -10,6 +10,7 @@ import {
 } from './schemas/schedule.schema';
 import { ScheduleService } from './schedule.service';
 
+import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { ScheduleRepository } from '@/models/schedule/schedule.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
@@ -329,10 +330,21 @@ describe('scheduleService', () => {
       expect(result.results[0].error).toContain('already exists');
     });
 
-    it('should handle NotFoundException errors correctly', async () => {
-      jest
-        .spyOn(service, 'createScheduleFromDto')
-        .mockRejectedValue(new NotFoundException('Client not found'));
+    it('should report a missing client connect target as NOT_FOUND', async () => {
+      // A missing client/studio connect target fails inside Prisma with P2025.
+      // The bulk loop catches it, so the global PrismaExceptionFilter never
+      // translates it — the service mapping has to.
+      // Drop the suite-wide createScheduleFromDto stub so the real
+      // createScheduleFromDto -> createSchedule -> repository.create path runs.
+      jest.restoreAllMocks();
+      scheduleRepository.create = jest
+        .fn()
+        .mockRejectedValue(
+          new Prisma.PrismaClientKnownRequestError(
+            'An operation failed because it depends on one or more records that were required but not found. No Client record was found.',
+            { code: PRISMA_ERROR.RecordNotFound, clientVersion: '5.0.0' },
+          ),
+        );
 
       const bulkDto = bulkCreateScheduleSchema.parse({
         schedules: [
@@ -340,7 +352,7 @@ describe('scheduleService', () => {
             name: 'January 2025 - Client A',
             start_date: '2025-01-01T00:00:00Z',
             end_date: '2025-01-31T23:59:59Z',
-            client_id: mockClient1.uid,
+            client_id: 'client_missing',
             created_by: mockUser.uid,
             plan_document: { shows: [] },
           },
@@ -351,7 +363,7 @@ describe('scheduleService', () => {
 
       expect(result.failed).toBe(1);
       expect(result.results[0].error_code).toBe('NOT_FOUND');
-      expect(result.results[0].error).toContain('Client not found');
+      expect(result.results[0].client_id).toBe('client_missing');
     });
 
     it('should preserve index mapping for error tracking', async () => {
@@ -494,15 +506,9 @@ describe('scheduleService', () => {
       expect(result.results[1].error_code).toBe('CONFLICT');
     });
 
-    it('should handle NotFoundException errors in bulk updates correctly', async () => {
-      jest
-        .spyOn(service, 'getScheduleById')
-        .mockResolvedValueOnce(
-          mockSchedule1 as Schedule | ScheduleWithRelations,
-        );
-      jest
-        .spyOn(service, 'updateSchedule')
-        .mockRejectedValueOnce(new NotFoundException('Schedule not found'));
+    it('should report a missing schedule as NOT_FOUND', async () => {
+      // Real path: updateSchedule -> findScheduleOrThrow -> HttpError.notFound.
+      scheduleRepository.findByUid = jest.fn().mockResolvedValue(null);
 
       const bulkDto = bulkUpdateScheduleSchema.parse({
         schedules: [
@@ -518,7 +524,37 @@ describe('scheduleService', () => {
 
       expect(result.failed).toBe(1);
       expect(result.results[0].error_code).toBe('NOT_FOUND');
-      expect(result.results[0].error).toContain('Schedule not found');
+      expect(result.results[0].schedule_id).toBe('schedule_missing');
+    });
+
+    it('should report a P2025 raised during the update write as NOT_FOUND', async () => {
+      // Row vanishes between the existence check and the write.
+      scheduleRepository.findByUid = jest
+        .fn()
+        .mockResolvedValue(mockSchedule1);
+      scheduleRepository.update = jest
+        .fn()
+        .mockRejectedValue(
+          new Prisma.PrismaClientKnownRequestError(
+            'An operation failed because it depends on one or more records that were required but not found.',
+            { code: PRISMA_ERROR.RecordNotFound, clientVersion: '5.0.0' },
+          ),
+        );
+
+      const bulkDto = bulkUpdateScheduleSchema.parse({
+        schedules: [
+          {
+            schedule_id: mockSchedule1.uid,
+            name: 'Updated Schedule 1',
+            version: 1,
+          },
+        ],
+      }) as BulkUpdateScheduleDto;
+
+      const result = await service.bulkUpdateSchedules(bulkDto);
+
+      expect(result.failed).toBe(1);
+      expect(result.results[0].error_code).toBe('NOT_FOUND');
     });
   });
 
