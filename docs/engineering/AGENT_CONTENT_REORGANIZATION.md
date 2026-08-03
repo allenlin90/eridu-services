@@ -99,7 +99,19 @@ rg -o '^    kind: (.+)$' -r '$1' .agents/agent-skill-registry.yaml | sort | uniq
 | Presentation mode | `presentation-mode` | 7 | Output style only, explicit user trigger — all 7 are `implicit: false` |
 | **Total** | | **102** | Matches the generated index and the skill directories |
 
-Routing split: **66 implicitly invocable**, **36 explicit-only**. The implicit count is ratcheted by `implicit_catalog_ceiling` and is above the `<50` milestone target — tracked in the PR roadmap, not here.
+Routing split: **48 implicitly invocable**, **54 explicit-only**, ratcheted by `implicit_catalog_ceiling`. The `<50` milestone target is met; the post-consolidation target of `<35` is not — tracked in the PR roadmap, not here.
+
+`implicit` is a **Codex-only** routing signal: it is written to each skill's `agents/openai.yaml`, which [`AGENTS.md`](../../AGENTS.md) scopes to Codex. Claude Code and OpenCode discover skills from `.agents/skills/` directly and are unaffected. An explicit-only skill stays listed in [`INDEX.md`](../../.agents/skills/INDEX.md) and the `AGENTS.md` routing map, so it remains discoverable everywhere — it simply stops being auto-routed by Codex and is invoked as `$skill`.
+
+Explicit-only is the right default when a skill's trigger is a **human decision** rather than *"an agent touched this code"*. Three groups qualify:
+
+| Group | Why explicit | Examples |
+| --- | --- | --- |
+| Deployed-platform operations | Drive an external system through its API; repo edits never lead here | `openwebui-rest-api`, `litellm-admin-api`, `wiki-knowledge-maintainer` |
+| Authoring and meta-work | Deliberate acts of creating or organizing agent/doc content | `write-a-skill`, `monorepo-doc-layering`, `user-facing-docs` |
+| Deliberate investigations and one-off ops | Started by a decision, not by a file edit | `local-database-cli`, `excel-creator-mapping`, `domain-refactor-cutover-strategy` |
+
+Skills whose trigger *is* a code edit stay implicit — backend and frontend patterns, database, security, testing, and the thin wrappers. Missing one of those produces a defect, which is exactly what auto-routing is for.
 
 Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
 
