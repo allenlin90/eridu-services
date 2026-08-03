@@ -111,13 +111,13 @@ Progress record for this program. **Every PR in this program states its row numb
 | # | PR | Scopes | Depends on | Status |
 | --- | --- | --- | --- | --- |
 | 1 | Skill registry, validator enforcement, OKF bundle + doctrine extraction, toolsuite docs | 1, 2.1–2.3, 3, 4.1 | — | ✅ Done ([#367](https://github.com/allenlin90/eridu-services/pull/367)) |
-| 2 | ~~Implicit-catalog triage — mark human-decision-triggered skills explicit-only~~ | — | 1 | ❌ **Withdrawn** — conflicts with canonical routing doctrine; see § 4.2 |
+| 2 | ~~Implicit-catalog triage — mark human-decision-triggered skills explicit-only~~ | — | 1 | 🔄 **Superseded** — its lever conflicts with canonical routing doctrine; the plan now routes reduction through row 3; see § 4.2 |
 | 3 | Candidate disposition review — decide `retire` / `consolidate` / `keep as thin skill` for each of the 25 extraction candidates, then apply | 2.4 | 1 | ✅ Done — 3 consolidations applied, 66 → 63; **neither target reached from this list** |
 | 4 | Final reconciliation — inventory counts, relocate this tracker out of `docs/prd/`, cross-client routing verification | 4.2 | 3 | ⬜ Not started |
 
-**Remaining: 1 of 4 PRs** (row 2 withdrawn, not replaced).
+**Remaining: 1 of 4 PRs.** Row 2 is superseded, not re-scheduled — the plan changed, it was not abandoned.
 
-Row 2 was attempted in [#368](https://github.com/allenlin90/eridu-services/pull/368) and withdrawn on review. The reason is recorded in § 4.2 because it constrains how rows 3 and 4 may reduce the catalog.
+Row 2 was attempted in [#368](https://github.com/allenlin90/eridu-services/pull/368). Review rejected its **lever**, not its **goal**: reducing the implicit catalog stays in scope, but it must go through consolidation and knowledge extraction rather than explicit-only marking. #368 therefore merged with its routing change removed, carrying only the record of that plan change. Row 2 is not re-attempted; row 3 now owns the reduction. The constraint lives in § 4.2 because it also bounds row 4.
 
 **Row 3 produced the disposition table and it does not reach either target.** All 25 candidates were reviewed; 3 consolidated (`admin-list-pattern` and `studio-list-pattern` into `table-view-pattern`, `solid-principles` into `code-quality`), 0 retired, 22 kept as thin skills. That is 66 → 63 — a gap of 13 to "no more than 50" and 28 to "35 or fewer", with no remaining candidate on that list able to decrement the count. The full table with per-entry basis is in [`AGENT_CONTENT_REORGANIZATION.md`](../engineering/AGENT_CONTENT_REORGANIZATION.md) § Candidate disposition table.
 
@@ -133,14 +133,14 @@ Row 2 was attempted in [#368](https://github.com/allenlin90/eridu-services/pull/
 
 These are independent. PR 1 met the character budget and did not move the count. Do not report one as satisfying the other.
 
-### 4.2 Routing-policy constraint (why row 2 was withdrawn)
+### 4.2 Routing-policy constraint (why row 2's lever was replaced)
 
 **The implicit catalog is reduced by knowledge extraction and consolidation — not by marking capabilities explicit-only.** This is canon, not preference:
 
 - [`.agents/README.md`](../../.agents/README.md) § Target Catalog: the implicit catalog **should contain** lifecycle and reasoning capabilities, concrete implementation and **operational** capabilities, and declared **review lenses**. It should **not** contain standalone pattern or technology guides, domain and architecture reference documents, duplicated workflow bodies, or unrequested presentation modes.
 - [`AGENT_OPERATING_MODEL.md`](../engineering/AGENT_OPERATING_MODEL.md) § Catalog targets: reach "**no more than 50**" in the first reorganization milestone, reach "**35 or fewer**" after "**overlap consolidation and knowledge extraction**", and mark **manual workflows and presentation modes** explicit-only.
 
-PR #368 marked 18 skills explicit-only using a different axis — "human decision vs. an agent touched this code". That axis is defensible on its own terms, but it flipped members of the classes canon retains in the implicit catalog (7 deployed-platform operations, `pr-ui-screenshot-review`, `plan-workflow-completeness`), and it substituted a lever canon does not sanction for the two it does. It was withdrawn rather than merged with the canonical documents left asserting the superseded rule, which the [pattern/direction-change gate](../../.agents/skills/agent-instruction-maintenance/SKILL.md) treats as blocking.
+PR #368 marked 18 skills explicit-only using a different axis — "human decision vs. an agent touched this code". That axis is defensible on its own terms, but it flipped members of the classes canon retains in the implicit catalog (7 deployed-platform operations, `pr-ui-screenshot-review`, `plan-workflow-completeness`), and it substituted a lever canon does not sanction for the two it does. The routing change was removed from #368's diff rather than merged with the canonical documents left asserting the superseded rule, which the [pattern/direction-change gate](../../.agents/skills/agent-instruction-maintenance/SKILL.md) treats as blocking. The plan changed here: the sanctioned levers are the two canon names, and row 3 carries them.
 
 **Extraction alone does not reduce the catalog count.** An earlier revision of this section claimed 66 − 25 = 41 from extraction. That is wrong, and the counter-evidence is already in the repo: all eight skills whose doctrine moved to `knowledge/` in PR 1 — `database-patterns`, `design-patterns`, `frontend-tech-stack`, `show-production-lifecycle`, and the rest — are still `implicit: true`. Extraction **relocates facts**; the skill remains in the catalog as a thin procedure.
 

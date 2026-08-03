@@ -143,7 +143,7 @@ The 25 entries the § Target portfolio budgets at 0 as standalone pattern or tec
 
 **The 25-candidate list does not reach either target.** After this PR the gap is **13 entries to "no more than 50"** and **28 to "35 or fewer"**, and no remaining entry on this list decrements the count. Closing that gap needs consolidation decisions over the *whole* implicit catalog, not further work on this list, and per [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2 that is an explicit decision in its own PR — not an assumption folded into a delivery PR.
 
-An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was withdrawn on review; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2.
+An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was rejected on review and replaced by the two levers canon sanctions — consolidation and knowledge extraction. The goal was never dropped; the plan changed. See [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2.
 
 Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
 
