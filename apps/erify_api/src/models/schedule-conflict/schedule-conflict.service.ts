@@ -36,12 +36,14 @@ type StaleConflictMetadata = {
     show_fields: { changed_fields: string[]; old: Record<string, unknown>; new: Record<string, unknown> } | null;
     show_creators: Array<{
       creator_uid: string;
+      creator_name?: string | null;
       action: 'update' | 'remove';
       old_note: string | null;
       new_note: string | null;
     }>;
     show_platforms: Array<{
       platform_uid: string;
+      platform_name?: string | null;
       action: 'update' | 'remove';
       old: { live_stream_link: string | null; platform_show_id: string | null };
       new: { live_stream_link: string | null; platform_show_id: string | null };
@@ -286,16 +288,42 @@ export class ScheduleConflictService {
         }
       : null;
 
+    const creatorUids = heldBack.showCreators.map((c) => c.creatorUid);
+    const creatorNameMap = new Map<string, string>();
+    if (creatorUids.length > 0) {
+      const creators = await this.txHost.tx.creator.findMany({
+        where: { uid: { in: creatorUids } },
+        select: { uid: true, name: true },
+      });
+      for (const c of creators) {
+        creatorNameMap.set(c.uid, c.name);
+      }
+    }
+
+    const platformUids = heldBack.showPlatforms.map((p) => p.platformUid);
+    const platformNameMap = new Map<string, string>();
+    if (platformUids.length > 0) {
+      const platforms = await this.txHost.tx.platform.findMany({
+        where: { uid: { in: platformUids } },
+        select: { uid: true, name: true },
+      });
+      for (const p of platforms) {
+        platformNameMap.set(p.uid, p.name);
+      }
+    }
+
     return {
       show_fields: showFields,
       show_creators: heldBack.showCreators.map((c) => ({
         creator_uid: c.creatorUid,
+        creator_name: creatorNameMap.get(c.creatorUid) ?? null,
         action: c.action,
         old_note: c.oldNote,
         new_note: c.newNote,
       })),
       show_platforms: heldBack.showPlatforms.map((p) => ({
         platform_uid: p.platformUid,
+        platform_name: platformNameMap.get(p.platformUid) ?? null,
         action: p.action,
         old: { live_stream_link: p.old.liveStreamLink, platform_show_id: p.old.platformShowId },
         new: { live_stream_link: p.new.liveStreamLink, platform_show_id: p.new.platformShowId },

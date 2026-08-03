@@ -176,6 +176,7 @@ const heldBackShowFieldsSchema = z.object({
 
 const heldBackCreatorEntrySchema = z.object({
   creator_uid: z.string(),
+  creator_name: z.string().nullable().optional(),
   action: z.enum(['update', 'remove']),
   old_note: z.string().nullable(),
   new_note: z.string().nullable(),
@@ -188,6 +189,7 @@ const heldBackPlatformFieldsSchema = z.object({
 
 const heldBackPlatformEntrySchema = z.object({
   platform_uid: z.string(),
+  platform_name: z.string().nullable().optional(),
   action: z.enum(['update', 'remove']),
   old: heldBackPlatformFieldsSchema,
   new: heldBackPlatformFieldsSchema,

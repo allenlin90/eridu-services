@@ -13,7 +13,12 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 const emptyRelationValues = { showCreators: {}, showPlatforms: {} };
 
-let mockTx: { $executeRaw: jest.Mock; showType: { findMany: jest.Mock } };
+let mockTx: {
+  $executeRaw: jest.Mock;
+  showType: { findMany: jest.Mock };
+  creator: { findMany: jest.Mock };
+  platform: { findMany: jest.Mock };
+};
 const mockPrismaForCls = {
   $transaction: jest.fn(async (callback: any) => callback(mockTx)),
 };
@@ -32,6 +37,8 @@ describe('scheduleConflictService', () => {
     mockTx = {
       $executeRaw: jest.fn().mockResolvedValue(undefined),
       showType: { findMany: jest.fn().mockResolvedValue([]) },
+      creator: { findMany: jest.fn().mockResolvedValue([{ uid: 'creator_1', name: 'Alice Host' }]) },
+      platform: { findMany: jest.fn().mockResolvedValue([{ uid: 'platform_1', name: 'Shopee Live' }]) },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -83,6 +90,27 @@ describe('scheduleConflictService', () => {
         conflict_uid: 'conflict_fresh1',
       }),
       targets: [{ targetType: 'SHOW', targetId: BigInt(1) }],
+    }));
+  });
+
+  it('opens a fresh conflict with resolved creator_name and platform_name', async () => {
+    const heldBack = {
+      showFields: null,
+      showCreators: [{ creatorUid: 'creator_1', action: 'update' as const, oldNote: 'old', newNote: 'new' }],
+      showPlatforms: [{ platformUid: 'platform_1', action: 'update' as const, old: { liveStreamLink: null, platformShowId: null }, new: { liveStreamLink: 'http://link', platformShowId: null } }],
+      proposedStatusTransition: null,
+    };
+
+    const result = await service.reconcileShowConflict({ ...baseParams, heldBack });
+
+    expect(result.recorded).toBe(true);
+    expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+      metadata: expect.objectContaining({
+        held_back: expect.objectContaining({
+          show_creators: [{ creator_uid: 'creator_1', creator_name: 'Alice Host', action: 'update', old_note: 'old', new_note: 'new' }],
+          show_platforms: [{ platform_uid: 'platform_1', platform_name: 'Shopee Live', action: 'update', old: { live_stream_link: null, platform_show_id: null }, new: { live_stream_link: 'http://link', platform_show_id: null } }],
+        }),
+      }),
     }));
   });
 
