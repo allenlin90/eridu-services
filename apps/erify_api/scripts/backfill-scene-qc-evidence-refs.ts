@@ -396,7 +396,6 @@ export function hasUnresolvedOrFailedBindings(result: BackfillResult): boolean {
 class BackfillModule {}
 
 async function main() {
-  // eslint-disable-next-line node/no-process-env
   ensureLocalDatabase(process.env.DATABASE_URL, process.env.ALLOW_PROD);
   const report = process.argv.includes('--report');
   const apply = process.argv.includes('--apply');

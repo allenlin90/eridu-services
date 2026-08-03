@@ -244,7 +244,10 @@ export async function runDerivationBackfill(
       const scale = 2;
       const intDigits = key === 'gmv' ? 10 : 3; // gmv Decimal(12,2); ctr/cto Decimal(5,2)
       const col = decimalToColumn(raw[key]!, scale, intDigits);
-      if (col === undefined) { skippedOutOfRange++; continue; }
+      if (col === undefined) {
+        skippedOutOfRange++;
+        continue;
+      }
       consider(platform, key, col as string, source, tpl);
     }
     if (raw.viewerCount !== undefined && raw.viewerCount !== null) {

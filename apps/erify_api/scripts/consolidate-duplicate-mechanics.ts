@@ -426,7 +426,6 @@ export async function runConsolidation({
 class ConsolidateModule {}
 
 async function main() {
-  // eslint-disable-next-line node/no-process-env
   ensureLocalDatabase(process.env.DATABASE_URL, process.env.ALLOW_PROD);
   const apply = process.argv.includes('--apply');
 

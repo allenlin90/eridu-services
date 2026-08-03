@@ -45,7 +45,15 @@ fails loudly the same way it does in the real app. Note that `envSchema` also
 requires `ERIDU_AUTH_URL`, so a database-only `.env` is not enough to boot a script
 even when the script never touches auth.
 
+## Linting
+
+`scripts/**/*.ts` is inside the workspace `lint` glob, so `pnpm --filter erify_api lint`
+covers this directory. [`eslint.config.mjs`](../eslint.config.mjs) adds one override for
+it: `no-console` is off (these are CLI tools whose output *is* `console`), and
+`node/no-process-env` allows the operator variables the scripts read directly
+(`DATABASE_URL`, `ALLOW_PROD`, `ERIDU_AUTH_DATABASE_URL`). Anything beyond those still
+belongs in `envSchema` and `ConfigService`.
+
 ## Related
 
 - [`apps/erify_api/docs/SCENE_QC.md`](../docs/SCENE_QC.md) — Scene QC's own operator scripts and their usage.
-- [`docs/tech-debt/erify-api-lint-excludes-scripts-dir.md`](../../../docs/tech-debt/erify-api-lint-excludes-scripts-dir.md) — this directory is outside the workspace `lint` glob.

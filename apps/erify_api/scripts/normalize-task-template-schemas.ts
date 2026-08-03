@@ -63,7 +63,7 @@ type TemplateActionPlan = {
   errors: string[];
 };
 
-const SUFFIX_PATTERN = /^(?<base>[a-z][a-z0-9_]*?)_l[0-9]+$/;
+const SUFFIX_PATTERN = /^(?<base>[a-z][a-z0-9_]*?)_l\d+$/;
 const LOOP_ID_PATTERN = /^l\d+$/;
 const FIELD_ID_PATTERN = /^fld_[a-z0-9]{10,}$/;
 
@@ -76,17 +76,13 @@ function parseArgs(): Args {
   for (const arg of argv) {
     if (arg === '--validate-only') {
       mode = 'validate-only';
-    }
-    else if (arg === '--current-to-v2') {
+    } else if (arg === '--current-to-v2') {
       mode = 'current-to-v2';
-    }
-    else if (arg === '--cleanup-legacy-shared-fields') {
+    } else if (arg === '--cleanup-legacy-shared-fields') {
       mode = 'cleanup-legacy-shared-fields';
-    }
-    else if (arg === '--dry-run') {
+    } else if (arg === '--dry-run') {
       dryRun = true;
-    }
-    else if (arg === '--apply') {
+    } else if (arg === '--apply') {
       apply = true;
     }
   }
@@ -307,8 +303,7 @@ function collectV2SharedFieldKeyReferences(
     let engine: 'task_template_v1' | 'task_template_v2' | null = null;
     try {
       engine = getSchemaEngine(schema);
-    }
-    catch {
+    } catch {
       engine = null;
     }
     if (engine !== 'task_template_v2') {
@@ -463,8 +458,7 @@ function upgradeSchemaToV2(
         // contains at most one field per shared family.
         next.key = decision.sharedKey;
         canonicalizedFamilies.add(decision.sharedKey);
-      }
-      else {
+      } else {
         next.shared_field_key = item.key;
         if (SUFFIX_PATTERN.test(item.key)) {
           preservedSuffixedFamilies.add(item.key);
@@ -543,7 +537,6 @@ function postUpgradeSelfCheck(schema: SchemaEnvelope): string[] {
 }
 
 function printSummaryAndSetExitCode(summary: { invalid: number }): void {
-  // eslint-disable-next-line no-console
   console.log(JSON.stringify({ summary }));
   process.exitCode = getNormalizationExitCode(summary);
 }
@@ -604,7 +597,6 @@ async function main() {
         const refs = collectV2SharedFieldKeyReferences(group.templates);
         const { plan, nextMetadata } = planLegacySharedFieldsCleanup(studioUid, group.studio.metadata, refs);
 
-        // eslint-disable-next-line no-console
         console.log(JSON.stringify({
           studio: studioUid,
           legacy_cleanup: {
@@ -653,7 +645,6 @@ async function main() {
         // upgrade decisions are computed against the post-pre-pass map either way.
         applyCanonicalBasesToMap(sharedFields, basesToAdd);
 
-        // eslint-disable-next-line no-console
         console.log(JSON.stringify({
           studio: studioUid,
           canonical_bases_to_add: basesToAdd.map((b) => ({
@@ -688,8 +679,7 @@ async function main() {
       let engine: 'task_template_v1' | 'task_template_v2' | null = null;
       try {
         engine = getSchemaEngine(currentSchema);
-      }
-      catch {
+      } catch {
         engine = null;
       }
 
@@ -711,16 +701,14 @@ async function main() {
         if (engine === null) {
           summary.invalid += 1;
           plan.errors.push('Unsupported or unknown engine');
-        }
-        else if (engine === 'task_template_v2') {
+        } else if (engine === 'task_template_v2') {
           summary.alreadyV2 += 1;
           const issues = postUpgradeSelfCheck(currentSchema);
           if (issues.length > 0) {
             summary.invalid += 1;
             plan.errors.push(...issues);
           }
-        }
-        else {
+        } else {
           const parsed = safeParseTemplateSchema(currentSchema);
           if (!parsed.success) {
             summary.invalid += 1;
@@ -734,7 +722,7 @@ async function main() {
           plan.preservedSuffixedFamilies = preview.plan.preservedSuffixedFamilies;
           plan.manualReviewItems = preview.plan.manualReviewItems;
         }
-        // eslint-disable-next-line no-console
+
         console.log(JSON.stringify({ template: plan }));
         continue;
       }
@@ -742,7 +730,7 @@ async function main() {
       if (engine === null) {
         summary.invalid += 1;
         plan.errors.push('Unsupported or unknown engine; skipping.');
-        // eslint-disable-next-line no-console
+
         console.log(JSON.stringify({ template: plan }));
         continue;
       }
@@ -753,7 +741,7 @@ async function main() {
         if (plan.errors.length > 0) {
           summary.invalid += 1;
         }
-        // eslint-disable-next-line no-console
+
         console.log(JSON.stringify({ template: plan, action: 'skip-already-v2' }));
         continue;
       }
@@ -769,7 +757,7 @@ async function main() {
       if (checkErrors.length > 0) {
         plan.errors.push(...checkErrors);
         summary.invalid += 1;
-        // eslint-disable-next-line no-console
+
         console.log(JSON.stringify({ template: plan, action: 'self-check-failed' }));
         continue;
       }
@@ -777,7 +765,6 @@ async function main() {
       summary.plannedUpgrades += 1;
 
       if (args.dryRun) {
-        // eslint-disable-next-line no-console
         console.log(JSON.stringify({ template: plan, action: 'plan-upgrade' }));
         continue;
       }
@@ -802,20 +789,18 @@ async function main() {
 
       summary.applied += 1;
       summary.snapshotsCreated += 1;
-      // eslint-disable-next-line no-console
+
       console.log(JSON.stringify({ template: plan, action: 'applied' }));
     }
 
     printSummaryAndSetExitCode(summary);
-  }
-  finally {
+  } finally {
     await prisma.$disconnect();
     await pool.end();
   }
 }
 
 main().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error(err);
   process.exit(1);
 });

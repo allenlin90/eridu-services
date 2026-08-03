@@ -1,10 +1,12 @@
 import 'dotenv/config';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Pool } from 'pg';
+
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
-import { nanoid, customAlphabet } from 'nanoid';
+import { customAlphabet, nanoid } from 'nanoid';
+import { Pool } from 'pg';
 
 // Auth User ID format: 32-character random alphanumeric string
 const generateAuthUserId = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 32);
@@ -60,7 +62,7 @@ function ensureLocalDatabase(url: string | undefined, allowProd: boolean, label:
   const isLocal = LOCAL_HOSTS.has(new URL(url).hostname);
   if (!isLocal && !allowProd) {
     throw new Error(
-      `Database URL for ${label} ("${url}") does not look like a local database. Run with --allow-production to bypass this safety guard.`
+      `Database URL for ${label} ("${url}") does not look like a local database. Run with --allow-production to bypass this safety guard.`,
     );
   }
 }
@@ -82,7 +84,7 @@ function parseCsvLine(line: string): string[] {
     }
   }
   result.push(current);
-  return result.map(v => v.replace(/^"|"$/g, '').trim());
+  return result.map((v) => v.replace(/^"|"$/g, '').trim());
 }
 
 function loadCsvRecords(filePath: string): CsvRecord[] {
@@ -91,7 +93,7 @@ function loadCsvRecords(filePath: string): CsvRecord[] {
   }
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
+  const lines = content.split(/\r?\n/).filter((line) => line.trim() !== '');
   if (lines.length < 2) {
     return [];
   }
@@ -105,12 +107,18 @@ function loadCsvRecords(filePath: string): CsvRecord[] {
     const record: any = {};
     headers.forEach((header, index) => {
       const val = values[index] !== undefined ? values[index] : '';
-      if (header === 'Nick Name') record.nickName = val;
-      else if (header === 'Name') record.name = val;
-      else if (header === 'Type') record.type = val;
-      else if (header === 'Rate/hr') record.rateHr = val;
-      else if (header === 'Email') record.email = val;
-      else if (header === 'Note') record.note = val;
+      if (header === 'Nick Name')
+        record.nickName = val;
+      else if (header === 'Name')
+        record.name = val;
+      else if (header === 'Type')
+        record.type = val;
+      else if (header === 'Rate/hr')
+        record.rateHr = val;
+      else if (header === 'Email')
+        record.email = val;
+      else if (header === 'Note')
+        record.note = val;
     });
     records.push(record as CsvRecord);
   }
@@ -119,13 +127,14 @@ function loadCsvRecords(filePath: string): CsvRecord[] {
 }
 
 function isValidEmail(email: string | undefined): boolean {
-  if (!email) return false;
+  if (!email)
+    return false;
   const cleaned = email.trim().toLowerCase();
   return cleaned.includes('@') && !cleaned.includes('ไม่พบข้อมูล');
 }
 
 function normalizeName(name: string): string {
-  return name.trim().replace(/[\s\t]+/g, ' ');
+  return name.trim().replace(/\s+/g, ' ');
 }
 
 async function main() {
@@ -191,7 +200,7 @@ async function main() {
     });
     console.log(`Loaded ${activeCreators.length} active creators from database.`);
 
-    const norm = (s: string) => s.trim().toLowerCase().replace(/[\s\t]+/g, ' ');
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
     let createdCreatorsCount = 0;
     let updatedCreatorsCount = 0;
@@ -203,7 +212,7 @@ async function main() {
       const record = csvRecords[index];
       const rawName = record.name || '';
       const rawNickName = record.nickName || '';
-      
+
       if (!rawName && !rawNickName) {
         console.warn(`[Row ${index + 2}] Skipping empty row.`);
         continue;
@@ -215,10 +224,10 @@ async function main() {
       const email = rawEmail.trim().toLowerCase();
       const hasValidEmail = isValidEmail(rawEmail);
       const isUniqueEmail = hasValidEmail && (emailCounts.get(email) === 1);
-      
+
       const creatorType = (record.type || '').trim().toLowerCase() === 'flexible' ? 'FLEXIBLE' : 'STANDARD';
-      const rateVal = parseFloat(record.rateHr);
-      const defaultRate = isNaN(rateVal) ? null : rateVal * 2;
+      const rateVal = Number.parseFloat(record.rateHr);
+      const defaultRate = Number.isNaN(rateVal) ? null : rateVal * 2;
       const note = (record.note || '').trim();
 
       console.log(`\n[Row ${index + 2}] Processing: "${name}" (${aliasName})`);
@@ -232,7 +241,7 @@ async function main() {
         // A. Check auth DB
         const authUserQuery = await authPool.query<{ id: string; name: string }>(
           'SELECT id, name FROM "user" WHERE email = $1 LIMIT 1',
-          [email]
+          [email],
         );
         const existingAuthUser = authUserQuery.rows[0];
 
@@ -244,7 +253,7 @@ async function main() {
             if (apply) {
               await authPool.query(
                 'UPDATE "user" SET name = $1, updated_at = NOW() WHERE id = $2',
-                [name, authUserId]
+                [name, authUserId],
               );
             }
             updatedUsersCount++;
@@ -255,7 +264,7 @@ async function main() {
           if (apply) {
             await authPool.query(
               'INSERT INTO "user" (id, name, email, email_verified, role, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())',
-              [authUserId, name, email, true, 'user']
+              [authUserId, name, email, true, 'user'],
             );
           }
           createdUsersCount++;
@@ -270,7 +279,7 @@ async function main() {
         if (existingApiUser) {
           apiUserId = existingApiUser.id;
           console.log(`  - Found existing API user: ${email} (UID: ${existingApiUser.uid})`);
-          
+
           let needsUpdate = false;
           const updateData: any = {};
 
@@ -334,9 +343,9 @@ async function main() {
         matchedCreator = existingApiUser.creator;
         console.log(`  - Matched creator by user relationship: "${matchedCreator.name}" (alias: "${matchedCreator.aliasName}", UID: ${matchedCreator.uid})`);
       } else {
-        matchedCreator = activeCreators.find(c => norm(c.aliasName) === norm(aliasName));
+        matchedCreator = activeCreators.find((c) => norm(c.aliasName) === norm(aliasName));
         if (!matchedCreator) {
-          matchedCreator = activeCreators.find(c => norm(c.name) === norm(name));
+          matchedCreator = activeCreators.find((c) => norm(c.name) === norm(name));
         }
       }
 
@@ -367,7 +376,7 @@ async function main() {
 
       if (matchedCreator) {
         console.log(`  - Matched existing creator: "${matchedCreator.name}" (alias: "${matchedCreator.aliasName}", UID: ${matchedCreator.uid})`);
-        
+
         const mergedMetadata = {
           ...(matchedCreator.metadata as Record<string, any> || {}),
           ...creatorMetadata,
@@ -429,7 +438,6 @@ async function main() {
     console.log(`\n--- Summary of Import ---`);
     console.log(`Creators: ${createdCreatorsCount} created, ${updatedCreatorsCount} updated`);
     console.log(`Users: ${createdUsersCount} created, ${updatedUsersCount} updated`);
-
   } catch (error) {
     console.error('An error occurred during import execution:', error);
     process.exitCode = 1;
@@ -440,7 +448,7 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Fatal error in main wrapper:', err);
   process.exit(1);
 });

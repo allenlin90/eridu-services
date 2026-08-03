@@ -1,6 +1,7 @@
 import 'dotenv/config';
+
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 
 export const POST_PRODUCTION_TEMPLATE_UID = 'ttpl_n6f7qAZQmPA4He6MOR-y';
@@ -108,13 +109,16 @@ export async function runBackfill({
 
   for (const task of tasks) {
     const templateUid = task.template?.uid;
-    if (!templateUid) continue;
+    if (!templateUid)
+      continue;
 
     const snapshot = task.snapshot;
-    if (!snapshot) continue;
+    if (!snapshot)
+      continue;
 
     const schema = snapshot.schema;
-    if (!schema || !Array.isArray(schema.items)) continue;
+    if (!schema || !Array.isArray(schema.items))
+      continue;
 
     // Build map from field ID to system_fact_key
     const fieldToFactKey = new Map<string, string>();
@@ -142,7 +146,8 @@ export async function runBackfill({
       const showPlatformUid = parts[2];
 
       const factKey = fieldToFactKey.get(fieldId);
-      if (!factKey) continue;
+      if (!factKey)
+        continue;
 
       if (![
         'show_platform_gmv',
@@ -179,10 +184,12 @@ export async function runBackfill({
           logger(`Warning: Failed to parse decimal value "${rawValue}" for show platform ${showPlatformUid}`);
           continue;
         }
-        if (!incomingDecimal.isFinite()) continue;
+        if (!incomingDecimal.isFinite())
+          continue;
       } else {
         incomingViewCount = Math.round(Number(rawValue));
-        if (!Number.isFinite(incomingViewCount)) continue;
+        if (!Number.isFinite(incomingViewCount))
+          continue;
       }
 
       // Look up ShowPlatform row
@@ -203,8 +210,8 @@ export async function runBackfill({
       const recordedTemplate = metadata.performance_templates?.[factKey];
 
       if (
-        recordedTemplate === POST_PRODUCTION_TEMPLATE_UID &&
-        templateUid !== POST_PRODUCTION_TEMPLATE_UID
+        recordedTemplate === POST_PRODUCTION_TEMPLATE_UID
+        && templateUid !== POST_PRODUCTION_TEMPLATE_UID
       ) {
         skippedCount++;
         continue;
@@ -256,7 +263,7 @@ export async function runBackfill({
 
 async function main() {
   const { dryRun, includeReview, startDate, endDate } = parseArgs();
-  
+
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error('DATABASE_URL is not defined in environment variables');
