@@ -99,19 +99,23 @@ rg -o '^    kind: (.+)$' -r '$1' .agents/agent-skill-registry.yaml | sort | uniq
 | Presentation mode | `presentation-mode` | 7 | Output style only, explicit user trigger — all 7 are `implicit: false` |
 | **Total** | | **102** | Matches the generated index and the skill directories |
 
-Routing split: **66 implicitly invocable**, **36 explicit-only**, ratcheted by `implicit_catalog_ceiling`. Both the `<50` milestone and the `<35` post-consolidation target are unmet.
+Routing split: **66 implicitly invocable**, **36 explicit-only**, ratcheted by `implicit_catalog_ceiling`. Both the "no more than 50" milestone and the "35 or fewer" post-consolidation target are unmet.
 
 ### How the implicit catalog gets reduced
 
 By **knowledge extraction and consolidation** — not by marking retained capability classes explicit-only. § Target Catalog above keeps lifecycle/reasoning capabilities, concrete implementation and operational capabilities, and declared review lenses in the implicit catalog; [`AGENT_OPERATING_MODEL.md`](./AGENT_OPERATING_MODEL.md) reserves explicit-only marking for **manual workflows and presentation modes**, and routes the `<35` target through "overlap consolidation and knowledge extraction".
 
-The lever is large enough on its own. Roughly **25 of the 66 implicit entries are standalone pattern or technology guides** — the class § Target portfolio budgets at **0**:
+**Extraction relocates facts; it does not by itself remove a catalog entry.** All eight skills whose doctrine moved to [`knowledge/`](../../knowledge/index.md) in PR #367 are still `implicit: true` — the skill remains as a thin procedure. The implicit count decrements only when an entry is **deleted** (extraction leaves no genuine procedure) or **merged** into another.
+
+The following **25 entries are extraction candidates, not removals** — the standalone pattern or technology guides § Target portfolio budgets at 0:
 
 `admin-list-pattern`, `api-performance-optimization`, `backend-controller-pattern-nestjs`, `backend-testing-patterns`, `code-quality`, `data-validation`, `database-patterns`, `design-patterns`, `engineering-best-practices-enforcer`, `frontend-api-layer`, `frontend-code-quality`, `frontend-error-handling`, `frontend-i18n`, `frontend-performance`, `frontend-state-management`, `frontend-tech-stack`, `frontend-testing-patterns`, `frontend-ui-components`, `observability-logging`, `pwa-best-practices`, `secure-coding-practices`, `shift-schedule-pattern`, `solid-principles`, `studio-list-pattern`, `table-view-pattern`
 
-That list is a starting inventory, not a decision — each entry still needs the routing test in [`.agents/README.md`](../../.agents/README.md) to separate the durable facts (which move to `knowledge/`) from any genuine procedure (which stays as a thin skill). The eight `thin-wrapper` entries already show the shape.
+Each still needs the routing test in [`.agents/README.md`](../../.agents/README.md) to separate durable facts (which move to `knowledge/`) from any genuine procedure (which stays as a thin skill and **keeps its catalog entry**). PR #367 kept all eight of its candidates, so a meaningful fraction of this batch will likely stay too.
 
-An attempt to reach `<50` by marking 18 human-decision-triggered skills explicit-only was withdrawn on review; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2.
+**No catalog reduction should be claimed from this list until each entry has a reviewed disposition** — `retire`, `consolidate into <id>`, or `keep as thin skill` — with the resulting count derived from those decisions. That disposition table is the first deliverable of PR 3.
+
+An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was withdrawn on review; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2.
 
 Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
 
