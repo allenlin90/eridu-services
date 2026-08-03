@@ -1,6 +1,6 @@
 # Agentic Tool Enhancement & OKF Consolidation Program
 
-**Status**: Active — 2 of 4 PRs merged
+**Status**: Active — 1 of 4 PRs merged
 **Type**: Multi-PR execution tracker for repository tooling
 **Owner**: AI Platform & Agent Systems Engineering
 
@@ -78,17 +78,17 @@ flowchart LR
     end
 
     subgraph FilteredCatalog ["Optimized Routing Catalog"]
-        ImplicitSkills["Implicit Capability Skills (48) — &lt;50 met, &lt;35 pending"]
-        ExplicitSkills["Explicit-Only Skills (54) ($skill / /command)"]
+        ImplicitSkills["Implicit Capability Skills (66) — target &lt;50, then &lt;35"]
+        ExplicitSkills["Explicit-Only Skills (36) ($skill / /command)"]
     end
 
     RawPrompt --> PolicyGate
     CheckImplicit -->|true| ImplicitSkills
     CheckImplicit -->|false| ExplicitSkills
-    ImplicitSkills --> BudgetCheck["Character Budget 5,213 / 8,000 (met)"]
+    ImplicitSkills --> BudgetCheck["Character Budget 7,074 / 8,000 (met)"]
 ```
 
-The character budget and the skill-count cap are **two different constraints**. PR 1 met the budget; PR 2 met the `<50` count cap. The post-consolidation `<35` target remains open — see § 4.1 and Scope 2.4b.
+The character budget and the skill-count cap are **two different constraints**. PR 1 met the budget. The count cap is not met and is reached by knowledge extraction, not by marking skills explicit-only — see § 4.2.
 
 ---
 
@@ -111,28 +111,36 @@ Progress record for this program. **Every PR in this program states its row numb
 | # | PR | Scopes | Depends on | Status |
 | --- | --- | --- | --- | --- |
 | 1 | Skill registry, validator enforcement, OKF bundle + doctrine extraction, toolsuite docs | 1, 2.1–2.3, 3, 4.1 | — | ✅ Done ([#367](https://github.com/allenlin90/eridu-services/pull/367)) |
-| 2 | Implicit-catalog triage — 18 skills whose trigger is a human decision become explicit-only; ceiling lowered to 48 | 2.4 (part) | 1 | ✅ Done |
-| 3 | Skill consolidation — merge `admin-list-pattern`/`studio-list-pattern`, fold `solid-principles` into `code-quality`, lower the ceiling again | 2.4 (rest) | 2 | ⬜ Not started |
-| 4 | Final reconciliation — inventory counts, relocate this tracker out of `docs/prd/`, cross-client verification on Claude Code / Codex / OpenCode | 4.2 | 2, 3 | ⬜ Not started |
+| 2 | ~~Implicit-catalog triage — mark human-decision-triggered skills explicit-only~~ | — | 1 | ❌ **Withdrawn** — conflicts with canonical routing doctrine; see § 4.2 |
+| 3 | Knowledge extraction + consolidation — move standalone pattern/technology guides to `knowledge/`, merge overlapping pairs, lower the ceiling | 2.4 | 1 | ⬜ Not started |
+| 4 | Final reconciliation — inventory counts, relocate this tracker out of `docs/prd/`, cross-client routing verification | 4.2 | 3 | ⬜ Not started |
 
-**Remaining: 2 of 4 PRs.**
+**Remaining: 2 of 4 PRs** (row 2 withdrawn, not replaced).
+
+Row 2 was attempted in [#368](https://github.com/allenlin90/eridu-services/pull/368) and withdrawn on review. The reason is recorded in § 4.2 because it constrains how rows 3 and 4 may reduce the catalog.
 
 ### 4.1 Two constraints, tracked separately
 
 | Constraint | Limit | Current | State |
 | --- | --- | --- | --- |
-| Implicit description characters (Codex catalog budget) | 8,000 | **5,213** | ✅ Met by PR 1 (7,074); further reduced by PR 2 |
-| Implicitly invocable skill count | 50 | **48** | ✅ Met (PR 2) |
-| Implicitly invocable skill count — post-consolidation | 35 | **48** | ❌ Not met — PR 3 |
-| Regression ratchet (`implicit_catalog_ceiling`) | 48 | 48 | 🔒 Enforced — validation fails if exceeded |
+| Implicit description characters (Codex catalog budget) | 8,000 | **7,074** | ✅ Met (PR 1) |
+| Implicitly invocable skill count | 50, then 35 | **66** | ❌ Not met — PR 3 |
+| Regression ratchet (`implicit_catalog_ceiling`) | 66 | 66 | 🔒 Enforced — validation fails if exceeded |
 
-These are independent. PR 1 met the character budget without moving the count; PR 2 moved the count. Do not report one as satisfying the other.
+These are independent. PR 1 met the character budget and did not move the count. Do not report one as satisfying the other.
 
-### Explicit-only selection criterion
+### 4.2 Routing-policy constraint (why row 2 was withdrawn)
 
-`implicit` is a **Codex-only** routing signal (`agents/openai.yaml`). Claude Code and OpenCode discover skills from `.agents/skills/` directly, and explicit-only skills stay in `INDEX.md` and the `AGENTS.md` routing map — so the flip changes auto-routing, not discoverability.
+**The implicit catalog is reduced by knowledge extraction and consolidation — not by marking capabilities explicit-only.** This is canon, not preference:
 
-A skill is explicit-only when its trigger is a **human decision** rather than *"an agent touched this code"*. PR 2 applied that to three groups: deployed-platform operations (7), authoring and meta-work (6), and deliberate investigations or one-off ops (5). Skills triggered by a code edit stay implicit, because missing one produces a defect — that is what auto-routing is for. Full rationale and membership: [`AGENT_CONTENT_REORGANIZATION.md`](../engineering/AGENT_CONTENT_REORGANIZATION.md) § Revised Provisional Inventory.
+- [`.agents/README.md`](../../.agents/README.md) § Target Catalog: the implicit catalog **should contain** lifecycle and reasoning capabilities, concrete implementation and **operational** capabilities, and declared **review lenses**. It should **not** contain standalone pattern or technology guides, domain and architecture reference documents, duplicated workflow bodies, or unrequested presentation modes.
+- [`AGENT_OPERATING_MODEL.md`](../engineering/AGENT_OPERATING_MODEL.md) § Catalog targets: reach `<50` "in the first reorganization milestone", reach `<35` "after **overlap consolidation and knowledge extraction**", and mark **manual workflows and presentation modes** explicit-only.
+
+PR #368 marked 18 skills explicit-only using a different axis — "human decision vs. an agent touched this code". That axis is defensible on its own terms, but it flipped members of the classes canon retains in the implicit catalog (7 deployed-platform operations, `pr-ui-screenshot-review`, `plan-workflow-completeness`), and it substituted a lever canon does not sanction for the two it does. It was withdrawn rather than merged with the canonical documents left asserting the superseded rule, which the [pattern/direction-change gate](../../.agents/skills/agent-instruction-maintenance/SKILL.md) treats as blocking.
+
+**Extraction is sufficient on its own.** Of the 66 implicit skills, roughly 25 are standalone pattern or technology guides — the exact class canon says the implicit catalog should hold **zero** of (`database-patterns`, the `frontend-*` family, `table-view-pattern`, `solid-principles`, `pwa-best-practices`, and similar). Extracting them clears both targets without touching routing policy for any retained class.
+
+If a narrow explicit-only class is still wanted later — for example "operates an external deployed system" — it must be proposed as a deliberate amendment to `.agents/README.md` and `AGENT_OPERATING_MODEL.md`, with cross-client routing parity evidence, in its own PR. It must not ride along in a delivery PR.
 
 ---
 
@@ -158,13 +166,11 @@ A skill is explicit-only when its trigger is a **human decision** rather than *"
   - [x] Create `knowledge/engineering/pwa-best-practices.md` and convert `pwa-best-practices` to a thin procedural skill bridge.
   - [x] Create `knowledge/engineering/table-view-pattern.md` and convert `table-view-pattern` to a thin procedural skill bridge.
 - [x] **2.3 Implicit Catalog Character Budget (<8KB limit)**:
-  - [x] Configure explicit policy (`allow_implicit_invocation: false`) for presentation modes and manual workflows (`caveman`, `cavecrew`, `graphify`, `setup-matt-pocock-skills`, etc.) — 36 skills explicit-only at merge, including the three presentation modes added in review.
+  - [x] Configure explicit policy (`allow_implicit_invocation: false`) for presentation modes and manual workflows (`caveman`, `cavecrew`, `graphify`, `setup-matt-pocock-skills`, etc.) — 36 skills explicit-only at merge, including three presentation modes added in review.
   - [x] Reduce implicit description character budget from 8,991 to 7,074 characters (below the 8,000 budget).
-- [x] **2.4a Implicit Skill *Count* Cap `<50` — MET (PR 2)**:
-  - [x] Move 18 human-decision-triggered skills to explicit-only: 66 → **48** implicit, 54 explicit-only.
-  - [x] Lower `implicit_catalog_ceiling` 66 → 48.
-- [ ] **2.4b Post-consolidation target `<35` — NOT MET**:
-  - Current: **48** implicitly invocable skills.
+- [ ] **2.4 Implicit Skill *Count* Cap — NOT MET**:
+  - Current: **69** implicitly invocable skills. Milestone target `<50`; post-consolidation target `<35`.
+  - The character budget above is met; the count cap is a separate, unfinished constraint. `implicit_catalog_ceiling: 69` prevents regression while this stays open.
   - [ ] Consolidate overlapping list pattern skills (`admin-list-pattern`, `studio-list-pattern`).
   - [ ] Consolidate quality and architecture skills (`solid-principles` into `code-quality`).
   - [ ] Lower `implicit_catalog_ceiling` in `.agents/agent-skill-registry.yaml` with each reduction.
@@ -200,14 +206,6 @@ What each merged PR actually changed for someone working in this repo. Filled in
 - **Codex catalog fits its budget**: 8,991 → 7,074 characters, 36 skills explicit-only. Codex no longer silently truncates skill entries.
 - **`knowledge/` is machine-checkable.** `pnpm agents:validate` now fails on malformed OKF frontmatter, a missing `type`, an unindexed concept, registry/`openai.yaml` drift, or implicit-catalog growth. Before this, none of those were detectable.
 - **Nothing is orphaned or dangling**: all 12 `references/` files reachable, all cited section numbers resolve, Codex `interface:` metadata intact.
-
-### PR 2 — merged
-
-- **Codex stops auto-routing to 18 skills nobody wanted auto-routed.** Deployed-platform operations (Open WebUI, LiteLLM, wiki), authoring/meta tooling, and one-off investigations now require `$skill`. An agent editing repo code can no longer be pulled into an external-platform API skill by a loose description match.
-- **`<50` implicit milestone met**: 66 → **48** implicit, 54 explicit-only. Implicit descriptions 7,074 → **5,213** characters, now 65% of the Codex catalog budget rather than 94%.
-- **Ratchet tightened** 66 → 48, so the reduction cannot silently erode.
-- **The selection criterion is written down**, not just applied — "human decision vs. an agent touched this code", with the three qualifying groups and the reason code-edit-triggered skills stay implicit. PR 3 and future skills have a rule to apply instead of a precedent to guess at.
-- **No discoverability loss anywhere**: the flip is Codex-only; all 102 skills remain in `INDEX.md` and the `AGENTS.md` routing map.
 
 ---
 

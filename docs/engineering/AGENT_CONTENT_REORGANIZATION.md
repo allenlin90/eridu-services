@@ -99,23 +99,23 @@ rg -o '^    kind: (.+)$' -r '$1' .agents/agent-skill-registry.yaml | sort | uniq
 | Presentation mode | `presentation-mode` | 7 | Output style only, explicit user trigger — all 7 are `implicit: false` |
 | **Total** | | **102** | Matches the generated index and the skill directories |
 
-Routing split: **48 implicitly invocable**, **54 explicit-only**, ratcheted by `implicit_catalog_ceiling`. The `<50` milestone target is met; the post-consolidation target of `<35` is not — tracked in the PR roadmap, not here.
+Routing split: **66 implicitly invocable**, **36 explicit-only**, ratcheted by `implicit_catalog_ceiling`. Both the `<50` milestone and the `<35` post-consolidation target are unmet.
 
-`implicit` is a **Codex-only** routing signal: it is written to each skill's `agents/openai.yaml`, which [`AGENTS.md`](../../AGENTS.md) scopes to Codex. Claude Code and OpenCode discover skills from `.agents/skills/` directly and are unaffected. An explicit-only skill stays listed in [`INDEX.md`](../../.agents/skills/INDEX.md) and the `AGENTS.md` routing map, so it remains discoverable everywhere — it simply stops being auto-routed by Codex and is invoked as `$skill`.
+### How the implicit catalog gets reduced
 
-Explicit-only is the right default when a skill's trigger is a **human decision** rather than *"an agent touched this code"*. Three groups qualify:
+By **knowledge extraction and consolidation** — not by marking retained capability classes explicit-only. § Target Catalog above keeps lifecycle/reasoning capabilities, concrete implementation and operational capabilities, and declared review lenses in the implicit catalog; [`AGENT_OPERATING_MODEL.md`](./AGENT_OPERATING_MODEL.md) reserves explicit-only marking for **manual workflows and presentation modes**, and routes the `<35` target through "overlap consolidation and knowledge extraction".
 
-| Group | Why explicit | Examples |
-| --- | --- | --- |
-| Deployed-platform operations | Drive an external system through its API; repo edits never lead here | `openwebui-rest-api`, `litellm-admin-api`, `wiki-knowledge-maintainer` |
-| Authoring and meta-work | Deliberate acts of creating or organizing agent/doc content | `write-a-skill`, `monorepo-doc-layering`, `user-facing-docs` |
-| Deliberate investigations and one-off ops | Started by a decision, not by a file edit | `local-database-cli`, `excel-creator-mapping`, `domain-refactor-cutover-strategy` |
+The lever is large enough on its own. Roughly **25 of the 66 implicit entries are standalone pattern or technology guides** — the class § Target portfolio budgets at **0**:
 
-Skills whose trigger *is* a code edit stay implicit — backend and frontend patterns, database, security, testing, and the thin wrappers. Missing one of those produces a defect, which is exactly what auto-routing is for.
+`admin-list-pattern`, `api-performance-optimization`, `backend-controller-pattern-nestjs`, `backend-testing-patterns`, `code-quality`, `data-validation`, `database-patterns`, `design-patterns`, `engineering-best-practices-enforcer`, `frontend-api-layer`, `frontend-code-quality`, `frontend-error-handling`, `frontend-i18n`, `frontend-performance`, `frontend-state-management`, `frontend-tech-stack`, `frontend-testing-patterns`, `frontend-ui-components`, `observability-logging`, `pwa-best-practices`, `secure-coding-practices`, `shift-schedule-pattern`, `solid-principles`, `studio-list-pattern`, `table-view-pattern`
+
+That list is a starting inventory, not a decision — each entry still needs the routing test in [`.agents/README.md`](../../.agents/README.md) to separate the durable facts (which move to `knowledge/`) from any genuine procedure (which stays as a thin skill). The eight `thin-wrapper` entries already show the shape.
+
+An attempt to reach `<50` by marking 18 human-decision-triggered skills explicit-only was withdrawn on review; see [`agentic-tool-enhancement.md`](../prd/agentic-tool-enhancement.md) § 4.2.
 
 Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
 
-All 8 `thin-wrapper` entries completed their extraction in this PR — their doctrine now lives in [`knowledge/`](../../knowledge/index.md).
+All 8 `thin-wrapper` entries completed their extraction in PR #367 — their doctrine now lives in [`knowledge/`](../../knowledge/index.md).
 
 ### Keep as procedural skill — provisional
 

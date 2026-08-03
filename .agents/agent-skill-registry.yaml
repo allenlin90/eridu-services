@@ -14,7 +14,7 @@ version: 1
 #
 # Character budget is tracked separately: Codex's fallback catalog holds ~8,000
 # characters of implicit descriptions, which is a different constraint from skill count.
-implicit_catalog_ceiling: 48
+implicit_catalog_ceiling: 66
 implicit_catalog_limit: 50
 post_consolidation_limit: 35
 
@@ -38,7 +38,7 @@ skills:
   ai-platform-capability-verification:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ review ]
     knowledge_sources: []
     migration_status: canonical
@@ -242,7 +242,7 @@ skills:
   domain-refactor-cutover-strategy:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ orient, implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -274,7 +274,7 @@ skills:
   eridu-docs-information-architecture:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ orient, implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -298,7 +298,7 @@ skills:
   eridu-skill-creator:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: [ .agents/README.md ]
     migration_status: canonical
@@ -326,7 +326,7 @@ skills:
   excel-creator-mapping:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -454,7 +454,7 @@ skills:
   improve-codebase-architecture:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ orient ]
     knowledge_sources: []
     migration_status: canonical
@@ -478,7 +478,7 @@ skills:
   litellm-admin-api:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -486,7 +486,7 @@ skills:
   local-database-cli:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ orient, implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -494,7 +494,7 @@ skills:
   monorepo-doc-layering:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ orient ]
     knowledge_sources: []
     migration_status: canonical
@@ -510,7 +510,7 @@ skills:
   openwebui-assistant-adapter:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -526,7 +526,7 @@ skills:
   openwebui-groups-permissions:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -534,7 +534,7 @@ skills:
   openwebui-mcp-tool-integration:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -542,7 +542,7 @@ skills:
   openwebui-rest-api:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -574,7 +574,7 @@ skills:
   plan-workflow-completeness:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ orient, review ]
     knowledge_sources: []
     migration_status: canonical
@@ -590,7 +590,7 @@ skills:
   pr-ui-screenshot-review:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ review ]
     knowledge_sources: []
     migration_status: canonical
@@ -814,7 +814,7 @@ skills:
   user-facing-docs:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: []
     migration_status: canonical
@@ -822,7 +822,7 @@ skills:
   wiki-knowledge-maintainer:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement, review ]
     knowledge_sources: []
     migration_status: canonical
@@ -830,7 +830,7 @@ skills:
   write-a-skill:
     kind: capability-skill
     authority: procedural
-    implicit: false
+    implicit: true
     lifecycle_stage: [ implement ]
     knowledge_sources: [ .agents/README.md ]
     migration_status: canonical
