@@ -23,5 +23,5 @@ pnpm --filter erify_api lint && pnpm --filter erify_api typecheck && pnpm --filt
 ## Canonical Knowledge
 
 - [`knowledge/architecture/backend-controller-pattern-nestjs`](../../../../knowledge/architecture/backend-controller-pattern-nestjs.md) — types, rules, checklists, review list
-- [`references/controller-rules.md`](controller-rules.md) — route semantics, DTO mapping, throttle profiles
-- [`references/controller-examples.md`](controller-examples.md) — concrete code
+- [`controller-rules.md`](controller-rules.md) — route semantics, DTO mapping, throttle profiles
+- [`controller-examples.md`](controller-examples.md) — concrete code

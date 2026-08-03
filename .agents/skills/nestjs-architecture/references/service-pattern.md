@@ -22,5 +22,5 @@ pnpm --filter erify_api lint && pnpm --filter erify_api typecheck && pnpm --filt
 ## Canonical Knowledge
 
 - [`knowledge/architecture/service-pattern-nestjs`](../../../../knowledge/architecture/service-pattern-nestjs.md) — rules, error matrix, checklist
-- [`references/service-examples.md`](service-examples.md) — code examples
+- [`service-examples.md`](service-examples.md) — code examples
 - [`apps/erify_api/docs/ARCHITECTURE.md`](../../../../apps/erify_api/docs/ARCHITECTURE.md) — capability and persistence matrix

@@ -13,7 +13,7 @@ Implementation guide for NestJS Repositories using Prisma.
 - **Model Repository**: [task-template.repository.ts](../../../../apps/erify_api/src/models/task-template/task-template.repository.ts)
 - **Base Repository**: [base.repository.ts](../../../../apps/erify_api/src/lib/repositories/base.repository.ts)
 
-> See [references/repository-examples.md](repository-examples.md) for detailed code examples.
+> See [repository-examples.md](repository-examples.md) for detailed code examples.
 
 ## Core Rules
 

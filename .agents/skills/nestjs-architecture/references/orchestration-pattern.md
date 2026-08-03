@@ -15,7 +15,7 @@ Orchestration services coordinate multiple capability/model services for workflo
 - **Processor Service**: [task-generation-processor.service.ts](../../../../apps/erify_api/src/task-orchestration/task-generation-processor.service.ts)
 - **Module**: [task-orchestration.module.ts](../../../../apps/erify_api/src/task-orchestration/task-orchestration.module.ts)
 
-> See [references/orchestration-examples.md](orchestration-examples.md) for full code examples.
+> See [orchestration-examples.md](orchestration-examples.md) for full code examples.
 
 ## When to Use
 

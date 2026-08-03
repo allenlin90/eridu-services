@@ -26,7 +26,7 @@ A repository is **not** the default. Read the repository reference only after th
 pnpm --filter erify_api lint && pnpm --filter erify_api typecheck && pnpm --filter erify_api test && pnpm --filter erify_api build
 ```
 
-Changes affecting transaction semantics, soft-delete/restore, CLS participation, or Nest runtime composition also require the guarded real-database gate in [`code-quality`](../code-quality/SKILL.md). Record the result in the PR.
+Changes affecting transaction semantics, soft-delete/restore, CLS participation, or Nest runtime composition also require the guarded real-database gate in [`code-quality` § backend testing](../code-quality/references/backend-testing-patterns.md#5-real-database-integration-tests). Record the result in the PR.
 
 ## Canonical Knowledge
 

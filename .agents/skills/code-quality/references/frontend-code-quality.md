@@ -1,6 +1,6 @@
 # Frontend Code Quality
 
-Quality standards for frontend applications. See [references/code-quality-details.md](frontend-quality-details.md) for detailed patterns and code examples.
+Quality standards for frontend applications. See [frontend-quality-details.md](frontend-quality-details.md) for detailed patterns and code examples.
 
 ## Linting & Testing
 

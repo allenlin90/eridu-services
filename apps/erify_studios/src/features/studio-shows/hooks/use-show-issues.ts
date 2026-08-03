@@ -13,7 +13,7 @@ type UseShowIssuesProps = {
 /**
  * Feature hook for the show detail Issues tab: owns URL-synced pagination
  * and filter state (via `useTableUrlState`) and the server query. See
- * `.agents/skills/table-view-pattern` and
+ * `.agents/skills/frontend-ui-components/references/table-view-pattern.md` and
  * apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md.
  */
 export function useShowIssues({ studioId, showId }: UseShowIssuesProps) {

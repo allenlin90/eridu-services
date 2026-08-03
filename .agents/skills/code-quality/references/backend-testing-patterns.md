@@ -4,7 +4,7 @@
 
 **Test helpers**: `apps/erify_api/src/testing/` — always check before writing boilerplate.
 
-> See [references/01-service-tests.md](backend-testing-01-service-tests.md) and [references/02-controller-tests.md](backend-testing-02-controller-tests.md) for detailed examples.
+> See [backend-testing-01-service-tests.md](backend-testing-01-service-tests.md) and [backend-testing-02-controller-tests.md](backend-testing-02-controller-tests.md) for detailed examples.
 
 ## 1. Model Service Tests
 

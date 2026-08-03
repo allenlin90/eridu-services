@@ -47,7 +47,7 @@ Extend `BaseModelService`. Handle single-entity CRUD, UID generation, and domain
 
 ### Orchestration Services
 
-Coordinate multiple Model Services. Use `@Transactional()` for atomicity. See the `orchestration-service-nestjs` skill.
+Coordinate multiple Model Services. Use `@Transactional()` for atomicity. See [`nestjs-architecture` § orchestration](../../.agents/skills/nestjs-architecture/references/orchestration-pattern.md).
 
 ## Critical Rules
 

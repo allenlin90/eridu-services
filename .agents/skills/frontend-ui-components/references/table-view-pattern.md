@@ -36,5 +36,5 @@ Admin table work also verifies `erify_api`. Also run the refactor-parity checks 
 ## Canonical Knowledge
 
 - [`knowledge/engineering/table-view-pattern`](../../../../knowledge/engineering/table-view-pattern.md) — principles, the three surface stacks, decision order, pagination gate, selection eligibility, export contract, checklist
-- [`references/table-view-details.md`](table-view-details.md) — code examples, virtualization, CRUD consistency, anti-patterns
-- [`references/studio-list-examples.md`](studio-list-examples.md) — card infinite-scroll hook, toolbar, and cache-helper code
+- [`table-view-details.md`](table-view-details.md) — code examples, virtualization, CRUD consistency, anti-patterns
+- [`studio-list-examples.md`](studio-list-examples.md) — card infinite-scroll hook, toolbar, and cache-helper code

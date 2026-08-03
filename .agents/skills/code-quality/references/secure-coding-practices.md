@@ -2,7 +2,7 @@
 
 Per-feature implementation checklist — not a threat model. Apply when writing new code or reviewing a PR.
 
-> See [references/security-examples.md](security-examples.md) for extended code examples.
+> See [security-examples.md](security-examples.md) for extended code examples.
 
 ## Rules
 

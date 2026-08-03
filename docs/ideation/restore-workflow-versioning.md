@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from Phase 4/5 planning
 > **Origin**: Phase 4/5 planning, March 2026
-> **Related**: [soft-delete-restore skill](../../.agents/skills/database-patterns/references/07-soft-delete-restore.md), [shift-optimistic-versioning.md](./shift-optimistic-versioning.md)
+> **Related**: [database-patterns § soft-delete restore](../../.agents/skills/database-patterns/references/07-soft-delete-restore.md), [shift-optimistic-versioning.md](./shift-optimistic-versioning.md)
 
 ## What
 
