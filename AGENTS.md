@@ -117,7 +117,7 @@ When a skill is added, removed, split, consolidated, or reclassified, update the
 
 ## Knowledge and OKF Contract
 
-Claude Code, Codex, and OpenCode must follow the same Open Knowledge Format behavior. Read [`docs/engineering/OKF_AGENT_CONTRACT.md`](docs/engineering/OKF_AGENT_CONTRACT.md) before changing or materially relying on knowledge intended to become an OKF bundle.
+Claude Code, Codex, and OpenCode must follow the same Open Knowledge Format behavior. Read [`docs/engineering/OKF_AGENT_CONTRACT.md`](docs/engineering/OKF_AGENT_CONTRACT.md) before changing or materially relying on OKF bundle content — [`knowledge/`](knowledge/index.md) today, plus any tree being migrated into one.
 
 Mandatory behavior:
 

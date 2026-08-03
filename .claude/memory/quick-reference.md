@@ -213,7 +213,7 @@ Canonical implementation references:
 
 - `apps/erify_studios/src/features/studio-shows/api/get-studio-shows.ts` — concurrency-capped batched pagination
 - `apps/erify_studios/src/features/studio-shifts/api/get-studio-shifts.ts` — older fan-out form (legacy)
-- `.agents/skills/table-view-pattern/SKILL.md`
+- `knowledge/engineering/table-view-pattern.md` § Current-View Export — canonical rules (the `table-view-pattern` skill is the thin procedure that selects it)
 
 ---
 

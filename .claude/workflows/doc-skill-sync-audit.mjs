@@ -57,6 +57,7 @@ ${CONVENTIONS}
 Read these files in full:
 ${files.map((f) => `- ${f}`).join('\n')}
 If any of these is a skill file (.agents/skills/<name>/SKILL.md), also check for a sibling references/ subfolder (run \`find .agents/skills/<name>/references -type f\`) and read any files found there.
+Several skills are thin procedures whose doctrine lives in the knowledge/ OKF bundle. When a listed skill links to a knowledge/ concept, read that concept too and audit it for drift — the skill body alone no longer holds the rules. Run \`ls knowledge/*/\` to see the bundle.
 
 Relevant code/doc areas to cross-check against: ${codeHints}
 ${extraNote ? '\n' + extraNote + '\n' : ''}
