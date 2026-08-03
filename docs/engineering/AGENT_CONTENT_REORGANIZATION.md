@@ -564,21 +564,24 @@ These bound every agent-content move, not just the ones already made.
 
 ## Cross-Client Routing Verification
 
-Last verified at the close of the consolidation program, against the three clients in the supported matrix.
+Last verified after the domain-clustering consolidation, against the three clients in the supported matrix.
 
 | Surface | Client | Result |
 | --- | --- | --- |
-| `.agents/skills/` — 99 directories, each with a `SKILL.md` | all | ✅ 99 directories, 99 registry entries, zero orphans in either direction |
-| `agents/openai.yaml` invocation policy vs registry `implicit` | Codex | ✅ 36 explicit-only, 63 implicit, **0 mismatches** |
-| Public entrypoint discoverability and `interface:` metadata | Codex | ✅ all 7 public IDs present; `display_name` / `short_description` / `default_prompt` intact where declared |
-| `.claude/skills` → `../.agents/skills` symlink | Claude Code | ✅ resolves |
+| `.agents/skills/` — 90 directories, each with a `SKILL.md` | all | ✅ 90 directories, 90 registry entries, zero orphans in either direction |
+| `agents/openai.yaml` invocation policy vs registry `implicit` | Codex | ✅ 33 explicit-only, 57 implicit, **0 mismatches** |
+| Public entrypoint discoverability and `interface:` metadata | Codex | ✅ all public IDs present and none named a consolidated skill; `display_name` / `short_description` / `default_prompt` intact where declared — 14 `interface:` blocks, up from 13 (`nestjs-architecture` added, none removed) |
+| `.claude/skills` → `../.agents/skills` symlink | Claude Code | ✅ resolves; `nestjs-architecture/SKILL.md` visible through it |
 | `.claude/CLAUDE.md` thin-adapter rule (≤30 lines, imports `AGENTS.md`) | Claude Code | ✅ 27 lines |
-| `.opencode/skills` → `../.agents/skills` symlink | OpenCode | ✅ resolves |
+| `.opencode/skills` → `../.agents/skills` symlink | OpenCode | ✅ resolves; `nestjs-architecture/SKILL.md` visible through it |
 | `opencode.json` instruction loading | OpenCode | ✅ loads `AGENTS.md` and `.agents/rules/*.mdc` |
-| Skill paths cited in `AGENTS.md`, `README.md`, `.agents/README.md`, `.cursor/rules/*.mdc`, `opencode.json` | all | ✅ zero dangling paths |
-| Generated `.agents/skills/INDEX.md` | all | ✅ 99 entries, not stale |
+| Relative-link resolution from each client's discovery root | all | ✅ 489 links resolved identically through `.agents/skills`, `.claude/skills`, and `.opencode/skills` — the symlink roots sit at the same depth, so `../../../../` reaches the repo root in all three. 8 unresolved, all pre-existing and none in a consolidated file (3 are illustrative placeholders). |
+| Skill paths cited in `AGENTS.md`, `README.md`, `.agents/README.md`, `.agents/rules/*.mdc`, `.cursor/rules/*.mdc`, `opencode.json` | all | ✅ zero dangling paths |
+| Generated `.agents/skills/INDEX.md` | all | ✅ 90 entries, not stale |
 
-Re-run this check whenever a skill is added, removed, consolidated, or reclassified — the registry/`openai.yaml` parity and ratchet lines are covered by `pnpm agents:validate`; the symlink, adapter-length, and dangling-path lines are not.
+Re-run this check whenever a skill is added, removed, consolidated, or reclassified — the registry/`openai.yaml` parity and ratchet lines are covered by `pnpm agents:validate`; the symlink, adapter-length, link-resolution, and dangling-path lines are not.
+
+**Reference-file depth is a cross-client constraint.** A skill's `references/` file sits four levels below the repo root (`.agents/skills/<skill>/references/`). Both client symlink roots (`.claude/skills`, `.opencode/skills`) sit at the same depth, so a `../../../../` link resolves identically whichever root a client walks. Moving a `SKILL.md` body into a `references/` file during consolidation therefore requires adding exactly one `../` to every relative link in it — the link-resolution row above is what proves that was done.
 
 ## Program Record
 
