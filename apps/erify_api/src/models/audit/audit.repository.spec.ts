@@ -84,6 +84,7 @@ describe('auditRepository', () => {
             showCreator: { select: { uid: true } },
             showPlatform: { select: { uid: true } },
             studioShift: { select: { uid: true } },
+            showIssue: { select: { uid: true } },
           },
         },
         actor: {
@@ -181,6 +182,7 @@ describe('auditRepository', () => {
             showCreator: { select: { uid: true } },
             showPlatform: { select: { uid: true } },
             studioShift: { select: { uid: true } },
+            showIssue: { select: { uid: true } },
           },
         },
         actor: {
@@ -207,6 +209,7 @@ describe('auditRepository', () => {
               showCreator: { select: { uid: true } },
               showPlatform: { select: { uid: true } },
               studioShift: { select: { uid: true } },
+              showIssue: { select: { uid: true } },
             },
           },
           actor: {

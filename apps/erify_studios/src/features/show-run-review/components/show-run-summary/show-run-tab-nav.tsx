@@ -1,6 +1,6 @@
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 
-export type ShowRunTab = 'creators' | 'violations' | 'tasks' | 'shows';
+export type ShowRunTab = 'creators' | 'violations' | 'tasks' | 'shows' | 'issues';
 
 type TabNavItem = {
   tab: ShowRunTab;
@@ -46,6 +46,12 @@ export function ShowRunTabNav({ activeTab, onTabChange, data }: ShowRunTabNavPro
       label: 'Shows Range',
       count: data.shows.total_count,
       activeBadgeClassName: '',
+    },
+    {
+      tab: 'issues',
+      label: 'Issues',
+      count: data.issues.unresolved_count,
+      activeBadgeClassName: 'bg-red-100 text-red-800',
     },
   ];
 

@@ -55,6 +55,20 @@ export const STUDIO_ROUTE_ACCESS = {
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,
   ],
+  // Read access matches `showTasks`: any active member who can already view
+  // this show's operational surfaces (not ACCOUNT_MANAGER, matching the
+  // isAM tab gating in shows/$showId/route.tsx). Create/escalate/reopen and
+  // full-field edit are further restricted to ADMIN/MANAGER inside the
+  // Issues tab itself — this key only gates whether the tab is reachable at
+  // all. See apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md Authorization.
+  showIssues: [
+    STUDIO_ROLE.MEMBER,
+    STUDIO_ROLE.DESIGNER,
+    STUDIO_ROLE.MODERATION_MANAGER,
+    STUDIO_ROLE.MANAGER,
+    STUDIO_ROLE.TALENT_MANAGER,
+    STUDIO_ROLE.ADMIN,
+  ],
   shifts: [
     STUDIO_ROLE.MANAGER,
     STUDIO_ROLE.ADMIN,

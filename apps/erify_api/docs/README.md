@@ -35,6 +35,7 @@
 | [Read-Path Optimization](./READ_PATH_OPTIMIZATION.md)                                                | ✅ March 2026 | Lean show/task-template query shaping and repository/service boundaries                              |
 | [MCP Server](./MCP_SERVER.md)                                                                        | ✅ Foundation | Private in-cluster MCP entrypoint with narrow read-only show/task lookup tools                       |
 | [Scene QC](./SCENE_QC.md)                                                                             | ✅ Phase 5    | Persisted Show-level scene review, daily confirmation, records, and manager report                   |
+| [Show-Level Issue Ownership](./SHOW_ISSUE_OWNERSHIP.md)                                              | ✅ Phase 5    | Manual and automated advisory issue tracking, reconciliation, show-detail and Show Run Review surfaces |
 | [Studios Internal Read Traffic Hardening](../../erify_studios/docs/STUDIOS_INTERNAL_READ_TRAFFIC.md) | ✅ Ops        | Internal-read burst handling, query cancellation, and readBurst throttle coverage                    |
 | [DB Migration Policy](../../../docs/engineering/DB_MIGRATION_POLICY.md)                              | ✅ Ops        | Canonical migration governance, tool-first generation, and branch-local scoping rule                 |
 
@@ -47,7 +48,6 @@
 | [Ad-hoc Task Ticketing](./design/AD_HOC_TASK_TICKETING.md)                                         | 📐      | Planned template-less task creation using the existing `Task` model            |
 | [Material Management](./design/MATERIAL_MANAGEMENT_DESIGN.md)                                      | 🗓️      | Deferred Phase 5 candidate for the operations-expansion track                  |
 | [Data Warehouse](./design/DATA_WAREHOUSE_DESIGN.md)                                                | 🗓️      | Deferred Phase 5 analytics candidate (Datastream + BigQuery)                   |
-| [Show-Level Issue Ownership](./design/SHOW_ISSUE_OWNERSHIP_DESIGN.md)                              | 📐      | Locked Phase 5 item 9 issue workflow and transactional reconciliation design   |
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.
 

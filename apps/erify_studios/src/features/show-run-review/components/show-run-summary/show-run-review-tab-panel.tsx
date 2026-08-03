@@ -39,6 +39,15 @@ type ShowRunReviewTabPanelProps<TRow> = {
   onPaginationChange: (updater: Updater<PaginationState>) => void;
   isExporting: boolean;
   onExport: () => void;
+  /**
+   * Set when the underlying query failed. On success `data` is `[]` for a
+   * valid empty result, but on error `data` is also `undefined` (coerced to
+   * `[]` by the caller) — without this flag a failed request renders
+   * indistinguishably from "nothing to show", hiding the failure.
+   */
+  isError?: boolean;
+  errorMessage?: string;
+  onRetry?: () => void;
 };
 
 /**
@@ -66,6 +75,9 @@ export function ShowRunReviewTabPanel<TRow>({
   onPaginationChange,
   isExporting,
   onExport,
+  isError = false,
+  errorMessage,
+  onRetry,
 }: ShowRunReviewTabPanelProps<TRow>) {
   const paginationState: PaginationState = {
     pageIndex: page - 1,
@@ -108,28 +120,41 @@ export function ShowRunReviewTabPanel<TRow>({
         </Button>
       </div>
 
-      <DataTable
-        data={rows}
-        columns={columns}
-        isLoading={isLoading}
-        isFetching={isFetching}
-        emptyMessage={emptyMessage}
-        manualPagination
-        pageCount={pageCount}
-        paginationState={paginationState}
-        onPaginationChange={onPaginationChange}
-        renderFooter={() => (
-          <DataTablePagination
-            pagination={{
-              pageIndex: paginationState.pageIndex,
-              pageSize: paginationState.pageSize,
-              total,
-              pageCount,
-            }}
-            onPaginationChange={onPaginationChange}
-          />
-        )}
-      />
+      {isError
+        ? (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive space-y-3">
+              <p>{errorMessage ?? 'Failed to load this tab. Please try again.'}</p>
+              {onRetry && (
+                <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+                  Retry
+                </Button>
+              )}
+            </div>
+          )
+        : (
+            <DataTable
+              data={rows}
+              columns={columns}
+              isLoading={isLoading}
+              isFetching={isFetching}
+              emptyMessage={emptyMessage}
+              manualPagination
+              pageCount={pageCount}
+              paginationState={paginationState}
+              onPaginationChange={onPaginationChange}
+              renderFooter={() => (
+                <DataTablePagination
+                  pagination={{
+                    pageIndex: paginationState.pageIndex,
+                    pageSize: paginationState.pageSize,
+                    total,
+                    pageCount,
+                  }}
+                  onPaginationChange={onPaginationChange}
+                />
+              )}
+            />
+          )}
     </div>
   );
 }

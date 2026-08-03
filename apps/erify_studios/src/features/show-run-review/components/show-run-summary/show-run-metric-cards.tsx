@@ -1,4 +1,4 @@
-import { CalendarDays, ListTodo, MonitorX, Users2 } from 'lucide-react';
+import { AlertTriangle, CalendarDays, ListTodo, MonitorX, Users2 } from 'lucide-react';
 
 import type { ShowRunReviewSummary } from '@eridu/api-types/shows';
 import {
@@ -45,7 +45,7 @@ export function ShowRunMetricCards({ data }: ShowRunMetricCardsProps) {
     : 0;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {/* Shows Actuals Completeness Card */}
       <Card className="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm transition-all hover:shadow-md">
         <CardHeader className="pb-2">
@@ -185,6 +185,40 @@ export function ShowRunMetricCards({ data }: ShowRunMetricCardsProps) {
               Checklist Gates
             </Badge>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Unresolved Issues Card */}
+      <Card className="relative overflow-hidden border-l-4 border-l-red-500 shadow-sm transition-all hover:shadow-md">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Unresolved Issues
+            </CardDescription>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-red-600">
+            {data.issues.unresolved_count}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Critical</span>
+            <span className="font-semibold text-red-700">{data.issues.unresolved_by_severity.critical}</span>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>High</span>
+            <span className="font-semibold text-orange-700">{data.issues.unresolved_by_severity.high}</span>
+          </div>
+          <p className="pt-2 text-[10px] text-muted-foreground border-t mt-2">
+            {data.issues.unresolved_by_severity.medium}
+            {' '}
+            medium ·
+            {' '}
+            {data.issues.unresolved_by_severity.low}
+            {' '}
+            low
+          </p>
         </CardContent>
       </Card>
     </div>

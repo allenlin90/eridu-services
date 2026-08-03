@@ -16,6 +16,11 @@ import { z } from 'zod';
 import { auditApiResponseSchema } from '@eridu/api-types/audits';
 import { STUDIO_ROLE } from '@eridu/api-types/memberships';
 import {
+  showIssueApiResponseSchema,
+  showIssueSeveritySchema,
+  showIssueStatusSchema,
+} from '@eridu/api-types/show-issues';
+import {
   publishRunRowSchema,
   scheduleConflictResolutionStatusSchema,
   schedulePublishImpactKindSchema,
@@ -198,6 +203,27 @@ const paginatedShowRunReviewQuerySchema = showRunReviewQuerySchema.extend({
 
 export class PaginatedShowRunReviewQueryDto extends createZodDto(paginatedShowRunReviewQuerySchema) {}
 
+// Unlike the other four run-review sub-resources (in-memory slice of an
+// already-bounded 31-day show graph), this endpoint's `limit` flows directly
+// into a Prisma `take` — an uncapped value would let a caller pull an
+// arbitrarily large result straight from PostgreSQL. Cap it at the same 100
+// the canonical `/studios/:studioId/show-issues` list uses.
+const SHOW_RUN_REVIEW_ISSUES_MAX_PAGE_SIZE = 100;
+
+// Deliberately NOT `paginatedShowRunReviewQuerySchema` — that schema's
+// `status`/`severity` fields are typed for the OTHER run-review sub-resources'
+// unrelated enums (`'LATE'|'MISSING'`, free string). The issues sub-resource
+// reuses the canonical ShowIssue status/severity enums instead.
+export const paginatedShowRunReviewIssuesQuerySchema = showRunReviewQuerySchema.extend({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(SHOW_RUN_REVIEW_ISSUES_MAX_PAGE_SIZE).optional().default(10),
+  search: z.string().optional(),
+  status: showIssueStatusSchema.optional(),
+  severity: showIssueSeveritySchema.optional(),
+});
+
+export class PaginatedShowRunReviewIssuesQueryDto extends createZodDto(paginatedShowRunReviewIssuesQuerySchema) {}
+
 const schedulePublishImpactQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).optional().default(1),
@@ -362,6 +388,18 @@ export class StudioShowController extends BaseStudioController {
     @Query() query: PaginatedShowRunReviewQueryDto,
   ) {
     const { items, total } = await this.showRunReviewService.getShowRunReviewShows(studioId, query);
+    return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @Get('run-review/issues')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  @ZodPaginatedResponse(showIssueApiResponseSchema)
+  async runReviewIssues(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PaginatedShowRunReviewIssuesQueryDto,
+  ) {
+    const { items, total } = await this.showRunReviewService.getShowRunReviewIssues(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
   }
 

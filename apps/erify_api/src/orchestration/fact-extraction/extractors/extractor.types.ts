@@ -4,6 +4,8 @@ import type {
   SystemFactKey,
 } from '@eridu/api-types/task-management';
 
+import type { ShowIssueReconciliationSignal } from '@/show-issue-orchestration/show-issue-reconciliation.types';
+
 /**
  * One bound field surfaced by an operator task submission. Built from the
  * task's stored `content` against the template's `system_fact_key` markers;
@@ -69,6 +71,14 @@ export type ExtractionDecision =
     oldValue: unknown;
     /** New indexed value, projected to JSON for the audit row. */
     newValue: unknown;
+    /**
+     * Show-issue reconciliation signals to apply in the same transaction as
+     * this write's audit row. Optional — most extractors have no downstream
+     * issue-reconciliation hook. See
+     * `.agents/skills/fact-extraction-pipeline/SKILL.md` and
+     * docs/SHOW_ISSUE_OWNERSHIP.md "Automated Reconciliation".
+     */
+    signals?: ShowIssueReconciliationSignal[];
   }
   | {
     kind: 'skip';

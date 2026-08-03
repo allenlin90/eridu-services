@@ -56,7 +56,7 @@ export class ShowPlatformViolationRepository {
 
   async findActiveByTaskField(
     scope: ShowPlatformViolationTaskFieldScope,
-  ): Promise<Array<Pick<ShowPlatformViolation, 'uid' | 'violationType' | 'severity' | 'reason'>>> {
+  ): Promise<Array<Pick<ShowPlatformViolation, 'id' | 'uid' | 'violationType' | 'severity' | 'reason'>>> {
     return this.delegate.findMany({
       where: {
         showPlatformId: scope.showPlatformId,
@@ -65,11 +65,27 @@ export class ShowPlatformViolationRepository {
         supersededAt: null,
       },
       select: {
+        id: true,
         uid: true,
         violationType: true,
         severity: true,
         reason: true,
       },
+    });
+  }
+
+  /**
+   * Resolves the internal bigint ids for rows just inserted by `createMany`
+   * (which does not return created rows). Scoped by `uid` — client-generated
+   * and globally unique, so no additional scope filter is needed.
+   */
+  async findByUids(uids: string[]): Promise<Array<Pick<ShowPlatformViolation, 'id' | 'uid'>>> {
+    if (uids.length === 0) {
+      return [];
+    }
+    return this.delegate.findMany({
+      where: { uid: { in: uids } },
+      select: { id: true, uid: true },
     });
   }
 

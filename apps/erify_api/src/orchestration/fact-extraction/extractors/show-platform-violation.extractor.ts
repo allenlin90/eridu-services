@@ -91,6 +91,21 @@ export class ShowPlatformViolationExtractor implements IngestionExtractor {
       action: result.superseded.length > 0 ? 'UPDATE' : 'CREATE',
       oldValue: result.superseded.map(toAuditValue),
       newValue: result.created.map(toAuditValue),
+      signals: [
+        ...result.superseded.map((violation) => ({
+          kind: 'platform_violation_superseded' as const,
+          showPlatformViolationId: violation.id,
+          violationUid: violation.uid,
+        })),
+        ...result.created.map((violation) => ({
+          kind: 'platform_violation_opened' as const,
+          showPlatformViolationId: violation.id,
+          violationUid: violation.uid,
+          showPlatformId: showPlatform.id,
+          severity: violation.severity,
+          reason: violation.reason,
+        })),
+      ],
     };
   }
 }

@@ -19,6 +19,7 @@ const AUDIT_WITH_TARGETS_INCLUDE = {
       showCreator: { select: { uid: true } },
       showPlatform: { select: { uid: true } },
       studioShift: { select: { uid: true } },
+      showIssue: { select: { uid: true } },
     },
   },
   actor: {
@@ -575,6 +576,8 @@ export class AuditRepository {
         return { ...base, showPlatform: { connect: { id: target.targetId } } };
       case 'STUDIO_SHIFT':
         return { ...base, studioShift: { connect: { id: target.targetId } } };
+      case 'SHOW_ISSUE':
+        return { ...base, showIssue: { connect: { id: target.targetId } } };
       default: {
         const exhaustive: never = target.targetType;
         throw new Error(`Unknown audit target type: ${exhaustive}`);
@@ -594,6 +597,8 @@ export class AuditRepository {
         return { showPlatformId: filter.targetId };
       case 'STUDIO_SHIFT':
         return { studioShiftId: filter.targetId };
+      case 'SHOW_ISSUE':
+        return { showIssueId: filter.targetId };
       default: {
         const exhaustive: never = filter.targetType;
         throw new Error(`Unknown audit target type: ${exhaustive}`);

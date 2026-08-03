@@ -130,6 +130,22 @@ export class CreatorAttendanceMissingExtractor implements IngestionExtractor {
       action: 'UPDATE',
       oldValue: currentValue,
       newValue: incoming,
+      // `incoming === true`: `desiredReason` is always a resolved string
+      // (operator sidecar > preserve-existing > system fallback — see
+      // above). `incoming === false`: no evidence is needed to resolve the
+      // linked automated issue.
+      signals: incoming
+        ? [{
+            kind: 'attendance_missing',
+            showCreatorId: showCreator.id,
+            showCreatorUid: fact.targetUid,
+            evidence: desiredReason as string,
+          }]
+        : [{
+            kind: 'attendance_present',
+            showCreatorId: showCreator.id,
+            showCreatorUid: fact.targetUid,
+          }],
     };
   }
 }

@@ -24,6 +24,7 @@ export const auditTargetTypeSchema = z.enum([
   'SHOW_CREATOR',
   'SHOW_PLATFORM',
   'STUDIO_SHIFT',
+  'SHOW_ISSUE',
 ]);
 
 /**

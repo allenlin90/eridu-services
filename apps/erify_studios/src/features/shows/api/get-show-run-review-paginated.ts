@@ -1,5 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
+import type { ShowIssueApiResponse } from '@eridu/api-types/show-issues';
+
 import type { PaginatedResponse } from '@/lib/api/admin';
 import { apiClient } from '@/lib/api/client';
 
@@ -39,6 +41,11 @@ export type ShowRunReviewShow = {
   status: string;
 };
 
+// Reuses the canonical ShowIssue API response shape verbatim (per the design
+// doc) so the Show Run Review issues tab can share label/formatting helpers
+// with the show-detail Issues tab instead of inventing a second shape.
+export type ShowRunReviewIssue = ShowIssueApiResponse;
+
 export type GetShowRunReviewPaginatedParams = {
   date_from: string;
   date_to: string;
@@ -59,6 +66,8 @@ export const showRunReviewPaginatedKeys = {
     ['show-run-review-paginated-tasks', studioId, params] as const,
   shows: (studioId: string, params: GetShowRunReviewPaginatedParams) =>
     ['show-run-review-paginated-shows', studioId, params] as const,
+  issues: (studioId: string, params: GetShowRunReviewPaginatedParams) =>
+    ['show-run-review-paginated-issues', studioId, params] as const,
 };
 
 export async function getShowRunReviewCreators(
@@ -155,6 +164,31 @@ export function useShowRunReviewShowsQuery(
   return useQuery({
     queryKey: showRunReviewPaginatedKeys.shows(studioId, params),
     queryFn: () => getShowRunReviewShows(studioId, params),
+    placeholderData: keepPreviousData,
+    enabled,
+    staleTime: 5000,
+  });
+}
+
+export async function getShowRunReviewIssues(
+  studioId: string,
+  params: GetShowRunReviewPaginatedParams,
+): Promise<PaginatedResponse<ShowRunReviewIssue>> {
+  const response = await apiClient.get<PaginatedResponse<ShowRunReviewIssue>>(
+    `/studios/${studioId}/shows/run-review/issues`,
+    { params },
+  );
+  return response.data;
+}
+
+export function useShowRunReviewIssuesQuery(
+  studioId: string,
+  params: GetShowRunReviewPaginatedParams,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: showRunReviewPaginatedKeys.issues(studioId, params),
+    queryFn: () => getShowRunReviewIssues(studioId, params),
     placeholderData: keepPreviousData,
     enabled,
     staleTime: 5000,

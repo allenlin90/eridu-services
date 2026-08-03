@@ -1,5 +1,6 @@
 import type {
   ShowRunReviewCreatorException,
+  ShowRunReviewIssue,
   ShowRunReviewShow,
   ShowRunReviewTask,
   ShowRunReviewViolation,
@@ -10,7 +11,7 @@ import { triggerBrowserDownload } from '@/lib/file-download';
 type CsvRow = Record<string, string>;
 const s = (v: string | number | null | undefined): string => (v === null || v === undefined ? '' : String(v));
 
-export type ShowRunReviewExportTab = 'creators' | 'violations' | 'tasks' | 'shows';
+export type ShowRunReviewExportTab = 'creators' | 'violations' | 'tasks' | 'shows' | 'issues';
 
 type ExportOptions = {
   dateFrom: string;
@@ -127,4 +128,29 @@ export function toShowCsvRow(r: ShowRunReviewShow): CsvRow {
 
 export function exportShowRunReviewShows(rows: ShowRunReviewShow[], opts: ExportOptions): void {
   runExport('shows', rows.map(toShowCsvRow), SHOW_CSV_COLUMNS, opts);
+}
+
+// --- issues ---
+export const ISSUE_CSV_COLUMNS: CsvColumn<CsvRow>[] = [
+  { key: 'title', label: 'Title' },
+  { key: 'category', label: 'Category' },
+  { key: 'severity', label: 'Severity' },
+  { key: 'status', label: 'Status' },
+  { key: 'show_name', label: 'Show' },
+  { key: 'due_at', label: 'Due At' },
+];
+
+export function toIssueCsvRow(r: ShowRunReviewIssue): CsvRow {
+  return {
+    title: s(r.title),
+    category: s(r.category),
+    severity: s(r.severity),
+    status: s(r.status),
+    show_name: s(r.show_name),
+    due_at: s(r.due_at),
+  };
+}
+
+export function exportShowRunReviewIssues(rows: ShowRunReviewIssue[], opts: ExportOptions): void {
+  runExport('issues', rows.map(toIssueCsvRow), ISSUE_CSV_COLUMNS, opts);
 }

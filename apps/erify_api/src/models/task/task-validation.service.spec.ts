@@ -1,6 +1,7 @@
 import {
   getTaskContentExtraKey,
   getTaskContentReasonKey,
+  MAX_PLATFORM_VIOLATIONS_PER_FIELD,
   TemplateSchemaV2Validator,
   TemplateSchemaValidator,
 } from '@eridu/api-types/task-management';
@@ -232,5 +233,66 @@ describe('taskValidationService', () => {
     expect(() => service.validateContent({
       setup_status: 'not_correct',
     }, schema)).not.toThrow();
+  });
+
+  describe('show_platform_violation multiselect cap', () => {
+    // One more option than the cap so a genuinely-oversized (but otherwise
+    // fully valid) selection is expressible against the field's enum.
+    const options = Array.from({ length: MAX_PLATFORM_VIOLATIONS_PER_FIELD + 1 }, (_, i) => ({
+      value: `violation_${i}`,
+      label: `Violation ${i}`,
+    }));
+    const schema = TemplateSchemaV2Validator.parse({
+      schema_version: 2,
+      schema_engine: 'task_template_v2',
+      items: [
+        {
+          id: 'fld_platformviol1',
+          key: 'platform_violation',
+          type: 'multiselect',
+          label: 'Platform violation',
+          required: false,
+          options,
+          system_fact_key: 'show_platform_violation',
+        },
+      ],
+    });
+
+    it(`accepts exactly ${MAX_PLATFORM_VIOLATIONS_PER_FIELD} selections`, () => {
+      const selected = options.slice(0, MAX_PLATFORM_VIOLATIONS_PER_FIELD).map((o) => o.value);
+
+      expect(() => service.validateContent({
+        fld_platformviol1: selected,
+      }, schema as any)).not.toThrow();
+    });
+
+    it(`rejects ${MAX_PLATFORM_VIOLATIONS_PER_FIELD + 1} selections before the task can complete`, () => {
+      const selected = options.map((o) => o.value);
+
+      expect(() => service.validateContent({
+        fld_platformviol1: selected,
+      }, schema as any)).toThrow(TaskValidationError);
+    });
+
+    it('does not cap an unrelated multiselect field with no system_fact_key', () => {
+      const unboundSchema = TemplateSchemaV2Validator.parse({
+        schema_version: 2,
+        schema_engine: 'task_template_v2',
+        items: [
+          {
+            id: 'fld_tags0000001',
+            key: 'tags',
+            type: 'multiselect',
+            label: 'Tags',
+            required: false,
+            options,
+          },
+        ],
+      });
+
+      expect(() => service.validateContent({
+        fld_tags0000001: options.map((o) => o.value),
+      }, unboundSchema as any)).not.toThrow();
+    });
   });
 });

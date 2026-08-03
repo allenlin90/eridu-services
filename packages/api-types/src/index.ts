@@ -30,6 +30,7 @@ export * from './performance/index.js';
 export * from './platforms/index.js';
 export * from './scene-qc/index.js';
 export * from './schedules/index.js';
+export * from './show-issues/index.js';
 export * from './show-standards/index.js';
 export * from './show-statuses/index.js';
 export * from './show-types/index.js';

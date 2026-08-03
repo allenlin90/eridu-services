@@ -34,6 +34,10 @@ model User {
   sceneQcTaxonomyElements      SceneQcTaxonomyElement[]   @relation("SceneQcTaxonomyElementCreatedBy")
   sceneQcTaxonomyDefects       SceneQcTaxonomyDefect[]    @relation("SceneQcTaxonomyDefectCreatedBy")
   sceneQcReviewAmendments      SceneQcReviewAmendment[]   @relation("SceneQcReviewAmendmentCreatedBy")
+  ownedShowIssues              ShowIssue[]                @relation("ShowIssueOwner")
+  createdShowIssues            ShowIssue[]                @relation("ShowIssueCreatedBy")
+  escalatedShowIssues          ShowIssue[]                @relation("ShowIssueEscalatedBy")
+  resolvedShowIssues           ShowIssue[]                @relation("ShowIssueResolvedBy")
   createdAt                    DateTime                   @default(now()) @map("created_at")
   updatedAt                    DateTime                   @updatedAt @map("updated_at")
   deletedAt                    DateTime?                  @map("deleted_at")
@@ -185,6 +189,7 @@ model Show {
   auditTargets                AuditTarget[]
   sceneQcReviews              SceneQcReview[]
   sceneQcConfirmationItems    SceneQcDailyConfirmationItem[]
+  showIssues                  ShowIssue[]
   createdAt                   DateTime                       @default(now()) @map("created_at")
   updatedAt                   DateTime                       @updatedAt @map("updated_at")
   deletedAt                   DateTime?                      @map("deleted_at")
@@ -241,6 +246,7 @@ model ShowCreator {
   creator                     Creator                      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   compensationLineItemTargets CompensationLineItemTarget[]
   auditTargets                AuditTarget[]
+  showIssues                  ShowIssue[]
   createdAt                   DateTime                     @default(now()) @map("created_at")
   updatedAt                   DateTime                     @updatedAt @map("updated_at")
   deletedAt                   DateTime?                    @map("deleted_at")
@@ -909,6 +915,7 @@ model ShowPlatformViolation {
   supersededAt   DateTime?    @map("superseded_at")
   metadata       Json         @default("{}")
   createdAt      DateTime     @default(now()) @map("created_at")
+  showIssue      ShowIssue?
 
   @@index([showPlatformId])
   @@index([violationType])
@@ -916,6 +923,85 @@ model ShowPlatformViolation {
   @@index([sourceTaskId, sourceFieldId])
   @@index([showPlatformId, supersededAt])
   @@map("show_platform_violations")
+}
+
+// ============================================
+// SHOW ISSUE (OWNERSHIP AND RESOLUTION)
+// ============================================
+// Advisory operational record for show-level exceptions that need ownership,
+// a due date, severity, and resolution — distinct from Task (executable work
+// with submission/template semantics) and Audit (immutable history, no
+// current-state fields). Manual issues and automated attendance/platform
+// violation issues share this model and workflow. See
+// docs/SHOW_ISSUE_OWNERSHIP.md. This feature is advisory only:
+// an unresolved issue never blocks or causes a Show state transition.
+//
+// category/origin/severity/status/resolutionCode are closed string enums
+// validated at the Zod API boundary (see `@eridu/api-types/show-issues`),
+// matching ShowPlatformViolation.severity rather than a native Prisma enum —
+// both models sit in the same advisory-record family and are kept flexible
+// for the same reason Audit.action and AuditTarget.targetType are strings.
+model ShowIssue {
+  id       BigInt  @id @default(autoincrement())
+  uid      String  @unique
+  showId   BigInt  @map("show_id")
+  show     Show    @relation(fields: [showId], references: [id], onDelete: Cascade)
+  // "CREATOR_ATTENDANCE" | "EQUIPMENT" | "UTILITY" | "PLATFORM_VIOLATION" | "POST_PRODUCTION_FOLLOW_UP" | "OTHER"
+  category String
+  // "MANUAL" | "FACT_EXTRACTION"
+  origin   String
+  // "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  severity String
+  // "OPEN" | "IN_PROGRESS" | "RESOLVED"
+  status   String  @default("OPEN")
+  title    String
+  evidence String?
+
+  ownerId BigInt?   @map("owner_id")
+  owner   User?     @relation("ShowIssueOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  dueAt   DateTime? @map("due_at")
+
+  createdById BigInt? @map("created_by_id")
+  createdBy   User?   @relation("ShowIssueCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  escalationLevel Int       @default(0) @map("escalation_level")
+  escalatedAt     DateTime? @map("escalated_at")
+  escalatedById   BigInt?   @map("escalated_by_id")
+  escalatedBy     User?     @relation("ShowIssueEscalatedBy", fields: [escalatedById], references: [id], onDelete: SetNull)
+  escalationNote  String?   @map("escalation_note")
+
+  resolvedAt     DateTime? @map("resolved_at")
+  resolvedById   BigInt?   @map("resolved_by_id")
+  resolvedBy     User?     @relation("ShowIssueResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  // "FIXED" | "SOURCE_CORRECTED" | "NO_LONGER_APPLICABLE" | "DUPLICATE" | "OTHER"
+  resolutionCode String?   @map("resolution_code")
+  resolutionNote String?   @map("resolution_note")
+
+  // Typed nullable FKs for the closed set of automated sources (exclusive
+  // arc). Service validation enforces FACT_EXTRACTION has exactly one of
+  // these set and MANUAL has neither — see ShowIssueService.
+  showCreatorId BigInt?      @map("show_creator_id")
+  showCreator   ShowCreator? @relation(fields: [showCreatorId], references: [id], onDelete: Cascade)
+
+  showPlatformViolationId BigInt?                @unique @map("show_platform_violation_id")
+  showPlatformViolation   ShowPlatformViolation? @relation(fields: [showPlatformViolationId], references: [id], onDelete: Cascade)
+
+  version Int @default(1)
+
+  auditTargets AuditTarget[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // One attendance-anomaly issue per (ShowCreator, category, origin) — NULLs
+  // are distinct in Postgres unique indexes, so this only constrains rows
+  // that actually carry a creator source.
+  @@unique([showCreatorId, category, origin])
+  @@index([showId, status, dueAt, deletedAt])
+  @@index([ownerId, status, deletedAt])
+  @@index([severity, status, deletedAt])
+  @@map("show_issues")
 }
 
 // ============================================
@@ -963,7 +1049,7 @@ model AuditTarget {
   id             BigInt        @id @default(autoincrement())
   auditId        BigInt        @map("audit_id")
   audit          Audit         @relation(fields: [auditId], references: [id], onDelete: Cascade)
-  // Polymorphic discriminator: "SHOW" | "SHOW_CREATOR" | "SHOW_PLATFORM" | "STUDIO_SHIFT"
+  // Polymorphic discriminator: "SHOW" | "SHOW_CREATOR" | "SHOW_PLATFORM" | "STUDIO_SHIFT" | "SHOW_ISSUE"
   targetType     String        @map("target_type")
   targetId       BigInt        @map("target_id")
   // Typed nullable FKs. Cascade on target delete cleans up the junction without
@@ -976,6 +1062,8 @@ model AuditTarget {
   showPlatform   ShowPlatform? @relation(fields: [showPlatformId], references: [id], onDelete: Cascade)
   studioShiftId  BigInt?       @map("studio_shift_id")
   studioShift    StudioShift?  @relation(fields: [studioShiftId], references: [id], onDelete: Cascade)
+  showIssueId    BigInt?       @map("show_issue_id")
+  showIssue      ShowIssue?    @relation(fields: [showIssueId], references: [id], onDelete: Cascade)
 
   @@unique([auditId, targetType, targetId])
   @@index([targetType, targetId])
@@ -983,6 +1071,7 @@ model AuditTarget {
   @@index([showCreatorId])
   @@index([showPlatformId])
   @@index([studioShiftId])
+  @@index([showIssueId])
   @@map("audit_targets")
 }
 

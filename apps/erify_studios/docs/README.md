@@ -27,6 +27,7 @@ Implemented/canonical frontend docs stay in `apps/erify_studios/docs/` root. Des
 15. [Entity Detail Routes (PR 14)](./ENTITY_DETAIL_ROUTES.md) — entity edit dialogs → dedicated routes; 14a creator, 14b member, and 14d shift detail shipped (14c show planned)
 16. [Client Mechanics Management](./CLIENT_MECHANICS_MANAGEMENT.md) — client-owned mechanics catalog, Loop × Mechanic matrix, mechanic↔show coverage (PR 20.1–20.8)
 17. [Scene QC](./SCENE_QC.md) — persisted Show-level daily scene review, confirmation, records, and manager report for Designer/Manager/Admin
+18. [Show-Level Issue Ownership](../../erify_api/docs/SHOW_ISSUE_OWNERSHIP.md) — cross-app Phase 5 item 9; show-detail Issues tab and Show Run Review issues surface
 
 ## Design Docs
 
@@ -35,6 +36,5 @@ Active (in progress):
 1. [Schedule Continuity FE Design](./design/DESIGN_FE_SCHEDULE_CONTINUITY_IMPLEMENTATION_PLAN.md) — 📐 Remaining cancellation-queue and task-warning follow-up
 2. [Sidebar Redesign](./design/SIDEBAR_REDESIGN.md) — 🔁 Incremental (core regrouping shipped)
 3. [Creator Availability Hardening Frontend Design](./design/CREATOR_AVAILABILITY_HARDENING_DESIGN.md) — 📐 Planned
-4. [Show-Level Issue Ownership](../../erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md) — 📐 Cross-app Phase 5 item 9 design locked for implementation
 
 Wave 2, Wave 3, and future revenue economics design drafts were removed after 2.1 sign-off because they carried stale pre-simplification assumptions. Redraft app-local implementation designs from the signed-off PRDs when each workstream starts.

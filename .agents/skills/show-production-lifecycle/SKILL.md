@@ -93,15 +93,15 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Manager performance correction** (Phase 5): `POST /studios/:studioId/shows/:id/platforms/:showPlatformUid/correct-performance` (ADMIN/MANAGER). Sets `actuals_source` to MANAGER for each corrected metric — the highest extraction priority — and creates an `OVERRIDE` audit record with a required business reason. The extraction pipeline enforces MANAGER priority at both read time and write time (WHERE predicate), so a correction is not overwritten by a subsequent extraction run. See [show-performance-analytics.md](../../../docs/features/show-performance-analytics.md#performance-correction-phase-5).
 
-**Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`.
+**Current surfaces**: `/studios/:studioId/shows/:showId/actuals`, `/studios/:studioId/shows/:showId/tasks`, `/studios/:studioId/shows/:showId/issues` (show-level issue tracking, manual and automated — item 9).
 
-**Gap (Phase 5)**: No live control dashboard, no show-level issue tracking. Fact extraction already writes platform violations and attendance-missing flags here, but they land as silent data with no issue record and no stakeholder notification — a manager only finds them by actively opening a review surface. See `PHASE_5.md` items 9 and 20.
+**Gap (Phase 5)**: No live control dashboard. Item 9 (manual issue workflow, show-detail Issues tab, automated reconciliation, Show Run Review issue counts) shipped in full — fact extraction now opens/resolves `ShowIssue` rows automatically for platform violations and attendance-missing flags, atomically with the source fact. See `PHASE_5.md` items 9 and 20.
 
 ### Show issue ownership contract (Phase 5 item 9)
 
 Show-level issues are dedicated advisory operational records anchored to `Show`; they are not tasks, audits, or state gates. Manual issues and extraction-detected attendance/platform anomalies share the same ownership and resolution workflow. Automated reconciliation joins the existing per-fact transaction so the source fact, extraction audit, and required issue commit or roll back together.
 
-Use explicit synchronous orchestration for this required single-consumer handoff. Do not introduce a generic event bus, NestJS CQRS, or a no-op notification seam. Promote to a durable outbox/event publisher when item 15 adds notifications as a second independently retryable consumer. The locked technical contract is [SHOW_ISSUE_OWNERSHIP_DESIGN.md](../../../apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md).
+Use explicit synchronous orchestration for this required single-consumer handoff. Do not introduce a generic event bus, NestJS CQRS, or a no-op notification seam. Promote to a durable outbox/event publisher when item 15 adds notifications as a second independently retryable consumer. The shipped technical contract is [SHOW_ISSUE_OWNERSHIP.md](../../../apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md).
 
 ### 3. Post-Production (live → completed)
 
@@ -215,7 +215,7 @@ Do not duplicate guidance from these skills. Reference them for their owned doma
 | Studio controller | `apps/erify_api/src/studios/studio-show/studio-show.controller.ts` |
 | Admin controller | `apps/erify_api/src/admin/shows/admin-show.controller.ts` |
 | Fact extraction | `apps/erify_api/src/orchestration/fact-extraction/` |
-| Show issue design | `apps/erify_api/docs/design/SHOW_ISSUE_OWNERSHIP_DESIGN.md` |
+| Show issue ownership | `apps/erify_api/docs/SHOW_ISSUE_OWNERSHIP.md` |
 | Shared types | `packages/api-types/src/shows/` |
 
 ### Frontend
@@ -223,7 +223,8 @@ Do not duplicate guidance from these skills. Reference them for their owned doma
 | Surface | Key files |
 |---|---|
 | Show list + CRUD | `apps/erify_studios/src/routes/studios/$studioId/shows/`, `features/studio-shows/` |
-| Show detail tabs | `apps/erify_studios/src/routes/studios/$studioId/shows/$showId/` (details, actuals, performance, compensation, tasks) |
+| Show detail tabs | `apps/erify_studios/src/routes/studios/$studioId/shows/$showId/` (details, actuals, performance, compensation, tasks, issues) |
+| Show issues | `apps/erify_studios/src/routes/studios/$studioId/shows/$showId/issues.tsx`, `features/studio-shows/{api,components,config}/show-issue*` |
 | Task setup | `apps/erify_studios/src/routes/studios/$studioId/task-setup/`, `features/studio-shows/hooks/use-task-setup-page-controller.ts` |
 | Task review | `apps/erify_studios/src/routes/studios/$studioId/task-review/` |
 | Show run review | `apps/erify_studios/src/routes/studios/$studioId/show-run-review.tsx`, `features/show-run-review/` |
