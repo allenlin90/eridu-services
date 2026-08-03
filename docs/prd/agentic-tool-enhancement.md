@@ -22,7 +22,7 @@
 ### Key Objectives
 
 1. **Reduce Prompt Overhead & Token Waste**: Extract static reference material from `.agents/skills/` into canonical OKF v0.2 knowledge bundles (`knowledge/`), converting skills into thin procedural bridges.
-2. **Cap Implicit Skill Routing (<50)**: Trim the active implicit skill catalog down to `<50` skills (target post-consolidation `<35`), setting `allow_implicit_invocation: false` for explicit-only workflows.
+2. **Cap Implicit Skill Routing**: Reduce the implicit skill catalog to **no more than 50** entries, then **35 or fewer** after overlap consolidation and knowledge extraction (canon wording — both thresholds are inclusive).
 3. **Enhance Agentic Toolsuite**: Ensure developer & agent tools (`rtk`, `caveman`, `graphify`, `mattpocock`) are intuitive, sharable, and documented across all supported clients.
 4. **100% Cross-Client Compatibility**: Maintain full functionality across **Claude Code**, **Codex**, and **OpenCode with VSCode** without breaking public entrypoints.
 
@@ -69,8 +69,8 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    subgraph RawCatalog ["Original Catalog (94+ Skills)"]
-        RawPrompt["Global Implicit Prompt (>9.0KB)"]
+    subgraph RawCatalog ["Original Catalog (102 skills, all implicit)"]
+        RawPrompt["Global Implicit Prompt (8,991 chars)"]
     end
 
     subgraph PolicyGate ["OpenAI Policy Gate (agents/openai.yaml)"]
@@ -78,17 +78,17 @@ flowchart LR
     end
 
     subgraph FilteredCatalog ["Optimized Routing Catalog"]
-        ImplicitSkills["Implicit Capability Skills (69 today, target &lt;50)"]
-        ExplicitSkills["Explicit-Only Skills (33) ($skill / /command)"]
+        ImplicitSkills["Implicit Capability Skills (66) — target &lt;50, then &lt;35"]
+        ExplicitSkills["Explicit-Only Skills (36) ($skill / /command)"]
     end
 
     RawPrompt --> PolicyGate
     CheckImplicit -->|true| ImplicitSkills
     CheckImplicit -->|false| ExplicitSkills
-    ImplicitSkills --> BudgetCheck["Character Budget 7,526 / 8,000 (met)"]
+    ImplicitSkills --> BudgetCheck["Character Budget 7,074 / 8,000 (met)"]
 ```
 
-The character budget and the skill-count cap are **two different constraints**. This PR meets the character budget and does not meet the count cap; see Scope 2.3 and 2.4.
+The character budget and the skill-count cap are **two different constraints**. PR 1 met the budget. The count cap is not met and is reached by knowledge extraction, not by marking skills explicit-only — see § 4.2.
 
 ---
 
@@ -111,23 +111,47 @@ Progress record for this program. **Every PR in this program states its row numb
 | # | PR | Scopes | Depends on | Status |
 | --- | --- | --- | --- | --- |
 | 1 | Skill registry, validator enforcement, OKF bundle + doctrine extraction, toolsuite docs | 1, 2.1–2.3, 3, 4.1 | — | ✅ Done ([#367](https://github.com/allenlin90/eridu-services/pull/367)) |
-| 2 | Implicit-catalog triage — decide which of the 69 implicit skills become explicit-only, apply, lower the ceiling | 2.4 (part) | 1 | ⬜ Not started — **needs a decision pass first** |
-| 3 | Skill consolidation — merge `admin-list-pattern`/`studio-list-pattern`, fold `solid-principles` into `code-quality`, lower the ceiling again | 2.4 (rest) | 2 | ⬜ Not started |
-| 4 | Final reconciliation — inventory counts, relocate this tracker out of `docs/prd/`, cross-client verification on Claude Code / Codex / OpenCode | 4.2 | 2, 3 | ⬜ Not started |
+| 2 | ~~Implicit-catalog triage — mark human-decision-triggered skills explicit-only~~ | — | 1 | ❌ **Withdrawn** — conflicts with canonical routing doctrine; see § 4.2 |
+| 3 | Candidate disposition review — decide `retire` / `consolidate` / `keep as thin skill` for each of the 25 extraction candidates, then apply | 2.4 | 1 | ⬜ Not started — **target reachability unproven until the disposition table exists** |
+| 4 | Final reconciliation — inventory counts, relocate this tracker out of `docs/prd/`, cross-client routing verification | 4.2 | 3 | ⬜ Not started |
 
-**Remaining: 3 of 4 PRs.**
+**Remaining: 2 of 4 PRs** (row 2 withdrawn, not replaced).
 
-Row 2 is deliberately not scoped yet. Reaching `<50` implicit skills means moving ~19 more skills to explicit-only, and *which* 19 is a judgment call about routing behavior — not a mechanical edit. That decision belongs in its own pass before any PR opens, and must not be folded into a delivery PR.
+Row 2 was attempted in [#368](https://github.com/allenlin90/eridu-services/pull/368) and withdrawn on review. The reason is recorded in § 4.2 because it constrains how rows 3 and 4 may reduce the catalog.
+
+**No row currently demonstrates a path to "35 or fewer".** Row 3 must produce the reviewed disposition table first; the reachable count follows from those decisions. If it falls short, closing the gap is an explicit decision in its own PR — a deliberate doctrine amendment or a target revision — not an assumption folded into a delivery PR.
 
 ### 4.1 Two constraints, tracked separately
 
 | Constraint | Limit | Current | State |
 | --- | --- | --- | --- |
-| Implicit description characters (Codex catalog budget) | 8,000 | **7,526** | ✅ Met (PR 1) |
-| Implicitly invocable skill count | 50 (then 35) | **69** | ❌ Not met — PRs 2–3 |
-| Regression ratchet (`implicit_catalog_ceiling`) | 69 | 69 | 🔒 Enforced — validation fails if exceeded |
+| Implicit description characters (Codex catalog budget) | 8,000 | **7,074** | ✅ Met (PR 1) |
+| Implicitly invocable skill count | ≤50, then ≤35 | **66** | ❌ Not met — PR 3 |
+| Regression ratchet (`implicit_catalog_ceiling`) | 66 | 66 | 🔒 Enforced — validation fails if exceeded |
 
 These are independent. PR 1 met the character budget and did not move the count. Do not report one as satisfying the other.
+
+### 4.2 Routing-policy constraint (why row 2 was withdrawn)
+
+**The implicit catalog is reduced by knowledge extraction and consolidation — not by marking capabilities explicit-only.** This is canon, not preference:
+
+- [`.agents/README.md`](../../.agents/README.md) § Target Catalog: the implicit catalog **should contain** lifecycle and reasoning capabilities, concrete implementation and **operational** capabilities, and declared **review lenses**. It should **not** contain standalone pattern or technology guides, domain and architecture reference documents, duplicated workflow bodies, or unrequested presentation modes.
+- [`AGENT_OPERATING_MODEL.md`](../engineering/AGENT_OPERATING_MODEL.md) § Catalog targets: reach "**no more than 50**" in the first reorganization milestone, reach "**35 or fewer**" after "**overlap consolidation and knowledge extraction**", and mark **manual workflows and presentation modes** explicit-only.
+
+PR #368 marked 18 skills explicit-only using a different axis — "human decision vs. an agent touched this code". That axis is defensible on its own terms, but it flipped members of the classes canon retains in the implicit catalog (7 deployed-platform operations, `pr-ui-screenshot-review`, `plan-workflow-completeness`), and it substituted a lever canon does not sanction for the two it does. It was withdrawn rather than merged with the canonical documents left asserting the superseded rule, which the [pattern/direction-change gate](../../.agents/skills/agent-instruction-maintenance/SKILL.md) treats as blocking.
+
+**Extraction alone does not reduce the catalog count.** An earlier revision of this section claimed 66 − 25 = 41 from extraction. That is wrong, and the counter-evidence is already in the repo: all eight skills whose doctrine moved to `knowledge/` in PR 1 — `database-patterns`, `design-patterns`, `frontend-tech-stack`, `show-production-lifecycle`, and the rest — are still `implicit: true`. Extraction **relocates facts**; the skill remains in the catalog as a thin procedure.
+
+The implicit count decrements only when an entry is:
+
+1. **deleted** — extraction leaves no genuine procedure behind, so the skill itself retires; or
+2. **merged** — two overlapping skills consolidate into one.
+
+PR 1 judged all eight of its candidates to have a genuine procedure worth keeping. That is a real prior: some fraction of any extraction batch will stay in the catalog, not retire from it.
+
+**Therefore the reachable count is currently undetermined, and PR 3 is not yet shown to reach 35 or fewer.** Before PR 3 claims any target, it must produce a reviewed disposition per candidate — `retire`, `consolidate into <id>`, or `keep as thin skill` — and derive the resulting count from those decisions rather than from the size of the candidate list. If the reviewed dispositions do not reach 35 or fewer, the remaining gap is an explicit decision, not an assumption: either a deliberate doctrine amendment (see below) or a revision of the target, argued in its own PR.
+
+If a narrow explicit-only class is still wanted later — for example "operates an external deployed system" — it must be proposed as a deliberate amendment to `.agents/README.md` and `AGENT_OPERATING_MODEL.md`, with cross-client routing parity evidence, in its own PR. It must not ride along in a delivery PR.
 
 ---
 
@@ -153,11 +177,11 @@ These are independent. PR 1 met the character budget and did not move the count.
   - [x] Create `knowledge/engineering/pwa-best-practices.md` and convert `pwa-best-practices` to a thin procedural skill bridge.
   - [x] Create `knowledge/engineering/table-view-pattern.md` and convert `table-view-pattern` to a thin procedural skill bridge.
 - [x] **2.3 Implicit Catalog Character Budget (<8KB limit)**:
-  - [x] Configure explicit policy (`allow_implicit_invocation: false`) for presentation modes and manual workflows (`caveman`, `cavecrew`, `graphify`, `setup-matt-pocock-skills`, etc.) — 33 skills explicit-only.
-  - [x] Reduce implicit description character budget from 8,991 to 7,526 characters (below the 8,000 budget).
+  - [x] Configure explicit policy (`allow_implicit_invocation: false`) for presentation modes and manual workflows (`caveman`, `cavecrew`, `graphify`, `setup-matt-pocock-skills`, etc.) — 36 skills explicit-only at merge, including three presentation modes added in review.
+  - [x] Reduce implicit description character budget from 8,991 to 7,074 characters (below the 8,000 budget).
 - [ ] **2.4 Implicit Skill *Count* Cap — NOT MET**:
-  - Current: **69** implicitly invocable skills. Milestone target `<50`; post-consolidation target `<35`.
-  - The character budget above is met; the count cap is a separate, unfinished constraint. `implicit_catalog_ceiling: 69` prevents regression while this stays open.
+  - Current: **66** implicitly invocable skills. Milestone: **no more than 50**; post-consolidation: **35 or fewer**.
+  - The character budget above is met; the count cap is a separate, unfinished constraint. `implicit_catalog_ceiling: 66` prevents regression while this stays open.
   - [ ] Consolidate overlapping list pattern skills (`admin-list-pattern`, `studio-list-pattern`).
   - [ ] Consolidate quality and architecture skills (`solid-principles` into `code-quality`).
   - [ ] Lower `implicit_catalog_ceiling` in `.agents/agent-skill-registry.yaml` with each reduction.
@@ -190,7 +214,7 @@ What each merged PR actually changed for someone working in this repo. Filled in
 
 - **Agents get correct doctrine.** 8 concepts now carry the full rule set with lifecycle metadata, so a skill can no longer hand an agent a four-bullet summary in place of the rule that mattered. Restored content includes the `txHost` lazy-delegate rule, the `createdAt`-ordering trap, the optimistic-lock bump rule, the metadata-vs-audit gate, migration naming policy, and the CDN cache-poisoning section.
 - **Three classes of wrong fact removed** from canonical docs: a show lifecycle with two states that do not exist, a guard API (`RolesGuard`, `@RequirePermission`) that does not exist, and two table components that do not exist. Each replaced with the verified value from source.
-- **Codex catalog fits its budget**: 8,991 → 7,526 characters, 33 skills explicit-only. Codex no longer silently truncates skill entries.
+- **Codex catalog fits its budget**: 8,991 → 7,074 characters, 36 skills explicit-only. Codex no longer silently truncates skill entries.
 - **`knowledge/` is machine-checkable.** `pnpm agents:validate` now fails on malformed OKF frontmatter, a missing `type`, an unindexed concept, registry/`openai.yaml` drift, or implicit-catalog growth. Before this, none of those were detectable.
 - **Nothing is orphaned or dangling**: all 12 `references/` files reachable, all cited section numbers resolve, Codex `interface:` metadata intact.
 
@@ -200,7 +224,7 @@ What each merged PR actually changed for someone working in this repo. Filled in
 
 Every PR in this program must pass:
 
-1. `pnpm agents:validate` — zero errors. This enforces registry coverage, registry/`openai.yaml` implicit agreement, the `implicit_catalog_ceiling` ratchet, OKF bundle structure, and local link resolution. The `<50` implicit-count target is reported as a warning until Scope 2.4 closes.
+1. `pnpm agents:validate` — zero errors. This enforces registry coverage, registry/`openai.yaml` implicit agreement, the `implicit_catalog_ceiling` ratchet, OKF bundle structure, and local link resolution. The "no more than 50" implicit-count target is reported as a warning until Scope 2.4 closes.
 2. `pnpm agents:index` — regenerated; `agents:validate` fails on a stale index.
 3. `pnpm agents:doctor` — All toolsuite components ready.
 4. `pnpm lint:markdown` — Markdown formatting clean.
