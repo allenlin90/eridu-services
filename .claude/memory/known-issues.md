@@ -50,7 +50,7 @@ Join tables (e.g. `TaskTarget`) now have their own thin services that wrap their
 The `TaskOrchestrationService` + `TaskGenerationProcessor` pattern is now established:
 - Orchestration Service coordinates model services
 - Processor Service holds `@Transactional()` boundary (required for NestJS DI proxy)
-- See skill: [orchestration-service-nestjs](../skills/orchestration-service-nestjs/SKILL.md)
+- See skill: [orchestration-service-nestjs](../skills/nestjs-architecture/references/orchestration-pattern.md)
 
 ---
 

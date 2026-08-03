@@ -9,10 +9,7 @@ Canonical guidance lives in `AGENTS.md` §§ Core Patterns, Backend API Patterns
 ## Skills to Load
 
 - `erify-api-capability-refactoring` — **load first** for module/capability placement and persistence selection. Its evidence-based persistence matrix is canonical.
-- `service-pattern-nestjs` — service APIs, payload types, UID generation, direct or provider-backed persistence
-- `repository-pattern-nestjs` — selective private repositories, BaseRepository, soft delete, complex query building
-- `backend-controller-pattern-nestjs` — controller decorators, UID validation, response shaping
-- `database-patterns` — transactions, bulk ops, Prisma patterns
+- `nestjs-architecture` — one router over the four layers; its references cover service APIs and payload types, selective private repositories and `BaseRepository`, controller decorators and UID validation, and multi-entity orchestration
+- `database-patterns` — transactions, bulk ops, Prisma patterns, soft-delete restore, local database CLI
 - `data-validation` — Zod schemas, DTO transformations, ID management
-- `orchestration-service-nestjs` — multi-entity coordination
-- `backend-testing-patterns` — Jest setup, mocking, layer-specific assertions
+- `code-quality` — Jest setup, mocking, layer-specific assertions, secure-coding review lens

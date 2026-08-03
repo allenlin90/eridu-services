@@ -2,7 +2,7 @@
 
 > **Status**: Deferred from the `erify_api` architecture-refactoring safety harness
 > **Origin**: [PR #323](https://github.com/allenlin90/eridu-services/pull/323) review, July 2026
-> **Related**: [`erify_api` architecture](../../apps/erify_api/docs/ARCHITECTURE.md), [real-database test guide](../../apps/erify_api/test/README.md), [backend testing patterns](../../.agents/skills/backend-testing-patterns/SKILL.md)
+> **Related**: [`erify_api` architecture](../../apps/erify_api/docs/ARCHITECTURE.md), [real-database test guide](../../apps/erify_api/test/README.md), [backend testing patterns](../../.agents/skills/code-quality/references/backend-testing-patterns.md)
 
 ## What
 

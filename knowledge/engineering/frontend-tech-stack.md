@@ -74,5 +74,5 @@ consumer builds omit the package's utility classes even though its theme tokens 
 
 - [`engineering/pwa-best-practices`](pwa-best-practices.md) — Service worker and offline behavior
 - [`engineering/table-view-pattern`](table-view-pattern.md) — Table and list surfaces
-- [`frontend-code-quality`](../../.agents/skills/frontend-code-quality/SKILL.md) — Quality standards
+- [`frontend-code-quality`](../../.agents/skills/code-quality/references/frontend-code-quality.md) — Quality standards
 - [`frontend-ui-components`](../../.agents/skills/frontend-ui-components/SKILL.md) — UI component patterns

@@ -101,7 +101,7 @@ Relevant existing sources include:
 - `.agents/skills/openwebui-extensibility-design/SKILL.md` — which mechanism (Function, Tool, Tool Server, or legacy Pipeline) a new capability should use, and where its source lives
 - `.agents/skills/operations-review-surface/SKILL.md`
 - `.agents/skills/show-production-lifecycle/SKILL.md`
-- `.agents/skills/table-view-pattern/SKILL.md`
+- `.agents/skills/frontend-ui-components/references/table-view-pattern.md`
 - `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
 - `.agents/skills/agent-instruction-maintenance/SKILL.md`
 

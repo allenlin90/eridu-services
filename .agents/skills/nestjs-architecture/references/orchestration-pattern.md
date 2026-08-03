@@ -1,12 +1,7 @@
----
-name: orchestration-service-nestjs
-description: Implement erify_api workflow coordination, transactions, idempotency, locks, and race-safe writes inside capability-owned use cases.
----
-
 # Orchestration Service Pattern - NestJS (Superseded for placement)
 
 > **Superseded for architecture and placement selection.**
-> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
+> [`erify-api-capability-refactoring`](../../erify-api-capability-refactoring/SKILL.md)
 > decides *where* a cross-model workflow lives — place it under the business capability
 > that owns the use case rather than a generic orchestration layer. **The workflow
 > correctness rules below (transactions, advisory locks, idempotency, race-safe writes,
@@ -16,11 +11,11 @@ Orchestration services coordinate multiple capability/model services for workflo
 
 ## Canonical Examples
 
-- **Orchestration Service**: [task-orchestration.service.ts](../../../apps/erify_api/src/task-orchestration/task-orchestration.service.ts)
-- **Processor Service**: [task-generation-processor.service.ts](../../../apps/erify_api/src/task-orchestration/task-generation-processor.service.ts)
-- **Module**: [task-orchestration.module.ts](../../../apps/erify_api/src/task-orchestration/task-orchestration.module.ts)
+- **Orchestration Service**: [task-orchestration.service.ts](../../../../apps/erify_api/src/task-orchestration/task-orchestration.service.ts)
+- **Processor Service**: [task-generation-processor.service.ts](../../../../apps/erify_api/src/task-orchestration/task-generation-processor.service.ts)
+- **Module**: [task-orchestration.module.ts](../../../../apps/erify_api/src/task-orchestration/task-orchestration.module.ts)
 
-> See [references/orchestration-examples.md](references/orchestration-examples.md) for full code examples.
+> See [references/orchestration-examples.md](orchestration-examples.md) for full code examples.
 
 ## When to Use
 
@@ -45,7 +40,7 @@ When a model service mutation needs to fan out into another domain (e.g. `TaskSe
 
 **Pattern:** put the workflow in the orchestration service that already composes both. Model services stay atomic. The orchestrator method takes the same args the caller would have given the model service, dispatches to the model, then triggers the side effect on success.
 
-Reference: `TaskOrchestrationService.submitTaskContent` ([task-orchestration.service.ts](../../../apps/erify_api/src/task-orchestration/task-orchestration.service.ts)) wraps `TaskService.updateTaskContentAndStatus{,AsAdmin}` and fires `FactExtractionService.extractFromTask` on a fresh transition into `COMPLETED`. All three call sites (`MeTaskService`, `StudioTaskController`, future paths) route through it — calling `TaskService.update*` directly silently bypasses extraction, which the orchestrator's doc-comment calls out.
+Reference: `TaskOrchestrationService.submitTaskContent` ([task-orchestration.service.ts](../../../../apps/erify_api/src/task-orchestration/task-orchestration.service.ts)) wraps `TaskService.updateTaskContentAndStatus{,AsAdmin}` and fires `FactExtractionService.extractFromTask` on a fresh transition into `COMPLETED`. All three call sites (`MeTaskService`, `StudioTaskController`, future paths) route through it — calling `TaskService.update*` directly silently bypasses extraction, which the orchestrator's doc-comment calls out.
 
 **Rule of thumb:** if you find yourself reaching for `forwardRef`, an orchestrator method is what you actually want. The only legitimate `forwardRef` cases are true two-way operational dependencies (rare), not "service A's update should fire service B."
 
@@ -81,7 +76,7 @@ Extract repeated lookups into private helpers (e.g., `resolveStudioMember()`). V
 
 When an orchestrator writes to a row that lives under a scope parent (e.g. `ShowPlatform` under `Show`, `ShowCreator` under `Show`, `StudioShift` under `Studio`), reads and writes can race with concurrent soft-deletes and cross-scope reassignments. Three rules — every Codex finding on PR 12.1.2 (#103) traced back to violating one of them.
 
-**1. Write predicates always include `{ uid, scopeParentId, deletedAt: null }`.** Use `updateMany` (not `update`), check `count === 0`, throw `HttpError.notFound(...)`. Reference: [`ShowPlatformService.updateActuals`](../../../apps/erify_api/src/models/show-platform/show-platform.service.ts).
+**1. Write predicates always include `{ uid, scopeParentId, deletedAt: null }`.** Use `updateMany` (not `update`), check `count === 0`, throw `HttpError.notFound(...)`. Reference: [`ShowPlatformService.updateActuals`](../../../../apps/erify_api/src/models/show-platform/show-platform.service.ts).
 
 **2. Bulk prefetch (`findActiveByUids` / similar) takes the scope parent too.** Otherwise a row reassigned to a different scope parent leaks into the cache used by the orchestrator for audit-target resolution and collision detection.
 
@@ -152,7 +147,7 @@ Codex P1 on PR #103 caught a single unguarded `.target` deref that aborted an en
 
 ## Related Skills
 
-- [Fact Extraction Pipeline](../fact-extraction-pipeline/SKILL.md) — extractor / paired-write / per-target collision patterns; required reading before any new `IngestionExtractor`
-- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Capability/model service patterns
-- [Database Patterns](../database-patterns/SKILL.md) — `@Transactional()`, advisory locks
-- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Controller patterns
+- [Fact Extraction Pipeline](../../fact-extraction-pipeline/SKILL.md) — extractor / paired-write / per-target collision patterns; required reading before any new `IngestionExtractor`
+- [Service Pattern](service-pattern.md) — Capability/model service patterns
+- [Database Patterns](../../database-patterns/SKILL.md) — `@Transactional()`, advisory locks
+- [Controller Pattern](controller-pattern.md) — Controller patterns

@@ -14,7 +14,7 @@ version: 1
 #
 # Character budget is tracked separately: Codex's fallback catalog holds ~8,000
 # characters of implicit descriptions, which is a different constraint from skill count.
-implicit_catalog_ceiling: 63
+implicit_catalog_ceiling: 57
 implicit_catalog_limit: 50
 post_consolidation_limit: 35
 
@@ -76,17 +76,6 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  backend-controller-pattern-nestjs:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ implement ]
-    knowledge_sources:
-      [
-        knowledge/architecture/backend-controller-pattern-nestjs.md,
-        apps/erify_api/docs/ARCHITECTURE.md
-      ]
-    migration_status: canonical
 
   backend-large-file-refactor:
     kind: capability-skill
@@ -96,13 +85,6 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  backend-testing-patterns:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ review ]
-    knowledge_sources: []
-    migration_status: canonical
 
   cavecrew:
     kind: presentation-mode
@@ -356,13 +338,6 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  frontend-code-quality:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ review ]
-    knowledge_sources: []
-    migration_status: canonical
 
   frontend-error-handling:
     kind: capability-skill
@@ -476,12 +451,19 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  local-database-cli:
+
+  nestjs-architecture:
     kind: capability-skill
     authority: procedural
     implicit: true
-    lifecycle_stage: [ orient, implement ]
-    knowledge_sources: []
+    lifecycle_stage: [ implement ]
+    knowledge_sources:
+      [
+        knowledge/architecture/service-pattern-nestjs.md,
+        knowledge/architecture/backend-controller-pattern-nestjs.md,
+        knowledge/architecture/database-patterns.md,
+        apps/erify_api/docs/ARCHITECTURE.md
+      ]
     migration_status: canonical
 
   monorepo-doc-layering:
@@ -548,13 +530,6 @@ skills:
     knowledge_sources: []
     migration_status: planned
 
-  orchestration-service-nestjs:
-    kind: capability-skill
-    authority: procedural
-    implicit: false
-    lifecycle_stage: [ implement ]
-    knowledge_sources: []
-    migration_status: canonical
 
   package-extraction-strategy:
     kind: capability-skill
@@ -628,13 +603,6 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  repository-pattern-nestjs:
-    kind: capability-skill
-    authority: procedural
-    implicit: false
-    lifecycle_stage: [ implement ]
-    knowledge_sources: []
-    migration_status: canonical
 
   schedule-continuity-workflow:
     kind: capability-skill
@@ -644,21 +612,7 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
-  secure-coding-practices:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ review ]
-    knowledge_sources: []
-    migration_status: canonical
 
-  service-pattern-nestjs:
-    kind: capability-skill
-    authority: procedural
-    implicit: false
-    lifecycle_stage: [ implement ]
-    knowledge_sources: [ knowledge/architecture/service-pattern-nestjs.md ]
-    migration_status: canonical
 
   setup-matt-pocock-skills:
     kind: capability-skill
@@ -692,13 +646,6 @@ skills:
     knowledge_sources: [ knowledge/domain/show-production-lifecycle.md ]
     migration_status: in_progress
 
-  soft-delete-restore:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ implement ]
-    knowledge_sources: []
-    migration_status: canonical
 
 
   spreadsheet:
@@ -718,13 +665,6 @@ skills:
     migration_status: canonical
 
 
-  table-view-pattern:
-    kind: capability-skill
-    authority: procedural
-    implicit: true
-    lifecycle_stage: [ implement ]
-    knowledge_sources: [ knowledge/engineering/table-view-pattern.md ]
-    migration_status: canonical
 
   task-template-builder:
     kind: thin-wrapper

@@ -89,5 +89,5 @@ assertions in the guard's authentication, membership, or role checks.
 ## Related Skills
 
 - [Authentication Authorization NestJS](../authentication-authorization-nestjs/SKILL.md) — Comprehensive auth patterns
-- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Auth decorators usage
+- [Controller Pattern](../nestjs-architecture/references/controller-pattern.md) — Auth decorators usage
 - [Data Validation](../data-validation/SKILL.md) — Input validation

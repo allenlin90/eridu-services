@@ -63,6 +63,6 @@ StudioShiftController   → StudioShiftService                   (CRUD)
 
 ## Related Skills
 
-- [orchestration-service-nestjs](../orchestration-service-nestjs/SKILL.md) — General orchestration
+- [orchestration-service-nestjs](../nestjs-architecture/references/orchestration-pattern.md) — General orchestration
 - [schedule-continuity-workflow](../schedule-continuity-workflow/SKILL.md) — Schedule publish behavior
 - [show-production-lifecycle](../show-production-lifecycle/SKILL.md) — owns the show-level readiness checklist and state gates that consume this skill's task-readiness signal

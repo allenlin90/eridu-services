@@ -119,5 +119,5 @@ Run `tsc --noEmit --noErrorTruncation -p tsconfig.app.json` and read the resulti
 - [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) — governs Open WebUI/LiteLLM/MCP as one platform; this skill covers the eridu_auth-side implementation it depends on
 - [`.agents/memory/odoo-railway-sso-integration.md`](../../memory/odoo-railway-sso-integration.md) — Railway platform gotchas (preDeployCommand reliability, config-as-code, redeploy-vs-fresh-trigger) and Odoo-specific findings from building the Odoo consumer integration above
 - [ssr-auth-integration](../ssr-auth-integration/SKILL.md) — the JWKS/JWT-cookie pattern this provider's `jwt()` bridge must keep working
-- [table-view-pattern](../table-view-pattern/SKILL.md) — row-actions convention used by the admin client list
+- [table-view-pattern](../frontend-ui-components/references/table-view-pattern.md) — row-actions convention used by the admin client list
 - [frontend-ui-components](../frontend-ui-components/SKILL.md) — `@eridu/ui` `Form`/`Dialog`/`AlertDialog` conventions used throughout the admin UI

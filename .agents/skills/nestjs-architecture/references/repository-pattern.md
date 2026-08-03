@@ -1,12 +1,7 @@
----
-name: repository-pattern-nestjs
-description: Implement private erify_api repositories when complex persistence earns a dedicated provider.
----
-
 # Repository Pattern - Prisma/NestJS (Selective)
 
 > **Not the default persistence choice.**
-> [`erify-api-capability-refactoring`](../erify-api-capability-refactoring/SKILL.md)
+> [`erify-api-capability-refactoring`](../../erify-api-capability-refactoring/SKILL.md)
 > decides whether a capability uses direct `TransactionHost.tx`, a private query
 > provider, or a repository/store. Apply this skill when that matrix selects a
 > repository.
@@ -15,10 +10,10 @@ Implementation guide for NestJS Repositories using Prisma.
 
 ## Canonical Examples
 
-- **Model Repository**: [task-template.repository.ts](../../../apps/erify_api/src/models/task-template/task-template.repository.ts)
-- **Base Repository**: [base.repository.ts](../../../apps/erify_api/src/lib/repositories/base.repository.ts)
+- **Model Repository**: [task-template.repository.ts](../../../../apps/erify_api/src/models/task-template/task-template.repository.ts)
+- **Base Repository**: [base.repository.ts](../../../../apps/erify_api/src/lib/repositories/base.repository.ts)
 
-> See [references/repository-examples.md](references/repository-examples.md) for detailed code examples.
+> See [references/repository-examples.md](repository-examples.md) for detailed code examples.
 
 ## Core Rules
 
@@ -79,7 +74,7 @@ queries should use `this.model` when the base delegate surface is sufficient,
 or `this.txHost.tx.<model>` when they need Prisma-specific operations. Do not
 use the unbounded `PrismaService` for transaction-dependent work.
 For the Express/knex lifecycle analogy and why request scope is not a
-transaction substitute, see [`database-patterns` §3](../../../knowledge/architecture/database-patterns.md#3-transaction-pattern).
+transaction substitute, see [`database-patterns` §3](../../../../knowledge/architecture/database-patterns.md#3-transaction-pattern).
 
 ## Key Patterns
 
@@ -131,6 +126,6 @@ When filtering through a soft-deletable join table, put `deletedAt: null` on the
 
 ## Related Skills
 
-- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Capability service and persistence selection
-- [Database Patterns](../database-patterns/SKILL.md) — Soft delete, transactions, locking
-- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Controller patterns
+- [Service Pattern](service-pattern.md) — Capability service and persistence selection
+- [Database Patterns](../../database-patterns/SKILL.md) — Soft delete, transactions, locking
+- [Controller Pattern](controller-pattern.md) — Controller patterns

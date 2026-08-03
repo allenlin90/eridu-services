@@ -90,7 +90,7 @@ Use `apiRequest` / `apiClient` from the app API layer. Do not create feature-loc
 ## Related Skills
 
 - [erify-authorization](../erify-authorization/SKILL.md) — erify_api-specific guards and roles
-- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Protected endpoints
+- [Controller Pattern](../nestjs-architecture/references/controller-pattern.md) — Protected endpoints
 - [Data Validation](../data-validation/SKILL.md) — Input validation
 - [ssr-auth-integration](../ssr-auth-integration/SKILL.md) — eridu_auth as IDP for SSR/JWKS consumers
 - [eridu-auth-oauth-provider](../eridu-auth-oauth-provider/SKILL.md) — eridu_auth as OAuth2/OIDC provider for third-party clients

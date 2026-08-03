@@ -1,8 +1,3 @@
----
-name: soft-delete-restore
-description: Restore soft-deleted erify_api records with correct permissions, optimistic conflicts, endpoints, and audit history.
----
-
 # Soft Delete Restore Pattern
 
 Full contract for restoring soft-deleted records: persistence, service,
@@ -16,6 +11,8 @@ Sets `deletedAt = null` on a soft-deleted record. Key invariants:
 - Operates on deleted records only (`deletedAt IS NOT NULL`)
 - Increments `version` when the model is versioned (signals stale clients to refresh)
 - Privileged write — apply role guards at same level as delete or stricter
+
+> Repository-level restore code: [`07-restore-repository.md`](07-restore-repository.md).
 
 ## Layer Pattern
 
@@ -62,5 +59,5 @@ Add `includeDeleted` param to list endpoint. Expose `deleted_at` in API response
 
 ## Related Skills
 
-- [database-patterns](../database-patterns/SKILL.md) — Soft delete, optimistic locking
-- [repository-pattern-nestjs](../repository-pattern-nestjs/SKILL.md) — Repository extension
+- [database-patterns](../SKILL.md) — Soft delete, optimistic locking
+- [nestjs-architecture § repository](../../nestjs-architecture/references/repository-pattern.md) — Repository extension

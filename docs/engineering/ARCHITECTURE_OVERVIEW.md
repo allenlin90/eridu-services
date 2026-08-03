@@ -169,10 +169,7 @@ For detailed implementation patterns, see `.agents/skills/`:
 | Skill                                 | Covers                                                     |
 | ------------------------------------- | ---------------------------------------------------------- |
 | `erify-api-capability-refactoring`    | Capability/module placement and persistence selection (authoritative)       |
-| `backend-controller-pattern-nestjs`   | All controller types, base classes, response serialization |
-| `service-pattern-nestjs`              | Capability services, typed APIs, direct or provider-backed persistence      |
-| `repository-pattern-nestjs`           | Selective private repositories, filtering, optimistic locking              |
-| `orchestration-service-nestjs`        | Capability workflow coordination, `@Transactional`, processors             |
+| `nestjs-architecture`                 | Controller types and serialization, capability services and typed APIs, selective private repositories, workflow coordination with `@Transactional` and processors |
 | `authentication-authorization-nestjs` | JWT validation, token storage, protected routes            |
 | `erify-authorization`                 | AdminGuard, StudioProtected, role-based access             |
 | `database-patterns`                   | Soft delete, bulk ops, transactions, nested writes         |

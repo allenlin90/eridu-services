@@ -27,4 +27,4 @@ pnpm --filter <workspace> lint && pnpm --filter <workspace> typecheck && pnpm --
 ## Canonical Knowledge
 
 - [`knowledge/engineering/frontend-tech-stack`](../../../knowledge/engineering/frontend-tech-stack.md) — stack, structure, principles, configuration
-- [`frontend-code-quality`](../frontend-code-quality/SKILL.md) | [`frontend-ui-components`](../frontend-ui-components/SKILL.md)
+- [`frontend-code-quality`](../code-quality/references/frontend-code-quality.md) | [`frontend-ui-components`](../frontend-ui-components/SKILL.md)

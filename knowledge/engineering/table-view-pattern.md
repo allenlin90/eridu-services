@@ -15,9 +15,9 @@ sources:
 
 # Table View Pattern
 
-Standard patterns for list surfaces in `erify_studios`, `erify_creators`, and `@eridu/ui`. Selected by the [`table-view-pattern`](../../.agents/skills/table-view-pattern/SKILL.md) skill.
+Standard patterns for list surfaces in `erify_studios`, `erify_creators`, and `@eridu/ui`. Selected by the [`table-view-pattern`](../../.agents/skills/frontend-ui-components/references/table-view-pattern.md) skill.
 
-> See [references/table-view-details.md](../../.agents/skills/table-view-pattern/references/table-view-details.md) for extended guidance, code examples, virtualization patterns, CRUD consistency rules, current-view export details, and anti-patterns.
+> See [references/table-view-details.md](../../.agents/skills/frontend-ui-components/references/table-view-details.md) for extended guidance, code examples, virtualization patterns, CRUD consistency rules, current-view export details, and anti-patterns.
 
 ## Read First
 
@@ -118,7 +118,7 @@ Card grids in `erify_studios`. Unlike the table stacks above (server pagination)
 - Hook: [use-task-templates.ts](../../apps/erify_studios/src/features/task-templates/hooks/use-task-templates.ts)
 - Toolbar: [task-templates-toolbar.tsx](../../apps/erify_studios/src/features/task-templates/components/task-templates-toolbar.tsx)
 
-> Full code examples: [references/studio-list-examples.md](../../.agents/skills/table-view-pattern/references/studio-list-examples.md).
+> Full code examples: [references/studio-list-examples.md](../../.agents/skills/frontend-ui-components/references/studio-list-examples.md).
 
 **Architecture**
 
@@ -254,7 +254,7 @@ When a table supports CSV/JSON export, export the current server-filtered view, 
 - Use shared primitives (`src/lib/csv.ts`, `src/lib/file-download.ts`) for escaping, UTF-8 BOM, CRLF, and downloads.
 - Disable the export action when the matching count is zero or an export is already running.
 
-See [references/table-view-details.md](../../.agents/skills/table-view-pattern/references/table-view-details.md) for reference implementations.
+See [references/table-view-details.md](../../.agents/skills/frontend-ui-components/references/table-view-details.md) for reference implementations.
 
 ## Checklist
 

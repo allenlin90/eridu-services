@@ -150,7 +150,7 @@ Before changing AI workspace policy, also check these existing sources:
 - `.claude/memory/skills-integration.md`
 - `.agents/skills/operations-review-surface/SKILL.md`
 - `.agents/skills/show-production-lifecycle/SKILL.md`
-- `.agents/skills/table-view-pattern/SKILL.md`
+- `.agents/skills/frontend-ui-components/references/table-view-pattern.md`
 - `.agents/skills/engineering-best-practices-enforcer/SKILL.md`
 - `apps/erify_api/docs/MCP_SERVER.md`
 

@@ -4,9 +4,9 @@
 
 This is the migration inventory and execution plan for the entries indexed under `.agents/skills/`. It establishes review and bookkeeping scope; provisional classifications still require focused content review.
 
-**Current count: 99 skills — 63 implicitly invocable, 36 explicit-only, 6,841 implicit description characters.** The original audit recorded 94; the catalog grew to 102 before the OKF migration began, and the consolidation PR brought three entries back down to 99. Dispositions below are derived from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml), which `pnpm agents:validate` keeps in sync with the skill directories — so this table can no longer silently drift from the tree.
+**Current count: 90 skills — 57 implicitly invocable, 33 explicit-only, 6,185 implicit description characters.** The original audit recorded 94; the catalog grew to 102 before the OKF migration began, the first consolidation PR brought three entries down to 99, and the domain-clustering PR merged ten more into four surviving skills to reach 90. Dispositions below are derived from the `kind` field in [`.agents/agent-skill-registry.yaml`](../../.agents/agent-skill-registry.yaml), which `pnpm agents:validate` keeps in sync with the skill directories — so this table can no longer silently drift from the tree.
 
-The Agentic Tool Enhancement & OKF Consolidation program that produced these counts has closed; its record is in § Program Record below. One constraint it set is still unmet: the implicit catalog is at 63 against a 50/35 target, and closing that gap is now an open decision tracked in [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md), not a scheduled delivery step.
+The Agentic Tool Enhancement & OKF Consolidation program that produced these counts has closed; its record is in § Program Record below. One constraint it set is still unmet: the implicit catalog is at 57 against a 50/35 target, and closing that gap is now an open decision tracked in [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md), not a scheduled delivery step.
 
 A content move is complete only when routing, links, validation, and behavior have been verified with Claude Code, Codex, and OpenCode. The most recent verification is recorded in § Cross-Client Routing Verification.
 
@@ -67,9 +67,9 @@ The ranges are not quotas. A skill survives only when its trigger, procedure, an
 
 | Constraint | Limit | Current | State |
 | --- | --- | --- | --- |
-| Implicit description characters (Codex catalog budget) | 8,000 | **6,841** | ✅ Met |
-| Implicitly invocable skill count | ≤50, then ≤35 | **63** | ❌ Not met — 13 short of the first milestone |
-| Regression ratchet (`implicit_catalog_ceiling`) | 63 | 63 | 🔒 Enforced — validation fails if exceeded |
+| Implicit description characters (Codex catalog budget) | 8,000 | **6,185** | ✅ Met |
+| Implicitly invocable skill count | ≤50, then ≤35 | **57** | ❌ Not met — 7 short of the first milestone |
+| Regression ratchet (`implicit_catalog_ceiling`) | 57 | 57 | 🔒 Enforced — validation fails if exceeded |
 
 These are independent. Meeting the character budget did not move the count. **Do not report one as satisfying the other.**
 
@@ -107,13 +107,13 @@ rg -o '^    kind: (.+)$' -r '$1' .agents/agent-skill-registry.yaml | sort | uniq
 
 | Disposition | Registry `kind` | Count | Meaning |
 | --- | --- | ---: | --- |
-| Keep as procedural skill | `capability-skill` | 78 | Task-triggered and procedural; still subject to quality review |
+| Keep as procedural skill | `capability-skill` | 69 | Task-triggered and procedural; still subject to quality review |
 | Thin skill plus extracted knowledge | `thin-wrapper` | 8 | Predominantly factual; doctrine belongs in `knowledge/` with routing/procedure retained — 4 of the 8 have landed it, 4 are still pending |
 | Workflow wrapper | `workflow-bridge` | 6 | Authoritative orchestration belongs under `.agents/workflows/` |
 | Presentation mode | `presentation-mode` | 7 | Output style only, explicit user trigger — all 7 are `implicit: false` |
-| **Total** | | **99** | Matches the generated index and the skill directories |
+| **Total** | | **90** | Matches the generated index and the skill directories |
 
-Routing split: **63 implicitly invocable**, **36 explicit-only**, ratcheted by `implicit_catalog_ceiling`. Both the "no more than 50" milestone and the "35 or fewer" post-consolidation target are unmet.
+Routing split: **57 implicitly invocable**, **33 explicit-only**, ratcheted by `implicit_catalog_ceiling`. Both the "no more than 50" milestone and the "35 or fewer" post-consolidation target are unmet.
 
 ### How the implicit catalog gets reduced
 
@@ -171,6 +171,24 @@ The 25 entries the § Target portfolio budgets at 0 as standalone pattern or tec
 
 **The 25-candidate list does not reach either target.** The gap is **13 entries to "no more than 50"** and **28 to "35 or fewer"**, and no remaining entry on this list decrements the count. Closing that gap needs consolidation decisions over the *whole* implicit catalog, not further work on this list, and per § How the implicit catalog gets reduced that is an explicit decision in its own PR — not an assumption folded into a delivery PR. The options and their decision gates are in [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md).
 
+### Domain clustering consolidation
+
+Ten skills merged into four surviving skills by mechanism 2 (**merged**) in § How the implicit catalog gets reduced. Every merged body and reference file moved **verbatim** into the surviving skill's `references/` — the moves are recorded as renames in the delivering commit, so no doctrine was rewritten or summarized.
+
+| Merged away | Into | Basis |
+| --- | --- | --- |
+| `service-pattern-nestjs`, `backend-controller-pattern-nestjs`, `repository-pattern-nestjs`, `orchestration-service-nestjs` | `nestjs-architecture` | One `erify_api` layering doctrine split across four catalog entries with the same trigger ("change an `erify_api` backend layer"). Placement stays with `erify-api-capability-refactoring`, which the new skill defers to in a banner. |
+| `table-view-pattern` | `frontend-ui-components` | List and table surfaces are a component-composition concern; both already shared `@eridu/ui` primitives and the same "build a UI surface" trigger. |
+| `soft-delete-restore`, `local-database-cli` | `database-patterns` | Restore is the inverse of the soft-delete rule the target skill already owns; the local CLI is the terminal-side companion to the same persistence work. |
+| `backend-testing-patterns`, `frontend-code-quality`, `secure-coding-practices` | `code-quality` | Three review lenses over changed code, which is exactly what the target skill is. |
+
+**Considered and deliberately not merged:**
+
+- `authentication-authorization-nestjs` — its subject is `eridu_auth` login, sessions, and cross-app JWT, not `erify_api` layering. Folding it into `nestjs-architecture` would conflate two applications and collide with `erify-authorization`.
+- `ai-platform-capability-verification` — a verification methodology for deployed Open WebUI and LiteLLM behavior, triggered by a capability claim rather than by changed code. It is not a code-quality lens.
+
+**Derived count: 63 → 57 implicit, 99 → 90 skills.** The `nestjs-architecture` merge is count-neutral on the implicit catalog — three of its four inputs were already explicit-only — so the six-entry reduction comes from the other three merges. The first milestone is still **7 entries away** and remains an open decision in [`agent-implicit-catalog-count-cap.md`](../ideation/agent-implicit-catalog-count-cap.md).
+
 An attempt to reach the milestone by marking 18 human-decision-triggered skills explicit-only was rejected on review and replaced by the two levers canon sanctions — consolidation and knowledge extraction. The goal was never dropped; the plan changed. See § How the implicit catalog gets reduced.
 
 Cross-cutting review flags are orthogonal to `kind` and are not counted in the table: **3 reasoning-intervention entries** must move into lifecycle timing rather than remain explicit modes, and **6 consolidation-review entries** have overlapping capability boundaries. Both sets are addressed by the consolidation PRs.
@@ -185,9 +203,7 @@ All 8 skills PR #367 targeted completed their extraction — their doctrine now 
 - `api-performance-optimization`
 - `astro-starlight-best-practices`
 - `authentication-authorization-nestjs`
-- `backend-controller-pattern-nestjs`
 - `backend-large-file-refactor`
-- `backend-testing-patterns`
 - `data-compatibility-migration`
 - `data-validation`
 - `diagnose`
@@ -205,7 +221,6 @@ All 8 skills PR #367 targeted completed their extraction — their doctrine now 
 - `file-upload-presign`
 - `frontend-api-layer`
 - `frontend-bundle-splitting`
-- `frontend-code-quality`
 - `frontend-error-handling`
 - `frontend-i18n`
 - `frontend-performance`
@@ -215,8 +230,8 @@ All 8 skills PR #367 targeted completed their extraction — their doctrine now 
 - `graphify`
 - `jsonb-analytics-snapshot`
 - `litellm-admin-api`
-- `local-database-cli`
 - `monorepo-doc-layering`
+- `nestjs-architecture`
 - `observability-logging`
 - `openwebui-assistant-adapter`
 - `openwebui-extensibility-design`
@@ -224,7 +239,6 @@ All 8 skills PR #367 targeted completed their extraction — their doctrine now 
 - `openwebui-mcp-tool-integration`
 - `openwebui-rest-api`
 - `upload-openwebui-skill`
-- `orchestration-service-nestjs`
 - `package-extraction-strategy`
 - `plan-workflow-completeness`
 - `pr-ui-screenshot-review`
@@ -232,16 +246,11 @@ All 8 skills PR #367 targeted completed their extraction — their doctrine now 
 - `prototype`
 - `pwa-best-practices`
 - `railway-template-config`
-- `repository-pattern-nestjs`
 - `schedule-continuity-workflow`
-- `secure-coding-practices`
-- `service-pattern-nestjs`
 - `setup-matt-pocock-skills`
 - `shared-api-types`
-- `soft-delete-restore`
 - `spreadsheet`
 - `ssr-auth-integration`
-- `table-view-pattern`
 - `template-system-fact-migration`
 - `ui-mockup-discussion`
 - `user-facing-docs`
@@ -255,14 +264,14 @@ This category means “not yet an obvious move candidate,” not “already idea
 
 | Skill | Knowledge concept |
 | --- | --- |
-| `backend-controller-pattern-nestjs` | [`architecture/backend-controller-pattern-nestjs`](../../knowledge/architecture/backend-controller-pattern-nestjs.md) |
+| `nestjs-architecture` (was `backend-controller-pattern-nestjs`) | [`architecture/backend-controller-pattern-nestjs`](../../knowledge/architecture/backend-controller-pattern-nestjs.md) |
 | `database-patterns` | [`architecture/database-patterns`](../../knowledge/architecture/database-patterns.md) |
 | `design-patterns` | [`architecture/design-patterns`](../../knowledge/architecture/design-patterns.md) |
 | `frontend-tech-stack` | [`engineering/frontend-tech-stack`](../../knowledge/engineering/frontend-tech-stack.md) |
 | `pwa-best-practices` | [`engineering/pwa-best-practices`](../../knowledge/engineering/pwa-best-practices.md) |
-| `service-pattern-nestjs` | [`architecture/service-pattern-nestjs`](../../knowledge/architecture/service-pattern-nestjs.md) |
+| `nestjs-architecture` (was `service-pattern-nestjs`) | [`architecture/service-pattern-nestjs`](../../knowledge/architecture/service-pattern-nestjs.md) |
 | `show-production-lifecycle` | [`domain/show-production-lifecycle`](../../knowledge/domain/show-production-lifecycle.md) |
-| `table-view-pattern` | [`engineering/table-view-pattern`](../../knowledge/engineering/table-view-pattern.md) |
+| `frontend-ui-components` (was `table-view-pattern`) | [`engineering/table-view-pattern`](../../knowledge/engineering/table-view-pattern.md) |
 
 **Pending extraction** — registry entries with an empty `knowledge_sources`. Two groups, and they overlap:
 
@@ -427,9 +436,9 @@ Target:
 
 ## Additional Clusters to Inspect
 
-- ~~`admin-list-pattern`, `studio-list-pattern`, and `table-view-pattern`~~ — consolidated into `table-view-pattern` (PR 3);
+- ~~`admin-list-pattern`, `studio-list-pattern`, and `table-view-pattern`~~ — consolidated into `table-view-pattern` (PR 3), then folded into `frontend-ui-components` (domain clustering);
 - `doc-hygiene`, `doc-lifecycle`, `knowledge-sync`, `monorepo-doc-layering`, and `user-facing-docs`;
-- `frontend-code-quality`, `code-quality`, and repository-convention review;
+- ~~`frontend-code-quality`, `code-quality`, and repository-convention review~~ — consolidated into `code-quality` (domain clustering);
 - `ai-workspace-control-plane`, Open WebUI skills, LiteLLM skills, and future `infra/` knowledge;
 - feature-specific pattern skills whose current-state facts already exist in feature, domain, or app documentation.
 

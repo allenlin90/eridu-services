@@ -98,5 +98,5 @@ Since the component is now a real `React.lazy` reference, tests must render it i
 ## Related Skills
 
 - [frontend-ui-components](../frontend-ui-components/SKILL.md) — Component patterns
-- [backend-testing-patterns](../backend-testing-patterns/SKILL.md) — Jest contrast
+- [backend-testing-patterns](../code-quality/references/backend-testing-patterns.md) — Jest contrast
 - [frontend-bundle-splitting](../frontend-bundle-splitting/SKILL.md) — why a route's page component ends up un-exported in the first place

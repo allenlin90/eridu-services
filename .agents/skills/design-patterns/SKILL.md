@@ -29,4 +29,4 @@ Then the standard checklist for each workspace the decision touches (`lint`, `ty
 
 - [`knowledge/architecture/design-patterns`](../../../knowledge/architecture/design-patterns.md) — layers, OLTP/analytical split, route shape, module exports, package organization
 - [`apps/erify_api/docs/ARCHITECTURE.md`](../../../apps/erify_api/docs/ARCHITECTURE.md) — capability-first direction and persistence matrix
-- Implementation detail: [controllers](../backend-controller-pattern-nestjs/SKILL.md) | [services](../service-pattern-nestjs/SKILL.md) | [repositories](../repository-pattern-nestjs/SKILL.md)
+- Implementation detail: [controllers](../nestjs-architecture/references/controller-pattern.md) | [services](../nestjs-architecture/references/service-pattern.md) | [repositories](../nestjs-architecture/references/repository-pattern.md)

@@ -81,6 +81,6 @@ Validate action intent explicitly: action enum, required reason/metadata for aud
 
 ## Related Skills
 
-- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Validation at HTTP boundary
-- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Business logic validation
-- [Repository Pattern](../repository-pattern-nestjs/SKILL.md) — Data access layer
+- [Controller Pattern](../nestjs-architecture/references/controller-pattern.md) — Validation at HTTP boundary
+- [Service Pattern](../nestjs-architecture/references/service-pattern.md) — Business logic validation
+- [Repository Pattern](../nestjs-architecture/references/repository-pattern.md) — Data access layer

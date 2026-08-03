@@ -1,6 +1,6 @@
 ---
 name: frontend-ui-components
-description: Build UI with Shadcn, Radix, and @eridu/ui while matching shipped component, form, and styling patterns.
+description: Build UI with Shadcn, Radix, and @eridu/ui — components, forms, styling, and list or table surfaces — matching shipped patterns.
 ---
 
 # Frontend UI Components
@@ -8,6 +8,8 @@ description: Build UI with Shadcn, Radix, and @eridu/ui while matching shipped c
 How to build and use UI components using the shared `@eridu/ui` package and Shadcn patterns.
 
 > See [references/ui-component-details.md](references/ui-component-details.md) for detailed code examples.
+
+**Building a list or table surface?** Read [`references/table-view-pattern.md`](references/table-view-pattern.md) first — it owns the three surface stacks (studio/creator data table, admin `/system/*` table, card infinite scroll), `useTableUrlState`, the pagination review gate, and the export contract. Operational-day review screens go to [`operations-review-surface`](../operations-review-surface/SKILL.md) instead.
 
 ## `@eridu/ui` Package
 
@@ -26,7 +28,7 @@ The root `@eridu/ui` barrel remains supported for ordinary named imports. Prefer
 When a UI/UX implementation choice isn't dictated by an explicit instruction, resolve it in this order — each tier only breaks ties the tier above it left open:
 
 1. **Fulfill the requirement and feature** — the user-facing behavior actually requested must work. Don't let pattern-matching produce a component that looks right but doesn't do the job (e.g. a disabled-looking button that's actually wired to the wrong field).
-2. **Project conventions and already-implemented patterns** — match the nearest existing equivalent in this codebase (table row actions, dialog shells, async lookups, three-perspective layout) over inventing a new variant, even a "cleaner" one. Consistency with what's already shipped beats a locally-better idea. See `table-view-pattern` for the table-specific instance of this rule.
+2. **Project conventions and already-implemented patterns** — match the nearest existing equivalent in this codebase (table row actions, dialog shells, async lookups, three-perspective layout) over inventing a new variant, even a "cleaner" one. Consistency with what's already shipped beats a locally-better idea. See [`references/table-view-pattern.md`](references/table-view-pattern.md) for the table-specific instance of this rule.
 3. **Framework/stack best practice** — React SPA idioms (controlled components, colocated state, composition over inheritance) only when tiers 1–2 don't already settle it.
 4. **Personal preference** — lowest priority; defer to the above three before a stylistic preference.
 
@@ -172,5 +174,5 @@ Use `cn()` from `@eridu/ui/lib/utils` to merge classes safely. Use theme-mapped 
 
 ## Related Skills
 
-- [frontend-code-quality](../frontend-code-quality/SKILL.md) — Quality standards
+- [frontend-code-quality](../code-quality/references/frontend-code-quality.md) — Quality standards
 - [frontend-tech-stack](../frontend-tech-stack/SKILL.md) — Tech stack
