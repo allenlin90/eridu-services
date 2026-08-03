@@ -91,6 +91,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Google Antigravity**: discovers `.agents/skills/` and `.agents/rules/` natively. It remains supported for shared portable content, but it is outside the primary Claude Code, Codex, and OpenCode compatibility matrix in this migration.
 - **OpenCode**: `opencode.json` loads this file. Skills are routed from `.agents/skills/` via `.opencode/skills` symlink.
 
+### Integrated Agentic Toolsuite
+
+- **`rtk` (Rust Token Killer)**: Wraps build and shell tool outputs to filter repetitive logs, reducing token consumption.
+- **`caveman`**: Presentation-only token compression mode (explicit user trigger). Cuts output token usage without altering code logic.
+- **`graphify`**: Code & doc knowledge-graph builder and query tool (`.agents/skills/graphify/SKILL.md`).
+- **`mattpocock`**: TypeScript pattern wizardry and type-level heuristics (`.agents/skills/setup-matt-pocock-skills/SKILL.md`).
+- **`karpathy`**: Clean, minimalist micro-agent coding principles (simplicity first, surgical changes, direct execution).
+
 ## Agent System References
 
 Use these documents when changing the agent system rather than application behavior:
