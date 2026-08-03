@@ -57,4 +57,4 @@ Use `loading="lazy"` and responsive `srcSet`/`sizes`.
 ## Related Skills
 
 - [frontend-tech-stack](../frontend-tech-stack/SKILL.md) — Tech stack
-- [studio-list-pattern](../studio-list-pattern/SKILL.md) — Infinite scroll
+- [table-view-pattern](../table-view-pattern/SKILL.md) — Infinite scroll and table surfaces

@@ -1,7 +1,7 @@
 ---
 type: engineering_standard
 title: Table View Pattern
-description: Standard patterns for large server-driven tabular views in erify_studios, erify_creators, and @eridu/ui.
+description: Standard patterns for list surfaces in erify_studios, erify_creators, and @eridu/ui — server-driven tables, admin paginated tables, and card-based infinite scroll.
 status: stable
 stale_after: "2027-01-01"
 sources:
@@ -15,20 +15,26 @@ sources:
 
 # Table View Pattern
 
-Standard patterns for large tabular views in `erify_studios`, `erify_creators`, and `@eridu/ui`. Selected by the [`table-view-pattern`](../../.agents/skills/table-view-pattern/SKILL.md) skill.
+Standard patterns for list surfaces in `erify_studios`, `erify_creators`, and `@eridu/ui`. Selected by the [`table-view-pattern`](../../.agents/skills/table-view-pattern/SKILL.md) skill.
 
 > See [references/table-view-details.md](../../.agents/skills/table-view-pattern/references/table-view-details.md) for extended guidance, code examples, virtualization patterns, CRUD consistency rules, current-view export details, and anti-patterns.
 
 ## Read First
 
 - Tech debt register: [`apps/erify_studios/docs/FRONTEND_TECH_DEBT.md`](../../apps/erify_studios/docs/FRONTEND_TECH_DEBT.md)
-- Nearest existing table route in target app before changing code
+- Nearest existing list route of the same surface kind in target app before changing code
 
-## When to Use / Not Use
+## Three Surface Stacks
 
-**Use**: Large table routes, migrating lists to tables, optimizing dense UIs, adding row actions/selection/editing, modifying `@eridu/ui` table primitives.
+One skill owns three list stacks. They share `useTableUrlState` for URL state and differ in pagination and layout:
 
-**Don't use**: Card-based studio lists → `studio-list-pattern`. Backend-only pagination → backend skills. Trivial CRUD with small row counts → use shared `DataTable` without extra complexity.
+| Surface | Pagination | Section |
+| --- | --- | --- |
+| Studio or creator data table | Server `page`/`limit` | § Standard Table Pattern |
+| Erify Admin table (`/system/*`) | Server `page`/`limit`, `@AdminPaginatedResponse` | § Admin Table Stack |
+| Card grid with infinite scroll | Offset `useInfiniteQuery` + sentinel | § Card Infinite-Scroll Lists |
+
+**Don't use**: operational-day review screens → `operations-review-surface`. Trivial CRUD with small row counts → use shared `DataTable` without extra complexity.
 
 ## Core Principles
 
@@ -56,6 +62,120 @@ Table-specific instance of `frontend-ui-components`'s general Decision Priority 
 - **Row actions**: any row action column — including a single action — goes behind a `MoreHorizontal` dropdown trigger, not a standalone `Button` in the cell. Extract a `<feature>-actions-cell.tsx` component (e.g. `studio-member-actions-cell.tsx`, `studio-creator-actions-cell.tsx`) that composes the shared `DataTableActions` primitive (`@eridu/ui`) — pass `onEdit`/`onDelete` as named props, everything else via `renderExtraActions` (toggle-style actions like retire/reactivate, navigation links, custom mutations). The actions column's `cell` in the `*-columns.tsx` file just renders that component. Don't start with a bare `Button` "because there's only one action today" — a second action getting added later is the common case, and starting with `DataTableActions` costs nothing over a plain `Button`. This applies to hand-rolled `<Table>` markup too, not just `DataTable`-column-config tables — e.g. a dashboard's manually-built table adding its first row action should still reach for `DataTableActions`, matching every other table in the app, rather than rendering a bare trigger because that file predates the primitive. See `mechanic-actions-cell.tsx` for a reference conversion (PR 20.8).
 - **Toolbar**: Use `DataTableToolbar` — primary search maps to URL-backed filter, debounced, manual refresh with icon-only button + `aria-label`. Two or more secondary filters belong in one responsive `Filters` Popover/Sheet with an active count and reset action; do not emit one toolbar dropdown per filter. A `*_from` + `*_to` pair representing one interval uses one `DatePickerWithRange` inside that surface. Keep page size, refresh, export, and primary actions outside because they are view controls/actions, not filters. Integrate custom filter triggers as children of `DataTableToolbar` (sizing buttons down to `h-8` to align with the search input).
 - **Pagination**: Use `DataTablePagination` — `useTableUrlState` owns `page`/`pageSize`, `placeholderData: keepPreviousData`, never clamp against fallback during loading
+
+## Admin Table Stack
+
+Searchable, paginated lists in admin sections, spanning `erify_studios` (frontend) and `erify_api` (backend).
+
+**Canonical examples**
+
+- Controller: [admin-client.controller.ts](../../apps/erify_api/src/admin/clients/admin-client.controller.ts)
+- Repository: [client.repository.ts](../../apps/erify_api/src/models/client/client.repository.ts)
+
+**Integration overview**
+
+```text
+Frontend (useTableUrlState → URL params) → API (QueryDto) → Service (pass-through) → Repository (Prisma where)
+```
+
+**Backend chain**
+
+1. **Query DTO** — extend base pagination with filters, transform to `take`/`skip`:
+
+   ```typescript
+   export const listResourceQuerySchema = z
+     .object({ page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).default(10) })
+     .and(listResourceFilterSchema)
+     .transform((d) => ({ ...d, take: d.limit, skip: (d.page - 1) * d.limit }));
+   ```
+
+2. **Repository** — build the `where` clause with `contains` + `insensitive`. Use `Promise.all` for data + count.
+3. **Service** — thin pass-through to `repository.findPaginated()`.
+4. **Controller** — use the `@AdminPaginatedResponse` decorator, pass the query DTO to the service.
+
+**Frontend**
+
+- Route search schema uses `limit` (not `pageSize`) as the URL param.
+- `useTableUrlState` owns URL synchronization and bridges `limit` → TanStack Table's `pageSize`.
+- `DataTable` + `DataTableToolbar` with `searchColumn` and a debounced (500ms) input.
+
+**Checklist**
+
+- [ ] Backend: query DTO extends pagination with filters
+- [ ] Backend: repository builds `where` with `contains`/`insensitive`
+- [ ] Backend: service delegates to `repository.findPaginated()`
+- [ ] Frontend: `useTableUrlState` for URL sync
+- [ ] Frontend: `searchColumn` passed to `DataTableToolbar`
+- [ ] Frontend: debounced search behavior verified
+
+## Card Infinite-Scroll Lists
+
+Card grids in `erify_studios`. Unlike the table stacks above (server pagination), these use offset-based pagination with `useInfiniteQuery`.
+
+**Canonical examples**
+
+- Route: [task-templates/index.tsx](../../apps/erify_studios/src/routes/studios/$studioId/task-templates/index.tsx)
+- Hook: [use-task-templates.ts](../../apps/erify_studios/src/features/task-templates/hooks/use-task-templates.ts)
+- Toolbar: [task-templates-toolbar.tsx](../../apps/erify_studios/src/features/task-templates/components/task-templates-toolbar.tsx)
+
+> Full code examples: [references/studio-list-examples.md](../../.agents/skills/table-view-pattern/references/studio-list-examples.md).
+
+**Architecture**
+
+```text
+Route Component
+├─ useFeature() hook              → Owns all query state
+├─ Sticky Toolbar                 → Search + Actions
+├─ ResponsiveCardGrid             → Auto-fill grid layout
+│  └─ Card components             → Individual items
+└─ useInfiniteScroll() sentinel  → Triggers fetchNextPage
+```
+
+| Concern | Owner | Pattern |
+| --- | --- | --- |
+| Query state | Feature hook | `useInfiniteQuery` + `useTableUrlState` |
+| Search | Toolbar | Debounced (300ms) local state → URL sync |
+| Pagination | Sentinel div | `IntersectionObserver` with 400px margin |
+| Layout | Route | Sticky toolbar + scrollable content |
+| Actions | Toolbar | Responsive: desktop buttons → mobile dropdown |
+
+**Key rules**
+
+1. `useInfiniteQuery` with offset pagination (`page` + `limit`), `initialPageParam: 1`
+2. `getNextPageParam`: `meta.page < meta.totalPages ? page + 1 : undefined`
+3. Expose `isFetching` (not just `isLoading`) for refresh button state
+4. Flatten pages: `useMemo(() => data?.pages.flatMap(p => p.data) ?? [], [data])`
+5. Handle all states: loading, error, empty, fetching next page
+
+**Query state ownership** — feature hooks own all query state; UI components receive callbacks, not query internals:
+
+```tsx
+// Hook exposes callbacks
+return { items, isLoading, isFetching, refetch };
+// Toolbar receives callbacks
+<FeatureToolbar onRefresh={refetch} isRefreshing={isFetching} />
+```
+
+**Cache management**
+
+- **Query key memoization**: wrap in `useMemo` when used outside the `queryKey` option.
+- **Compact on unmount**: `compactToFirstPage` on cleanup — prevents an N-page burst on remount.
+- **Manual refresh**: compact first, then refetch.
+
+See [`frontend-state-management` references](../../.agents/skills/frontend-state-management/references/infinite-cache-patterns.md) for full cache helper implementations.
+
+**Checklist**
+
+- [ ] Feature hook uses `useInfiniteQuery` with offset pagination
+- [ ] Hook exposes `isFetching` for refresh state
+- [ ] Sticky toolbar with `backdrop-blur-sm`
+- [ ] Responsive actions (desktop buttons → mobile dropdown)
+- [ ] Debounced search (300ms) with local state
+- [ ] `ResponsiveCardGrid` for layout
+- [ ] `useInfiniteScroll` hook with sentinel div
+- [ ] All loading/error/empty states handled
+- [ ] Query key calls memoized when used outside `queryKey`
+- [ ] Cache compacted to page 1 on unmount
 
 ## Pagination Review Gate
 
@@ -156,8 +276,6 @@ See [references/table-view-details.md](../../.agents/skills/table-view-pattern/r
 
 - [`engineering/frontend-tech-stack`](frontend-tech-stack.md) — Stack and project structure
 - [`operations-review-surface`](../../.agents/skills/operations-review-surface/SKILL.md) — Multi-tab operational-day review screens composed on top of these table primitives
-- [`studio-list-pattern`](../../.agents/skills/studio-list-pattern/SKILL.md) — Card-based infinite scroll
 - [`frontend-ui-components`](../../.agents/skills/frontend-ui-components/SKILL.md) — Shared UI primitives
 - [`frontend-state-management`](../../.agents/skills/frontend-state-management/SKILL.md) — State patterns
 - [`frontend-performance`](../../.agents/skills/frontend-performance/SKILL.md) — Virtualization, memoization
-- [`admin-list-pattern`](../../.agents/skills/admin-list-pattern/SKILL.md) — Admin table lists

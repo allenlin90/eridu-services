@@ -23,8 +23,8 @@ Before implementing ANY feature:
    - Multi-service: `orchestration-service-nestjs`
    - Workflows: `schedule-continuity-workflow`
    - Frontend: `frontend-tech-stack`, `frontend-ui-components`, `frontend-api-layer`, `frontend-state-management`, `frontend-testing-patterns`
-   - Full-stack: `admin-list-pattern`, `studio-list-pattern`
-   - Cross-cutting: `solid-principles`
+   - Full-stack: `table-view-pattern`
+   - Cross-cutting: `code-quality`
 
 2. **Identify affected apps/packages**: Determine which of `erify_api`, `eridu_auth`, `erify_creators`, `erify_studios`, or `@eridu/*` packages are involved.
 
