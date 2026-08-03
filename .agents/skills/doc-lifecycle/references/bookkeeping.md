@@ -53,8 +53,8 @@ These are delivery states. **Promoted to a domain contract** and **superseded by
 When an app design describes shipped behavior:
 
 1. Create or update `apps/<app>/docs/<FEATURE>.md`.
-2. Keep purpose, public surface, business rules, design decisions, and known limitations.
-3. Remove task lists, file inventories, verification commands, and planning status.
+2. Keep purpose, public surface, business rules, design decisions, known limitations, and any Mermaid ERD/sequence/flowchart diagrams (from the design doc or the shipping PR description's diagrams — see `pr-review.md`'s PR description check) that explain current structure.
+3. Remove task lists, file inventories, verification commands, and planning status — including delta/before-after framing in a diagram (e.g. a "before → after step N" pair): redraw it as the single current-state diagram, since the doc is current truth, not a change log.
 4. Delete the original file under `apps/<app>/docs/design/`.
 5. Move its app index entry from Design to Features and repair cross-links.
 

@@ -48,7 +48,7 @@ These phrases almost always signal reasoning leakage. Cut or rewrite each one as
 - Open items only when they are real gaps a future reader needs to act on. Each open item names the action and who/when, not the history.
 - Deferred implementation work split by nature: `docs/tech-debt/` for real shipped/pre-existing gaps; `docs/ideation/` for future mechanisms, speculative seams, and designs blocked on larger product/architecture decisions.
 - File citations only when they specify *where the change lands* or *where a reader should look* — they help navigation, not justification.
-- Diagrams that explain structure, not diagrams that re-show the iteration sequence.
+- Diagrams that explain structure, not diagrams that re-show the iteration sequence. For a doc describing a data model, cross-service/transactional workflow, or module boundary, carry the Mermaid ERD/sequence/flowchart diagrams from the shipping PR description into the doc itself (see `pr-review.md`'s PR description check) — the doc is the durable home; the PR description is where they were first drafted, not their only home.
 - Production data snapshots when they ground a current decision (e.g., "the registry currently contains 96 suffixed entries"). Drop the date framing if it is not load-bearing.
 
 ## Rewrite patterns
