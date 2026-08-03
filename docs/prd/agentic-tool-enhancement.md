@@ -26,43 +26,49 @@ This document serves as the repository PRD and delivery roadmap for consolidatin
 
 ---
 
-## 3. Delivery Strategy & Scope Roadmap
+## 3. Scope & Delivery Roadmap Checklist
 
 ### Scope 1: Machine-Readable Skill Registry & Validation Tooling
-- [x] **PR 1.1 — Skill Registry**: Add `.agents/agent-skill-registry.yaml` mapping all active skills to their classification (`capability-skill`, `thin-wrapper`, `knowledge-source`, `presentation-mode`, `workflow-bridge`).
-- [x] **PR 1.2 — Validation Script Enforcement**: Update `scripts/validate-agent-skills.mjs` (`pnpm agents:validate`) to check registry coverage, validate knowledge links, and enforce character budgets.
+- [x] **1.1 Skill Registry**: Add `.agents/agent-skill-registry.yaml` mapping all active skills to classification, lifecycle stage, and knowledge sources.
+- [x] **1.2 Validation Script Enforcement**: Update `scripts/validate-agent-skills.mjs` (`pnpm agents:validate`) to check registry coverage, validate knowledge links, and enforce character budgets.
 
 ---
 
 ### Scope 2: OKF Knowledge Migration & Skill Consolidation
-- [x] **PR 2.1 — Pilot OKF Migration (Frontend Stack & Design Patterns)**:
-  - Created `knowledge/engineering/frontend-tech-stack.md` & `knowledge/architecture/design-patterns.md`.
-  - Converted `frontend-tech-stack` and `design-patterns` into thin procedural skills.
-- [x] **PR 2.2 — Pilot Domain OKF Migration (Show Production Lifecycle)**:
-  - Created `knowledge/domain/show-production-lifecycle.md`.
-  - Converted `show-production-lifecycle` into a thin procedural skill.
-- [ ] **PR 2.3 — Complete Engineering & Architecture OKF Migration**:
-  - Extract static facts from `service-pattern-nestjs`, `backend-controller-pattern-nestjs`, `database-patterns`, `pwa-best-practices`, `table-view-pattern`, `backend-large-file-refactor` into OKF bundles under `knowledge/engineering/` and `knowledge/architecture/`.
-  - Thin out corresponding skills in `.agents/skills/`.
-- [ ] **PR 2.4 — Complete Skill Deduplication & Implicit Flag Cap (<50)**:
-  - Set `allow_implicit_invocation: false` in `agents/openai.yaml` for explicit-only workflows and presentation modes.
-  - Consolidate duplicate skills (`admin-list-pattern` into `table-view-pattern`, `solid-principles` into `code-quality`).
+- [x] **2.1 Core Engineering & Architecture OKF Migration**:
+  - [x] Create `knowledge/engineering/frontend-tech-stack.md` and convert `frontend-tech-stack` to a thin procedural skill bridge.
+  - [x] Create `knowledge/architecture/design-patterns.md` and convert `design-patterns` to a thin procedural skill bridge.
+  - [x] Create `knowledge/architecture/service-pattern-nestjs.md` and convert `service-pattern-nestjs` to a thin procedural skill bridge.
+  - [x] Create `knowledge/architecture/backend-controller-pattern-nestjs.md` and convert `backend-controller-pattern-nestjs` to a thin procedural skill bridge.
+  - [x] Create `knowledge/architecture/database-patterns.md` and convert `database-patterns` to a thin procedural skill bridge.
+- [x] **2.2 Core Domain OKF Migration**:
+  - [x] Create `knowledge/domain/show-production-lifecycle.md` and convert `show-production-lifecycle` to a thin procedural skill bridge.
+  - [x] Create `knowledge/engineering/pwa-best-practices.md` and convert `pwa-best-practices` to a thin procedural skill bridge.
+  - [x] Create `knowledge/engineering/table-view-pattern.md` and convert `table-view-pattern` to a thin procedural skill bridge.
+- [x] **2.3 Implicit Catalog Budget Optimization (<8KB limit)**:
+  - [x] Configure explicit policy (`allow_implicit_invocation: false`) for presentation modes and manual workflows (`caveman`, `cavecrew`, `graphify`, `mattpocock`, `karpathy-guidelines`, etc.).
+  - [x] Reduce implicit description character budget from 8,991 down to 7,458 characters (below 8,000 budget).
+- [ ] **2.4 Deep Skill Deduplication & Advanced Consolidation**:
+  - [ ] Consolidate overlapping list pattern skills (`admin-list-pattern`, `studio-list-pattern`).
+  - [ ] Consolidate quality and architecture skills (`solid-principles` into `code-quality`).
+  - [ ] Target post-consolidation implicit skill count cap (<35 skills).
 
 ---
 
 ### Scope 3: Agentic Tool Enhancement (`rtk`, `caveman`, `graphify`, `mattpocock`, `karpathy`)
-- [x] **PR 3.1 — Developer Tooling & Doctor Integration**:
-  - Updated `scripts/check-agent-tooling.mjs` (`pnpm agents:doctor`) to verify `rtk`, `graphify`, `ripgrep`, Node 22, pnpm 10, and skill registry adapter.
-- [x] **PR 3.2 — Shared Developer & Agent Documentation**:
-  - Updated `AGENTS.md` with explicit guidance for `rtk`, `caveman`, `graphify`, `mattpocock`, and `karpathy`.
+- [x] **3.1 Developer Tooling & Doctor Integration**:
+  - [x] Update `scripts/check-agent-tooling.mjs` (`pnpm agents:doctor`) to verify `rtk`, `graphify`, `ripgrep`, Node 22, pnpm 10, and skill registry adapter.
+- [x] **3.2 Shared Developer & Agent Documentation**:
+  - [x] Update `AGENTS.md` with explicit guidance for `rtk`, `caveman`, `graphify`, `mattpocock`, and `karpathy`.
 
 ---
 
 ### Scope 4: Catalog Index Regeneration & Final Reconciliation
-- [ ] **PR 4.1 — Index Regeneration & Full Workspace Verification**:
-  - Regenerate `.agents/skills/INDEX.md` via `pnpm agents:index`.
-  - Update `docs/engineering/AGENT_CONTENT_REORGANIZATION.md`.
-  - Run full monorepo verification (`pnpm agents:validate`, `pnpm agents:doctor`, `pnpm lint`, `pnpm typecheck`, `pnpm build`).
+- [x] **4.1 Index Regeneration**:
+  - [x] Regenerate `.agents/skills/INDEX.md` via `pnpm agents:index`.
+- [ ] **4.2 Final Inventory Update & Operating Model Reconciliation**:
+  - [ ] Update `docs/engineering/AGENT_CONTENT_REORGANIZATION.md` with final skill counts.
+  - [ ] Conduct final end-to-end verification pass across Claude Code, Codex, and OpenCode.
 
 ---
 
