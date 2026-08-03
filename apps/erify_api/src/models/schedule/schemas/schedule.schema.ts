@@ -188,6 +188,9 @@ export const bulkOperationResultItemSchema = z.object({
   client_name: z.string().nullable(),
   success: z.boolean(),
   error: z.string().nullable(),
+  // BAD_REQUEST | CONFLICT | NOT_FOUND | UNKNOWN_ERROR — see
+  // ScheduleService.mapErrorToErrorCode. Kept as a plain string so a new code
+  // does not break existing clients.
   error_code: z.string().nullable(),
 });
 

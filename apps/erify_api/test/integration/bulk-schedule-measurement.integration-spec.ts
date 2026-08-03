@@ -140,7 +140,7 @@ describeMeasurement('bulk schedule maximum measurement', () => {
       expect(createResult.results[FAILURE_INDEX]).toMatchObject({
         index: FAILURE_INDEX,
         success: false,
-        error_code: 'UNKNOWN_ERROR',
+        error_code: 'NOT_FOUND',
       });
       expect(createResult.results[FAILURE_INDEX + 1]).toMatchObject({
         index: FAILURE_INDEX + 1,

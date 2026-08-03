@@ -12,6 +12,12 @@ export type ListSchedulesByStudioParams = {
   include?: ScheduleInclude;
 };
 
+export type BulkScheduleErrorCode =
+  | 'BAD_REQUEST'
+  | 'CONFLICT'
+  | 'NOT_FOUND'
+  | 'UNKNOWN_ERROR';
+
 export type BulkScheduleResultRow = {
   index?: number;
   schedule_id?: string | null;
@@ -19,7 +25,7 @@ export type BulkScheduleResultRow = {
   client_name?: string | null;
   success: boolean;
   error?: string | null;
-  error_code?: string | null;
+  error_code?: BulkScheduleErrorCode | null;
 };
 
 export type BulkScheduleOperationResult = {

@@ -4,7 +4,7 @@ import {
   HttpException,
   Injectable,
 } from '@nestjs/common';
-import { Schedule } from '@prisma/client';
+import { Prisma, Schedule } from '@prisma/client';
 
 import {
   BulkCreateScheduleDto,
@@ -24,6 +24,7 @@ import {
 } from './schedule.constants';
 import { ScheduleRepository } from './schedule.repository';
 import type {
+  BulkScheduleErrorCode,
   BulkScheduleOperationResult,
   ListSchedulesByStudioParams,
   MonthlyScheduleOverview,
@@ -34,6 +35,7 @@ import {
 } from './schedule-upload-progress';
 
 import { HttpError } from '@/lib/errors/http-error.util';
+import { PRISMA_ERROR } from '@/lib/errors/prisma-error-codes';
 import { BaseModelService } from '@/lib/services/base-model.service';
 import { UidGeneratorService } from '@/lib/uid/uid-generator.service';
 import { ShowPlanItem } from '@/schedule-planning/schemas/schedule-planning.schema';
@@ -343,12 +345,7 @@ export class ScheduleService extends BaseModelService {
         // Extract error information
         const errorMessage
           = error instanceof Error ? error.message : String(error);
-        const errorCode
-          = error instanceof BadRequestException
-            ? 'BAD_REQUEST'
-            : error instanceof ConflictException
-              ? 'CONFLICT'
-              : 'UNKNOWN_ERROR';
+        const errorCode = this.mapErrorToErrorCode(error);
 
         // Try to extract client_id from the failed DTO for context
         const clientId = scheduleDto.client?.connect?.uid;
@@ -457,14 +454,7 @@ export class ScheduleService extends BaseModelService {
         // Extract error information
         const errorMessage
           = error instanceof Error ? error.message : String(error);
-        const errorCode
-          = error instanceof BadRequestException
-            ? 'BAD_REQUEST'
-            : error instanceof ConflictException
-              ? 'CONFLICT'
-              : error instanceof HttpException && error.getStatus() === 404
-                ? 'NOT_FOUND'
-                : 'UNKNOWN_ERROR';
+        const errorCode = this.mapErrorToErrorCode(error);
 
         results.push({
           index,
@@ -486,6 +476,37 @@ export class ScheduleService extends BaseModelService {
       successfulSchedules:
         successfulSchedules.length > 0 ? successfulSchedules : undefined,
     };
+  }
+
+  /**
+   * Maps a per-item bulk failure to the shared bulk error-code contract.
+   *
+   * Both bulk methods catch each item's exception inside the loop, so the
+   * global `PrismaExceptionFilter` never sees it. That makes the two paths
+   * fail in different shapes and this mapping has to normalize both:
+   * the update path throws `NotFoundException` from `findScheduleOrThrow`,
+   * while the create path fails inside Prisma with a raw `P2025` when a
+   * `client`/`studio` connect target does not exist.
+   */
+  private mapErrorToErrorCode(error: unknown): BulkScheduleErrorCode {
+    if (error instanceof BadRequestException) {
+      return 'BAD_REQUEST';
+    }
+    if (error instanceof ConflictException) {
+      return 'CONFLICT';
+    }
+    // NotFoundException extends HttpException with status 404, so this
+    // covers HttpError.notFound and any other 404 raised by a nested call.
+    if (error instanceof HttpException && error.getStatus() === 404) {
+      return 'NOT_FOUND';
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError
+      && error.code === PRISMA_ERROR.RecordNotFound
+    ) {
+      return 'NOT_FOUND';
+    }
+    return 'UNKNOWN_ERROR';
   }
 
   /**
