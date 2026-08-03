@@ -3,6 +3,7 @@ import {
   ConflictException,
   HttpException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { Schedule } from '@prisma/client';
 
@@ -343,12 +344,7 @@ export class ScheduleService extends BaseModelService {
         // Extract error information
         const errorMessage
           = error instanceof Error ? error.message : String(error);
-        const errorCode
-          = error instanceof BadRequestException
-            ? 'BAD_REQUEST'
-            : error instanceof ConflictException
-              ? 'CONFLICT'
-              : 'UNKNOWN_ERROR';
+        const errorCode = this.mapErrorToErrorCode(error);
 
         // Try to extract client_id from the failed DTO for context
         const clientId = scheduleDto.client?.connect?.uid;
@@ -457,14 +453,7 @@ export class ScheduleService extends BaseModelService {
         // Extract error information
         const errorMessage
           = error instanceof Error ? error.message : String(error);
-        const errorCode
-          = error instanceof BadRequestException
-            ? 'BAD_REQUEST'
-            : error instanceof ConflictException
-              ? 'CONFLICT'
-              : error instanceof HttpException && error.getStatus() === 404
-                ? 'NOT_FOUND'
-                : 'UNKNOWN_ERROR';
+        const errorCode = this.mapErrorToErrorCode(error);
 
         results.push({
           index,
@@ -486,6 +475,22 @@ export class ScheduleService extends BaseModelService {
       successfulSchedules:
         successfulSchedules.length > 0 ? successfulSchedules : undefined,
     };
+  }
+
+  private mapErrorToErrorCode(error: unknown): string {
+    if (error instanceof BadRequestException) {
+      return 'BAD_REQUEST';
+    }
+    if (error instanceof ConflictException) {
+      return 'CONFLICT';
+    }
+    if (
+      error instanceof NotFoundException
+      || (error instanceof HttpException && error.getStatus() === 404)
+    ) {
+      return 'NOT_FOUND';
+    }
+    return 'UNKNOWN_ERROR';
   }
 
   /**

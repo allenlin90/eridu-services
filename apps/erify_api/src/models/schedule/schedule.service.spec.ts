@@ -1,5 +1,5 @@
 /* eslint-disable  */
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import type { Prisma, Schedule } from '@prisma/client';
 
 import {
@@ -329,6 +329,31 @@ describe('scheduleService', () => {
       expect(result.results[0].error).toContain('already exists');
     });
 
+    it('should handle NotFoundException errors correctly', async () => {
+      jest
+        .spyOn(service, 'createScheduleFromDto')
+        .mockRejectedValue(new NotFoundException('Client not found'));
+
+      const bulkDto = bulkCreateScheduleSchema.parse({
+        schedules: [
+          {
+            name: 'January 2025 - Client A',
+            start_date: '2025-01-01T00:00:00Z',
+            end_date: '2025-01-31T23:59:59Z',
+            client_id: mockClient1.uid,
+            created_by: mockUser.uid,
+            plan_document: { shows: [] },
+          },
+        ],
+      }) as BulkCreateScheduleDto;
+
+      const result = await service.bulkCreateSchedules(bulkDto);
+
+      expect(result.failed).toBe(1);
+      expect(result.results[0].error_code).toBe('NOT_FOUND');
+      expect(result.results[0].error).toContain('Client not found');
+    });
+
     it('should preserve index mapping for error tracking', async () => {
       jest
         .spyOn(service, 'createScheduleFromDto')
@@ -467,6 +492,33 @@ describe('scheduleService', () => {
       expect(result.successful).toBe(1);
       expect(result.failed).toBe(1);
       expect(result.results[1].error_code).toBe('CONFLICT');
+    });
+
+    it('should handle NotFoundException errors in bulk updates correctly', async () => {
+      jest
+        .spyOn(service, 'getScheduleById')
+        .mockResolvedValueOnce(
+          mockSchedule1 as Schedule | ScheduleWithRelations,
+        );
+      jest
+        .spyOn(service, 'updateSchedule')
+        .mockRejectedValueOnce(new NotFoundException('Schedule not found'));
+
+      const bulkDto = bulkUpdateScheduleSchema.parse({
+        schedules: [
+          {
+            schedule_id: 'schedule_missing',
+            name: 'Updated Schedule 1',
+            version: 1,
+          },
+        ],
+      }) as BulkUpdateScheduleDto;
+
+      const result = await service.bulkUpdateSchedules(bulkDto);
+
+      expect(result.failed).toBe(1);
+      expect(result.results[0].error_code).toBe('NOT_FOUND');
+      expect(result.results[0].error).toContain('Schedule not found');
     });
   });
 

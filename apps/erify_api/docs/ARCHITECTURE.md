@@ -163,8 +163,6 @@ only when they activate an architecture target.
   manual guarded runner remains the active gate.
 - The shared REST pagination cap mismatch remains
   [tech debt](../../../docs/tech-debt/erify-api-shared-pagination-limit-unbounded.md).
-- Bulk schedule create/update error-code mapping remains
-  [tech debt](../../../docs/tech-debt/erify-api-bulk-schedule-error-code-asymmetry.md).
 
 ## Related References
 
