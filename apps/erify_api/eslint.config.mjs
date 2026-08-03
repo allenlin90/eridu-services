@@ -48,8 +48,22 @@ export default createConfig(
   {
     files: ['scripts/**/*.ts'],
     rules: {
+      // Operator CLI tools: console output is the interface, and they read a
+      // small, fixed set of connection/safety variables before Nest boots.
       'no-console': 'off',
-      'node/no-process-env': 'off',
+      'node/no-process-env': [
+        'error',
+        {
+          allowedVariables: [
+            'NODE_ENV',
+            'PORT',
+            'SHUTDOWN_TIMEOUT',
+            'DATABASE_URL',
+            'ALLOW_PROD',
+            'ERIDU_AUTH_DATABASE_URL',
+          ],
+        },
+      ],
     },
   },
 );
