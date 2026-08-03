@@ -47,6 +47,7 @@ Phase 5 ([`PHASE_5.md`](../roadmap/PHASE_5.md)) uses workstream briefs for addit
 | PRD | Workstream | Status |
 | --- | --- | --- |
 | [Operational Notifications and PWA Push](./notification-system.md) | Notification center, read status, optional PWA push, and reusable event policies | Active requirements |
+| [Agentic Tool Enhancement & OKF Consolidation](./agentic-tool-enhancement.md) | OKF v0.2 migration, skill consolidation, toolsuite enhancements, dynamic routing | Active requirements |
 
 Deferred Phase 4 and Phase 6 candidate work is tracked in the [ideation register](../ideation/README.md) until it is committed to an active phase.
 
