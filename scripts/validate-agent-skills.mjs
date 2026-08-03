@@ -183,6 +183,53 @@ async function validateClaudeCommandNames(repositoryRoot, names) {
   }
 }
 
+async function validateRegistry(repositoryRoot, skillEntries) {
+  const registryPath = path.join(repositoryRoot, '.agents/agent-skill-registry.yaml')
+  let source
+  try {
+    source = await readFile(registryPath, 'utf8')
+  } catch (error) {
+    errors.push(`${registryPath}: missing registry file: ${error.message}`)
+    return
+  }
+
+  const registry = parseYaml(source, registryPath)
+  if (!registry || typeof registry !== 'object' || !registry.skills) {
+    errors.push(`${registryPath}: invalid or empty registry file structure`)
+    return
+  }
+
+  const registrySkills = Object.keys(registry.skills)
+  const actualSkills = skillEntries.map((e) => e.name)
+
+  for (const skillName of actualSkills) {
+    if (!registry.skills[skillName]) {
+      errors.push(`${registryPath}: skill directory "${skillName}" is missing from registry`)
+    }
+  }
+
+  for (const skillName of registrySkills) {
+    if (!actualSkills.includes(skillName)) {
+      errors.push(`${registryPath}: registered skill "${skillName}" directory does not exist`)
+    }
+  }
+
+  for (const [skillName, config] of Object.entries(registry.skills)) {
+    if (Array.isArray(config.knowledge_sources)) {
+      for (const sourcePath of config.knowledge_sources) {
+        const resolvedPath = path.resolve(repositoryRoot, sourcePath)
+        try {
+          await access(resolvedPath)
+        } catch {
+          errors.push(
+            `${registryPath}: skill "${skillName}" references non-existent knowledge source: ${sourcePath}`,
+          )
+        }
+      }
+    }
+  }
+}
+
 async function main() {
   const repositoryRoot = process.cwd()
   const skillsRoot = path.join(repositoryRoot, SKILLS_DIRECTORY)
@@ -236,6 +283,7 @@ async function main() {
   }
 
   await validateClaudeCommandNames(repositoryRoot, names)
+  await validateRegistry(repositoryRoot, entries)
 
   if (implicitDescriptionCharacters > CODEX_FALLBACK_CATALOG_BUDGET) {
     warnings.push(
@@ -262,3 +310,4 @@ async function main() {
 }
 
 await main()
+
