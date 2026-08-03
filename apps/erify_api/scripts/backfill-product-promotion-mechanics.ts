@@ -1,11 +1,13 @@
 import 'dotenv/config';
 
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { ClsPluginTransactional } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { ClsModule } from 'nestjs-cls';
 
+import { envSchema } from '@/config/env.schema';
 import { ClientModule } from '@/models/client/client.module';
 import { ClientMechanicModule } from '@/models/client-mechanic/client-mechanic.module';
 import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
@@ -359,6 +361,26 @@ export async function runBackfill({
 
 @Module({
   imports: [
+    // PrismaService injects ConfigService; without a real ConfigModule.forRoot()
+    // registration somewhere in the tree, Nest has no provider for it and the
+    // injector passes `undefined`, crashing PrismaService's constructor.
+    // Mirrors the real AppModule's setup (src/app.module.ts) exactly, including
+    // the env schema validation, so a missing/invalid DATABASE_URL fails loudly
+    // here the same way it would in the real app.
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate: (config: Record<string, unknown>) => {
+        const result = envSchema.safeParse(config);
+        if (!result.success) {
+          const errorMessage = result.error.issues
+            .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+            .join('\n');
+          throw new Error(`Invalid environment variables:\n${errorMessage}`);
+        }
+        return result.data;
+      },
+    }),
     PrismaModule,
     TaskTemplateModule,
     ClientMechanicModule,
