@@ -1,15 +1,10 @@
----
-name: backend-testing-patterns
-description: Test erify_api services, persistence boundaries, controllers, guards, and orchestration with Jest and real-DB gates.
----
-
 # Backend Testing Patterns
 
 **Test runner**: Jest (`jest.fn()`, `jest.mock()`, `jest.spyOn()`) — NOT Vitest.
 
 **Test helpers**: `apps/erify_api/src/testing/` — always check before writing boilerplate.
 
-> See [references/01-service-tests.md](references/01-service-tests.md) and [references/02-controller-tests.md](references/02-controller-tests.md) for detailed examples.
+> See [backend-testing-01-service-tests.md](backend-testing-01-service-tests.md) and [backend-testing-02-controller-tests.md](backend-testing-02-controller-tests.md) for detailed examples.
 
 ## 1. Model Service Tests
 
@@ -59,10 +54,10 @@ handoff when a change can affect:
 - Nest module imports, exports, provider resolution, or runtime bootstrap.
 
 Unit-test success does not satisfy this gate. Automated enforcement is
-[deferred explicitly](../../../docs/ideation/erify-api-real-database-ci-gate.md),
+[deferred explicitly](../../../../docs/ideation/erify-api-real-database-ci-gate.md),
 so the PR must contain the manual result until that topic is promoted.
 
-See [`apps/erify_api/test/README.md`](../../../apps/erify_api/test/README.md) for
+See [`apps/erify_api/test/README.md`](../../../../apps/erify_api/test/README.md) for
 the guarded runner and local database commands.
 
 ## 6. Error Cases
@@ -86,6 +81,6 @@ Use `createBaseMockEntity()` from `@/testing/model-service-test.helper`. Check `
 
 ## Related Skills
 
-- [Service Pattern](../service-pattern-nestjs/SKILL.md) — Service layer being tested
-- [Repository Pattern](../repository-pattern-nestjs/SKILL.md) — Complex persistence boundary
-- [Frontend Testing Patterns](../frontend-testing-patterns/SKILL.md) — Vitest (contrast)
+- [Service Pattern](../../nestjs-architecture/references/service-pattern.md) — Service layer being tested
+- [Repository Pattern](../../nestjs-architecture/references/repository-pattern.md) — Complex persistence boundary
+- [Frontend Testing Patterns](../../frontend-testing-patterns/SKILL.md) — Vitest (contrast)

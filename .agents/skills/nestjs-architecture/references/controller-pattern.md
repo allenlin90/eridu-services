@@ -1,11 +1,6 @@
----
-name: backend-controller-pattern-nestjs
-description: Build erify_api NestJS controllers with correct routes, guards, Zod responses, UID validation, and payload mapping.
----
-
 # Controller Pattern — NestJS
 
-Procedure for adding or changing an `erify_api` controller. Canonical controller-type table, key rules, per-audience checklists, and review list live in [`knowledge/architecture/backend-controller-pattern-nestjs`](../../../knowledge/architecture/backend-controller-pattern-nestjs.md).
+Procedure for adding or changing an `erify_api` controller. Canonical controller-type table, key rules, per-audience checklists, and review list live in [`knowledge/architecture/backend-controller-pattern-nestjs`](../../../../knowledge/architecture/backend-controller-pattern-nestjs.md).
 
 ## Procedure
 
@@ -17,7 +12,7 @@ Procedure for adding or changing an `erify_api` controller. Canonical controller
 6. Apply the guard for the boundary — `@StudioProtected([STUDIO_ROLE.…])` for studio routes; `@Delete` needs its own explicit `[STUDIO_ROLE.ADMIN]` override, never an inherited class-level guard.
 7. Walk the knowledge doc's review checklist before opening the PR.
 
-For guard and role decisions, load [`erify-authorization`](../erify-authorization/SKILL.md).
+For guard and role decisions, load [`erify-authorization`](../../erify-authorization/SKILL.md).
 
 ## Verification
 
@@ -27,6 +22,6 @@ pnpm --filter erify_api lint && pnpm --filter erify_api typecheck && pnpm --filt
 
 ## Canonical Knowledge
 
-- [`knowledge/architecture/backend-controller-pattern-nestjs`](../../../knowledge/architecture/backend-controller-pattern-nestjs.md) — types, rules, checklists, review list
-- [`references/controller-rules.md`](references/controller-rules.md) — route semantics, DTO mapping, throttle profiles
-- [`references/controller-examples.md`](references/controller-examples.md) — concrete code
+- [`knowledge/architecture/backend-controller-pattern-nestjs`](../../../../knowledge/architecture/backend-controller-pattern-nestjs.md) — types, rules, checklists, review list
+- [`controller-rules.md`](controller-rules.md) — route semantics, DTO mapping, throttle profiles
+- [`controller-examples.md`](controller-examples.md) — concrete code

@@ -1,8 +1,3 @@
----
-name: local-database-cli
-description: Query local Docker PostgreSQL from an agent terminal for raw SQL, schema inspection, and data verification.
----
-
 # Local Database CLI Querying
 
 Use this workflow to query the local Docker PostgreSQL databases with CLI tools such as `psql` or `pgcli`.

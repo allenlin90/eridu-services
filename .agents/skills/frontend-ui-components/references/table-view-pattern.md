@@ -1,13 +1,8 @@
----
-name: table-view-pattern
-description: Build studio and admin list surfaces — server-driven tables, admin paginated tables, and card-based infinite scroll — with shared URL state and pagination.
----
-
 # List and Table View Pattern
 
-Procedure for every list surface in `erify_studios`, `erify_creators`, `@eridu/ui`, and the `erify_api` endpoints that back them. Canonical principles, the three surface stacks, decision order, pagination gate, row-selection rules, and export contract live in [`knowledge/engineering/table-view-pattern`](../../../knowledge/engineering/table-view-pattern.md).
+Procedure for every list surface in `erify_studios`, `erify_creators`, `@eridu/ui`, and the `erify_api` endpoints that back them. Canonical principles, the three surface stacks, decision order, pagination gate, row-selection rules, and export contract live in [`knowledge/engineering/table-view-pattern`](../../../../knowledge/engineering/table-view-pattern.md).
 
-**Don't use for**: operational-day review screens → [`operations-review-surface`](../operations-review-surface/SKILL.md).
+**Don't use for**: operational-day review screens → [`operations-review-surface`](../../operations-review-surface/SKILL.md).
 
 ## Select The Surface
 
@@ -36,10 +31,10 @@ All three share `useTableUrlState` for URL state. Do not invent a fourth stack.
 pnpm --filter <app> lint && pnpm --filter <app> typecheck && pnpm --filter <app> test && pnpm --filter <app> build
 ```
 
-Admin table work also verifies `erify_api`. Also run the refactor-parity checks in [`.agents/workflows/verification.md`](../../workflows/verification.md#steps) — loading/empty/data states, route and search-param contracts, pagination stack parity.
+Admin table work also verifies `erify_api`. Also run the refactor-parity checks in [`.agents/workflows/verification.md`](../../../workflows/verification.md#steps) — loading/empty/data states, route and search-param contracts, pagination stack parity.
 
 ## Canonical Knowledge
 
-- [`knowledge/engineering/table-view-pattern`](../../../knowledge/engineering/table-view-pattern.md) — principles, the three surface stacks, decision order, pagination gate, selection eligibility, export contract, checklist
-- [`references/table-view-details.md`](references/table-view-details.md) — code examples, virtualization, CRUD consistency, anti-patterns
-- [`references/studio-list-examples.md`](references/studio-list-examples.md) — card infinite-scroll hook, toolbar, and cache-helper code
+- [`knowledge/engineering/table-view-pattern`](../../../../knowledge/engineering/table-view-pattern.md) — principles, the three surface stacks, decision order, pagination gate, selection eligibility, export contract, checklist
+- [`table-view-details.md`](table-view-details.md) — code examples, virtualization, CRUD consistency, anti-patterns
+- [`studio-list-examples.md`](studio-list-examples.md) — card infinite-scroll hook, toolbar, and cache-helper code

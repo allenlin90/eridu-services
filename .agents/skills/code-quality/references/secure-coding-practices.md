@@ -1,13 +1,8 @@
----
-name: secure-coding-practices
-description: Secure erify_api and erify_studios endpoints, uploads, and auth. Use the threat skill for architecture.
----
-
 # Secure Coding Practices
 
 Per-feature implementation checklist — not a threat model. Apply when writing new code or reviewing a PR.
 
-> See [references/security-examples.md](references/security-examples.md) for extended code examples.
+> See [security-examples.md](security-examples.md) for extended code examples.
 
 ## Rules
 
@@ -51,7 +46,7 @@ CORS is app-level — don't override per-controller. File downloads: `Content-Di
 
 ## Related Skills
 
-- [data-validation](../data-validation/SKILL.md) — Zod schema patterns, UID rules
-- [observability-logging](../observability-logging/SKILL.md) — What must never appear in logs
-- [file-upload-presign](../file-upload-presign/SKILL.md) — Secure presigned upload contract
-- [eridu-security-threat-model](../eridu-security-threat-model/SKILL.md) — Architectural threat analysis
+- [data-validation](../../data-validation/SKILL.md) — Zod schema patterns, UID rules
+- [observability-logging](../../observability-logging/SKILL.md) — What must never appear in logs
+- [file-upload-presign](../../file-upload-presign/SKILL.md) — Secure presigned upload contract
+- [eridu-security-threat-model](../../eridu-security-threat-model/SKILL.md) — Architectural threat analysis

@@ -59,7 +59,7 @@ Client management here is intentionally internal-admin-only. Do not add dynamic/
 
 Mirrors `admin-user-management.tsx` (tab shell: list / create) — reuse that structure for any future admin CRUD surface in this app:
 - Hook: plain fetch-on-mount + `refresh()`, no pagination (client counts are small; don't add `TablePagination` here).
-- List: `@eridu/ui` `Table` + `DataTableActions` (kebab menu) with `renderExtraActions` for the non-standard "Rotate Secret" action, `onEdit`/`onDelete` for the standard ones — per `table-view-pattern`'s row-actions convention, even for a 3-action row.
+- List: `@eridu/ui` `Table` + `DataTableActions` (kebab menu) with `renderExtraActions` for the non-standard "Rotate Secret" action, `onEdit`/`onDelete` for the standard ones — per [`frontend-ui-components` § table view](../frontend-ui-components/references/table-view-pattern.md)'s row-actions convention, even for a 3-action row.
 - Create / Rotate Secret: both must show the returned secret **once**, in a dismissable panel with `CopyableText`. Never persist it client-side beyond that render — better-auth never re-exposes a stored secret.
 - Delete: `AlertDialog` confirmation naming the client, warning that its signed-in users will be signed out.
 
@@ -119,5 +119,5 @@ Run `tsc --noEmit --noErrorTruncation -p tsconfig.app.json` and read the resulti
 - [ai-workspace-control-plane](../ai-workspace-control-plane/SKILL.md) — governs Open WebUI/LiteLLM/MCP as one platform; this skill covers the eridu_auth-side implementation it depends on
 - [`.agents/memory/odoo-railway-sso-integration.md`](../../memory/odoo-railway-sso-integration.md) — Railway platform gotchas (preDeployCommand reliability, config-as-code, redeploy-vs-fresh-trigger) and Odoo-specific findings from building the Odoo consumer integration above
 - [ssr-auth-integration](../ssr-auth-integration/SKILL.md) — the JWKS/JWT-cookie pattern this provider's `jwt()` bridge must keep working
-- [table-view-pattern](../table-view-pattern/SKILL.md) — row-actions convention used by the admin client list
+- [frontend-ui-components § table view](../frontend-ui-components/references/table-view-pattern.md) — row-actions convention used by the admin client list
 - [frontend-ui-components](../frontend-ui-components/SKILL.md) — `@eridu/ui` `Form`/`Dialog`/`AlertDialog` conventions used throughout the admin UI

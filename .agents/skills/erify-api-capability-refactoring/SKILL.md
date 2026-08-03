@@ -11,11 +11,11 @@ This is the authoritative skill for **capability placement** in `erify_api`: whi
 
 For that placement decision it supersedes the design-selection guidance in:
 
-- `service-pattern-nestjs`
-- `repository-pattern-nestjs`
-- `orchestration-service-nestjs`
+- `nestjs-architecture` § [service pattern](../nestjs-architecture/references/service-pattern.md)
+- `nestjs-architecture` § [repository pattern](../nestjs-architecture/references/repository-pattern.md)
+- `nestjs-architecture` § [orchestration pattern](../nestjs-architecture/references/orchestration-pattern.md)
 
-Do not use those three skills to justify adding a new model-shaped service, a repository per Prisma model, a default `BaseRepository`, a generic orchestration service, or a table-first module. For that decision, this skill wins.
+Do not use those three references to justify adding a new model-shaped service, a repository per Prisma model, a default `BaseRepository`, a generic orchestration service, or a table-first module. For that decision, this skill wins.
 
 ### Persistence doctrine is evidence-based
 
@@ -594,10 +594,10 @@ Primary direction:
 
 Existing conventions to preserve but progressively reconcile:
 
-- `.agents/skills/service-pattern-nestjs/SKILL.md`
-- `.agents/skills/repository-pattern-nestjs/SKILL.md`
+- `.agents/skills/nestjs-architecture/references/service-pattern.md`
+- `.agents/skills/nestjs-architecture/references/repository-pattern.md`
 - `.agents/skills/database-patterns/SKILL.md`
-- `.agents/skills/orchestration-service-nestjs/SKILL.md`
+- `.agents/skills/nestjs-architecture/references/orchestration-pattern.md`
 
 Representative implementation areas:
 

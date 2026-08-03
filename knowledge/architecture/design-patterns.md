@@ -19,7 +19,7 @@ For `erify_api` module placement and persistence selection,
 [`erify-api-capability-refactoring`](../../.agents/skills/erify-api-capability-refactoring/SKILL.md)
 is authoritative.
 
-For implementation details: [controllers](backend-controller-pattern-nestjs.md) | [services](service-pattern-nestjs.md) | [repositories](../../.agents/skills/repository-pattern-nestjs/SKILL.md)
+For implementation details: [controllers](backend-controller-pattern-nestjs.md) | [services](service-pattern-nestjs.md) | [repositories](../../.agents/skills/nestjs-architecture/references/repository-pattern.md)
 
 ## Architectural Layers
 

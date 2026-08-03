@@ -1,0 +1,4 @@
+interface:
+  display_name: "NestJS Layering"
+  short_description: "Controller, service, repository, and orchestration rules for erify_api"
+  default_prompt: "Use $nestjs-architecture to apply the correctness rules for the erify_api layer you are changing, after erify-api-capability-refactoring has settled placement."

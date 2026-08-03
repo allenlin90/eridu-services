@@ -9,8 +9,8 @@ Provides general code quality and best practices guidance applicable across lang
 
 For architecture-specific patterns (N+1 queries, Soft Deletes, etc.), refer to:
 - **[Database Patterns](../database-patterns/SKILL.md)**
-- **[Service Patterns](../service-pattern-nestjs/SKILL.md)**
-- **[Repository Patterns](../repository-pattern-nestjs/SKILL.md)**
+- **[nestjs-architecture § service](../nestjs-architecture/references/service-pattern.md)**
+- **[nestjs-architecture § repository](../nestjs-architecture/references/repository-pattern.md)**
 
 ## Pre-Submission Checklist
 
@@ -111,9 +111,9 @@ For **shared packages** (e.g. `@eridu/api-types`), apply both references as rele
 ## Related Skills
 
 - **[Database Patterns](../database-patterns/SKILL.md)**: N+1 queries, Soft Deletes, Bulk Operations.
-- **[Service Pattern NestJS](../service-pattern-nestjs/SKILL.md)**: Business logic errors, Transactions.
-- **[Repository Pattern NestJS](../repository-pattern-nestjs/SKILL.md)**: Data access rules.
-- **[Backend Controller Pattern NestJS](../backend-controller-pattern-nestjs/SKILL.md)**: NestJS-specific controller rules.
-- **[Frontend Code Quality](../frontend-code-quality/SKILL.md)**: React/Frontend specific patterns.
+- **[nestjs-architecture § service](../nestjs-architecture/references/service-pattern.md)**: Business logic errors, Transactions.
+- **[nestjs-architecture § repository](../nestjs-architecture/references/repository-pattern.md)**: Data access rules.
+- **[nestjs-architecture § controller](../nestjs-architecture/references/controller-pattern.md)**: NestJS-specific controller rules.
+- **[code-quality § frontend quality](references/frontend-code-quality.md)**: React/Frontend specific patterns.
 - **[Design Patterns](../design-patterns/SKILL.md)**: High-level architecture and layer boundaries.
 - **[Engineering Best Practices Enforcer](../engineering-best-practices-enforcer/SKILL.md)**: Staged repo-wide quality audits.

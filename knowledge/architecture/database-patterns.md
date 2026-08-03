@@ -143,4 +143,4 @@ Schema/service changes must include seed/fixture compatibility review: reference
 ## Related Concepts
 
 - [`architecture/service-pattern-nestjs`](service-pattern-nestjs.md) — Transaction usage and business logic
-- [`repository-pattern-nestjs`](../../.agents/skills/repository-pattern-nestjs/SKILL.md) — Repository class patterns
+- [`nestjs-architecture § repository`](../../.agents/skills/nestjs-architecture/references/repository-pattern.md) — Repository class patterns

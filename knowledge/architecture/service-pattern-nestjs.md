@@ -15,7 +15,7 @@ sources:
 
 # NestJS Service Pattern
 
-Service-layer correctness rules for Eridu. Selected by the [`service-pattern-nestjs`](../../.agents/skills/service-pattern-nestjs/SKILL.md) skill.
+Service-layer correctness rules for Eridu. Selected by the [`nestjs-architecture § service`](../../.agents/skills/nestjs-architecture/references/service-pattern.md) skill.
 
 > **Capability placement and persistence selection.**
 > [`erify-api-capability-refactoring`](../../.agents/skills/erify-api-capability-refactoring/SKILL.md)
@@ -31,7 +31,7 @@ Study these real implementations as the source of truth:
 - **Schema File**: [task-template.schema.ts](../../apps/erify_api/src/models/task-template/schemas/task-template.schema.ts)
 - **Base Service**: [base-model.service.ts](../../apps/erify_api/src/lib/services/base-model.service.ts)
 
-> See [references/service-examples.md](../../.agents/skills/service-pattern-nestjs/references/service-examples.md) for detailed code examples.
+> See [references/service-examples.md](../../.agents/skills/nestjs-architecture/references/service-examples.md) for detailed code examples.
 
 ## Service Architecture
 
@@ -47,7 +47,7 @@ Extend `BaseModelService`. Handle single-entity CRUD, UID generation, and domain
 
 ### Orchestration Services
 
-Coordinate multiple Model Services. Use `@Transactional()` for atomicity. See the `orchestration-service-nestjs` skill.
+Coordinate multiple Model Services. Use `@Transactional()` for atomicity. See [`nestjs-architecture` § orchestration](../../.agents/skills/nestjs-architecture/references/orchestration-pattern.md).
 
 ## Critical Rules
 
@@ -114,5 +114,5 @@ A model service exists to generate UIDs, enforce invariants, translate payloads,
 
 - [`architecture/backend-controller-pattern-nestjs`](backend-controller-pattern-nestjs.md) — Controller patterns
 - [`architecture/database-patterns`](database-patterns.md) — Transactions, soft delete, locking
-- [`repository-pattern-nestjs`](../../.agents/skills/repository-pattern-nestjs/SKILL.md) — Complex private persistence providers
+- [`nestjs-architecture § repository`](../../.agents/skills/nestjs-architecture/references/repository-pattern.md) — Complex private persistence providers
 - [`data-validation`](../../.agents/skills/data-validation/SKILL.md) — Input validation patterns

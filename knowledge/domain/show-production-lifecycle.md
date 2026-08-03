@@ -213,7 +213,7 @@ Do not duplicate guidance from these skills. Reference them for their owned doma
 | Fact extraction from task submissions | `fact-extraction-pipeline` | Extractor implementation, SystemFactKey catalog |
 | Review screen composition (read-only surfaces) | `operations-review-surface` | UI surface patterns, operational-day window |
 | Shift CRUD, duty-manager coverage | `shift-schedule-pattern` | Staff scheduling mechanics |
-| Multi-service orchestration patterns | `orchestration-service-nestjs` | Generic backend architecture |
+| Multi-service orchestration patterns | `nestjs-architecture` § orchestration | Generic backend architecture |
 | Task template schema, builder UI | `task-template-builder` | Template CRUD and draft persistence |
 | SystemFactKey catalog expansion | `template-system-fact-migration` | Fact key bindings |
 

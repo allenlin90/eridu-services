@@ -1,6 +1,6 @@
 # erify_api hardening program — deferred work
 
-The `erify_api` hardening program (WI-01…WI-34, PRs #157–#200) is **complete**; the planning docs were retired and the methodology, patterns, decisions, and concerns live in skills (`codebase-hardening-program`, `repository-pattern-nestjs`, `service-pattern-nestjs`, `database-patterns`).
+The `erify_api` hardening program (WI-01…WI-34, PRs #157–#200) is **complete**; the planning docs were retired and the methodology, patterns, decisions, and concerns live in skills (`codebase-hardening-program`, `nestjs-architecture`, `database-patterns`).
 
 This register tracks only the **actionable work** that was deliberately deferred, so it isn't lost. Rationale/patterns live in the linked skill — this is the "do later" list.
 

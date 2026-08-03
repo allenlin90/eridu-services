@@ -11,7 +11,7 @@ Current authorization implementation patterns for erify_api.
 - [Authorization Guide](../../../apps/erify_api/docs/design/AUTHORIZATION_GUIDE.md)
 - [Planned RBAC patterns](references/planned-rbac.md) — future reference only, not implemented
 - `authentication-authorization-nestjs` for broader auth guidance
-- `backend-controller-pattern-nestjs` for controller/decorator usage
+- [`nestjs-architecture` § controller](../nestjs-architecture/references/controller-pattern.md) for controller/decorator usage
 
 ## Implementation Status
 
@@ -89,5 +89,5 @@ assertions in the guard's authentication, membership, or role checks.
 ## Related Skills
 
 - [Authentication Authorization NestJS](../authentication-authorization-nestjs/SKILL.md) — Comprehensive auth patterns
-- [Controller Pattern](../backend-controller-pattern-nestjs/SKILL.md) — Auth decorators usage
+- [Controller Pattern](../nestjs-architecture/references/controller-pattern.md) — Auth decorators usage
 - [Data Validation](../data-validation/SKILL.md) — Input validation

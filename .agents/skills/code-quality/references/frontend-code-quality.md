@@ -1,11 +1,6 @@
----
-name: frontend-code-quality
-description: Apply React quality standards for lint rules, file structure, naming, form contracts, and components over 200 lines.
----
-
 # Frontend Code Quality
 
-Quality standards for frontend applications. See [references/code-quality-details.md](references/code-quality-details.md) for detailed patterns and code examples.
+Quality standards for frontend applications. See [frontend-quality-details.md](frontend-quality-details.md) for detailed patterns and code examples.
 
 ## Linting & Testing
 
@@ -85,5 +80,5 @@ Keep it about responsibilities and data flow, not a line-by-line restatement of 
 
 ## Related Skills
 
-- [frontend-tech-stack](../frontend-tech-stack/SKILL.md) — Tech stack
-- [table-view-pattern](../table-view-pattern/SKILL.md) — Table patterns
+- [frontend-tech-stack](../../frontend-tech-stack/SKILL.md) — Tech stack
+- [frontend-ui-components § table view](../../frontend-ui-components/references/table-view-pattern.md) — Table patterns

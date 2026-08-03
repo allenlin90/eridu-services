@@ -57,4 +57,4 @@ Use `loading="lazy"` and responsive `srcSet`/`sizes`.
 ## Related Skills
 
 - [frontend-tech-stack](../frontend-tech-stack/SKILL.md) — Tech stack
-- [table-view-pattern](../table-view-pattern/SKILL.md) — Infinite scroll and table surfaces
+- [frontend-ui-components § table view](../frontend-ui-components/references/table-view-pattern.md) — Infinite scroll and table surfaces

@@ -104,6 +104,6 @@ Assistants should also reference existing domain skills where relevant:
 |---|---|
 | `.agents/skills/operations-review-surface/SKILL.md` | Operational-day review surfaces and read-only review model rules. |
 | `.agents/skills/show-production-lifecycle/SKILL.md` | Show lifecycle, statuses, readiness, cancellation, roles, and lifecycle boundaries. |
-| `.agents/skills/table-view-pattern/SKILL.md` | Table, pagination, filtering, export, and dense view conventions. |
+| `.agents/skills/frontend-ui-components/references/table-view-pattern.md` | Table, pagination, filtering, export, and dense view conventions. |
 | `.agents/skills/engineering-best-practices-enforcer/SKILL.md` | Engineering quality gate for implementation work. |
 | `.agents/skills/agent-instruction-maintenance/SKILL.md` | Maintenance rules for agent instructions and skill updates. |

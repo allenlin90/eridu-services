@@ -239,6 +239,6 @@ Every arrow points toward an **abstraction**, not a **concrete class**.
 ## Related Skills
 
 - **[Design Patterns](../../design-patterns/SKILL.md)**: Architecture and layer boundaries.
-- **[Service Patterns](../../service-pattern-nestjs/SKILL.md)**: NestJS service implementation.
-- **[Repository Patterns](../../repository-pattern-nestjs/SKILL.md)**: Data access patterns.
-- **[Backend Controller Patterns](../../backend-controller-pattern-nestjs/SKILL.md)**: Controller conventions.
+- **[nestjs-architecture § service](../../nestjs-architecture/references/service-pattern.md)**: NestJS service implementation.
+- **[nestjs-architecture § repository](../../nestjs-architecture/references/repository-pattern.md)**: Data access patterns.
+- **[Backend Controller Patterns](../../nestjs-architecture/references/controller-pattern.md)**: Controller conventions.

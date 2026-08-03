@@ -32,7 +32,7 @@ For large frontend route components (roughly >200 LOC or mixed concerns), the st
 5. Preserve route-state behavior parity (`page`, `limit`, `date`, filters) and verify with tests.
 
 Source of truth:
-- `.agents/skills/frontend-code-quality/SKILL.md`
+- `.agents/skills/code-quality/references/frontend-code-quality.md`
 - `.agents/skills/frontend-tech-stack/SKILL.md`
 - `.agents/skills/frontend-testing-patterns/SKILL.md`
 - `.agents/rules/01-general-agent-guidelines.mdc`
@@ -43,7 +43,7 @@ Source of truth:
 For oversized `apps/erify_api` NestJS files, use `.agents/skills/backend-large-file-refactor/SKILL.md`.
 
 Overlap boundary:
-- this is a development principle and decomposition decision guide, not a replacement for `service-pattern-nestjs`, `repository-pattern-nestjs`, `backend-controller-pattern-nestjs`, `code-quality`, or `engineering-best-practices-enforcer`
+- this is a development principle and decomposition decision guide, not a replacement for `nestjs-architecture`, `code-quality`, or `engineering-best-practices-enforcer`
 - use those layer-specific skills for contracts, transaction rules, controller response rules, query ownership, and verification
 - use this skill to decide when private helpers are no longer enough and whether to extract a pure module, injectable collaborator, local schema/types file, or no abstraction
 
@@ -118,7 +118,7 @@ Source of truth:
 > for shallow bounded CRUD and private repositories/query providers for complex
 > persistence. The skills below define correctness for the selected boundary.
 
-### service-pattern-nestjs (PRIMARY)
+### nestjs-architecture § service pattern (PRIMARY)
 
 **Key Rules** (canonical source: `knowledge/architecture/service-pattern-nestjs.md` § 2; the skill is the thin procedure that selects it):
 1. ✅ Schemas MAY import `Prisma` types to DEFINE payload types
@@ -146,7 +146,7 @@ async create(payload: CreateTaskPayload): Promise<Task> {
 
 **This clarifies**: My earlier analysis saying "services shouldn't use Prisma types" is correct for SERVICE layer, but SCHEMA layer CAN derive payloads from Prisma types. The key is the **abstraction boundary**.
 
-### repository-pattern-nestjs (WHEN THE MATRIX SELECTS A REPOSITORY)
+### nestjs-architecture § repository pattern (WHEN THE MATRIX SELECTS A REPOSITORY)
 
 **Key Rules**:
 1. ✅ Create a repository only when persistence complexity earns the seam

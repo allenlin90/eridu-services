@@ -98,7 +98,7 @@ For **every new repository or named repository method**:
 - [ ] Raw SQL (`$executeRaw` / `$queryRaw`) references `@@map`/`@map` names, not model/field names — Prisma does not map raw queries. New raw-SQL methods carry a regression test asserting the literal table name.
 - [ ] Any new "operational day" / relative-date (`today`, `yesterday`, business-day) resolution reuses `OPERATIONAL_DAY_START_HOUR`/`toOperationalDayKey` from `apps/erify_api/src/lib/utils/operational-day.util.ts` — no independent reimplementation of the cutover-hour shift. See `.agents/skills/operations-review-surface/SKILL.md` § Operational-day bucketing.
 
-Full reference: `.agents/skills/erify-api-capability-refactoring/SKILL.md`, `.agents/skills/repository-pattern-nestjs/SKILL.md`
+Full reference: `.agents/skills/erify-api-capability-refactoring/SKILL.md`, `.agents/skills/nestjs-architecture/references/repository-pattern.md`
 
 ### Service checks
 
@@ -106,7 +106,7 @@ Full reference: `.agents/skills/erify-api-capability-refactoring/SKILL.md`, `.ag
 - [ ] Multi-step writes use `@Transactional()` — no manual `tx` passing.
 - [ ] Orchestration services throw `HttpError`; model services return `null` for not-found.
 
-Full reference: `.agents/skills/service-pattern-nestjs/SKILL.md`, `.agents/skills/orchestration-service-nestjs/SKILL.md`
+Full reference: `.agents/skills/nestjs-architecture/references/service-pattern.md`, `.agents/skills/nestjs-architecture/references/orchestration-pattern.md`
 
 ### Controller checks
 
@@ -118,7 +118,7 @@ Full reference: `.agents/skills/service-pattern-nestjs/SKILL.md`, `.agents/skill
 - [ ] Delete endpoints restricted to `ADMIN` unless explicitly approved.
 - [ ] No internal BigInt IDs exposed in API responses.
 
-Full reference: `.agents/skills/backend-controller-pattern-nestjs/SKILL.md`, `.agents/skills/erify-authorization/SKILL.md`
+Full reference: `.agents/skills/nestjs-architecture/references/controller-pattern.md`, `.agents/skills/erify-authorization/SKILL.md`
 
 ### Read-model / report projection checks
 
@@ -184,7 +184,7 @@ Full reference: `.agents/skills/frontend-state-management/SKILL.md`
 - [ ] Nullable prop guards: explicit non-null guard before dereference — no `a?.x === b?.y` then `a.x`.
 - [ ] Route guards and sidebar visibility reference the same access policy source.
 - [ ] i18n strings go through Paraglide — no hardcoded UI copy.
-- [ ] No scattered magic values: repeated viewport/layout offsets (`calc(100vh-Xrem)`, gutters, overlay heights) live in `src/config/layout.ts`; pagination/fetch limits, durations, and similar tunables live in named constants — not duplicated inline. Layout constants hold the **full literal** Tailwind class (JIT-safe). Bespoke single-use composites (e.g. `min(20rem,calc(100vw-2rem))`) may stay inline. See `frontend-code-quality` rules 6–7.
+- [ ] No scattered magic values: repeated viewport/layout offsets (`calc(100vh-Xrem)`, gutters, overlay heights) live in `src/config/layout.ts`; pagination/fetch limits, durations, and similar tunables live in named constants — not duplicated inline. Layout constants hold the **full literal** Tailwind class (JIT-safe). Bespoke single-use composites (e.g. `min(20rem,calc(100vw-2rem))`) may stay inline. See `code-quality` § frontend quality, rules 6–7.
 
 Full reference: `.agents/skills/frontend-ui-components/SKILL.md`, `.agents/skills/frontend-i18n/SKILL.md`
 

@@ -40,7 +40,7 @@ Run when any of these are true:
    - Capture only stable/reusable guidance (avoid one-off task logs).
    - Keep paths/references accurate.
    - When frontend access control/navigation behavior changes, document the shared policy location and guard usage so route guard + sidebar visibility remain aligned.
-   - When frontend pagination behavior is standardized or corrected, update `table-view-pattern` and the relevant review-oriented skill/checklist so future implementations and reviews enforce the same stack.
+   - When frontend pagination behavior is standardized or corrected, update [`frontend-ui-components` § table view](../skills/frontend-ui-components/references/table-view-pattern.md) and the relevant review-oriented skill/checklist so future implementations and reviews enforce the same stack.
    - When decomposing large routes, document the standard boundary split (route container vs hooks vs presentation sections).
    - When route-shell consistency changes, document parent layout boundary + leaf wrapper convention (for example `/system/*` + `AdminLayout`, `studios/$studioId/*` + `PageLayout`).
 
