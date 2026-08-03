@@ -183,7 +183,7 @@ async function validateClaudeCommandNames(repositoryRoot, names) {
   }
 }
 
-async function validateRegistry(repositoryRoot, skillEntries) {
+async function validateRegistry(repositoryRoot, skillEntries, implicitByName) {
   const registryPath = path.join(repositoryRoot, '.agents/agent-skill-registry.yaml')
   let source
   try {
@@ -227,6 +227,121 @@ async function validateRegistry(repositoryRoot, skillEntries) {
         }
       }
     }
+
+    // `implicit` is the registry's declared routing intent; `agents/openai.yaml`
+    // is what Codex actually enforces. Drift between them makes the registry lie.
+    const actualImplicit = implicitByName.get(skillName)
+    if (actualImplicit !== undefined && typeof config.implicit === 'boolean'
+      && config.implicit !== actualImplicit) {
+      errors.push(
+        `${registryPath}: skill "${skillName}" declares implicit: ${config.implicit} but ` +
+          `agents/openai.yaml resolves allow_implicit_invocation: ${actualImplicit}`,
+      )
+    }
+  }
+
+  // Ratchet: `implicit_catalog_ceiling` is the current high-water mark and fails the
+  // build on regression. `implicit_catalog_limit` and `post_consolidation_limit` are
+  // milestone targets we have not reached yet, so they warn rather than block.
+  const implicitCount = [...implicitByName.values()].filter(Boolean).length
+  const ceiling = registry.implicit_catalog_ceiling
+
+  if (typeof ceiling === 'number' && implicitCount > ceiling) {
+    errors.push(
+      `${registryPath}: ${implicitCount} implicitly invocable skills exceed the ` +
+        `implicit_catalog_ceiling of ${ceiling}. Set allow_implicit_invocation: false on the ` +
+        `new skill, or lower the ceiling deliberately if this growth is intended.`,
+    )
+  } else if (typeof ceiling === 'number' && implicitCount < ceiling) {
+    warnings.push(
+      `implicit catalog is down to ${implicitCount} skills; lower implicit_catalog_ceiling ` +
+        `from ${ceiling} to ${implicitCount} to lock in the reduction`,
+    )
+  }
+
+  for (const [field, target] of [
+    ['implicit_catalog_limit', registry.implicit_catalog_limit],
+    ['post_consolidation_limit', registry.post_consolidation_limit],
+  ]) {
+    if (typeof target === 'number' && implicitCount > target) {
+      warnings.push(
+        `${implicitCount} implicitly invocable skills remain above the ${field} target of ${target}`,
+      )
+    }
+  }
+}
+
+const KNOWLEDGE_DIRECTORY = 'knowledge'
+const OKF_VERSION = '0.2'
+const RESERVED_KNOWLEDGE_FILES = new Set(['index.md', 'log.md'])
+
+async function collectKnowledgeConcepts(directory, bundleRoot, found = []) {
+  const entries = await readdir(directory, { withFileTypes: true })
+
+  for (const entry of entries) {
+    const entryPath = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      await collectKnowledgeConcepts(entryPath, bundleRoot, found)
+    } else if (entry.name.endsWith('.md') && !RESERVED_KNOWLEDGE_FILES.has(entry.name)) {
+      found.push(path.relative(bundleRoot, entryPath))
+    }
+  }
+
+  return found
+}
+
+/**
+ * Enforce the strict OKF v0.2 profile from docs/engineering/OKF_AGENT_CONTRACT.md:
+ * fenced YAML frontmatter (not body prose), okf_version only at the bundle root,
+ * a non-empty `type` and `description` on every concept, and index coverage.
+ */
+async function validateKnowledgeBundle(repositoryRoot) {
+  const bundleRoot = path.join(repositoryRoot, KNOWLEDGE_DIRECTORY)
+  const indexPath = path.join(bundleRoot, 'index.md')
+
+  let indexContent
+  try {
+    indexContent = await readFile(indexPath, 'utf8')
+  } catch {
+    errors.push(`${indexPath}: knowledge bundle root index.md is missing`)
+    return
+  }
+
+  const indexMetadata = extractFrontmatter(indexContent, indexPath)
+  if (indexMetadata && indexMetadata.okf_version !== OKF_VERSION) {
+    errors.push(
+      `${indexPath}: bundle root must declare okf_version: "${OKF_VERSION}" in frontmatter ` +
+        `(found ${JSON.stringify(indexMetadata.okf_version)})`,
+    )
+  }
+
+  const concepts = await collectKnowledgeConcepts(bundleRoot, bundleRoot)
+
+  for (const relativePath of concepts.sort()) {
+    const conceptPath = path.join(bundleRoot, relativePath)
+    const content = await readFile(conceptPath, 'utf8')
+    const metadata = extractFrontmatter(content, conceptPath)
+
+    if (!metadata) continue
+
+    if (typeof metadata.type !== 'string' || metadata.type.trim().length === 0) {
+      errors.push(`${conceptPath}: strict OKF v0.2 concept requires a non-empty type`)
+    }
+
+    if (typeof metadata.description !== 'string' || metadata.description.trim().length === 0) {
+      errors.push(`${conceptPath}: concept requires a one-sentence description`)
+    }
+
+    if ('okf_version' in metadata) {
+      errors.push(
+        `${conceptPath}: only the bundle-root index.md carries okf_version`,
+      )
+    }
+
+    const conceptId = relativePath.replace(/\.md$/, '')
+    if (!indexContent.includes(relativePath) && !indexContent.includes(conceptId)) {
+      errors.push(`${indexPath}: concept "${conceptId}" is not listed in the bundle index`)
+    }
   }
 }
 
@@ -237,6 +352,7 @@ async function main() {
     .filter((entry) => entry.isDirectory())
     .sort((left, right) => left.name.localeCompare(right.name))
   const names = new Map()
+  const implicitByName = new Map()
   let totalDescriptionCharacters = 0
   let implicitDescriptionCharacters = 0
   let explicitOnlySkillCount = 0
@@ -260,6 +376,7 @@ async function main() {
     const metadata = extractFrontmatter(content, skillPath)
     const validatedMetadata = validateMetadata(metadata, entry.name, skillPath)
     const allowImplicitInvocation = await validateCodexMetadata(skillDirectory)
+    implicitByName.set(entry.name, allowImplicitInvocation)
 
     if (validatedMetadata) {
       totalDescriptionCharacters += validatedMetadata.description.length
@@ -283,7 +400,8 @@ async function main() {
   }
 
   await validateClaudeCommandNames(repositoryRoot, names)
-  await validateRegistry(repositoryRoot, entries)
+  await validateRegistry(repositoryRoot, entries, implicitByName)
+  await validateKnowledgeBundle(repositoryRoot)
 
   if (implicitDescriptionCharacters > CODEX_FALLBACK_CATALOG_BUDGET) {
     warnings.push(

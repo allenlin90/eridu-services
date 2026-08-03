@@ -5,7 +5,7 @@
 
 **Quick links**
 
-- **Lifecycle model** (read first): [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — state machine, entity relationships, readiness conditions, and operating roles
+- **Lifecycle model** (read first): [`knowledge/domain/show-production-lifecycle`](../../knowledge/domain/show-production-lifecycle.md) — state machine, entity relationships, readiness conditions, and operating roles
 - **State-gate detail**: [`references/state-gates.md`](../../.agents/skills/show-production-lifecycle/references/state-gates.md) — full condition inventory per transition
 - **Phase 4**: [PHASE_4.md](./PHASE_4.md) — upstream phase (P&L Visibility & Creator Operations)
 - **Phase 6 deferrals**: [PHASE_6.md](./PHASE_6.md) — Tracks A/B/C + Phase 4/5 deferrals
@@ -216,7 +216,7 @@ The design must define the "import review status" shape that item 12's completio
 
 ### 11. Advisory planning readiness checklist
 
-**Source**: [`show-production-lifecycle`](../../.agents/skills/show-production-lifecycle/SKILL.md) skill — Lifecycle Phases §1, Readiness Conditions; [`references/state-gates.md`](../../.agents/skills/show-production-lifecycle/references/state-gates.md)
+**Source**: [`knowledge/domain/show-production-lifecycle`](../../knowledge/domain/show-production-lifecycle.md) — Lifecycle Phases §1, Readiness Conditions; [`references/state-gates.md`](../../.agents/skills/show-production-lifecycle/references/state-gates.md)
 
 Aggregate existing planning signals into one advisory checklist for the current planning surfaces: room assigned, creators assigned from a reliable roster intake path, platforms assigned, required task stages generated, and required tasks assigned to operators. This extends `/task-setup` and show detail/list readiness; it does not create a transition gate or new data model.
 

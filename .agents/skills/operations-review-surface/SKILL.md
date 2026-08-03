@@ -118,7 +118,7 @@ Worse, a single selector can conflate **two distinct data-model concepts**. The 
 
 ## Per-tab "export the full filtered set" CSV
 
-Each tab's Export action exports **every matching row across the filter, not the visible page** (see [`table-view-pattern` § Current-View Export](../table-view-pattern/SKILL.md) for the mechanics):
+Each tab's Export action exports **every matching row across the filter, not the visible page** (see [`table-view-pattern` § Current-View Export](../../../knowledge/engineering/table-view-pattern.md#current-view-export) for the mechanics):
 
 - Refetch the tab's endpoint with the **same active filters** and `limit = total` (the count from the tab's cached list query), then serialize client-side via shared `@/lib/csv` + `@/lib/file-download`.
 - One shared `runTabExport<TRow>(tab, total, filters, fetcher, exporter)` helper in the view model — do not write four near-identical export handlers with their own try/catch.

@@ -85,7 +85,7 @@ Task Review → choose the show operational-day range → review submitted tasks
 
 **Client-side partition tabs**: `All Tasks`, `Ready for Approval`, and `Needs Attention` are pure client-side filters over `summaryData`. Phase-specific exception cards (`Pre-Production`, `On-Air`, `Post-Production`) each set a distinct `activeFilter` value (`pre-prod-attention`, `on-air-attention`, `post-prod-attention`) so managers can drill into a specific phase.
 
-**Pagination override**: Because `summaryData` can contain more rows than the server-paginated `useStudioTasks` query (due to undated tasks), the route exposes `setPageCount` from `useStudioTasks` and, once `summaryData` resolves, overrides the URL-state page count with the merged `pageCount`. This prevents `useTableUrlState` from silently clamping `pageIndex` to the smaller server range. See `table-view-pattern` skill § Merged-Dataset Pagination.
+**Pagination override**: Because `summaryData` can contain more rows than the server-paginated `useStudioTasks` query (due to undated tasks), the route exposes `setPageCount` from `useStudioTasks` and, once `summaryData` resolves, overrides the URL-state page count with the merged `pageCount`. This prevents `useTableUrlState` from silently clamping `pageIndex` to the smaller server range. See [`knowledge/engineering/table-view-pattern` § Merged-Dataset Pagination](../../../knowledge/engineering/table-view-pattern.md#merged-dataset-pagination).
 
 ### 10. Show Run Review (Admin/Manager)
 Show Run Review → choose operational day range → review submitted show records after task approval and export filtered operational rows. The page focuses on manager-friendly checks: shows happened, creators showed up, and streams stayed clean.

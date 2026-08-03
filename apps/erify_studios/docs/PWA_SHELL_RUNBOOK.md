@@ -17,7 +17,7 @@ Push notification delivery is tracked in the [Operational Notifications and PWA 
 - Asset-like requests, including `.css`, `.js`, images, and the web manifest, must never use the SPA fallback. A missing asset must return 404 instead of HTML.
 - This boundary prevents a CDN from caching `index.html` under a hashed asset URL during a deployment overlap, which would make the app appear unstyled or fail with MIME-type errors.
 - If an asset URL was already poisoned, purge that exact URL from the external CDN after deploying the corrected server configuration.
-- See [`pwa-best-practices` skill § Static Hosting / SPA Fallback](../../../.agents/skills/pwa-best-practices/SKILL.md) for the pattern and the browser-cache verification gotcha before changing this again.
+- See [`knowledge/engineering/pwa-best-practices` § Static Hosting / SPA Fallback](../../../knowledge/engineering/pwa-best-practices.md#static-hosting--spa-fallback-cdn-cache-poisoning-prevention) for the pattern and the browser-cache verification gotcha before changing this again.
 
 ## Update Policy
 

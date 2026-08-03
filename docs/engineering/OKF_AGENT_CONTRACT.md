@@ -39,7 +39,7 @@ The bundle-root `index.md` is the only `index.md` that should carry version fron
 
 Apply strict v0.2 conformance to:
 
-- the future `knowledge/` tree after a bundle is introduced;
+- the `knowledge/` tree, which is a live strict v0.2 bundle declaring `okf_version: "0.2"` at its root [`index.md`](../../knowledge/index.md);
 - a separate private repository containing a bundle that declares `okf_version: "0.2"`;
 - generated publication artifacts derived from a canonical v0.2 bundle.
 

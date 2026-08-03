@@ -169,13 +169,24 @@ This category means “not yet an obvious move candidate,” not “already idea
 
 ### Thin skill plus extracted knowledge
 
+**Extracted (live in [`knowledge/`](../../knowledge/index.md) as strict OKF v0.2 concepts):**
+
+| Skill | Knowledge concept |
+| --- | --- |
+| `backend-controller-pattern-nestjs` | [`architecture/backend-controller-pattern-nestjs`](../../knowledge/architecture/backend-controller-pattern-nestjs.md) |
+| `database-patterns` | [`architecture/database-patterns`](../../knowledge/architecture/database-patterns.md) |
+| `design-patterns` | [`architecture/design-patterns`](../../knowledge/architecture/design-patterns.md) |
+| `frontend-tech-stack` | [`engineering/frontend-tech-stack`](../../knowledge/engineering/frontend-tech-stack.md) |
+| `pwa-best-practices` | [`engineering/pwa-best-practices`](../../knowledge/engineering/pwa-best-practices.md) |
+| `service-pattern-nestjs` | [`architecture/service-pattern-nestjs`](../../knowledge/architecture/service-pattern-nestjs.md) |
+| `show-production-lifecycle` | [`domain/show-production-lifecycle`](../../knowledge/domain/show-production-lifecycle.md) |
+| `table-view-pattern` | [`engineering/table-view-pattern`](../../knowledge/engineering/table-view-pattern.md) |
+
+**Pending extraction:**
+
 - `ai-workspace-control-plane`
-- `database-patterns`
-- `design-patterns`
-- `frontend-tech-stack`
 - `operations-review-surface`
 - `shift-schedule-pattern`
-- `show-production-lifecycle`
 - `task-template-builder`
 
 Expected pattern:
@@ -191,13 +202,17 @@ references/...
   implementation depth needed only after selecting the skill
 ```
 
-The first extraction pilot uses:
-
-1. `frontend-tech-stack` — engineering stack knowledge.
-2. `design-patterns` — architecture doctrine and pattern-selection knowledge.
-3. `show-production-lifecycle` — business-domain lifecycle knowledge.
+The first extraction pilot covered `frontend-tech-stack` (engineering stack knowledge), `design-patterns` (architecture doctrine), and `show-production-lifecycle` (business-domain lifecycle), then extended to the five other concepts in the table above.
 
 Each extraction must land with the skill or reasoning consumer that retrieves and applies the new canonical source.
+
+**Extraction rules learned from the pilot** — every one of these was violated on the first attempt and caught in review:
+
+- **Move content verbatim.** Resummarizing doctrine into a four-step procedure deletes rules; it does not extract them. If the concept is shorter than what it replaced, content was lost.
+- **Thinning a `SKILL.md` body saves no catalog tokens.** `pnpm agents:validate` counts frontmatter `description` characters only. Deleting body content buys nothing.
+- **Verify every code-level claim against source.** State values, guard names, and component names written from memory come out wrong; structural validation will not catch it.
+- **Preserve cited section numbering** and repoint every citing document in the same PR.
+- **Keep `references/` reachable** from either the thin skill or the knowledge concept.
 
 ### Workflow wrappers
 

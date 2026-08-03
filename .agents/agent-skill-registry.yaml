@@ -3,6 +3,18 @@
 # Authoritative taxonomy mapping for .agents/skills/ in eridu-services monorepo
 
 version: 1
+
+# Enforced by scripts/validate-agent-skills.mjs.
+#
+# implicit_catalog_ceiling — current high-water mark. Exceeding it FAILS validation,
+#   so a new skill cannot silently grow the implicit catalog. Lower it whenever the
+#   count drops; the validator warns when the ceiling is above the actual count.
+# implicit_catalog_limit / post_consolidation_limit — milestone targets from
+#   .agents/README.md § Target Catalog. Not reached yet, so they warn rather than block.
+#
+# Character budget is tracked separately: Codex's fallback catalog holds ~8,000
+# characters of implicit descriptions, which is a different constraint from skill count.
+implicit_catalog_ceiling: 69
 implicit_catalog_limit: 50
 post_consolidation_limit: 35
 
