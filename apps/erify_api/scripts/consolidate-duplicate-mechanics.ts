@@ -392,7 +392,9 @@ export async function runConsolidation({
     // PrismaService injects ConfigService; without a real ConfigModule.forRoot()
     // registration somewhere in the tree, Nest has no provider for it and the
     // injector passes `undefined`, crashing PrismaService's constructor.
-    // Mirrors the real AppModule's setup (src/app.module.ts) exactly.
+    // Mirrors the real AppModule's setup (src/app.module.ts) exactly, including
+    // the env schema validation, so a missing/invalid DATABASE_URL fails loudly
+    // here the same way it would in the real app.
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
