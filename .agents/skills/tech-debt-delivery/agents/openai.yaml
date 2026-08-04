@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tech Debt Delivery"
+  short_description: "Deliver one accepted tech debt item through to a reviewed PR"
+  default_prompt: "Use $tech-debt-delivery to fix an accepted docs/tech-debt item, verify it, open the PR, and run the pr-ready gate."
+policy:
+  allow_implicit_invocation: false

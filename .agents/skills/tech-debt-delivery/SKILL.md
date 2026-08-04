@@ -1,15 +1,15 @@
 ---
 name: tech-debt-delivery
-description: End-to-end workflow to select, fix, verify, commit, push, create a GitHub PR with diagrams if needed, and run /pr-ready for tech debt items.
+description: Deliver an accepted docs/tech-debt item end to end - fix, verify, branch, PR, and review gate. Use when explicitly picking up tech debt.
 ---
 
 # Tech Debt Delivery
 
-Bridge to the canonical [Tech Debt Resolution and PR Delivery Workflow](../../workflows/tech-debt-delivery.md).
+Bridge to the canonical [tech debt delivery workflow](../../workflows/tech-debt-delivery.md). Do not duplicate its steps or verification commands here.
 
 1. Read the workflow completely at the start of every invocation.
-2. Pick up an accepted tech debt from `docs/tech-debt/` or fix the target specified by the user.
-3. Implement surgical fixes and update/reconcile tech debt docs and skills.
-4. Execute verification commands (`typecheck`, `lint`, `test`, `agents:validate`, `lint:markdown`, `sherif`).
-5. Commit, push branch to origin, and create the PR using `gh pr create` with diagrams when needed.
-6. Execute the `/pr-ready` review gate and output the final readiness verdict.
+2. Resolve the target: an accepted entry under `docs/tech-debt/`, or the item the user named.
+3. Execute every applicable step, verification command, and confirmation gate in the workflow.
+4. Return the `pr-ready` verdict with the PR link and verification evidence.
+
+Treat the workflow as the sole process source of truth. Update this skill only when its routing or bridge behavior changes.
