@@ -70,14 +70,23 @@ export class SceneProfileService extends BaseModelService {
    * caller's belief and the current state — never silently creates a second
    * row or silently overwrites an unrelated version.
    */
-  @Transactional()
   async saveProfileForClient(
     clientUid: string,
     payload: SaveSceneProfilePayload,
     context: SceneProfileMutationContext,
   ): Promise<SceneProfileRecord> {
-    const actor = await this.resolveActor(context.actorExtId);
     const verified = await this.assertSceneReferenceUpload(payload, context.actorExtId);
+    return this.saveProfileForClientInTx(clientUid, payload, context, verified);
+  }
+
+  @Transactional()
+  private async saveProfileForClientInTx(
+    clientUid: string,
+    payload: SaveSceneProfilePayload,
+    context: SceneProfileMutationContext,
+    verified: { mimeType: string; fileSize: number },
+  ): Promise<SceneProfileRecord> {
+    const actor = await this.resolveActor(context.actorExtId);
     const verifiedPayload: SaveSceneProfilePayload = {
       ...payload,
       mimeType: verified.mimeType,
