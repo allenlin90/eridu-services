@@ -105,7 +105,11 @@ Additional rules:
    - `file_url` equals `StorageService.resolvePublicFileUrl(object_key)` — the deterministic public URL derived from the key, not an attacker-chosen value.
 2. **R2 existence probe** — once the structural checks pass, `StorageService.headObject(objectKey)` performs a real `HeadObjectCommand` against R2 and returns `null` for a missing object (rejected as not-found) or the R2-observed `{contentType, contentLength}` for an existing one. The service then validates that pair against `SCENE_PROFILE_ALLOWED_MIME_TYPES`/`SCENE_PROFILE_MAX_FILE_SIZE_BYTES` and uses the **R2-observed** values — not the client's claimed `mime_type`/`file_size` — as what gets persisted. The client-claimed values still earn a cheap pre-flight 400 (schema validation) before the network round-trip, but the stored record reflects what R2 actually has.
 
-`assertSceneReferenceUpload` runs outside `saveProfileForClient`'s `@Transactional()` boundary (in `saveProfileForClient`, before delegating to `saveProfileForClientInTx`), so the R2 round-trip completes before opening the Postgres transaction. Always verify uploads before entering a transactional write boundary for new code.
+Together this means a forged payload can only ever point at a real, actor-owned key in the presign-owned namespace, rendered through the canonical public URL, and it must exist in R2 with an allowed content type/size before it is accepted. `StorageService.resolvePublicFileUrl` is the promoted-public form of the private `buildPublicFileUrl` used internally by `generatePresignedUploadUrl`; `sanitizeActorIdForObjectKey` and `headObject` are the promoted-public forms used to verify a client-supplied key/URL against the calling actor and against real R2 state. Reuse all three for any future write path that needs the same guarantee.
+
+`assertSceneReferenceUpload` runs outside `saveProfileForClient`'s `@Transactional()` boundary — `saveProfileForClient` resolves the actor and verifies the upload first, then delegates to the transactional `saveProfileForClientInTx`, so the R2 round-trip completes before the Postgres transaction opens. Always verify an upload before entering a transactional write boundary in new code.
+
+## Checklist: Adding a New Use Case
 
 - [ ] Add enum value to `FILE_UPLOAD_USE_CASE` in `packages/api-types/src/uploads/schemas.ts`
 - [ ] Add entry to `FILE_UPLOAD_USE_CASE_RULES` in `packages/api-types/src/uploads/schemas.ts`
