@@ -317,6 +317,7 @@ Each extraction must land with the skill or reasoning consumer that retrieves an
 - `pr-ready`
 - `repository-health`
 - `tdd`
+- `tech-debt-delivery`
 - `to-issues`
 - `to-prd`
 - `triage`

@@ -682,6 +682,14 @@ skills:
     knowledge_sources: []
     migration_status: canonical
 
+  tech-debt-delivery:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: false
+    lifecycle_stage: [ implement, review ]
+    knowledge_sources: [ .agents/workflows/tech-debt-delivery.md ]
+    migration_status: canonical
+
   template-system-fact-migration:
     kind: capability-skill
     authority: procedural
