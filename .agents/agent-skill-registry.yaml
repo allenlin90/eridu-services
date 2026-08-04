@@ -14,7 +14,7 @@ version: 1
 #
 # Character budget is tracked separately: Codex's fallback catalog holds ~8,000
 # characters of implicit descriptions, which is a different constraint from skill count.
-implicit_catalog_ceiling: 57
+implicit_catalog_ceiling: 58
 implicit_catalog_limit: 50
 post_consolidation_limit: 35
 
@@ -679,6 +679,14 @@ skills:
     authority: procedural
     implicit: false
     lifecycle_stage: [ implement ]
+    knowledge_sources: []
+    migration_status: canonical
+
+  tech-debt-delivery:
+    kind: workflow-bridge
+    authority: orchestration
+    implicit: true
+    lifecycle_stage: [ implement, review ]
     knowledge_sources: []
     migration_status: canonical
 
