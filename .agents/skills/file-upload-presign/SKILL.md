@@ -107,7 +107,7 @@ Additional rules:
 
 Together this means a forged payload can only ever point at a real, actor-owned key in the presign-owned namespace, rendered through the canonical public URL, and it must exist in R2 with an allowed content type/size before it is accepted. `StorageService.resolvePublicFileUrl` is the promoted-public form of the private `buildPublicFileUrl` used internally by `generatePresignedUploadUrl`; `sanitizeActorIdForObjectKey` and `headObject` are the promoted-public forms used to verify a client-supplied key/URL against the calling actor and against real R2 state. Reuse all three for any future write path that needs the same guarantee.
 
-`assertSceneReferenceUpload` runs inside `saveProfileForClient`'s `@Transactional()` boundary, so the R2 round-trip currently happens before Prisma writes but still inside the open transaction — see [`scene-qc-profile-save-r2-probe-inside-transaction.md`](../../../docs/tech-debt/scene-qc-profile-save-r2-probe-inside-transaction.md) before copying this pattern into a new transactional write path; prefer verifying the upload before entering the transactional boundary for new code.
+`assertSceneReferenceUpload` runs outside `saveProfileForClient`'s `@Transactional()` boundary — `saveProfileForClient` resolves the actor and verifies the upload first, then delegates to the transactional `saveProfileForClientInTx`, so the R2 round-trip completes before the Postgres transaction opens. Always verify an upload before entering a transactional write boundary in new code.
 
 ## Checklist: Adding a New Use Case
 

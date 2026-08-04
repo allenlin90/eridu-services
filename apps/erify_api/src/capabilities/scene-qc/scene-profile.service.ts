@@ -69,8 +69,13 @@ export class SceneProfileService extends BaseModelService {
    * this version" (replace). Throws 409 on every mismatch between the
    * caller's belief and the current state — never silently creates a second
    * row or silently overwrites an unrelated version.
+   *
+   * Actor resolution and upload verification both run before the
+   * `@Transactional()` boundary: the `headObject` probe is a network round
+   * trip to R2, and holding a pool connection open across it turns R2
+   * slowness into a transaction-timeout 500 where a clean 400/404 was meant.
+   * The transaction covers only the profile write and its audit row.
    */
-  @Transactional()
   async saveProfileForClient(
     clientUid: string,
     payload: SaveSceneProfilePayload,
@@ -84,10 +89,20 @@ export class SceneProfileService extends BaseModelService {
       fileSize: verified.fileSize,
     };
 
+    return this.saveProfileForClientInTx(clientUid, verifiedPayload, context, actor);
+  }
+
+  @Transactional()
+  private async saveProfileForClientInTx(
+    clientUid: string,
+    verifiedPayload: SaveSceneProfilePayload,
+    context: SceneProfileMutationContext,
+    actor: { id: bigint; uid: string },
+  ): Promise<SceneProfileRecord> {
     const existing = await this.getActiveProfileForClient(clientUid);
 
     if (!existing) {
-      if (payload.version !== undefined) {
+      if (verifiedPayload.version !== undefined) {
         throw HttpError.conflict(
           'Scene profile no longer exists. Please refresh your record and try again.',
         );
@@ -97,13 +112,13 @@ export class SceneProfileService extends BaseModelService {
       return created;
     }
 
-    if (payload.version === undefined) {
+    if (verifiedPayload.version === undefined) {
       throw HttpError.conflict(
         'Scene profile already exists. Please refresh your record and try again.',
       );
     }
 
-    const replaced = await this.replaceProfile(clientUid, existing, verifiedPayload, payload.version);
+    const replaced = await this.replaceProfile(clientUid, existing, verifiedPayload, verifiedPayload.version);
     await this.writeAudit('UPDATE', replaced, existing, actor, context.studioUid);
     return replaced;
   }

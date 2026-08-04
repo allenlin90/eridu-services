@@ -193,6 +193,30 @@ describe('sceneProfileService', () => {
 
       expect(delegate.findFirst).not.toHaveBeenCalled();
       expect(auditWriter.recordSceneProfileChange).not.toHaveBeenCalled();
+      expect(mockPrismaForCls.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('finishes the R2 probe before opening the transaction, so R2 latency cannot hold a pool connection', async () => {
+      delegate.findFirst.mockResolvedValue(null);
+      delegate.create.mockResolvedValue(createSceneProfileRecord());
+
+      await service.saveProfileForClient('client_abc', SAVE_PAYLOAD, CONTEXT);
+
+      expect(storageService.headObject).toHaveBeenCalled();
+      expect(mockPrismaForCls.$transaction).toHaveBeenCalled();
+      expect(storageService.headObject.mock.invocationCallOrder[0]).toBeLessThan(
+        mockPrismaForCls.$transaction.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('opens no transaction when the R2 probe rejects the upload', async () => {
+      storageService.headObject.mockResolvedValueOnce(null);
+
+      await expect(
+        service.saveProfileForClient('client_abc', SAVE_PAYLOAD, CONTEXT),
+      ).rejects.toMatchObject({ status: 400 });
+
+      expect(mockPrismaForCls.$transaction).not.toHaveBeenCalled();
     });
 
     it('rejects with 400 and writes no audit when object_key is outside the scene_reference namespace', async () => {
