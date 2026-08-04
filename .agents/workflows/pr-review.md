@@ -91,7 +91,7 @@ For **every new repository or named repository method**:
 3. **Feature doc record** — the same decision must appear in the relevant feature doc (Key Product Decisions or Design Decisions) so it is traceable.
 
 - [ ] Every new repository or named method is justified by the persistence matrix or removed as pass-through ceremony.
-- [ ] All custom queries filter `deletedAt: null` unless `includeDeleted` is explicit.
+- [ ] All custom queries filter `deletedAt: null` unless `includeDeleted` is explicit, or the query is a **historical-snapshot label read** (resolving a uid to the name an already-written immutable record was captured under). That exception must be label-only (`select` uid + name), carry an inline `// Engineering decision:` comment, and have a test asserting the absent filter. See `knowledge/architecture/database-patterns` §1.
 - [ ] No `Prisma.*` types leaking into service method signatures — payload types defined in schema files.
 - [ ] No `findByUidOrThrow` — return `null`, let the controller call `ensureResourceExists()`.
 - [ ] Direct-persistence services keep Prisma operations private and bounded; complex or reusable persistence remains in a private repository/query provider.

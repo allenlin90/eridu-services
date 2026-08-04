@@ -286,6 +286,10 @@ export class ScheduleConflictService {
     const creatorUids = heldBack.showCreators.map((c) => c.creatorUid);
     const platformUids = heldBack.showPlatforms.map((p) => p.platformUid);
 
+    // Engineering decision: these two lookups intentionally omit `deletedAt: null`.
+    // The snapshot is an immutable historical record, so a creator or platform that
+    // is soft-deleted after the conflict was opened must still resolve to the name
+    // the diff was recorded under. `resolveFieldRecord` resolves FK labels the same way.
     const [showFields, creators, platforms] = await Promise.all([
       this.resolveHeldBackShowFields(heldBack.showFields),
       creatorUids.length > 0

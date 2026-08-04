@@ -25,6 +25,17 @@ transaction-aware persistence boundary: `BaseRepository.softDelete()` for an
 existing repository or a scoped `txHost.tx.<model>.update` for shallow direct
 persistence. Add `@@index([deletedAt])`.
 
+The one exception is a **historical-snapshot label read**: resolving a uid to the
+display name it was recorded under, for an immutable record that has already been
+written (audit snapshots, held-back conflict diffs). These deliberately omit
+`deletedAt: null`, because an entity soft-deleted after the snapshot was taken must
+still resolve to the name the record was captured with — filtering it would blank
+out history. Such a read must be a label-only projection (`select` the uid and name,
+never revive a soft-deleted row into live business logic) and carry an inline
+`// Engineering decision:` comment plus a test asserting the absent filter, so the
+deviation cannot be "fixed" back by a later reader. `ScheduleConflictService`'s
+`resolveFieldRecord` and `resolveHeldBackLabels` are the reference implementations.
+
 > 📖 [references/01-soft-delete.md](../../.agents/skills/database-patterns/references/01-soft-delete.md)
 
 ## 2. Bulk Operations
