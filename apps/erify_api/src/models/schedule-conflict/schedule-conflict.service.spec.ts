@@ -93,15 +93,15 @@ describe('scheduleConflictService', () => {
     }));
   });
 
-  it('opens a fresh conflict with resolved creator_name and platform_name', async () => {
-    const heldBack = {
-      showFields: null,
-      showCreators: [{ creatorUid: 'creator_1', action: 'update' as const, oldNote: 'old', newNote: 'new' }],
-      showPlatforms: [{ platformUid: 'platform_1', action: 'update' as const, old: { liveStreamLink: null, platformShowId: null }, new: { liveStreamLink: 'http://link', platformShowId: null } }],
-      proposedStatusTransition: null,
-    };
+  const heldBackWithEntities = {
+    showFields: null,
+    showCreators: [{ creatorUid: 'creator_1', action: 'update' as const, oldNote: 'old', newNote: 'new' }],
+    showPlatforms: [{ platformUid: 'platform_1', action: 'update' as const, old: { liveStreamLink: null, platformShowId: null }, new: { liveStreamLink: 'http://link', platformShowId: null } }],
+    proposedStatusTransition: null,
+  };
 
-    const result = await service.reconcileShowConflict({ ...baseParams, heldBack });
+  it('opens a fresh conflict with resolved creator_name and platform_name', async () => {
+    const result = await service.reconcileShowConflict({ ...baseParams, heldBack: heldBackWithEntities });
 
     expect(result.recorded).toBe(true);
     expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -109,6 +109,31 @@ describe('scheduleConflictService', () => {
         held_back: expect.objectContaining({
           show_creators: [{ creator_uid: 'creator_1', creator_name: 'Alice Host', action: 'update', old_note: 'old', new_note: 'new' }],
           show_platforms: [{ platform_uid: 'platform_1', platform_name: 'Shopee Live', action: 'update', old: { live_stream_link: null, platform_show_id: null }, new: { live_stream_link: 'http://link', platform_show_id: null } }],
+        }),
+      }),
+    }));
+  });
+
+  it('resolves names without excluding soft-deleted creators and platforms', async () => {
+    await service.reconcileShowConflict({ ...baseParams, heldBack: heldBackWithEntities });
+
+    // No `deletedAt` filter: a historical diff must keep the name it was recorded under
+    // even after the creator or platform is soft-deleted.
+    expect(mockTx.creator.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { uid: { in: ['creator_1'] } } }));
+    expect(mockTx.platform.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { uid: { in: ['platform_1'] } } }));
+  });
+
+  it('falls back to a null name when a held-back uid does not resolve', async () => {
+    mockTx.creator.findMany.mockResolvedValue([]);
+    mockTx.platform.findMany.mockResolvedValue([]);
+
+    await service.reconcileShowConflict({ ...baseParams, heldBack: heldBackWithEntities });
+
+    expect(auditService.create).toHaveBeenCalledWith(expect.objectContaining({
+      metadata: expect.objectContaining({
+        held_back: expect.objectContaining({
+          show_creators: [expect.objectContaining({ creator_uid: 'creator_1', creator_name: null })],
+          show_platforms: [expect.objectContaining({ platform_uid: 'platform_1', platform_name: null })],
         }),
       }),
     }));

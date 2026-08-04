@@ -275,42 +275,35 @@ export class ScheduleConflictService {
   }
 
   /**
-   * Resolves every FK-backed field in `held_back.show_fields` to `{uid, name}`
-   * before it's written into `Audit.metadata` — this must happen at write
-   * time since the API later serializes the stored JSON directly (spec line 64).
+   * Resolves every FK-backed field in `held_back.show_fields`, plus each
+   * held-back creator/platform uid, to a display name before it's written into
+   * `Audit.metadata` — this must happen at write time since the API later
+   * serializes the stored JSON directly (spec line 64). Soft-deleted creators
+   * and platforms are deliberately still resolved so a historical diff keeps
+   * the name it was recorded under.
    */
   private async resolveHeldBackLabels(heldBack: ScheduleConflictHeldBack): Promise<StaleConflictMetadata['held_back']> {
-    const showFields = heldBack.showFields
-      ? {
-          changed_fields: heldBack.showFields.changedFields,
-          old: await this.resolveFieldRecord(heldBack.showFields.changedFields, heldBack.showFields.old),
-          new: await this.resolveFieldRecord(heldBack.showFields.changedFields, heldBack.showFields.new),
-        }
-      : null;
-
     const creatorUids = heldBack.showCreators.map((c) => c.creatorUid);
-    const creatorNameMap = new Map<string, string>();
-    if (creatorUids.length > 0) {
-      const creators = await this.txHost.tx.creator.findMany({
-        where: { uid: { in: creatorUids } },
-        select: { uid: true, name: true },
-      });
-      for (const c of creators) {
-        creatorNameMap.set(c.uid, c.name);
-      }
-    }
-
     const platformUids = heldBack.showPlatforms.map((p) => p.platformUid);
-    const platformNameMap = new Map<string, string>();
-    if (platformUids.length > 0) {
-      const platforms = await this.txHost.tx.platform.findMany({
-        where: { uid: { in: platformUids } },
-        select: { uid: true, name: true },
-      });
-      for (const p of platforms) {
-        platformNameMap.set(p.uid, p.name);
-      }
-    }
+
+    const [showFields, creators, platforms] = await Promise.all([
+      this.resolveHeldBackShowFields(heldBack.showFields),
+      creatorUids.length > 0
+        ? this.txHost.tx.creator.findMany({
+            where: { uid: { in: creatorUids } },
+            select: { uid: true, name: true },
+          })
+        : Promise.resolve([]),
+      platformUids.length > 0
+        ? this.txHost.tx.platform.findMany({
+            where: { uid: { in: platformUids } },
+            select: { uid: true, name: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const creatorNameMap = new Map(creators.map((c): [string, string] => [c.uid, c.name]));
+    const platformNameMap = new Map(platforms.map((p): [string, string] => [p.uid, p.name]));
 
     return {
       show_fields: showFields,
@@ -330,6 +323,21 @@ export class ScheduleConflictService {
       })),
       proposed_status_transition: heldBack.proposedStatusTransition,
     };
+  }
+
+  private async resolveHeldBackShowFields(
+    showFields: ScheduleConflictHeldBack['showFields'],
+  ): Promise<StaleConflictMetadata['held_back']['show_fields']> {
+    if (!showFields) {
+      return null;
+    }
+
+    const [old, next] = await Promise.all([
+      this.resolveFieldRecord(showFields.changedFields, showFields.old),
+      this.resolveFieldRecord(showFields.changedFields, showFields.new),
+    ]);
+
+    return { changed_fields: showFields.changedFields, old, new: next };
   }
 
   private async resolveFieldRecord(
