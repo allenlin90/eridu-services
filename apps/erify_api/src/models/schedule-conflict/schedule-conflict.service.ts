@@ -36,12 +36,14 @@ type StaleConflictMetadata = {
     show_fields: { changed_fields: string[]; old: Record<string, unknown>; new: Record<string, unknown> } | null;
     show_creators: Array<{
       creator_uid: string;
+      creator_name?: string | null;
       action: 'update' | 'remove';
       old_note: string | null;
       new_note: string | null;
     }>;
     show_platforms: Array<{
       platform_uid: string;
+      platform_name?: string | null;
       action: 'update' | 'remove';
       old: { live_stream_link: string | null; platform_show_id: string | null };
       new: { live_stream_link: string | null; platform_show_id: string | null };
@@ -273,35 +275,73 @@ export class ScheduleConflictService {
   }
 
   /**
-   * Resolves every FK-backed field in `held_back.show_fields` to `{uid, name}`
-   * before it's written into `Audit.metadata` — this must happen at write
-   * time since the API later serializes the stored JSON directly (spec line 64).
+   * Resolves every FK-backed field in `held_back.show_fields`, plus each
+   * held-back creator/platform uid, to a display name before it's written into
+   * `Audit.metadata` — this must happen at write time since the API later
+   * serializes the stored JSON directly (spec line 64). Soft-deleted creators
+   * and platforms are deliberately still resolved so a historical diff keeps
+   * the name it was recorded under.
    */
   private async resolveHeldBackLabels(heldBack: ScheduleConflictHeldBack): Promise<StaleConflictMetadata['held_back']> {
-    const showFields = heldBack.showFields
-      ? {
-          changed_fields: heldBack.showFields.changedFields,
-          old: await this.resolveFieldRecord(heldBack.showFields.changedFields, heldBack.showFields.old),
-          new: await this.resolveFieldRecord(heldBack.showFields.changedFields, heldBack.showFields.new),
-        }
-      : null;
+    const creatorUids = heldBack.showCreators.map((c) => c.creatorUid);
+    const platformUids = heldBack.showPlatforms.map((p) => p.platformUid);
+
+    // Engineering decision: these two lookups intentionally omit `deletedAt: null`.
+    // The snapshot is an immutable historical record, so a creator or platform that
+    // is soft-deleted after the conflict was opened must still resolve to the name
+    // the diff was recorded under. `resolveFieldRecord` resolves FK labels the same way.
+    const [showFields, creators, platforms] = await Promise.all([
+      this.resolveHeldBackShowFields(heldBack.showFields),
+      creatorUids.length > 0
+        ? this.txHost.tx.creator.findMany({
+            where: { uid: { in: creatorUids } },
+            select: { uid: true, name: true },
+          })
+        : Promise.resolve([]),
+      platformUids.length > 0
+        ? this.txHost.tx.platform.findMany({
+            where: { uid: { in: platformUids } },
+            select: { uid: true, name: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const creatorNameMap = new Map(creators.map((c): [string, string] => [c.uid, c.name]));
+    const platformNameMap = new Map(platforms.map((p): [string, string] => [p.uid, p.name]));
 
     return {
       show_fields: showFields,
       show_creators: heldBack.showCreators.map((c) => ({
         creator_uid: c.creatorUid,
+        creator_name: creatorNameMap.get(c.creatorUid) ?? null,
         action: c.action,
         old_note: c.oldNote,
         new_note: c.newNote,
       })),
       show_platforms: heldBack.showPlatforms.map((p) => ({
         platform_uid: p.platformUid,
+        platform_name: platformNameMap.get(p.platformUid) ?? null,
         action: p.action,
         old: { live_stream_link: p.old.liveStreamLink, platform_show_id: p.old.platformShowId },
         new: { live_stream_link: p.new.liveStreamLink, platform_show_id: p.new.platformShowId },
       })),
       proposed_status_transition: heldBack.proposedStatusTransition,
     };
+  }
+
+  private async resolveHeldBackShowFields(
+    showFields: ScheduleConflictHeldBack['showFields'],
+  ): Promise<StaleConflictMetadata['held_back']['show_fields']> {
+    if (!showFields) {
+      return null;
+    }
+
+    const [old, next] = await Promise.all([
+      this.resolveFieldRecord(showFields.changedFields, showFields.old),
+      this.resolveFieldRecord(showFields.changedFields, showFields.new),
+    ]);
+
+    return { changed_fields: showFields.changedFields, old, new: next };
   }
 
   private async resolveFieldRecord(
