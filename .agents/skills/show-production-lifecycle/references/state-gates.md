@@ -28,6 +28,43 @@ Planning readiness. The planning manager has reviewed and accepted the show as o
 
 **Current surface (item 11)**: `PlanningReadinessService` (`apps/erify_api/src/show-orchestration/planning-readiness.service.ts`) computes all five conditions above server-side behind the shared `showPlanningReadinessSchema` contract (`@eridu/api-types/shows`), via `GET /studios/:studioId/shows/:id/planning-readiness` (single) and `GET /studios/:studioId/shows/planning-readiness?show_id=...` (bulk-by-ids). Consumed by a Planning Readiness card on show detail and a per-row column on `/task-setup`. `ShowReadinessTriagePanel` / `show-readiness.utils.ts` remain a separate, task-only display fed by `ShiftAlignmentService`'s `task_readiness_warnings` — they are not the readiness authority (see item 11's shared condition contract note in `PHASE_5.md`).
 
+**Request flow**:
+
+```mermaid
+sequenceDiagram
+    participant FE as Task Setup / Show Detail (FE)
+    participant C as StudioShowController
+    participant S as PlanningReadinessService
+    participant Show as ShowService
+    participant Task as TaskService
+
+    FE->>C: GET /shows/planning-readiness?show_id=...
+    C->>S: getPlanningReadinessForShowIds(studioUid, showUids)
+    S->>Show: findMany({studio, uid in showUids},<br/>include: showStandard, showCreators, showPlatforms)
+    S->>Task: mapTasksByShowId(showIds) via show-task-coverage.util.ts
+    S->>S: computeShowTaskCoverage(tasks, standardName) per show
+    S->>S: build 5 conditions (room / creators / platforms / stages / assignment)
+    S-->>C: PlanningReadinessResult[]
+    C-->>FE: showPlanningReadinessSchema[] (snake_case)
+```
+
+**Task-stage / task-assignment decision logic** (the two conditions sourced from `show-task-coverage.util.ts`, shared with `ShiftAlignmentService`):
+
+```mermaid
+flowchart TD
+    T{Tasks targeting this show} -->|none| NM["task_stages_generated: not_met
+tasks_assigned: not_met"]
+    T -->|one or more| ST{Missing SETUP/CLOSURE,
+or premium show missing
+a moderation task?}
+    ST -->|yes| SNM[task_stages_generated: not_met]
+    ST -->|no| SM[task_stages_generated: met]
+    T -->|one or more| AS{Any task with
+no assignee?}
+    AS -->|yes| ANM[tasks_assigned: not_met]
+    AS -->|no| AM[tasks_assigned: met]
+```
+
 ## Transition: confirmed → live
 
 Production readiness. The onset/production manager takes ownership of live execution.
