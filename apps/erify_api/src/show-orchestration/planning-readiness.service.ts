@@ -11,6 +11,11 @@ import { ShowService } from '@/models/show/show.service';
 import { TaskService } from '@/models/task/task.service';
 import { computeShowTaskCoverage, mapTasksByShowId } from '@/show-orchestration/show-task-coverage.util';
 
+// Shared with `PlanningReadinessQueryDto` — the DTO validates this cap at the
+// transport boundary, the service enforces the same cap for callers (e.g. MCP
+// queries) that bypass the HTTP DTO.
+export const PLANNING_READINESS_MAX_BULK_SHOW_IDS = 100;
+
 type LifecycleConditionStatus = (typeof LIFECYCLE_CONDITION_STATUS)[keyof typeof LIFECYCLE_CONDITION_STATUS];
 
 export type PlanningReadinessCondition = {
@@ -52,12 +57,6 @@ function condition(key: string, label: string, met: boolean): PlanningReadinessC
  */
 @Injectable()
 export class PlanningReadinessService {
-  // Bulk lookups take an explicit show-id list from the calling surface
-  // (show detail, or the current task-setup table page) rather than
-  // re-deriving a date-window scope — keeps this capability decoupled from
-  // shift-alignment's planning-window logic.
-  private static readonly MAX_BULK_SHOW_IDS = 100;
-
   constructor(
     private readonly showService: ShowService,
     private readonly taskService: TaskService,
@@ -75,8 +74,8 @@ export class PlanningReadinessService {
     if (showUids.length === 0) {
       return [];
     }
-    if (showUids.length > PlanningReadinessService.MAX_BULK_SHOW_IDS) {
-      throw HttpError.badRequest(`Too many show_id values (max ${PlanningReadinessService.MAX_BULK_SHOW_IDS})`);
+    if (showUids.length > PLANNING_READINESS_MAX_BULK_SHOW_IDS) {
+      throw HttpError.badRequest(`Too many show_id values (max ${PLANNING_READINESS_MAX_BULK_SHOW_IDS})`);
     }
 
     const shows = (await this.showService.findMany({

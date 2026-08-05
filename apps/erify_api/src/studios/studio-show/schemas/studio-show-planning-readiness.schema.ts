@@ -1,7 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
-const MAX_BULK_SHOW_IDS = 100;
+import { PLANNING_READINESS_MAX_BULK_SHOW_IDS } from '@/show-orchestration/planning-readiness.service';
 
 export const planningReadinessQuerySchema = z
   .object({
@@ -10,8 +10,8 @@ export const planningReadinessQuerySchema = z
   .transform((data) => ({
     showIds: Array.isArray(data.show_id) ? data.show_id : [data.show_id],
   }))
-  .refine((data) => data.showIds.length <= MAX_BULK_SHOW_IDS, {
-    message: `Too many show_id values (max ${MAX_BULK_SHOW_IDS})`,
+  .refine((data) => data.showIds.length <= PLANNING_READINESS_MAX_BULK_SHOW_IDS, {
+    message: `Too many show_id values (max ${PLANNING_READINESS_MAX_BULK_SHOW_IDS})`,
     path: ['show_id'],
   });
 

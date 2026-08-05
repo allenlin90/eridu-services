@@ -81,7 +81,7 @@ For field-level detail on each entity, see [references/entity-relationships.md](
 
 **Current surfaces**: `/studios/:studioId/shows` (show list + CRUD), `/studios/:studioId/creators` (creator roster intake), `/studios/:studioId/task-setup` (task generation, assignment, readiness), `/studios/:studioId/creator-mapping` (bulk creator assignment).
 
-**Gap (Phase 5)**: No unified planning readiness checklist for `draft → confirmed`.
+**Planning readiness checklist (Phase 5 item 11)**: `PlanningReadinessService` (`apps/erify_api/src/show-orchestration/planning-readiness.service.ts`) computes room/creators/platforms/task-stage/task-assignment conditions server-side behind the shared `showPlanningReadinessSchema` contract (`@eridu/api-types/shows`), via `GET /studios/:studioId/shows/:id/planning-readiness` (single) and the bulk-by-ids variant. Surfaced on show detail and `/task-setup`. Advisory only — see § Readiness Conditions.
 
 ### 2. Production (confirmed → live → completed)
 
@@ -175,11 +175,11 @@ These conditions are identified for lifecycle gates. Current enforcement is advi
 
 | Condition | Relevant transition | Current status |
 | --- | --- | --- |
-| Room assigned | draft → confirmed | Field exists, not enforced |
-| Creators assigned | draft → confirmed | Field exists, not enforced |
-| Platforms assigned | draft → confirmed | Field exists, not enforced |
-| Required task stages generated | draft → confirmed | Hardcoded check in task-setup |
-| Required tasks assigned to operators | draft → confirmed | Hardcoded check in task-setup |
+| Room assigned | draft → confirmed | Computed server-side by `PlanningReadinessService` (item 11) |
+| Creators assigned | draft → confirmed | Computed server-side by `PlanningReadinessService` (item 11) |
+| Platforms assigned | draft → confirmed | Computed server-side by `PlanningReadinessService` (item 11) |
+| Required task stages generated | draft → confirmed | Computed server-side by `PlanningReadinessService` via shared `show-task-coverage.util.ts` (item 11) |
+| Required tasks assigned to operators | draft → confirmed | Computed server-side by `PlanningReadinessService` via shared `show-task-coverage.util.ts` (item 11) |
 | Duty manager or production owner visible | confirmed → live | Shift coverage readable, not enforced |
 | Post-production tasks submitted/approved | live → completed | Task review exists, not enforced as gate |
 | Required performance facts present | live → completed | Fact extraction exists, not enforced |
