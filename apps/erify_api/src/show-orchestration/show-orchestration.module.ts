@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { CreatorCompensationService } from './creator-compensation.service';
+import { PlanningReadinessService } from './planning-readiness.service';
 import { ShowCancellationGateService } from './show-cancellation-gate.service';
 import { ShowCreatorAssignmentService } from './show-creator-assignment.service';
 import { ShowOrchestrationService } from './show-orchestration.service';
@@ -46,7 +47,14 @@ import { PrismaModule } from '@/prisma/prisma.module';
     ShowPlatformAssignmentService,
     ShowCreatorAssignmentService,
     ShowCancellationGateService,
+    PlanningReadinessService,
   ],
-  exports: [ShowOrchestrationService, ShowRunReviewService, CreatorCompensationService, ShowCancellationGateService],
+  exports: [
+    ShowOrchestrationService,
+    ShowRunReviewService,
+    CreatorCompensationService,
+    ShowCancellationGateService,
+    PlanningReadinessService,
+  ],
 })
 export class ShowOrchestrationModule {}

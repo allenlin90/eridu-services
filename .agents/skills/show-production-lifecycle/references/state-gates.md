@@ -18,17 +18,15 @@ Planning readiness. The planning manager has reviewed and accepted the show as o
 
 | Condition | Where checked today | Enforcement | Notes |
 |---|---|---|---|
-| Room assigned | `show.studioRoomId` is not null | Not enforced | Field exists on Show |
-| Creators assigned | `ShowCreator[]` count > 0 for the show | Not enforced | Visible in creator-mapping surface |
-| Platforms assigned | `ShowPlatform[]` count > 0 for the show | Not enforced | Visible in show detail |
-| Required task stages generated | Hardcoded in `/task-setup` readiness check | Advisory (task-setup surface) | Checks SETUP, ACTIVE, CLOSURE stages by template type |
-| Required tasks assigned to operators | Hardcoded in `/task-setup` assignment readiness | Advisory (task-setup surface) | Checks that generated tasks have assignees |
+| Room assigned | `show.studioRoomId` is not null | Advisory (`PlanningReadinessService`) | |
+| Creators assigned | `ShowCreator[]` count > 0 for the show | Advisory (`PlanningReadinessService`) | Visible in creator-mapping surface |
+| Platforms assigned | `ShowPlatform[]` count > 0 for the show | Advisory (`PlanningReadinessService`) | Visible in show detail |
+| Required task stages generated | Shared `show-task-coverage.util.ts` (also used by `ShiftAlignmentService`) | Advisory (`PlanningReadinessService`) | Checks SETUP/CLOSURE stages, plus moderation for premium shows |
+| Required tasks assigned to operators | Shared `show-task-coverage.util.ts` | Advisory (`PlanningReadinessService`) | Checks that generated tasks have assignees |
 | Critical record-collection tasks assigned | Not checked | Not enforced | Phase 5 candidate |
 | Schedule linkage (if studio requires it) | `show.scheduleId` is not null | Not enforced | Orphan detection available in show list |
 
-**Current surface**: `/studios/:studioId/task-setup` has a `ShowReadinessTriagePanel` that surfaces missing tasks and unassigned shows. This is the closest existing readiness check.
-
-**Gap**: No unified show-level readiness checklist that aggregates all conditions.
+**Current surface (item 11)**: `PlanningReadinessService` (`apps/erify_api/src/show-orchestration/planning-readiness.service.ts`) computes all five conditions above server-side behind the shared `showPlanningReadinessSchema` contract (`@eridu/api-types/shows`), via `GET /studios/:studioId/shows/:id/planning-readiness` (single) and `GET /studios/:studioId/shows/planning-readiness?show_id=...` (bulk-by-ids). Consumed by a Planning Readiness card on show detail and a per-row column on `/task-setup`. `ShowReadinessTriagePanel` / `show-readiness.utils.ts` remain a separate, task-only display fed by `ShiftAlignmentService`'s `task_readiness_warnings` — they are not the readiness authority (see item 11's shared condition contract note in `PHASE_5.md`).
 
 ## Transition: confirmed → live
 

@@ -6,6 +6,11 @@ import { StudioService } from '@/models/studio/studio.service';
 import type { ShiftAlignmentQuery } from '@/models/studio-shift/schemas/studio-shift.schema';
 import { StudioShiftService } from '@/models/studio-shift/studio-shift.service';
 import { TaskService } from '@/models/task/task.service';
+import {
+  computeShowTaskCoverage,
+  mapTasksByShowId,
+  type RequiredTaskType,
+} from '@/show-orchestration/show-task-coverage.util';
 
 type ShiftWithBlocks = Awaited<ReturnType<StudioShiftService['findShiftsInWindow']>>[number];
 type ShowWithPlanningContext = {
@@ -16,8 +21,6 @@ type ShowWithPlanningContext = {
   endTime: Date;
   showStandard: { name: string } | null;
 };
-type TaskWithTargets = Awaited<ReturnType<TaskService['findTasksByShowIds']>>[number];
-
 type TimeInterval = { start: Date; end: Date };
 type ShowWindow = {
   id: bigint;
@@ -34,15 +37,6 @@ type OperationalDayBucket = {
   lastShowEnd: Date;
   shows: ShowWindow[];
 };
-
-// Required coverage baseline:
-// - Standard shows: SETUP + CLOSURE
-// - Premium shows: SETUP + CLOSURE + moderation task
-const REQUIRED_SHOW_TASK_TYPES = ['SETUP', 'CLOSURE'] as const;
-type RequiredTaskType = (typeof REQUIRED_SHOW_TASK_TYPES)[number];
-
-// Convention: shows whose standard name equals this value require a moderation task.
-const PREMIUM_SHOW_STANDARD_NAME = 'premium';
 
 @Injectable()
 export class ShiftAlignmentService {
@@ -123,7 +117,7 @@ export class ShiftAlignmentService {
       query.includePast ?? false,
     );
     const operationalDays = this.groupShowsByOperationalDay(showWindows);
-    const taskMapByShowId = await this.buildTaskMapByShowId(showWindows);
+    const taskMapByShowId = await mapTasksByShowId(this.taskService, showWindows.map((show) => show.id));
 
     const dutyManagerUncoveredSegments: Array<{
       operational_day: string;
@@ -191,21 +185,8 @@ export class ShiftAlignmentService {
       }
 
       const tasks = taskMapByShowId.get(show.id) ?? [];
-      const hasNoTasks = tasks.length === 0;
-      const unassignedTaskCount = tasks.filter((task) => task.assigneeId === null).length;
-      const missingRequiredTaskTypes = hasNoTasks
-        ? REQUIRED_SHOW_TASK_TYPES.map((type) => type as 'SETUP' | 'CLOSURE')
-        : (() => {
-            const presentTypes = new Set(tasks.map((task) => task.type));
-            return REQUIRED_SHOW_TASK_TYPES
-              .filter((requiredType) => !presentTypes.has(requiredType))
-              .map((type) => type as 'SETUP' | 'CLOSURE');
-          })();
-
-      // Premium shows require at least one moderation task.
-      const isPremiumShow = show.standardName.toLowerCase() === PREMIUM_SHOW_STANDARD_NAME;
-      const hasModerationTask = tasks.some((task) => this.isModerationTask(task));
-      const missingModerationTask = isPremiumShow && !hasModerationTask;
+      const { hasNoTasks, unassignedTaskCount, missingRequiredTaskTypes, missingModerationTask }
+        = computeShowTaskCoverage(tasks, show.standardName);
 
       if (hasNoTasks || unassignedTaskCount > 0 || missingRequiredTaskTypes.length > 0 || missingModerationTask) {
         taskReadinessWarnings.push({
@@ -334,45 +315,6 @@ export class ShiftAlignmentService {
     }
 
     return map;
-  }
-
-  private async buildTaskMapByShowId(showWindows: ShowWindow[]): Promise<Map<bigint, TaskWithTargets[]>> {
-    const map = new Map<bigint, TaskWithTargets[]>();
-    if (showWindows.length === 0) {
-      return map;
-    }
-
-    const showIds = showWindows.map((show) => show.id);
-    // Include template for moderation detection and targets for show association.
-    const tasks = await this.taskService.findTasksByShowIds(showIds, {
-      targets: true,
-      template: true,
-    });
-
-    for (const task of tasks) {
-      for (const target of task.targets ?? []) {
-        if (target.targetType !== 'SHOW' || target.deletedAt || !target.showId) {
-          continue;
-        }
-
-        if (!map.has(target.showId)) {
-          map.set(target.showId, []);
-        }
-        map.get(target.showId)!.push(task);
-      }
-    }
-
-    return map;
-  }
-
-  private isModerationTask(task: TaskWithTargets): boolean {
-    if (task.type !== 'ACTIVE') {
-      return false;
-    }
-
-    const schema = task.template?.currentSchema as { metadata?: { loops?: unknown[] } } | null;
-    const loops = schema?.metadata?.loops;
-    return Array.isArray(loops) && loops.length > 0;
   }
 
   private toOperationalDay(value: Date): string {

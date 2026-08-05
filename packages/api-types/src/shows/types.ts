@@ -8,6 +8,7 @@ import type {
   createShowInputSchema,
   createStudioShowInputSchema,
   heldBackPayloadSchema,
+  lifecycleConditionSchema,
   listShowsQuerySchema,
   publishRunRowSchema,
   publishRunSourceSchema,
@@ -21,6 +22,7 @@ import type {
   schedulePublishImpactSummarySchema,
   showApiResponseSchema,
   showListResponseSchema,
+  showPlanningReadinessSchema,
   showRunReviewSummarySchema,
   studioShowDetailSchema,
   studioShowPlatformSummarySchema,
@@ -162,3 +164,5 @@ export type ScheduleConflictType = z.infer<typeof scheduleConflictTypeSchema>;
 export type ScheduleConflictResolutionStatus = z.infer<typeof scheduleConflictResolutionStatusSchema>;
 export type HeldBackPayload = z.infer<typeof heldBackPayloadSchema>;
 export type ResolveScheduleConflictInput = z.infer<typeof resolveScheduleConflictSchema>;
+export type LifecycleCondition = z.infer<typeof lifecycleConditionSchema>;
+export type ShowPlanningReadiness = z.infer<typeof showPlanningReadinessSchema>;

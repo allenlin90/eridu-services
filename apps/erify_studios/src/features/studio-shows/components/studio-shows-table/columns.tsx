@@ -4,7 +4,8 @@ import { Link, useParams } from '@tanstack/react-router';
 import type { ColumnDef } from '@tanstack/react-table';
 import { CheckCircle2, ChevronRight, Clock3, FileQuestion, UserMinus } from 'lucide-react';
 
-import { Badge, Checkbox, DataTableActions, DropdownMenuItem } from '@eridu/ui';
+import type { ShowPlanningReadiness } from '@eridu/api-types/shows';
+import { Badge, Checkbox, DataTableActions, DropdownMenuItem, Tooltip, TooltipContent, TooltipTrigger } from '@eridu/ui';
 
 import type { StudioShow } from '../../api/get-studio-shows';
 import { getShowActualsStatus, toShowActualsServerFilter } from '../../utils/show-actuals.utils';
@@ -139,12 +140,46 @@ function ShowActualsCell({ show }: { show: StudioShow }) {
   return <Badge variant="secondary" className="font-normal">Missing</Badge>;
 }
 
+function PlanningReadinessCell({ readiness }: { readiness: ShowPlanningReadiness | undefined }) {
+  if (!readiness) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+
+  const toneClass = readiness.is_ready
+    ? 'border-green-200 bg-green-50 text-green-700'
+    : 'border-amber-200 bg-amber-50 text-amber-700';
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="outline" className={`font-normal shadow-sm hover:cursor-help ${toneClass}`}>
+          {readiness.met_count}
+          {' / '}
+          {readiness.total_count}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-64 text-xs space-y-1">
+        {readiness.conditions.map((condition) => (
+          <div key={condition.key} className="flex items-center justify-between gap-2">
+            <span>{condition.label}</span>
+            <span className={condition.status === 'met' ? 'text-green-400' : 'text-amber-400'}>
+              {condition.status === 'met' ? 'Met' : 'Not met'}
+            </span>
+          </div>
+        ))}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 type StudioShowOperationsColumnActions = {
   onEditActuals: (show: StudioShow) => void;
+  readinessByShowId?: Map<string, ShowPlanningReadiness>;
 };
 
 export function getStudioShowOperationsColumns({
   onEditActuals,
+  readinessByShowId,
 }: StudioShowOperationsColumnActions): ColumnDef<StudioShow>[] {
   return [
     {
@@ -268,6 +303,11 @@ export function getStudioShowOperationsColumns({
         }
         return <span className="text-xs">Assigned</span>;
       },
+    },
+    {
+      id: 'planning_readiness',
+      header: 'Planning Readiness',
+      cell: ({ row }) => <PlanningReadinessCell readiness={readinessByShowId?.get(row.original.id)} />,
     },
     // Hidden filter-support columns so toolbar filters can bind non-visible fields.
     {

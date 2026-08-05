@@ -9,6 +9,7 @@ import { useUpdateStudioShow } from '@/features/studio-shows/api/update-studio-s
 import { CancelShowDialog } from '@/features/studio-shows/components/cancel-show-dialog';
 import { GateHistory } from '@/features/studio-shows/components/gate-history';
 import { ResolveCancellationDialog } from '@/features/studio-shows/components/resolve-cancellation-dialog';
+import { PlanningReadinessCard } from '@/features/studio-shows/components/show-readiness/planning-readiness-card';
 import type { StudioShowFormValues } from '@/features/studio-shows/components/studio-show-management-form';
 import { StudioShowManagementForm } from '@/features/studio-shows/components/studio-show-management-form';
 import { useStudioShow } from '@/features/studio-shows/hooks/use-studio-show';
@@ -48,9 +49,12 @@ function StudioShowDetailsTab() {
 
   const isReadOnly = role === STUDIO_ROLE.ACCOUNT_MANAGER;
 
+  const canViewPlanningReadiness = role === STUDIO_ROLE.ADMIN || role === STUDIO_ROLE.MANAGER;
+
   return (
     <div className="space-y-3">
       <CancellationResolutionCard studioId={studioId} show={show} />
+      {canViewPlanningReadiness && <PlanningReadinessCard studioId={studioId} showId={show.id} />}
       <div className="rounded-md border bg-background p-3 sm:p-4">
         <StudioShowDetailsForm
           key={`${show.id}:${show.updated_at}:${resetNonce}`}
