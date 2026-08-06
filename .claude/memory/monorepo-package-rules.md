@@ -1,6 +1,7 @@
 # Monorepo Package Rules
 
-> Source: `.cursor/rules/monorepo_packages_guide.mdc` + `.agents/rules/03-monorepo-packages.mdc`
+> Canonical rules: `AGENTS.md` § Monorepo Package Rules + `.agents/rules/03-monorepo-packages.mdc`
+> This file is a detailed worked reference (examples), not a second source of truth.
 > **Reference implementation**: `packages/auth-service` (follows all best practices)
 
 ## Build Output Structure
