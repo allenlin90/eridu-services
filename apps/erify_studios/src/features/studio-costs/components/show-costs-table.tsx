@@ -11,6 +11,7 @@ import {
   Badge,
   Button,
   DataTable,
+  DataTablePagination,
   DataTableToolbar,
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -670,6 +671,17 @@ export function ShowCostsTable({
               </PopoverContent>
             </Popover>
           </DataTableToolbar>
+        )}
+        renderFooter={() => (
+          <DataTablePagination
+            pagination={{
+              pageIndex: page - 1,
+              pageSize: limit,
+              total,
+              pageCount,
+            }}
+            onPaginationChange={handlePaginationChange}
+          />
         )}
       />
     </div>
