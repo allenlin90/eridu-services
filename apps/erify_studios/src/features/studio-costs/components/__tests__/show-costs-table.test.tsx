@@ -141,6 +141,46 @@ describe('showCostsTable', () => {
     expect(screen.getByText(`to ${expectedEndStr}`)).toBeInTheDocument();
   });
 
+  it('renders the pagination footer for the server-paginated result set', () => {
+    render(
+      <ShowCostsTable
+        {...baseProps}
+        total={39}
+        page={1}
+        limit={10}
+        locale="th-TH"
+        currency="THB"
+      />,
+    );
+
+    expect(screen.getByText(/Showing 1 to 10 of 39 entries/)).toBeInTheDocument();
+    expect(screen.getByText(/Page 1 of 4/)).toBeInTheDocument();
+  });
+
+  it('advances the page and resets the page size through the footer controls', () => {
+    const onPageChange = vi.fn();
+    const onLimitChange = vi.fn();
+
+    render(
+      <ShowCostsTable
+        {...baseProps}
+        total={39}
+        page={1}
+        limit={10}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        locale="th-TH"
+        currency="THB"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+    expect(onPageChange).toHaveBeenCalledWith(2);
+
+    fireEvent.change(screen.getByDisplayValue('10'), { target: { value: '20' } });
+    expect(onLimitChange).toHaveBeenCalledWith(20);
+  });
+
   it('toggles warning tooltip popover when clicked/tapped', async () => {
     const showCostWithWarnings = {
       ...mockShowCost,
