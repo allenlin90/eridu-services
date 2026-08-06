@@ -128,6 +128,21 @@ describe('planningReadinessService', () => {
       expect(byKey.tasks_assigned).toBe('met');
     });
 
+    it('excludes soft-deleted shows and soft-deleted studios from the lookup', async () => {
+      showService.findMany.mockResolvedValue([]);
+
+      await service.getPlanningReadinessForShowIds(studioUid, ['show_1']);
+
+      expect(showService.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            studio: { uid: studioUid, deletedAt: null },
+            deletedAt: null,
+          }),
+        }),
+      );
+    });
+
     it('preserves the requested id order and drops ids that were not found', async () => {
       showService.findMany.mockResolvedValue([mockShow({ id: BigInt(2), uid: 'show_2' })]);
 

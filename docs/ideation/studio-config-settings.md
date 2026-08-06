@@ -18,21 +18,26 @@ This document unifies three previously scattered ideation tracks:
 
 ## Hardcoded Configurations & Operational Gaps
 
+> **Canonical home (since PR [#378](https://github.com/allenlin90/eridu-services/pull/378)):** the premium-show rule and moderation detection in §1–§2 live in [`show-task-coverage.util.ts`](../../apps/erify_api/src/show-orchestration/show-task-coverage.util.ts), not `ShiftAlignmentService`. Two surfaces now consume them: `ShiftAlignmentService`'s planning-risk warnings and `PlanningReadinessService`'s advisory readiness checklist (show detail + `/task-setup` column). Make these configurable in that util; both surfaces pick the change up together.
+
 ### 1. Hardcoded Premium Show Identification
-*   **Current Logic:** The backend checks `show.standardName.toLowerCase() === 'premium'`.
+*   **Current Logic:** `PREMIUM_SHOW_STANDARD_NAME = 'premium'` in `show-task-coverage.util.ts`; `computeShowTaskCoverage` checks `showStandardName.toLowerCase() === PREMIUM_SHOW_STANDARD_NAME`.
 *   **The Problem:** Only shows with the exact standard name `"premium"` are evaluated for moderation. If a studio defines other high-priority show types (e.g., `"VIP"`, `"Campaign"`, `"Mega-Sale"`), they cannot be gated without a backend code change.
+*   **Same-shape sibling:** `REQUIRED_SHOW_TASK_TYPES = ['SETUP', 'CLOSURE']` in the same util is the required-stage baseline for every studio, and belongs in the same configuration domain.
 
 ### 2. Hardcoded / Brittle Moderation Task Gating
-*   **Current Logic:**
+*   **Current Logic:** structural, not text-matching — an `ACTIVE` task whose template snapshot carries at least one loop:
     ```typescript
-    private isModerationTask(task: TaskWithTargets): boolean {
-      const moderationPattern = /moderation/i;
-      return moderationPattern.test(task.description ?? '') || moderationPattern.test(task.template?.name ?? '');
+    export function isModerationTask(task: TaskForCoverage): boolean {
+      if (task.type !== 'ACTIVE') {
+        return false;
+      }
+      const schema = task.template?.currentSchema as { metadata?: { loops?: unknown[] } } | null;
+      const loops = schema?.metadata?.loops;
+      return Array.isArray(loops) && loops.length > 0;
     }
     ```
-*   **The Problem:**
-    1.  **Brittle text-matching:** The regex `/moderation/i` fails on `"Moderator Workflow"` templates because the word `"Moderator"` does not contain the substring `"moderation"`. This triggers false alarms in the **Missing required coverage** dashboard card.
-    2.  **Localization & renaming risks:** Relying on free-form names or descriptions means renaming a template or localizing it to other languages (e.g. Thai, Chinese) will break readiness gating entirely, as they won't match English keywords.
+*   **The Problem:** the earlier `/moderation/i` name/description regex — brittle across renames and localization — has already been replaced by the structural check above, so the original text-matching risk is resolved. What remains is that "a template with loops" is an implicit, repo-wide convention for "this is a moderation task": a template author who adds loops for any other reason silently satisfies the premium gate, and a studio cannot declare which template kinds actually count. Per-studio configuration should name the qualifying template kind explicitly rather than infer it from schema shape.
 
 ### 3. Hardcoded Operational Day Boundary
 *   **Current Logic:** `ShiftAlignmentService.OPERATIONAL_DAY_START_HOUR_UTC = 6` (06:00 UTC cutoff).

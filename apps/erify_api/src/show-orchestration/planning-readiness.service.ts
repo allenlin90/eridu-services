@@ -80,7 +80,8 @@ export class PlanningReadinessService {
 
     const shows = (await this.showService.findMany({
       where: {
-        studio: { uid: studioUid },
+        studio: { uid: studioUid, deletedAt: null },
+        deletedAt: null,
         uid: { in: showUids },
       },
       include: {

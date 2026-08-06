@@ -1,11 +1,12 @@
 import { CheckCircle2, CircleDashed, XCircle } from 'lucide-react';
 
+import type { LifecycleCondition } from '@eridu/api-types/shows';
 import { Badge } from '@eridu/ui';
 import { cn } from '@eridu/ui/lib/utils';
 
 import { useShowPlanningReadiness } from '@/features/studio-shows/api/get-show-planning-readiness';
 
-function ConditionIcon({ status }: { status: string }) {
+function ConditionIcon({ status }: { status: LifecycleCondition['status'] }) {
   if (status === 'met') {
     return <CheckCircle2 className="h-4 w-4 text-green-600" />;
   }
