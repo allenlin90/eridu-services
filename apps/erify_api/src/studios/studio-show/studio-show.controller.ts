@@ -26,6 +26,7 @@ import {
   schedulePublishImpactKindSchema,
   schedulePublishImpactRowSchema,
   schedulePublishImpactSummarySchema,
+  showPlanningReadinessSchema,
   showRunReviewCreatorExceptionSchema,
   showRunReviewIncompleteTaskSchema,
   showRunReviewShowsRangeRowSchema,
@@ -56,6 +57,7 @@ import {
 import { showCreatorCompensationSummaryDto } from './schemas/studio-show-creator-compensation-summary.schema';
 import { studioShowCreatorListItemDto } from './schemas/studio-show-creator-list.schema';
 import { UpdateStudioShowCreatorDto } from './schemas/studio-show-creator-update.schema';
+import { PlanningReadinessQueryDto } from './schemas/studio-show-planning-readiness.schema';
 import { ResolveScheduleConflictDto } from './schemas/studio-show-schedule-conflict.schema';
 import { StudioShowManagementService } from './studio-show-management.service';
 
@@ -85,6 +87,8 @@ import {
   taskWithRelationsDto,
 } from '@/models/task/schemas/task.schema';
 import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
+import type { PlanningReadinessResult } from '@/show-orchestration/planning-readiness.service';
+import { PlanningReadinessService } from '@/show-orchestration/planning-readiness.service';
 import type { CancellationStatusResult } from '@/show-orchestration/show-cancellation-gate.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
@@ -298,6 +302,21 @@ function toCancellationStatusApiResponse(status: CancellationStatusResult) {
   };
 }
 
+// `showPlanningReadinessSchema` is snake_case; `PlanningReadinessService`
+// returns camelCase, the same hand-mapping approach as
+// `toCancellationStatusApiResponse` above.
+function toPlanningReadinessApiResponse(result: PlanningReadinessResult) {
+  return {
+    phase: result.phase,
+    show_id: result.showUid,
+    show_name: result.showName,
+    conditions: result.conditions,
+    met_count: result.metCount,
+    total_count: result.totalCount,
+    is_ready: result.isReady,
+  };
+}
+
 @StudioProtected() // All studio members can view
 @Controller('studios/:studioId/shows')
 export class StudioShowController extends BaseStudioController {
@@ -308,6 +327,7 @@ export class StudioShowController extends BaseStudioController {
     private readonly creatorCompensationService: CreatorCompensationService,
     private readonly studioShowManagementService: StudioShowManagementService,
     private readonly clientMechanicService: ClientMechanicService,
+    private readonly planningReadinessService: PlanningReadinessService,
   ) {
     super();
   }
@@ -436,6 +456,18 @@ export class StudioShowController extends BaseStudioController {
   ) {
     const { items, total } = await this.studioShowManagementService.listPublishRuns(studioId, query);
     return this.createPaginatedResponse(items, total, this.toPaginationQuery(query));
+  }
+
+  @Get('planning-readiness')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ReadBurstThrottle()
+  @ZodResponse(z.array(showPlanningReadinessSchema))
+  async planningReadiness(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Query() query: PlanningReadinessQueryDto,
+  ) {
+    const results = await this.planningReadinessService.getPlanningReadinessForShowIds(studioId, query.showIds);
+    return results.map(toPlanningReadinessApiResponse);
   }
 
   @Get(':id')
@@ -572,6 +604,17 @@ export class StudioShowController extends BaseStudioController {
   ) {
     const status = await this.studioShowManagementService.getCancellationStatus(studioId, id);
     return toCancellationStatusApiResponse(status);
+  }
+
+  @Get(':id/planning-readiness')
+  @StudioProtected([STUDIO_ROLE.ADMIN, STUDIO_ROLE.MANAGER])
+  @ZodResponse(showPlanningReadinessSchema)
+  async showPlanningReadiness(
+    @Param('studioId', new UidValidationPipe(StudioService.UID_PREFIX, 'Studio')) studioId: string,
+    @Param('id', new UidValidationPipe(ShowService.UID_PREFIX, 'Show')) id: string,
+  ) {
+    const result = await this.planningReadinessService.getPlanningReadinessForShow(studioId, id);
+    return toPlanningReadinessApiResponse(result);
   }
 
   @Get(':id/mechanics-coverage')

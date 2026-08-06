@@ -23,6 +23,7 @@ import { useShowLookupsQuery } from '@/features/shows/api/get-show-lookups';
 import { BulkTaskGenerationDialog } from '@/features/shows/components/bulk-task-generation-dialog';
 import { ShowAssignmentDialog } from '@/features/shows/components/show-assignment-dialog';
 import { formatDateTime } from '@/features/studio-shifts/utils/shift-form.utils';
+import { useShowsPlanningReadiness } from '@/features/studio-shows/api/get-show-planning-readiness';
 import {
   getAllStudioShowsForExport,
   SHOW_EXPORT_MAX_RECORDS,
@@ -106,9 +107,20 @@ export function TaskSetupShowsSection({
 
     return shows.find((show) => show.id === actualsShowId) ?? null;
   }, [actualsShowId, shows]);
+
+  // Current-page show ids only — planning readiness is a per-row advisory
+  // checklist (item 11), not a whole-scope aggregate, so there's no need to
+  // re-derive the date-window scope server-side.
+  const pageShowIds = useMemo(() => shows.map((show) => show.id), [shows]);
+  const { data: readinessResults } = useShowsPlanningReadiness(studioId, pageShowIds);
+  const readinessByShowId = useMemo(
+    () => new Map((readinessResults ?? []).map((readiness) => [readiness.show_id, readiness])),
+    [readinessResults],
+  );
+
   const tableColumns = useMemo(
-    () => getStudioShowOperationsColumns({ onEditActuals: (show) => setActualsShowId(show.id) }),
-    [],
+    () => getStudioShowOperationsColumns({ onEditActuals: (show) => setActualsShowId(show.id), readinessByShowId }),
+    [readinessByShowId],
   );
 
   const {

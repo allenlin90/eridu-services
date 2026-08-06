@@ -3,6 +3,8 @@ import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ShowPlanningReadiness } from '@eridu/api-types/shows';
+
 import type { StudioShow } from '../../../api/get-studio-shows';
 import { getStudioShowOperationsColumns } from '../columns';
 
@@ -71,5 +73,61 @@ describe('studio shows table — task_status cell', () => {
 
     expect(container.textContent).toContain('1 unassigned');
     expect(container.textContent).not.toContain('No Assignee');
+  });
+});
+
+function renderPlanningReadinessCell(
+  show: StudioShow,
+  readinessByShowId?: Map<string, ShowPlanningReadiness>,
+) {
+  const columns = getStudioShowOperationsColumns({ onEditActuals: vi.fn(), readinessByShowId });
+  const column = columns.find((col) => col.id === 'planning_readiness') as ColumnDef<StudioShow>;
+  const cell = column.cell as (ctx: { row: { original: StudioShow } }) => ReactNode;
+  return render(<>{cell({ row: { original: show } })}</>);
+}
+
+function makeReadiness(overrides: Partial<ShowPlanningReadiness> = {}): ShowPlanningReadiness {
+  return {
+    phase: 'planning_readiness',
+    show_id: 'show_1',
+    show_name: 'Show 1',
+    conditions: [
+      { key: 'room_assigned', label: 'Room assigned', status: 'met' },
+      { key: 'creators_assigned', label: 'Creators assigned', status: 'not_met' },
+    ],
+    met_count: 1,
+    total_count: 2,
+    is_ready: false,
+    ...overrides,
+  };
+}
+
+describe('studio shows table — planning_readiness cell', () => {
+  const show = makeShow({ total: 0, assigned: 0, unassigned: 0, completed: 0 }, false);
+
+  it('renders a placeholder when no readiness result exists for the row', () => {
+    const { container } = renderPlanningReadinessCell(show);
+
+    expect(container.textContent).toContain('—');
+  });
+
+  it('renders the met/total ratio for a partially ready show', () => {
+    const readinessByShowId = new Map([['show_1', makeReadiness()]]);
+
+    const { container } = renderPlanningReadinessCell(show, readinessByShowId);
+
+    expect(container.textContent).toContain('1');
+    expect(container.textContent).toContain('2');
+    expect(container.textContent).not.toContain('—');
+  });
+
+  it('renders the full ratio for a fully ready show', () => {
+    const readinessByShowId = new Map([
+      ['show_1', makeReadiness({ met_count: 2, is_ready: true })],
+    ]);
+
+    const { container } = renderPlanningReadinessCell(show, readinessByShowId);
+
+    expect(container.textContent).toContain('2 / 2');
   });
 });

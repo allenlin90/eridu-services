@@ -583,3 +583,54 @@ export const correctShowPlatformPerformanceInputSchema = z.object({
   cto: optionalDecimalSchema(/^\d{1,3}(?:\.\d{1,2})?$/),
   reason: z.string().min(1, 'Business reason is required'),
 });
+
+/**
+ * Shared lifecycle readiness condition contract (Phase 5 item 11/12/19).
+ * One schema across planning readiness (`draft -> confirmed`) and completion
+ * review (`live -> completed`) so item 19 builds one enforcement engine, not
+ * two adapters. `phase` discriminates which checklist a condition set belongs
+ * to; `status` is advisory only in Phase 5 — no transition is ever blocked.
+ */
+export const LIFECYCLE_CONDITION_STATUS = {
+  MET: 'met',
+  NOT_MET: 'not_met',
+  NOT_APPLICABLE: 'not_applicable',
+} as const;
+export const lifecycleConditionStatusSchema = z.enum([
+  LIFECYCLE_CONDITION_STATUS.MET,
+  LIFECYCLE_CONDITION_STATUS.NOT_MET,
+  LIFECYCLE_CONDITION_STATUS.NOT_APPLICABLE,
+]);
+
+export const LIFECYCLE_READINESS_PHASE = {
+  PLANNING_READINESS: 'planning_readiness',
+  COMPLETION_REVIEW: 'completion_review',
+} as const;
+export const lifecycleReadinessPhaseSchema = z.enum([
+  LIFECYCLE_READINESS_PHASE.PLANNING_READINESS,
+  LIFECYCLE_READINESS_PHASE.COMPLETION_REVIEW,
+]);
+
+export const lifecycleConditionSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  status: lifecycleConditionStatusSchema,
+});
+
+export const PLANNING_READINESS_CONDITION_KEY = {
+  ROOM_ASSIGNED: 'room_assigned',
+  CREATORS_ASSIGNED: 'creators_assigned',
+  PLATFORMS_ASSIGNED: 'platforms_assigned',
+  TASK_STAGES_GENERATED: 'task_stages_generated',
+  TASKS_ASSIGNED: 'tasks_assigned',
+} as const;
+
+export const showPlanningReadinessSchema = z.object({
+  phase: z.literal(LIFECYCLE_READINESS_PHASE.PLANNING_READINESS),
+  show_id: z.string(),
+  show_name: z.string(),
+  conditions: z.array(lifecycleConditionSchema),
+  met_count: z.number().int(),
+  total_count: z.number().int(),
+  is_ready: z.boolean(),
+});

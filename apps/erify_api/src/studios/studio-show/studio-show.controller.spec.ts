@@ -12,6 +12,7 @@ import { STUDIO_ROLES_KEY } from '@/lib/decorators/studio-protected.decorator';
 import { ClientMechanicService } from '@/models/client-mechanic/client-mechanic.service';
 import type { CreateStudioShowDto, UpdateStudioShowDto } from '@/models/show/schemas/show.schema';
 import { CreatorCompensationService } from '@/show-orchestration/creator-compensation.service';
+import { PlanningReadinessService } from '@/show-orchestration/planning-readiness.service';
 import { ShowOrchestrationService } from '@/show-orchestration/show-orchestration.service';
 import { ShowRunReviewService } from '@/show-orchestration/show-run-review.service';
 import { TaskOrchestrationService } from '@/task-orchestration/task-orchestration.service';
@@ -61,6 +62,11 @@ describe('studioShowController', () => {
     getShowMechanicsCoverage: jest.fn(),
   };
 
+  const planningReadinessServiceMock = {
+    getPlanningReadinessForShow: jest.fn(),
+    getPlanningReadinessForShowIds: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StudioShowController],
@@ -88,6 +94,10 @@ describe('studioShowController', () => {
         {
           provide: ClientMechanicService,
           useValue: clientMechanicServiceMock,
+        },
+        {
+          provide: PlanningReadinessService,
+          useValue: planningReadinessServiceMock,
         },
       ],
     }).compile();
