@@ -1,3 +1,8 @@
+---
+description: erify_api backend Cursor adapter — routes to AGENTS.md and canonical skills.
+globs: apps/erify_api/**/*
+---
+
 # `erify_api` Cursor Adapter
 
 **Applies to:** `apps/erify_api/**/*`
