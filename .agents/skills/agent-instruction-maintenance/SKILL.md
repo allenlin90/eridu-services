@@ -30,6 +30,7 @@ Keep agent instruction files accurate, non-duplicated, and correctly layered.
 - **`.agents/skills/` is portable** — shared skill instructions must work across supported agents.
 - **`.claude/CLAUDE.md` is thin** — redirect + Claude-specific paths + startup flow; ≤30 lines.
 - **Vendor adapters stay local** — use `agents/openai.yaml` for Codex-only skill metadata; keep Claude-only configuration in `.claude/` or justified Claude frontmatter.
+- **Cursor adapters carry frontmatter** — every `.cursor/rules/*.mdc` file needs a `description` + `globs` frontmatter block (match the shape in `.agents/rules/*.mdc`) or Cursor has no signal to auto-attach it by path; a routing adapter without frontmatter never reaches the agent it was written for.
 - **No rule duplication** — one canonical location per rule; delete copies.
 - **Knowledge is not disguised as behavior** — stable facts, architecture, domain models, and current-state references belong in canonical docs or OKF knowledge and are selected by procedural skills.
 
