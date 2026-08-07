@@ -2,7 +2,7 @@
 
 > Canonical rules: `AGENTS.md` § Monorepo Package Rules + `.agents/rules/03-monorepo-packages.mdc`
 > This file is a detailed worked reference (examples), not a second source of truth.
-> **Reference implementation**: `packages/auth-service` (follows all best practices)
+> **Reference implementation**: `packages/auth-sdk` (follows all best practices)
 
 ## Build Output Structure
 
@@ -42,11 +42,17 @@ packages/package-name/
     "dev": "tsc --watch --preserveWatchOutput",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix"
   },
+  "peerDependencies": {
+    "react": "^19.1.0"
+  },
   "dependencies": {
     "@eridu/other-package": "workspace:*"
   }
 }
 ```
+
+Declare `peerDependencies` for framework/runtime dependencies the consumer already
+owns — it prevents duplicate copies and keeps versions compatible.
 
 **Anti-patterns:**
 - ❌ `"./hooks/*": "./src/hooks/*.ts"` — never export source
@@ -87,7 +93,7 @@ packages/package-name/
 **❌ WRONG:**
 ```json
 "paths": {
-  "@eridu/auth-service/*": ["../../packages/auth-service/src/*"]  // Bypasses exports
+  "@eridu/auth-sdk/*": ["../../packages/auth-sdk/src/*"]  // Bypasses exports
 }
 ```
 
@@ -98,12 +104,17 @@ export default defineConfig(() => ({
   resolve: {
     preserveSymlinks: false, // Required for pnpm workspaces
     alias: { "@": path.resolve(__dirname, "./src") },
+    conditions: ["default", "module", "import"],
   },
   optimizeDeps: {
-    include: ["@eridu/auth-service/**", "@eridu/ui/**"],
+    exclude: ["@eridu/ui", "@eridu/i18n"], // Workspace packages: served from dist/, not prebundled
   },
 }));
 ```
+
+`erify_studios` and `erify_creators` both **exclude** workspace packages from
+prebundling so `tsc --watch` output is picked up without a Vite re-optimize.
+Prebundling them (`optimizeDeps.include`) causes stale-dependency reloads in dev.
 
 ## Turbo Configuration
 
@@ -124,16 +135,16 @@ export default defineConfig(() => ({
 2. `package.json`: `@eridu/` prefix, `type: "module"`, `exports` → `dist/`, `workspace:*` deps
 3. `tsconfig.json`: `outDir: "dist"`, `declaration: true`, `declarationMap: true`, `sourceMap: true`, `include: ["src"]`
 4. `scripts.build: "tsc"`, `scripts.dev: "tsc --watch --preserveWatchOutput"`
-5. Consuming apps: add `workspace:*` dep, add to Vite `optimizeDeps.include`
+5. Consuming apps: add `workspace:*` dep, add to Vite `optimizeDeps.exclude`
 6. Verify: `pnpm build` succeeds, `dist/` has `.js` + `.d.ts`, imports work
 
 ## Import Pattern
 
 ```typescript
 // ✅ CORRECT: Import through package name
-import { useSession } from "@eridu/auth-service/hooks/use-session";
-import { Button } from "@eridu/ui/components/button";
+import { createAuthClient } from "@eridu/auth-sdk/client/react";
+import { SidebarTrigger } from "@eridu/ui/components/ui/sidebar";
 
 // ❌ WRONG: Direct path to source
-import { useSession } from "../../packages/auth-service/src/hooks/use-session";
+import { createAuthClient } from "../../packages/auth-sdk/src/client/react";
 ```

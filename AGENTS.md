@@ -8,7 +8,7 @@ Operational guide for coding agents in `eridu-services`.
 - `AGENTS.md` is the canonical shared runtime instruction file for this repo.
 - [`.agents/README.md`](.agents/README.md) is the canonical taxonomy and admission contract for agent content; it does not replace this runtime instruction file.
 - Claude Code auto-loads `.claude/CLAUDE.md`; that file should remain a thin adapter that points back to this file instead of duplicating shared guidance.
-- Cursor auto-loads `.cursor/rules/`; keep the `erify_api` rule as a thin adapter to this file and the canonical skills instead of duplicating backend doctrine.
+- Cursor auto-loads `.cursor/rules/`; keep every rule in that directory as a thin adapter to this file and the canonical skills instead of duplicating repository doctrine.
 - Canonical agent skill location: `.agents/skills/`. Skills are discovered dynamically from this directory.
 - House rules: `.agents/rules/`.
 - Workflows: `.agents/workflows/`.
@@ -269,6 +269,7 @@ method(@StudioParam() studioUid: string) {
 - Runtime shared packages export JavaScript, declarations, source maps, and package-owned static assets from `dist/`. Do not point runtime export conditions at TypeScript source; package builds must materialize every exported target before consumer builds run.
 - A package's `dev` script must also produce every exported target that `build` produces, including non-TS static assets `tsc --watch` won't touch (e.g. copying a stylesheet into `dist/`). A fresh clone must not need a manual `build` before `pnpm dev`/`dev:studios`/`dev:creators` works.
 - Prefer package exports with both `types` and runtime entry definitions in `package.json`.
+- Declare `peerDependencies` for framework or runtime dependencies a consumer already owns (React, NestJS, sibling `@eridu/*` packages) so the install does not duplicate them or drift out of version compatibility.
 - Avoid path mappings from apps directly into workspace package sources unless the package already uses that pattern and the task explicitly requires it.
 - For package or bundler changes, verify pnpm symlink behavior and affected `optimizeDeps` or build config expectations.
 
