@@ -17,6 +17,7 @@ type Args = {
   csvPath: string;
   authDbUrl?: string;
   apiDbUrl?: string;
+  studioUid?: string;
 };
 
 type CsvRecord = {
@@ -35,6 +36,7 @@ function parseArgs(): Args {
   let csvPath = 'MC List - ชีต1.csv';
   let authDbUrl: string | undefined;
   let apiDbUrl: string | undefined;
+  let studioUid: string | undefined;
 
   for (const arg of args) {
     if (arg === '--apply') {
@@ -47,10 +49,12 @@ function parseArgs(): Args {
       authDbUrl = arg.split('=')[1];
     } else if (arg.startsWith('--api-db-url=')) {
       apiDbUrl = arg.split('=')[1];
+    } else if (arg.startsWith('--studio-uid=')) {
+      studioUid = arg.split('=')[1];
     }
   }
 
-  return { apply, allowProduction, csvPath, authDbUrl, apiDbUrl };
+  return { apply, allowProduction, csvPath, authDbUrl, apiDbUrl, studioUid };
 }
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
@@ -138,7 +142,7 @@ function normalizeName(name: string): string {
 }
 
 async function main() {
-  const { apply, allowProduction, csvPath, authDbUrl, apiDbUrl } = parseArgs();
+  const { apply, allowProduction, csvPath, authDbUrl, apiDbUrl, studioUid } = parseArgs();
 
   // Resolve CSV path
   const potentialPaths = [
@@ -200,12 +204,25 @@ async function main() {
     });
     console.log(`Loaded ${activeCreators.length} active creators from database.`);
 
+    // 2b. Resolve the target studio roster, if requested. Without --studio-uid
+    // this script only touches the global creators/users tables, same as before.
+    let studioId: bigint | null = null;
+    if (studioUid) {
+      const studio = await prisma.studio.findUnique({ where: { uid: studioUid } });
+      if (!studio) {
+        throw new Error(`No studio found for --studio-uid="${studioUid}"`);
+      }
+      studioId = studio.id;
+      console.log(`Linking imported/updated creators to studio roster: "${studio.name}" (${studioUid})`);
+    }
+
     const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
     let createdCreatorsCount = 0;
     let updatedCreatorsCount = 0;
     let createdUsersCount = 0;
     let updatedUsersCount = 0;
+    let createdRosterLinksCount = 0;
 
     // We process each CSV record
     for (let index = 0; index < csvRecords.length; index++) {
@@ -374,6 +391,10 @@ async function main() {
         ...(note ? { note } : {}),
       };
 
+      // Populated once the creator row's id is known, so the studio roster
+      // link below can be written for both matched and newly created rows.
+      let creatorRowId: bigint | null = matchedCreator ? matchedCreator.id : null;
+
       if (matchedCreator) {
         console.log(`  - Matched existing creator: "${matchedCreator.name}" (alias: "${matchedCreator.aliasName}", UID: ${matchedCreator.uid})`);
 
@@ -417,7 +438,7 @@ async function main() {
         console.log(`    - User ID Link: ${apiUserId ? apiUserId.toString() : willLinkUser ? '[pending - new user, dry-run]' : 'null'}`);
 
         if (apply) {
-          await prisma.creator.create({
+          const createdCreator = await prisma.creator.create({
             data: {
               uid: newCreatorUid,
               name,
@@ -430,14 +451,48 @@ async function main() {
               user: apiUserId ? { connect: { id: apiUserId } } : undefined,
             },
           });
+          creatorRowId = createdCreator.id;
         }
         createdCreatorsCount++;
+      }
+
+      // Link the creator to the target studio roster, mirroring the manual
+      // studio_creators backfill this script used to require after the fact.
+      if (studioId) {
+        if (creatorRowId) {
+          const existingRosterEntry = await prisma.studioCreator.findFirst({
+            where: { studioId, creatorId: creatorRowId },
+          });
+          if (existingRosterEntry) {
+            console.log(`  - Studio roster link already exists (studio_creators uid: ${existingRosterEntry.uid}). Skipping.`);
+          } else {
+            const newRosterUid = `smc_${nanoid(20)}`;
+            console.log(`  - Will create studio roster link: UID ${newRosterUid}, rate ${defaultRate} FIXED`);
+            if (apply) {
+              await prisma.studioCreator.create({
+                data: {
+                  uid: newRosterUid,
+                  studioId,
+                  creatorId: creatorRowId,
+                  defaultRate,
+                  defaultRateType: 'FIXED',
+                },
+              });
+              createdRosterLinksCount++;
+            }
+          }
+        } else {
+          console.log(`  - Studio roster link pending (new creator, dry-run) — will be created on --apply.`);
+        }
       }
     }
 
     console.log(`\n--- Summary of Import ---`);
     console.log(`Creators: ${createdCreatorsCount} created, ${updatedCreatorsCount} updated`);
     console.log(`Users: ${createdUsersCount} created, ${updatedUsersCount} updated`);
+    if (studioUid) {
+      console.log(`Studio roster links: ${createdRosterLinksCount} created`);
+    }
   } catch (error) {
     console.error('An error occurred during import execution:', error);
     process.exitCode = 1;
