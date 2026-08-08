@@ -7,12 +7,10 @@ query data through an LLM-backed analytics agent. Deployment guide:
 
 **Status: Railway service provisioned, not yet running.** The `nao` service,
 its dedicated Postgres, and a public domain exist in the `eridu-services`
-Railway project. It builds from `infra/nao` on `master` — until this
-directory's contents reach `master`, Railway can't see
-[`Dockerfile`](Dockerfile) or `.railway/nao.json` there, so the current build
-falls back to Railpack auto-detect and will fail. See
-[`project/README.md`](project/README.md) for what's still needed in
-`project/` itself before a successful build produces a working deployment.
+Railway project, and it builds from `infra/nao` on `master` through
+[`Dockerfile`](Dockerfile) and `.railway/nao.json`. What's still missing is
+[`project/`](project/) itself — see [`project/README.md`](project/README.md)
+and the known gaps below.
 
 ## Why a plain `FROM getnao/nao` image
 
@@ -66,10 +64,10 @@ for the reference example):
 
 1. Service `nao` created, connected to `allenlin90/eridu-services` branch
    `master`, root directory `infra/nao`.
-2. `railwayConfigFile` set to `.railway/nao.json` — inert until this content
-   reaches `master` (Railway resolves it against `master`, where the file
-   doesn't exist yet; build currently falls back to Railpack auto-detect, see
-   [`infra/odoo/README.md`](../odoo/README.md)'s note on this same gotcha).
+2. `railwayConfigFile` set to `.railway/nao.json`. Railway resolves it against
+   `master`, so a build from a commit that predates the file falls back to
+   Railpack auto-detect instead — see
+   [`infra/odoo/README.md`](../odoo/README.md)'s note on this same gotcha.
 3. Dedicated Postgres (`Postgres-RY3e`) provisioned; `DB_URI` wired as a
    reference variable (`${{Postgres-RY3e.DATABASE_URL}}`).
 4. Public domain generated (Railway-assigned `*.up.railway.app` hostname,
@@ -78,15 +76,19 @@ for the reference example):
    canonical app URL for its self-hosted auth (session cookies, redirect
    construction), not an SSO integration setting; nao does not currently
    integrate with `eridu_auth` SSO.
-5. All env vars above set except `NAO_CONTEXT_GIT_TOKEN` (see gaps below).
+5. All env vars above set, `NAO_CONTEXT_GIT_TOKEN` included — but see the
+   token-scope gap below.
 
 ## Known gaps versus a working deployment
 
-- **`NAO_CONTEXT_GIT_TOKEN` not set.** Needs a fine-grained GitHub PAT scoped
-  to this repo, read-only `contents` permission. Only creatable via the
-  GitHub UI (Settings → Developer settings → Fine-grained tokens) — not
-  something `gh` CLI or this agent can generate. Without it the container
-  cannot clone `project/` at boot.
+- **`NAO_CONTEXT_GIT_TOKEN` is a classic PAT, not a fine-grained one.** The
+  value currently set is a `ghp_`-prefixed classic token, whose `repo` scope
+  carries read *and* write access to every repository the issuing account can
+  reach — far wider than a container that only needs to read
+  `infra/nao/project`. Replace it with a fine-grained PAT scoped to this
+  repository alone, `contents: read-only`, no other permissions (GitHub UI →
+  Settings → Developer settings → Fine-grained tokens), then revoke the
+  classic one.
 - **`project/` is still a placeholder.** No real `nao_config.yaml` — the
   container will fail to find a usable project until someone runs `nao init`
   and commits the result (see [`project/README.md`](project/README.md)).
@@ -99,8 +101,7 @@ for the reference example):
   entire "a commit needs a redeploy to reach the live agent" contract above
   assumes the container actually re-clones on restart; verify both on first
   real boot.
-- **This content hasn't reached `master` yet.** Until it does, Railway builds
-  against `master` where `infra/nao/` doesn't exist, so every build attempt
-  fails. Deploys are currently held (`skip_deploys` on the variable writes)
-  rather than left to crash-loop against a nonexistent path.
+- **Deploys are held.** The variable writes used `skip_deploys`, so nothing
+  deploys until `project/` is populated — the service doesn't crash-loop
+  against a missing config in the meantime.
 - **`OPENAI_API_BASE_URL` honor unconfirmed** — see the env var table above.
