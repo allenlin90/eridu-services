@@ -221,6 +221,8 @@ Full reference: `.claude/memory/monorepo-package-rules.md`
 - [ ] `apps/*/docs/README.md` Features table lists promoted docs with `✅` and correct paths (not `design/` paths).
 - [ ] `apps/*/docs/design/README.md` contains only active design proposals; no shipped/implemented items remain in the design index.
 - [ ] Accepted non-blocking review issues are captured in `docs/tech-debt/` with scope, risk, trigger to fix, and acceptance criteria.
+- [ ] A `docs/tech-debt/` entry is **deleted** only when its stated desired behavior and acceptance criteria are fully met. A partially resolved entry is **updated** to its residual scope and keeps its `README.md` row — an accepted gap declared only in the PR description does not survive the squash-merge and leaves the residual untracked.
+- [ ] Any new or edited `.cursor/rules/*.mdc` carries a `description` + `globs` frontmatter block (shape per `.agents/rules/*.mdc`); Cursor has no auto-attach signal without it. See `agent-instruction-maintenance` § Architecture Rules.
 - [ ] **If this PR changes an established pattern, convention, or architectural direction** (deprecates/supersedes a skill, flips a default, changes a doctrine): every skill/rule/workflow/doc asserting the old pattern is reconciled in this PR, or explicitly deferred with a recorded gate. Enumerate via `rg -l "<skill/pattern>" .agents .claude .cursor .opencode ai apps docs infra packages AGENTS.md README.md opencode.json`. A canonical doc left asserting the superseded pattern is **BLOCKING**. If the direction is only partly accepted, the skills state which part is active and which is gated. See `agent-instruction-maintenance` § Pattern or Direction Change Gate.
 - [ ] No stale links to deleted or moved files.
 

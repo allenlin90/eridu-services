@@ -1,3 +1,8 @@
+---
+description: Monorepo package & dependency management Cursor adapter — routes to AGENTS.md and .agents/rules.
+globs: packages/**/*, apps/**/*
+---
+
 # Monorepo Package & Dependency Management — Cursor Adapter
 
 **Applies to:** All packages in `packages/*` and apps consuming them
