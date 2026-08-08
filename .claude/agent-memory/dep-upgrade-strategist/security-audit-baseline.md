@@ -17,11 +17,11 @@ Snapshot of `pnpm audit` + `pnpm outdated -r`. Vuln counts decay — re-run befo
 ## Vuln posture (as of audit)
 - 250 vulns: 3 critical / 101 high / 126 moderate / 20 low. Most are deep dev/build transitives.
 - **All 3 criticals are dev/test-only**, not prod-runtime: handlebars (via erify_api ts-jest), shell-quote (via eridu_auth concurrently), vitest 4.0.13 (<4.1.0).
-- **Prod-runtime-reachable HIGHs** (real Security priority): axios (frontends), hono (eridu_auth), @hono/node-server (eridu_auth), drizzle-orm (eridu_auth), multer (erify_api via @nestjs/platform-express).
+- **Prod-runtime-reachable HIGHs** (real Security priority): axios (frontends), hono (eridu_auth), @hono/node-server (eridu_auth), drizzle-orm (eridu_auth). multer (erify_api via @nestjs/platform-express) is RESOLVED — see below.
 
 ## Fix-path facts (verified)
 - **@hono/node-server**: patched >=1.19.10; latest 1.x is 1.19.14 (< v2 major). `^1.19.x` bump fixes vuln without the v2 major. Latest overall 2.0.8 is a separate major.
-- **multer**: @nestjs/platform-express@11.1.27 pins multer 2.1.1 (currently 2.0.2). That fixes 2 of 3 multer advisories; the `<2.2.0` advisory still needs a `pnpm.overrides` multer>=2.2.0 to fully clear.
+- **multer** (RESOLVED 2026-08-08): was @nestjs/platform-express@11.1.27 pinning multer 2.1.1, which left the `<2.2.0` DoS advisories open and needed an interim root `pnpm.overrides.multer: ">=2.2.0"` (added in #255). @nestjs/platform-express@11.1.28 now ships multer 2.2.0 natively, so the override and its tech-debt entry were removed in #382 — **do not re-add the override**; bump the `@nestjs/platform-express` floor instead.
 - **drizzle-orm**: 0.45.1→0.45.2 is a trivial patch that clears its HIGH advisory.
 - **samlify + node-forge** HIGHs come only via `@better-auth/sso` (SSO is currently disabled/commented in auth.ts) — lower real exposure; a better-auth 1.6.x bump likely pulls patched samlify.
 
