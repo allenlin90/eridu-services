@@ -44,9 +44,9 @@ every future commit, with no error anywhere.
 | `OPENAI_API_BASE_URL` | Yes | `http://${{LiteLLM.RAILWAY_PRIVATE_DOMAIN}}:4000/v1` — LiteLLM's internal endpoint. **Unconfirmed** — nothing has booted yet, and nao's docs never named a base-URL override env var. If unhonored, set the equivalent in nao's own Settings → Agent → Model Providers admin UI instead. |
 | `NAO_DEFAULT_PROJECT_PATH` | Yes | `/app/project` — intended to match where the git-context clone lands. **Unconfirmed** — same as above, nothing has booted yet to verify this. |
 | `NAO_CONTEXT_GIT_URL` | Yes | This repository's URL. |
-| `NAO_CONTEXT_GIT_TOKEN` | Yes | HTTPS auth token to clone this private repo. **Blast radius**: `NAO_CONTEXT_GIT_SUBPATH` limits what gets *cloned*, not what the token can *fetch* — a repo-scoped PAT sitting inside this container can read the whole monorepo if used directly against the GitHub API, not just `infra/nao/project`. Use a fine-grained PAT scoped to this repo only, `contents: read-only`, no other permissions. Fine-grained PATs expire — track owner and expiry, and rotate before it lapses (an expired token fails the clone silently at the next redeploy, not loudly). |
+| `NAO_CONTEXT_GIT_TOKEN` | Probably not | HTTPS auth token for the context clone. **This repository is public** — an anonymous clone of `infra/nao/project` succeeds, so no credential should be required. Leave it unset unless nao proves it needs a value; see the gap below. If this repository ever goes private, the token's blast radius is the whole monorepo (`NAO_CONTEXT_GIT_SUBPATH` limits what gets *cloned*, not what a token can *fetch*), and a properly narrow fine-grained PAT is only mintable when the resource owner owns the repository — collaborator accounts cannot scope one to it. |
 | `NAO_CONTEXT_GIT_BRANCH` | Yes | Branch to clone, e.g. `master`. |
-| `NAO_CONTEXT_GIT_SUBPATH` | Yes | `infra/nao/project` — scopes what the clone checks out, not what the token can read (see `NAO_CONTEXT_GIT_TOKEN` above). |
+| `NAO_CONTEXT_GIT_SUBPATH` | Yes | `infra/nao/project` — scopes what the clone checks out, not what a credential could read (see `NAO_CONTEXT_GIT_TOKEN` above). |
 | `GCP_SERVICE_ACCOUNT_KEY_JSON` | If using a warehouse | Data-warehouse (e.g. BigQuery) credentials, referenced from `nao_config.yaml` via `{{ env(...) }}`. |
 | `SMTP_HOST`, `SMTP_MAIL_FROM`, `SMTP_PASSWORD` | Optional, together | Email notifications. |
 | `SMTP_PORT`, `SMTP_USER`, `SMTP_SSL` | Optional | Email notifications. |
@@ -76,19 +76,21 @@ for the reference example):
    canonical app URL for its self-hosted auth (session cookies, redirect
    construction), not an SSO integration setting; nao does not currently
    integrate with `eridu_auth` SSO.
-5. All env vars above set, `NAO_CONTEXT_GIT_TOKEN` included — but see the
-   token-scope gap below.
+5. All env vars above set, including a `NAO_CONTEXT_GIT_TOKEN` that this
+   repository's public visibility should make unnecessary — see the gap below.
 
 ## Known gaps versus a working deployment
 
-- **`NAO_CONTEXT_GIT_TOKEN` is a classic PAT, not a fine-grained one.** The
-  value currently set is a `ghp_`-prefixed classic token, whose `repo` scope
-  carries read *and* write access to every repository the issuing account can
-  reach — far wider than a container that only needs to read
-  `infra/nao/project`. Replace it with a fine-grained PAT scoped to this
-  repository alone, `contents: read-only`, no other permissions (GitHub UI →
-  Settings → Developer settings → Fine-grained tokens), then revoke the
-  classic one.
+- **`NAO_CONTEXT_GIT_TOKEN` is set but shouldn't be needed, and the value is a
+  classic PAT.** This repository is public — an unauthenticated
+  `git-upload-pack` probe against it succeeds — so the context clone needs no
+  credential at all. The value currently set is a `ghp_`-prefixed classic
+  token, whose `repo` scope carries read *and write* access to every
+  repository the issuing account can reach; `master` has no branch protection,
+  so a leak means a direct push. Unset the variable, confirm the clone still
+  works on first boot, and revoke the token. Only if nao turns out to require
+  a value — it may build a `https://<token>@github.com/…` URL
+  unconditionally — keep one, and prefer a credential with no scopes at all.
 - **`project/` is still a placeholder.** No real `nao_config.yaml` — the
   container will fail to find a usable project until someone runs `nao init`
   and commits the result (see [`project/README.md`](project/README.md)).

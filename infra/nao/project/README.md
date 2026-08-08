@@ -12,6 +12,11 @@ See [`../README.md`](../README.md) for the Railway service this feeds into.
 - **Git is the source of truth.** Nothing here is edited through a nao admin
   UI that writes back — there is no such surface. A commit here is the only
   way this content changes.
+- **`nao init` is an authoring step, never a build step.** Don't move it into
+  [`../Dockerfile`](../Dockerfile): generating this content at build time takes
+  it out of git (nothing to review or diff, and a rebuild can change agent
+  behavior on its own), and it would compete with the boot-time clone for
+  ownership of the same directory.
 - **Reaching the live agent requires a redeploy**, not just a commit — see
   [`../README.md`](../README.md)'s "A commit alone does not reach the running
   container" section. Keep every file this directory needs inside
@@ -33,7 +38,11 @@ See [`../README.md`](../README.md) for the Railway service this feeds into.
   knowledge inside a vendor adapter.
 - **Secrets never live in this directory.** Reference them from
   `nao_config.yaml` via `{{ env('VAR_NAME') }}` and set the actual value as a
-  Railway service variable.
+  Railway service variable. `nao init` works against this rule — it writes the
+  connection details you type at its prompts into `nao_config.yaml` literally
+  — and **this repository is public**, so a committed warehouse credential is
+  a rotate-everything event. Scrubbing init's output is a deliberate step, not
+  a glance.
 
 ## Nothing has been generated here yet
 
@@ -45,11 +54,20 @@ against a real database.
 
 To populate this directory for a real deployment:
 
-1. Install `nao-core` locally (`pip install nao-core`).
+1. Install the `nao` CLI locally, matching the image version pinned in
+   [`../Dockerfile`](../Dockerfile) — e.g. `uv tool install 'nao-core[postgres]'`.
+   The base package ships no database drivers, so include the extra for the
+   warehouse actually chosen (`postgres`, `bigquery`, `snowflake`, …); `nao
+   debug` can't test a connection without it.
 2. Run `nao init` from this directory and follow the prompts (project name,
-   database connection, optional Slack integration).
+   database connection, LLM provider, optional Slack/Notion). `--yes` scaffolds
+   the folder structure non-interactively around a pre-written
+   `nao_config.yaml` if you'd rather author the config by hand.
 3. Run `nao debug` and `nao sync` to verify the generated config against a real
    database/warehouse connection.
-4. Commit the generated files here, replacing this placeholder.
-5. Push to a branch that triggers the Railway watch pattern (or merge to the
-   deployed branch) so the running container picks it up.
+4. **Replace every literal credential `nao init` wrote into `nao_config.yaml`
+   with `{{ env('VAR_NAME') }}`**, and set the real values as Railway service
+   variables — see the secrets rule above.
+5. Commit the generated files here, replacing this placeholder.
+6. Merge to the deployed branch so the watch pattern rebuilds and the container
+   re-clones — see [`../README.md`](../README.md).
