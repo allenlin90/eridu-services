@@ -22,6 +22,16 @@ definitions) ship as ordinary commits and don't require rebuilding the image —
 only [`Dockerfile`](Dockerfile) itself needs a rebuild, and it never changes
 in normal operation.
 
+**A commit alone does not reach the running container.** nao clones its
+context once, at boot — there's no periodic re-pull, no push mechanism, and
+no drift risk (nothing writes back). What actually applies a new commit is a
+**redeploy**, supplied today by `.railway/nao.json`'s
+`watchPatterns: ["/infra/nao/**"]`: any commit under this path triggers
+Railway to rebuild and restart the container, which re-clones fresh. This is
+why [`project/`](project/) must stay under `infra/nao/` — content moved
+outside the watch pattern would silently stop reaching the live agent on
+every future commit, with no error anywhere.
+
 ## Environment variables
 
 | Variable | Required | Purpose |

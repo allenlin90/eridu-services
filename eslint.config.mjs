@@ -12,6 +12,9 @@ export default createConfig(
       // rewrite the live instance's own text and reintroduce the drift the
       // mirror exists to eliminate. README.md here is repo-authored and stays linted.
       "ai/openwebui/skills/!(README).md",
+      // nao reads these as its own runtime instructions (RULES.md, agent/skills/*.md,
+      // nao_config.yaml). Formatting them would rewrite content nao interprets directly.
+      "infra/nao/project/!(README).md",
     ],
   },
   {

@@ -24,6 +24,7 @@ Keep Open WebUI, LiteLLM, Better Auth, MCP services, and repo policy aligned as 
 | `ai/openwebui/models/` | **Source of truth** for Workspace Model manifests, including group access |
 | `ai/openwebui/synced/` | Drift snapshot of the live instance — read-only, never an edit surface |
 | `ai/` | Workspace policy manifests, import/export notes, LiteLLM references, budget-tier policy tables |
+| `infra/nao/project/` | **Source of truth** for the nao analytics-agent's own runtime config, rules, and product skills — git-authoritative, not OKF, not `.agents/skills/` (see the directory's own README before editing) |
 
 ## Required source check
 
@@ -94,6 +95,31 @@ When changing Open WebUI workspace policy:
 5. Check `.agents/skills/` before creating any new instruction content.
 6. If the assistant needs repo implementation guidance, reference canonical `.agents` skills instead of duplicating them.
 7. Use [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md) when Git-authored company knowledge is added, reorganized, reviewed for staleness, or prepared for sync.
+
+## nao decision path
+
+nao (`infra/nao/`) is a self-hosted analytics-agent chat UI, deployed like
+Odoo — a pinned third-party service this repo builds and deploys, not an
+`ai/`-style manifest-driven integration. It differs from the Open WebUI
+pattern in one structural way: nao **pulls** its own config by cloning
+`infra/nao/project/` at container boot (`NAO_CONTEXT_GIT_URL`/`_SUBPATH`), so
+there is no push workflow and no drift workflow — nothing writes back to
+that directory, so nothing can diverge from it. See
+[`infra/nao/README.md`](../../../infra/nao/README.md) for the full mechanism.
+
+When changing nao's project context:
+
+1. Edit only inside `infra/nao/project/` — anything nao needs to read must be
+   physically inside that sparse-checkout root.
+2. A commit alone does not reach the running agent; it needs a redeploy,
+   supplied by `.railway/nao.json`'s watch pattern on `/infra/nao/**`. Don't
+   move content outside that path.
+3. Reference secrets only via `{{ env('VAR_NAME') }}` in `nao_config.yaml`,
+   never inline.
+4. If the change is durable company knowledge rather than agent behavior
+   config, route it through `knowledge/` and treat anything under
+   `infra/nao/project/docs/` as a generated artifact, not the source — see
+   [wiki-knowledge-maintainer](../wiki-knowledge-maintainer/SKILL.md).
 
 ## MCP decision path
 

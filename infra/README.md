@@ -10,14 +10,15 @@ Place these here:
 - Dockerfiles, patches, bootstrap scripts, and configuration examples;
 - local Docker Compose stack definitions;
 - deployment-provider-neutral service documentation;
-- read-only exports used to reconcile intended and deployed state.
+- read-only exports used to reconcile intended and deployed state;
+- first-party behavioral content a third-party runtime reads at boot/startup (its own config, rules, or product-specific skills) — this is content the vendored service owns and interprets, not company knowledge or a coding-agent skill (see `nao/project/` for the reference shape).
 
 Do not place these here:
 
 - first-party NestJS or React application code (`apps/`);
 - shared TypeScript packages (`packages/`);
-- canonical company knowledge (`knowledge/` or its future private repository);
-- reusable coding-agent skills (`.agents/skills/`);
+- canonical company knowledge intended for multiple consumers (`knowledge/` or its future private repository) — a vendor's own runtime config/rules directory is not this, even when it's prose;
+- reusable *coding-agent* skills (`.agents/skills/`) — a vendored product's own skill/plugin feature (e.g. nao's `agent/skills/`) is that product's config, not this;
 - Railway-only service descriptors (`.railway/`).
 
 ## Railway services deployed from this repository
@@ -43,6 +44,7 @@ its source is then visibly a change that needs deploying.
 ```text
 infra/
 ├── odoo/
+├── nao/
 ├── openwebui/
 ├── litellm/
 └── stacks/
