@@ -1,0 +1,52 @@
+# Configuration documentation:
+# https://docs.getnao.io/nao-agent/context-builder/configuration#nao_config-yaml
+#
+# Credentials are never written here. Every secret is a `{{ env('VAR') }}`
+# reference resolved from a Railway service variable at container start — see
+# README.md in this directory. This repository is public.
+
+project_name: eridu-analytics
+
+databases:
+  # erify_api's operational Postgres. This is an OLTP database serving the live
+  # product, not a warehouse: normalised for transactions, queried concurrently
+  # by the API. Point nao at a dedicated read-only role, never the application
+  # user — see README.md "Database access".
+  - name: erify_api
+    type: postgres
+    host: "{{ env('ERIFY_API_DB_HOST') }}"
+    port: 5432
+    database: "{{ env('ERIFY_API_DB_NAME') }}"
+    user: "{{ env('ERIFY_API_DB_USER') }}"
+    password: "{{ env('ERIFY_API_DB_PASSWORD') }}"
+    schema_name: public
+    # `preview` renders sample rows into databases/*/preview.md, which is
+    # committed to this public repository. Omitted deliberately, and omitting
+    # `templates` entirely would render all three. `query_history` is dropped
+    # too — it reads warehouse query logs Postgres doesn't expose the same way.
+    templates:
+      - columns
+    exclude:
+      - public.users # email, name, ext_id — identity, not analytics
+      - public.audits # actor-attributed change log with arbitrary JSON payloads
+      - public.audit_targets
+      - public._prisma_migrations
+    exclude_columns:
+      - "*.email"
+      - "*.metadata" # untyped JSONB; contents vary per row and per feature
+
+  # Teable's per-base read-only Postgres connection, generated from Teable's own
+  # UI (Base → Database connection). Not the container's PRISMA_DATABASE_URL —
+  # that is Teable's internal application storage and is read-write.
+  - name: teable
+    type: postgres
+    host: "{{ env('TEABLE_DB_HOST') }}"
+    port: 5432
+    database: "{{ env('TEABLE_DB_NAME') }}"
+    user: "{{ env('TEABLE_DB_USER') }}"
+    password: "{{ env('TEABLE_DB_PASSWORD') }}"
+    schema_name: "{{ env('TEABLE_DB_SCHEMA') }}"
+    templates:
+      - columns
+
+repos: []

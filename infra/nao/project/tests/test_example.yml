@@ -1,0 +1,4 @@
+name: test_example
+prompt: What is the result of 1+1?
+sql: |
+  SELECT 2 AS answer_integer
