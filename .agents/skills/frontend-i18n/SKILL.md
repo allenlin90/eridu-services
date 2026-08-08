@@ -46,7 +46,17 @@ Generic `@eridu/ui` components import `@eridu/i18n` for defaults and expose `tex
 4. **No hardcoding** — always extract to `en.json`
 5. **Check shared first** before adding generic terms
 
+## Compile Ordering
+
+`paraglide-js compile` **deletes its `--outdir` before rewriting it**. Any task reading that directory concurrently sees missing files.
+
+- In `@eridu/i18n`, the compile is its own turbo `generate` task with `outputs: ["src/paraglide/**"]`; `build` and `typecheck` both declare `dependsOn: ["generate"]`. Do not move the compile back into the `build` script — `typecheck` would race it. Regenerate with `pnpm --filter @eridu/i18n generate`.
+- In each app, the compile stays inline at the front of its own `build`/`typecheck`/`dev` script. That is safe because the app's `src/paraglide` has exactly one reader, in the same sequential command.
+
+Generalizes: generated output read by more than one turbo task needs its own task with declared `outputs`, not an inline step at the front of one consumer.
+
 ## Troubleshooting
 
 - **Missing type**: Run `pnpm dev` or `pnpm build` to regenerate Paraglide files
 - **TS1005 build error**: Paraglide `.d.ts` bug — apply `patch-dts` script (see `@eridu/i18n` `package.json`)
+- **Intermittent `@eridu/i18n#typecheck ... exited (2)` on a cold `pnpm typecheck --force`, passing on re-run**: a concurrent writer wiped `src/paraglide` mid-typecheck. Check the compile-ordering rules above.
