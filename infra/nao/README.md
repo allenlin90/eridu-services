@@ -14,7 +14,7 @@ falls back to Railpack auto-detect and will fail. See
 [`project/README.md`](project/README.md) for what's still needed in
 `project/` itself before a successful build produces a working deployment.
 
-## Why a plain `FROM getnao/nao:latest` image
+## Why a plain `FROM getnao/nao` image
 
 nao's deployment guide offers two ways to get project files into the
 container: `COPY` them into the image at build time, or set
