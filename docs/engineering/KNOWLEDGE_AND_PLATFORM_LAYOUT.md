@@ -34,6 +34,10 @@ The distinction is based on lifecycle rather than whether a directory contains a
 infra/
 ├── README.md
 ├── odoo/
+├── nao/
+│   ├── README.md
+│   ├── Dockerfile
+│   └── project/                # NAO_CONTEXT_GIT_SUBPATH — nao's own runtime config, not OKF
 ├── openwebui/
 │   ├── README.md
 │   ├── functions/
@@ -170,6 +174,8 @@ application source ─────────> Graphify local graph ──> cod
 
 knowledge/ OKF bundles ─────> Open WebUI sync ──> Open WebUI knowledge collections
 ```
+
+If nao ever needs durable company knowledge rather than agent behavior config, `knowledge/` should be the source and `infra/nao/project/docs/` a generated publication artifact derived from it — not a new pipeline that exists today.
 
 QMD does not require OKF, but OKF metadata improves filtering, provenance, lifecycle checks, and future interoperability. Graphify remains code-focused.
 

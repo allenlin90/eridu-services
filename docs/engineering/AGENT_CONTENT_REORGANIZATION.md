@@ -528,7 +528,7 @@ Land each extraction with the skill or reasoning consumer that retrieves and app
 
 ### Wave 6 — platform and publication alignment
 
-- Align AI platform skills with the eventual `infra/` migration.
+- Align AI platform skills with the eventual `infra/` migration. `infra/nao/` (added directly under the target convention, no `ai/` detour) is the reference shape for what `ai/openwebui/` → `infra/openwebui/` should look like post-migration.
 - Update QMD collections and Open WebUI publication paths.
 - Preserve access, stable IDs, and citations.
 
