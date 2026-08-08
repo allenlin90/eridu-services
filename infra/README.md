@@ -22,7 +22,10 @@ Do not place these here:
 
 ## Railway services deployed from this repository
 
-**None today.** Every Railway service in the Eridu stack is either a first-party app
+- [`odoo/`](odoo/) — custom image layering an OIDC patch onto stock Odoo.
+- [`nao/`](nao/) — scaffold only, not yet deployed. See its README for status.
+
+Every other Railway service in the Eridu stack is either a first-party app
 (`apps/`) or a pinned upstream image configured in the dashboard — see
 [ai-platform-release-management](../.agents/skills/ai-platform-release-management/SKILL.md)
 for the pin and rollback policy on those.
