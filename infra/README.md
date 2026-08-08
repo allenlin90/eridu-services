@@ -23,7 +23,7 @@ Do not place these here:
 
 ## Railway services deployed from this repository
 
-- [`odoo/`](odoo/) — custom image layering an OIDC patch onto stock Odoo.
+- [`odoo/`](odoo/) — custom image layering an OIDC patch onto stock Odoo. **Service asleep**: SSO moved to Teable; build material kept for reference, not actively deployed.
 - [`nao/`](nao/) — scaffold only, not yet deployed. See its README for status.
 
 Every other Railway service in the Eridu stack is either a first-party app

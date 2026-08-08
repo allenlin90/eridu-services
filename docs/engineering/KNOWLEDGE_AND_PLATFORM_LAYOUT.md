@@ -173,9 +173,9 @@ docs and app docs ──────┼──> QMD local index ──> coding ag
 application source ─────────> Graphify local graph ──> coding agents
 
 knowledge/ OKF bundles ─────> Open WebUI sync ──> Open WebUI knowledge collections
-
-knowledge/ OKF bundles ─────> generated publication artifact ──> infra/nao/project/docs/ (nao's own retrieval, if ever needed)
 ```
+
+If nao ever needs durable company knowledge rather than agent behavior config, `knowledge/` should be the source and `infra/nao/project/docs/` a generated publication artifact derived from it — not a new pipeline that exists today.
 
 QMD does not require OKF, but OKF metadata improves filtering, provenance, lifecycle checks, and future interoperability. Graphify remains code-focused.
 

@@ -7,10 +7,11 @@ query data through an LLM-backed analytics agent. Deployment guide:
 
 **Status: Railway service provisioned, not yet running.** The `nao` service,
 its dedicated Postgres, and a public domain exist in the `eridu-services`
-Railway project. It builds from `infra/nao` on `master` — until PR #383
-merges, Railway can't see [`Dockerfile`](Dockerfile) or `.railway/nao.json`
-there, so the current build falls back to Railpack auto-detect and will fail.
-See [`project/README.md`](project/README.md) for what's still needed in
+Railway project. It builds from `infra/nao` on `master` — until this
+directory's contents reach `master`, Railway can't see
+[`Dockerfile`](Dockerfile) or `.railway/nao.json` there, so the current build
+falls back to Railpack auto-detect and will fail. See
+[`project/README.md`](project/README.md) for what's still needed in
 `project/` itself before a successful build produces a working deployment.
 
 ## Why a plain `FROM getnao/nao:latest` image
@@ -42,12 +43,12 @@ every future commit, with no error anywhere.
 | `BETTER_AUTH_URL` | Yes | Public URL of this deployment. |
 | `DB_URI` | Yes | PostgreSQL connection string for nao's own application data (not the analytics warehouse). |
 | `OPENAI_API_KEY` | Yes | A LiteLLM-issued virtual key, **not** a real OpenAI key. Per [ai-workspace-control-plane](../../.agents/skills/ai-workspace-control-plane/SKILL.md), LLM traffic routes through LiteLLM rather than calling a provider directly — same pattern as Open WebUI's own `OPENAI_API_KEY`. This key is scoped to the `MiniMax-M3` model only (minted via [litellm-admin-api](../../.agents/skills/litellm-admin-api/SKILL.md), `key_alias: nao-backend`). |
-| `OPENAI_API_BASE_URL` | Yes | `http://${{LiteLLM.RAILWAY_PRIVATE_DOMAIN}}:4000/v1` — LiteLLM's internal endpoint. Whether nao itself actually honors this env var (vs. requiring the base URL to be set in its own Settings → Agent → Model Providers admin UI) is **unconfirmed** — nao's docs never named a base-URL override env var. Verify after first successful boot; if unhonored, set the equivalent in nao's admin UI instead. |
-| `NAO_DEFAULT_PROJECT_PATH` | Yes | `/app/project` — matches where the git-context clone lands. |
+| `OPENAI_API_BASE_URL` | Yes | `http://${{LiteLLM.RAILWAY_PRIVATE_DOMAIN}}:4000/v1` — LiteLLM's internal endpoint. **Unconfirmed** — nothing has booted yet, and nao's docs never named a base-URL override env var. If unhonored, set the equivalent in nao's own Settings → Agent → Model Providers admin UI instead. |
+| `NAO_DEFAULT_PROJECT_PATH` | Yes | `/app/project` — intended to match where the git-context clone lands. **Unconfirmed** — same as above, nothing has booted yet to verify this. |
 | `NAO_CONTEXT_GIT_URL` | Yes | This repository's URL. |
-| `NAO_CONTEXT_GIT_TOKEN` | Yes | HTTPS auth token to clone this private repo. |
+| `NAO_CONTEXT_GIT_TOKEN` | Yes | HTTPS auth token to clone this private repo. **Blast radius**: `NAO_CONTEXT_GIT_SUBPATH` limits what gets *cloned*, not what the token can *fetch* — a repo-scoped PAT sitting inside this container can read the whole monorepo if used directly against the GitHub API, not just `infra/nao/project`. Use a fine-grained PAT scoped to this repo only, `contents: read-only`, no other permissions. Fine-grained PATs expire — track owner and expiry, and rotate before it lapses (an expired token fails the clone silently at the next redeploy, not loudly). |
 | `NAO_CONTEXT_GIT_BRANCH` | Yes | Branch to clone, e.g. `master`. |
-| `NAO_CONTEXT_GIT_SUBPATH` | Yes | `infra/nao/project` |
+| `NAO_CONTEXT_GIT_SUBPATH` | Yes | `infra/nao/project` — scopes what the clone checks out, not what the token can read (see `NAO_CONTEXT_GIT_TOKEN` above). |
 | `GCP_SERVICE_ACCOUNT_KEY_JSON` | If using a warehouse | Data-warehouse (e.g. BigQuery) credentials, referenced from `nao_config.yaml` via `{{ env(...) }}`. |
 | `SMTP_HOST`, `SMTP_MAIL_FROM`, `SMTP_PASSWORD` | Optional, together | Email notifications. |
 | `SMTP_PORT`, `SMTP_USER`, `SMTP_SSL` | Optional | Email notifications. |
@@ -57,19 +58,22 @@ Container listens on port `5005`.
 ## Railway wiring — done
 
 Provisioned in the `eridu-services` Railway project, `production` environment
-(service id `f4af6990-06ba-4872-8e01-63362a3b5d3f`), following the same
-pattern as every other service here (see `.railway/<service>.json` and
-[`infra/odoo/README.md`](../odoo/README.md) for the reference example):
+(service id `<nao-service-id>` — look it up via the Railway dashboard or MCP,
+not hardcoded here since IDs and generated hostnames aren't stable across a
+service recreate), following the same pattern as every other service here
+(see `.railway/<service>.json` and [`infra/odoo/README.md`](../odoo/README.md)
+for the reference example):
 
 1. Service `nao` created, connected to `allenlin90/eridu-services` branch
    `master`, root directory `infra/nao`.
-2. `railwayConfigFile` set to `.railway/nao.json` — inert until PR #383
-   merges (Railway resolves it against `master`, where the file doesn't exist
-   yet; build currently falls back to Railpack auto-detect, see
+2. `railwayConfigFile` set to `.railway/nao.json` — inert until this content
+   reaches `master` (Railway resolves it against `master`, where the file
+   doesn't exist yet; build currently falls back to Railpack auto-detect, see
    [`infra/odoo/README.md`](../odoo/README.md)'s note on this same gotcha).
 3. Dedicated Postgres (`Postgres-RY3e`) provisioned; `DB_URI` wired as a
    reference variable (`${{Postgres-RY3e.DATABASE_URL}}`).
-4. Public domain generated: `https://nao-production-e415.up.railway.app`,
+4. Public domain generated (Railway-assigned `*.up.railway.app` hostname,
+   regenerable — look up the live value rather than assuming a fixed one),
    target port `5005`. `BETTER_AUTH_URL` set to it — this is nao's own
    canonical app URL for its self-hosted auth (session cookies, redirect
    construction), not an SSO integration setting; nao does not currently
@@ -88,8 +92,15 @@ pattern as every other service here (see `.railway/<service>.json` and
   and commits the result (see [`project/README.md`](project/README.md)).
 - **No data-warehouse credentials decided or provisioned** — what nao is
   allowed to query is a real access-scope decision, not an infra default.
-- **PR #383 not merged.** Until it is, Railway builds against `master` where
-  `infra/nao/` doesn't exist yet, so every build attempt fails. Deploys are
-  currently held (`skip_deploys` on the variable writes) rather than left to
-  crash-loop against a nonexistent path.
+- **Boot-clone failure mode is unconfirmed.** nao's docs don't state whether
+  a failed context clone (bad token, network error, wrong subpath) hard-fails
+  the container or lets it start with empty/stale context — the difference
+  between a loud outage and an agent silently running with no rules. The
+  entire "a commit needs a redeploy to reach the live agent" contract above
+  assumes the container actually re-clones on restart; verify both on first
+  real boot.
+- **This content hasn't reached `master` yet.** Until it does, Railway builds
+  against `master` where `infra/nao/` doesn't exist, so every build attempt
+  fails. Deploys are currently held (`skip_deploys` on the variable writes)
+  rather than left to crash-loop against a nonexistent path.
 - **`OPENAI_API_BASE_URL` honor unconfirmed** — see the env var table above.
